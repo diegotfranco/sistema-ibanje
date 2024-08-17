@@ -5,7 +5,7 @@ type Auth = {
   token: string;
 };
 type AuthContextType = {
-  auth: Auth;
+  auth: Auth | null;
   setAuth: Dispatch<SetStateAction<Auth | null>>;
 };
 

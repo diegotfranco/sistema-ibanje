@@ -1,9 +1,9 @@
 import { ReactNode, useEffect } from "react";
-import { useAuth } from "hooks/AuthProvider";
+import { useAuth } from "hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 
 export default function ProtectedRoute({ children }: { children: ReactNode }) {
-  const auth = useAuth();
+  const { auth } = useAuth();
   const navigate = useNavigate();
   console.log(auth);
 
