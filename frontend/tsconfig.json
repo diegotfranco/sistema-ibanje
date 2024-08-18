@@ -20,17 +20,17 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "baseUrl": ".",
+    "baseUrl": "src",
     "paths": {
-      "components/*": ["src/components/*"],
-      "pages/*": ["src/pages/*"],
-      "types/*": ["src/types/*"],
-      "enums/*": ["src/enums/*"],
-      "routes/*": ["src/routes/*"],
-      "utils/*": ["src/utils/*"],
-      "hooks/*": ["src/hooks/*"]
+      "components/*": ["components/*"],
+      "pages/*": ["pages/*"],
+      "types/*": ["types/*"],
+      "enums/*": ["enums/*"],
+      "routes/*": ["routes/*"],
+      "utils/*": ["utils/*"],
+      "hooks/*": ["hooks/*"]
     }
   },
-  "include": ["src", "vite-env.d.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*.tsx", "src/**/*.ts", "vite-env.d.ts"],
+  "exclude": ["node_modules", "/var/www/sistema-ibanje/frontend"]
 }

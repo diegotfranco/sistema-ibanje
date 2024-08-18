@@ -1,15 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  important: '#root',
+  important: "#root",
   content: [
-    './src/pages/**/*.{ts,tsx}',
-    './src/routes/**/*.{ts,tsx}',
-    './src/components/**/*.{ts,tsx}',
-    './index.html'
+    "./src/pages/**/*.{ts,tsx}",
+    "./src/routes/**/*.{ts,tsx}",
+    "./src/components/**/*.{ts,tsx}",
+    "./index.html"
   ],
   theme: {
     fontFamily: {
-      sans: ['Roboto', 'Helvetica Neue', 'sans-serif'],
+      sans: ["Roboto", "Helvetica Neue", "sans-serif"],
     },
     extend: {
       colors: {
