@@ -31,6 +31,5 @@
       "hooks/*": ["hooks/*"]
     }
   },
-  "include": ["src/**/*.tsx", "src/**/*.ts", "vite-env.d.ts"],
-  "exclude": ["node_modules", "/var/www/sistema-ibanje/frontend"]
+  "include": ["src/**/*.tsx", "src/**/*.ts", "vite-env.d.ts"]
 }
