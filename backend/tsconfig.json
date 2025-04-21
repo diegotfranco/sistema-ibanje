@@ -20,11 +20,12 @@
 			"middlewares/*": ["middlewares/*"],
 			"routes/*": ["routes/*"],
 			"services/*": ["services/*"],
+			"repositories/*": ["repositories/*"],
 			"types/*": ["types/*"],
 			"utils/*": ["utils/*"]
 		},
 		"typeRoots": ["node_modules/@types", "src/types"]
 	},
-	"include": ["src/**/*.ts"],
+	"include": ["src"],
 	"exclude": ["src/utils/generatePassword.js"]
 }
