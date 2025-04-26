@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 
 const Root = () => {
   return (
-    <div className="flex h-screen">
+    <div className="flex h-dvh">
       <Outlet />
     </div>
   );

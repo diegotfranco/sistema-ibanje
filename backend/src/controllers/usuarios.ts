@@ -32,6 +32,28 @@ export const login = asyncHandler(
   },
 );
 
+// export const login = asyncHandler(
+//   async (req: Request, res: Response): Promise<void> => {
+//     const { email, password } = req.body
+
+//     if (!email || !password) {
+//       res.status(400).json({ msg: 'bad request' })
+//       return
+//     }
+
+//     const user = await service.findUserByEmail(email)
+
+//     if (!user || !validPassword(password, user.hash)) {
+//       res.status(401).json({ msg: 'not authenticated' })
+//       return
+//     }
+
+//     req.session.user = await createUser(user)
+
+//     res.status(200).json({ msg: 'ok' })
+//   }
+// )
+
 export const logout = (req: Request, res: Response): void => {
   req.session.destroy((err) => {
     if (err != null) res.status(500).json({ msg: "internal server error" });
