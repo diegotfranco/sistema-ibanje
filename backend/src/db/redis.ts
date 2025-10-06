@@ -1,8 +1,19 @@
 import { createClient } from "redis";
+import "dotenv/config";
 
-// Replace with your Redis ACL credentials
+const {
+  DB_HOST,
+  DB_USER,
+  DB_PASS,
+} = process.env;
+
 export const redisClient = createClient({
-  url: "redis://sistema_ibanje:ARS7m#cQMsvSz&pk@89.116.214.28:6379",
+  socket: {
+    host: DB_HOST,
+    port: 6379,
+  },
+  username: DB_USER,
+  password: DB_PASS,
 });
 
 redisClient.connect().catch((error) => {

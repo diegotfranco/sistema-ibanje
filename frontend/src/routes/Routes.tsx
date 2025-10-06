@@ -7,12 +7,12 @@ import Entradas from "pages/Entradas";
 import Dashboard from "pages/Dashboard";
 import Unauthorized from "pages/Unauthorized";
 import MenuLateral from "components/MenuLateral";
-import Route from "types/routes.types";
+import type Route from "types/routes.types";
 import RoutesEnum from "enums/routes.enum";
 import ProtectedRoute from "./ProtectedRoute";
 import Root from "./Root";
 
-const createProtectedRoute = (element: JSX.Element) => (
+const createProtectedRoute = (element: JSX.Element): JSX.Element => (
   <ProtectedRoute>
     <MenuLateral>{element}</MenuLateral>
   </ProtectedRoute>

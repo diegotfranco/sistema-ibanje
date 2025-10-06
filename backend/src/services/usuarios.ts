@@ -1,9 +1,9 @@
-import sql from "db/postgres.js";
-import type { Cargo } from "dtos/cargo.dto.js";
-import type { Permissao } from "dtos/permissao.dto.js";
-import type { Usuario } from "dtos/usuario.dto.js";
-import type { User } from "types/session.types.js";
-import groupPermissions from "utils/groupPermissions.js";
+import { sql } from "db/postgres";
+import type { Cargo } from "dtos/cargo.dto";
+import type { Permissao } from "dtos/permissao.dto";
+import type { Usuario } from "dtos/usuario.dto";
+import type { User } from "types/session.types";
+import groupPermissions from "utils/groupPermissions";
 
 export const findUserByEmail = async (email: string): Promise<Usuario> => {
   const users = await sql<Usuario[]>`
@@ -33,7 +33,7 @@ export const findCargoById = async (id: number): Promise<Cargo> => {
 };
 
 export const findPermissoesByUserId = async (
-  id: number,
+  id: number
 ): Promise<Permissao[]> => {
   const permissoes = await sql<Permissao[]>`
     select

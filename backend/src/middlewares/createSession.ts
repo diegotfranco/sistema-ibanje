@@ -1,4 +1,4 @@
-import RedisStore from "connect-redis";
+import { RedisStore } from "connect-redis";
 import session from "express-session";
 import { redisClient } from "db/redis.js";
 import type { RequestHandler } from "express";
