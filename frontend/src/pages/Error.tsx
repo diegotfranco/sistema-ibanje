@@ -1,4 +1,4 @@
-import { useRouteError } from "react-router-dom";
+import { useRouteError } from 'react-router';
 
 const Error = () => {
   const error: any = useRouteError();
@@ -6,11 +6,7 @@ const Error = () => {
   return (
     <>
       <p>pagina erro</p>
-      <p>
-        {error.internal
-          ? `${error.status} - ${error.statusText}`
-          : error.message}
-      </p>
+      <p>{error.internal ? `${error.status} - ${error.statusText}` : error.message}</p>
     </>
   );
 };

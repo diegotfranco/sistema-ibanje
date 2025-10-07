@@ -1,61 +1,63 @@
-import { createBrowserRouter } from "react-router-dom";
-import Home from "pages/Home";
-import Login from "pages/Login";
-import Error from "pages/Error";
-import Saidas from "pages/Saidas";
-import Entradas from "pages/Entradas";
-import Dashboard from "pages/Dashboard";
-import Unauthorized from "pages/Unauthorized";
-import MenuLateral from "components/MenuLateral";
-import type Route from "types/routes.types";
-import RoutesEnum from "enums/routes.enum";
-import ProtectedRoute from "./ProtectedRoute";
-import Root from "./Root";
-
-const createProtectedRoute = (element: JSX.Element): JSX.Element => (
-  <ProtectedRoute>
-    <MenuLateral>{element}</MenuLateral>
-  </ProtectedRoute>
-);
+import type { Route } from 'types/routes.types';
+import RoutesEnum from 'enums/routes.enum';
+import Home from 'pages/Home';
+import Dashboard from 'pages/Dashboard';
+import Entradas from 'pages/Entradas';
+import Saidas from 'pages/Saidas';
+import Login from 'pages/Login';
+import Unauthorized from 'pages/Unauthorized';
 
 export const routes: Route[] = [
   {
     index: true,
     element: <Home />,
-    name: "Home",
+    name: 'Home',
+    hasMenu: true,
+    isProtected: true,
+    isVisible: true,
+    permission: 'home'
+  },
+  {
+    path: RoutesEnum.DASHBOARD,
+    element: <Dashboard />,
+    name: 'Dashboard',
+    hasMenu: true,
+    isProtected: true,
+    isVisible: true,
+    permission: 'dashboard'
+  },
+  {
+    path: RoutesEnum.ENTRADAS,
+    element: <Entradas />,
+    name: 'Entradas',
+    hasMenu: true,
+    isProtected: true,
+    isVisible: true,
+    permission: 'entradas'
+  },
+  {
+    path: RoutesEnum.SAIDAS,
+    element: <Saidas />,
+    name: 'Saídas',
+    hasMenu: true,
+    isProtected: true,
+    isVisible: true,
+    permission: 'saidas'
   },
   {
     path: RoutesEnum.LOGIN,
     element: <Login />,
-    name: "Login",
+    name: 'Login',
+    hasMenu: false,
+    isProtected: false,
+    isVisible: false
   },
   {
     path: RoutesEnum.UNAUTHORIZED,
     element: <Unauthorized />,
-    name: "Não Autorizado",
-  },
-  {
-    path: RoutesEnum.DASHBOARD,
-    element: createProtectedRoute(<Dashboard />),
-    name: "Dashboard",
-  },
-  {
-    path: RoutesEnum.ENTRADAS,
-    element: createProtectedRoute(<Entradas />),
-    name: "Entradas",
-  },
-  {
-    path: RoutesEnum.SAIDAS,
-    element: createProtectedRoute(<Saidas />),
-    name: "Saídas",
-  },
+    name: 'Não Autorizado',
+    hasMenu: false,
+    isProtected: true,
+    isVisible: false
+  }
 ];
-
-export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Root />,
-    errorElement: <Error />,
-    children: routes,
-  },
-]);

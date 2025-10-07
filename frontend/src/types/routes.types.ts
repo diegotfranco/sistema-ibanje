@@ -1,7 +1,9 @@
-import { RouteObject } from "react-router-dom";
+import type { RouteObject } from 'react-router';
 
-type Route = RouteObject & {
+export type Route = RouteObject & {
   name: string;
+  hasMenu?: boolean;
+  isProtected?: boolean;
+  isVisible?: boolean;
+  permission?: string;
 };
-
-export default Route;

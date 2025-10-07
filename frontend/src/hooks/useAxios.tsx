@@ -1,11 +1,11 @@
-import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from "axios";
-import { useLayoutEffect } from "react";
-import { useAuth } from "./useAuth";
+import axios, { type AxiosInstance, type InternalAxiosRequestConfig } from 'axios';
+import { useLayoutEffect } from 'react';
+import { useAuth } from './useAuth';
 
 const _axios = axios.create({
   baseURL: import.meta.env.BASE_URL,
   withCredentials: true,
-  timeout: 600000,
+  timeout: 600000
 });
 
 type CustomConfig = InternalAxiosRequestConfig & {
@@ -15,15 +15,11 @@ const useAxios = (): AxiosInstance => {
   const { auth, setAuth } = useAuth();
 
   useLayoutEffect(() => {
-    const authInterceptor = _axios.interceptors.request.use(
-      (config: CustomConfig) => {
-        config.headers.Authorization =
-          !config._retry && auth
-            ? `Bearer ${auth.token}`
-            : config.headers.Authorization;
-        return config;
-      },
-    );
+    const authInterceptor = _axios.interceptors.request.use((config: CustomConfig) => {
+      config.headers.Authorization =
+        !config._retry && auth ? `Bearer ${auth.token}` : config.headers.Authorization;
+      return config;
+    });
     return () => {
       _axios.interceptors.request.eject(authInterceptor);
     };
@@ -36,10 +32,10 @@ const useAxios = (): AxiosInstance => {
         const originalRequest = error.config;
         if (
           error.response.status === 403 &&
-          error.response.data.message === "Unauthorized" // verificar 401 ou 403
+          error.response.data.message === 'Unauthorized' // verificar 401 ou 403
         ) {
           try {
-            const response = await _axios.get("v1/usuario/refresh");
+            const response = await _axios.get('v1/usuario/refresh');
             setAuth(response.data.auth);
             originalRequest.headers.Authorization = `Bearer ${response.data.auth.token}`;
             originalRequest._retry = true;
@@ -49,7 +45,7 @@ const useAxios = (): AxiosInstance => {
           }
         }
         return await Promise.reject(error);
-      },
+      }
     );
 
     return () => {
