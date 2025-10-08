@@ -2,7 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { resolveLayout } from './layouts/layoutResolver';
 import { routes } from './Routes';
 import { Root } from './Root';
-import Error from 'pages/Error';
+import Error from '@/pages/Error';
 
 const routesWithLayouts = routes.map((route) => ({
   ...route,

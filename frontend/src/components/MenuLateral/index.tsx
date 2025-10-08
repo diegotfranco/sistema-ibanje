@@ -1,7 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
-import { useAuth } from 'hooks/useAuth';
-import type { AuthPayload } from 'types/auth.types';
-import type { Route } from 'types/routes.types';
+import { useAuth } from '@/hooks/useAuth';
+import type { AuthPayload } from '@/types/auth.types';
+import type { Route } from '@/types/routes.types';
 import { Item } from './Item';
 import { Lista } from './Lista';
 import { Root } from './Root';

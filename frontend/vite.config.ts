@@ -16,14 +16,7 @@ export default defineConfig({
   envDir: 'frontend',
   resolve: {
     alias: {
-      components: path.resolve(__dirname, './src/components'),
-      contexts: path.resolve(__dirname, './src/contexts'),
-      enums: path.resolve(__dirname, './src/enums'),
-      hooks: path.resolve(__dirname, './src/hooks'),
-      pages: path.resolve(__dirname, './src/pages'),
-      routes: path.resolve(__dirname, './src/routes'),
-      types: path.resolve(__dirname, './src/types'),
-      utils: path.resolve(__dirname, './src/utils')
+      '@': path.resolve(__dirname, './src')
     }
   }
 });
