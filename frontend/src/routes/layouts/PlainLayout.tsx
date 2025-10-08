@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PermissionGate } from 'routes/PermissionGate';
+import { PermissionGate } from '@/routes/PermissionGate';
 
 type PlainLayoutProps = {
   children: ReactNode;

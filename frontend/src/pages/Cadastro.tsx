@@ -3,13 +3,12 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { InputPassword } from '@/components/InputPassword';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Link } from 'react-router';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import { useLoginForm } from '@/hooks/useLoginForm';
+import { useCadastroForm } from '@/hooks/useCadastroForm';
 
-const Login = () => {
-  const { form, onSubmit, showPassword, toggleShowPassword } = useLoginForm();
+const Cadastro = () => {
+  const { form, onSubmit, showPassword, toggleShowPassword } = useCadastroForm();
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>
@@ -22,13 +21,29 @@ const Login = () => {
           </h1>
 
           <div className="flex justify-between items-center">
-            <h2 className="text-lg text-teal-600 mb-4">Login</h2>
-            <Link to="/cadastro" className="font-light text-slate-600 text-sm mb-4 block">
-              Não tem uma conta?
+            <h2 className="text-lg text-teal-600 mb-4">Cadastro</h2>
+            <Link to="/login" className="font-light text-slate-600 text-sm mb-4 block">
+              Já possui conta?
             </Link>
           </div>
 
           <div className="flex flex-col gap-4">
+            {/* Name */}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700">Nome</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Seu nome completo" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email */}
             <FormField
               control={form.control}
               name="email"
@@ -43,6 +58,7 @@ const Login = () => {
               )}
             />
 
+            {/* Password */}
             <FormField
               control={form.control}
               name="password"
@@ -62,33 +78,29 @@ const Login = () => {
               )}
             />
 
-            <div className="flex items-center justify-between">
-              <FormField
-                control={form.control}
-                name="rememberMe"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                    <FormControl>
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 cursor-pointer h-4 w-4"
-                      />
-                    </FormControl>
-                    <FormLabel className="text-slate-600 text-sm font-light cursor-pointer">
-                      Lembrar de mim
-                    </FormLabel>
-                  </FormItem>
-                )}
-              />
-              <Link to="#" className="text-slate-600 text-sm font-light underline-offset-4 hover:underline">
-                Esqueceu sua senha?
-              </Link>
-            </div>
+            {/* Confirm Password */}
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-slate-700">Confirmar Senha</FormLabel>
+                  <FormControl>
+                    <InputPassword
+                      placeholder="********"
+                      {...field}
+                      showPassword={showPassword}
+                      onToggleShowPassword={toggleShowPassword}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800">
-            Entrar
+            Criar Conta
           </Button>
         </form>
       </Form>
@@ -96,4 +108,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Cadastro;

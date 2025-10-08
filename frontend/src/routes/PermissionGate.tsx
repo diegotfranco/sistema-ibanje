@@ -1,8 +1,8 @@
-import { useAuth } from 'hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router';
 import { jwtDecode } from 'jwt-decode';
 import type { ReactNode } from 'react';
-import type { AuthPayload } from 'types/auth.types';
+import type { AuthPayload } from '@/types/auth.types';
 
 interface PermissionGateProps {
   permission?: string;

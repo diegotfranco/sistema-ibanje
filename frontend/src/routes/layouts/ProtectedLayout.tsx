@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import { PermissionGate } from 'routes/PermissionGate';
-import { ProtectedRoute } from 'routes/ProtectedRoute';
+import { PermissionGate } from '@/routes/PermissionGate';
+import { ProtectedRoute } from '@/routes/ProtectedRoute';
 
 interface ProtectedLayoutProps {
   children: ReactNode;

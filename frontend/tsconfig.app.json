@@ -24,16 +24,9 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
 
-    "baseUrl": "src",
+    "baseUrl": ".",
     "paths": {
-      "components/*": ["components/*"],
-      "contexts/*": ["contexts/*"],
-      "enums/*": ["enums/*"],
-      "hooks/*": ["hooks/*"],
-      "pages/*": ["pages/*"],
-      "routes/*": ["routes/*"],
-      "types/*": ["types/*"],
-      "utils/*": ["utils/*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": ["src"]

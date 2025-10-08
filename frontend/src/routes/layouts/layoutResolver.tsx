@@ -1,4 +1,4 @@
-import type { Route } from 'types/routes.types';
+import type { Route } from '@/types/routes.types';
 import { MenuLayout } from './MenuLayout';
 import { PlainLayout } from './PlainLayout';
 import { ProtectedLayout } from './ProtectedLayout';
