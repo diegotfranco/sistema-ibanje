@@ -1,23 +1,20 @@
-import type { Dispatch, ReactNode, SetStateAction } from 'react';
-
-type AuthPayload = {
-  sub: string;
+export type RegisterRequest = {
   name: string;
-  permissions: string[];
-  iat: number;
+  email: string;
+  password: string;
 };
 
-type Auth = {
-  token: string;
+export type LoginRequest = {
+  email: string;
+  password: string;
 };
 
-type AuthContextType = {
-  auth: Auth | null;
-  setAuth: Dispatch<SetStateAction<Auth | null>>;
-};
+export type PermissionEntry = [number, number[]]; // [area, [actions]]
 
-type AuthProviderProps = {
-  children: ReactNode;
+export type User = {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  permissions: PermissionEntry[];
 };
-
-export type { AuthPayload, Auth, AuthContextType, AuthProviderProps };

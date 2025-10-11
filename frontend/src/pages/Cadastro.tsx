@@ -8,7 +8,7 @@ import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { useCadastroForm } from '@/hooks/useCadastroForm';
 
 const Cadastro = () => {
-  const { form, onSubmit, showPassword, toggleShowPassword } = useCadastroForm();
+  const { form, onSubmit, showPassword, toggleShowPassword, isPending } = useCadastroForm();
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>
@@ -99,8 +99,8 @@ const Cadastro = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800">
-            Criar Conta
+          <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800" disabled={isPending}>
+            {isPending ? 'Criando conta...' : 'Criar Conta'}
           </Button>
         </form>
       </Form>

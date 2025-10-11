@@ -7,13 +7,15 @@ const {
   DB_PASS,
 } = process.env;
 
+const password = encodeURIComponent(DB_PASS || "");
+
 export const redisClient = createClient({
   socket: {
     host: DB_HOST,
     port: 6379,
   },
   username: DB_USER,
-  password: DB_PASS,
+  password: password,
 });
 
 redisClient.connect().catch((error) => {

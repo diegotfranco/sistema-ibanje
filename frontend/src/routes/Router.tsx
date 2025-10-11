@@ -1,19 +1,20 @@
 import { createBrowserRouter } from 'react-router';
-import { resolveLayout } from './layouts/layoutResolver';
 import { routes } from './Routes';
+import { resolveLayout } from './layouts/layoutResolver';
 import { Root } from './Root';
 import Error from '@/pages/Error';
+import RoutesEnum from '@/enums/routesEnum';
 
-const routesWithLayouts = routes.map((route) => ({
+const routesWithLayout = routes.map((route) => ({
   ...route,
   element: resolveLayout(route, routes)
 }));
 
 export const router = createBrowserRouter([
   {
-    path: '/',
+    path: RoutesEnum.ROOT,
     element: <Root />,
     errorElement: <Error />,
-    children: routesWithLayouts
+    children: routesWithLayout
   }
 ]);

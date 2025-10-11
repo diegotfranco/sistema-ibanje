@@ -1,14 +1,14 @@
 import type { ReactNode } from 'react';
-import { PermissionGate } from '@/routes/PermissionGate';
-import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { usePermission } from '@/hooks/usePermission';
+import { Navigate } from 'react-router';
 
 interface ProtectedLayoutProps {
   children: ReactNode;
-  permission?: string;
+  area: number;
+  acao: number;
 }
 
-export const ProtectedLayout = ({ children, permission }: ProtectedLayoutProps) => (
-  <ProtectedRoute>
-    <PermissionGate permission={permission}>{children}</PermissionGate>
-  </ProtectedRoute>
-);
+export const ProtectedLayout = ({ children, area, acao }: ProtectedLayoutProps) => {
+  const { can } = usePermission();
+  return can(area, acao) ? <>{children}</> : <Navigate to="/unauthorized" replace />;
+};

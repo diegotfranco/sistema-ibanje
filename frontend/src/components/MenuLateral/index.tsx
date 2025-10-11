@@ -1,6 +1,4 @@
-import { jwtDecode } from 'jwt-decode';
-import { useAuth } from '@/hooks/useAuth';
-import type { AuthPayload } from '@/types/auth.types';
+import { useAuthStore } from '@/stores/useAuthStore';
 import type { Route } from '@/types/routes.types';
 import { Item } from './Item';
 import { Lista } from './Lista';
@@ -11,23 +9,18 @@ type MenuLateralProps = {
 };
 
 const MenuLateral = ({ routes }: MenuLateralProps) => {
-  const { auth } = useAuth();
-  const token = auth?.token ? jwtDecode<AuthPayload>(auth.token) : null;
+  const { decoded } = useAuthStore();
 
   return (
     <Root>
       <Lista>
-        {routes.map(
-          (route, index) =>
-            route.isVisible &&
-            (route.permission ? (
-              token?.permissions.includes(route.permission) && (
-                <Item key={index} name={route.name} path={route.path} />
-              )
-            ) : (
-              <Item key={index} name={route.name} path={route.path} />
-            ))
-        )}
+        {routes.map((route, index) => {
+          if (!route.isVisible) return null;
+
+          const canAccess = !route.permission || decoded?.permissions?.includes(route.permission);
+
+          return canAccess && <Item key={index} name={route.name} path={route.path} />;
+        })}
       </Lista>
     </Root>
   );

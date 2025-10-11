@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '@/schemas/loginSchema';
+import { useNavigate } from 'react-router';
+import { useLoginMutation } from '@/hooks/useAuthMutations';
+import { toast } from 'sonner';
 
 export const useLoginForm = () => {
   const form = useForm<LoginSchema>({
@@ -16,27 +19,26 @@ export const useLoginForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword((p) => !p);
 
+  const navigate = useNavigate();
+  const { mutate: login, isPending } = useLoginMutation();
+
   const onSubmit = (values: LoginSchema) => {
-    console.log('✅ Dados validados:', values);
-
-    // try {
-    //   // Example of API request — replace with your real endpoint
-    //   const res = await fetch('/api/login', {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify(values)
-    //   });
-
-    //   if (!res.ok) throw new Error('Falha no login');
-
-    //   const data = await res.json();
-    //   console.log('🎉 Login bem-sucedido:', data);
-    //   // (Optionally) save token, redirect, etc.
-    // } catch (err) {
-    //   console.error('❌ Erro no login:', err);
-    //   // You can add setError or toast notification later
-    // }
+    login(values, {
+      onSuccess: () => {
+        toast.success('Login realizado com sucesso!');
+        navigate('/');
+      },
+      onError: (error: any) => {
+        toast.error(error.message || 'Falha no login');
+      }
+    });
   };
 
-  return { form, showPassword, toggleShowPassword, onSubmit };
+  return {
+    form,
+    showPassword,
+    toggleShowPassword,
+    onSubmit,
+    isPending
+  };
 };

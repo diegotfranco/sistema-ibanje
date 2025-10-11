@@ -1,9 +1,15 @@
 import MenuLateral from '@/components/MenuLateral';
-import { PermissionGate } from '@/routes/PermissionGate';
 import type { Route } from '@/types/routes.types';
+import type { ReactNode } from 'react';
 
-export const MenuLayout = ({ routes, permission }: { routes: Route[]; permission?: string }) => (
-  <PermissionGate permission={permission}>
+interface MenuLayoutProps {
+  routes: Route[];
+  children?: ReactNode;
+}
+
+export const MenuLayout = ({ routes, children }: MenuLayoutProps) => (
+  <div className="flex">
     <MenuLateral routes={routes} />
-  </PermissionGate>
+    <main className="flex-1 p-6">{children}</main>
+  </div>
 );

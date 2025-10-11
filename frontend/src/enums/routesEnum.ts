@@ -1,9 +1,11 @@
 const RoutesEnum = {
-  LOGIN: '/login',
-  CADASTRO: '/cadastro',
+  ROOT: '/',
   DASHBOARD: '/dashboard',
   ENTRADAS: '/entradas',
   SAIDAS: '/saidas',
+  MEMBROS: '/membros',
+  LOGIN: '/login',
+  CADASTRO: '/cadastro',
   UNAUTHORIZED: '/unauthorized'
 } as const;
 

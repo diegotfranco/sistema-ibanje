@@ -17,3 +17,5 @@ node_modules
 dist
 *.local
 .env
+.env.development
+.env.production

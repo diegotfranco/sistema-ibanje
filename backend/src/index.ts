@@ -8,7 +8,8 @@ import { errorHandler } from "middlewares/errorHandler";
 import shutdown from "utils/shutdown";
 
 async function init() {
-  const port = Number(process.env.PORT) || 5000;
+  // const port = Number(process.env.PORT) || 5000;
+  const port = 5000;
   const url = process.env.BASE_URL || "localhost";
   let secureCookie = false;
 
@@ -21,7 +22,7 @@ async function init() {
     // app.use(morgan('dev'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-    app.use(() => configCors(port, false));
+    app.use(configCors(3000, false));
 
     app.use(createSession(secureCookie));
     // app.use(cookieParser());

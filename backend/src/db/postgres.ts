@@ -3,7 +3,6 @@ import "dotenv/config";
 
 if (
   !process.env.DB_HOST ||
-  !process.env.DB_PORT ||
   !process.env.DB_USER ||
   !process.env.DB_PASS ||
   !process.env.DB_NAME
@@ -13,7 +12,7 @@ if (
 
 export const sql = postgres({
   host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT),
+  port: 5432,
   username: process.env.DB_USER,
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,

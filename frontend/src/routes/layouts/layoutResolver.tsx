@@ -4,20 +4,18 @@ import { PlainLayout } from './PlainLayout';
 import { ProtectedLayout } from './ProtectedLayout';
 
 export function resolveLayout(route: Route, routes: Route[]) {
-  const { element, isProtected, hasMenu, permission } = route;
+  const { element, hasMenu, permission } = route;
 
-  if (hasMenu && isProtected) {
-    return (
-      <ProtectedLayout permission={permission}>
-        <MenuLayout routes={routes} />
+  if (permission) {
+    const protectedElement = (
+      <ProtectedLayout area={permission.area} acao={permission.acao}>
         {element}
       </ProtectedLayout>
     );
-  } else if (hasMenu) {
-    return <MenuLayout routes={routes} />;
-  } else if (isProtected) {
-    return <ProtectedLayout permission={permission}>{element}</ProtectedLayout>;
+
+    return hasMenu ? <MenuLayout routes={routes}>{protectedElement}</MenuLayout> : protectedElement;
   }
 
-  return <PlainLayout permission={permission}>{element}</PlainLayout>;
+  // Public routes
+  return hasMenu ? <MenuLayout routes={routes}>{element}</MenuLayout> : <PlainLayout>{element}</PlainLayout>;
 }

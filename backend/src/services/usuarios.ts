@@ -12,7 +12,7 @@ export const findUserByEmail = async (email: string): Promise<Usuario> => {
       email,
       nome,
       hash,
-      cargo_id
+      id_cargo
     from usuarios
     where email = ${email} and id_status = 1
   `;

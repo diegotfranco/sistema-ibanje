@@ -9,7 +9,7 @@ import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { useLoginForm } from '@/hooks/useLoginForm';
 
 const Login = () => {
-  const { form, onSubmit, showPassword, toggleShowPassword } = useLoginForm();
+  const { form, onSubmit, showPassword, toggleShowPassword, isPending } = useLoginForm();
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>
@@ -87,8 +87,8 @@ const Login = () => {
             </div>
           </div>
 
-          <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800">
-            Entrar
+          <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800" disabled={isPending}>
+            {isPending ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>
       </Form>
