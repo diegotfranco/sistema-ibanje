@@ -1,2 +1,3 @@
-node_modules
-var/www/sistema-ibanje/backend
+# Ignore artifacts:
+build
+coverage

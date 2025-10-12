@@ -1,11 +1,8 @@
-import { ExitStatus } from "enums/exitStatus.enum.js";
-import type { Server } from "node:http";
-import type { Sql } from "postgres";
+import { ExitStatus } from 'enums/exitStatus.enum.js';
+import type { Server } from 'node:http';
+import type { Sql } from 'postgres';
 
-type ExitFunction = (
-  code: number,
-  reason: string,
-) => (err: Error | null, promise?: Promise<any>) => void;
+type ExitFunction = (code: number, reason: string) => (err: Error | null, promise?: Promise<any>) => void;
 
 // Define the terminate function
 export default (
@@ -13,23 +10,23 @@ export default (
   sql: Sql,
   options: { coredump: boolean; timeout: number } = {
     coredump: false,
-    timeout: 500,
-  },
+    timeout: 500
+  }
 ): ExitFunction => {
   // Exit function
   const exit = async (code: number): Promise<void> => {
     try {
       await sql.end({ timeout: options.timeout / 1000 }); // Ensure cleanup with sql.end()
-      console.log("PostgreSQL client disconnected.");
+      console.log('PostgreSQL client disconnected.');
     } catch (err) {
-      console.error("Error during PostgreSQL disconnection:", err);
+      console.error('Error during PostgreSQL disconnection:', err);
       code = ExitStatus.Failure;
     } finally {
       if (options.coredump) {
-        console.log("Aborting proccess.");
+        console.log('Aborting proccess.');
         process.abort();
       } else {
-        console.log("Exiting proccess with the code: ", code);
+        console.log('Exiting proccess with the code: ', code);
         process.exit(code);
       }
     }
@@ -45,7 +42,7 @@ export default (
       // Attempt a graceful shutdown
       server.close((err) => {
         if (err != null) {
-          console.error("Error during server close:", err);
+          console.error('Error during server close:', err);
         }
         void exit(code); // Ensure exit is handled as a promise
       });

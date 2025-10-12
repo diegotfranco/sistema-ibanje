@@ -1,13 +1,8 @@
-import postgres from "postgres";
-import "dotenv/config";
+import postgres from 'postgres';
+import 'dotenv/config';
 
-if (
-  !process.env.DB_HOST ||
-  !process.env.DB_USER ||
-  !process.env.DB_PASS ||
-  !process.env.DB_NAME
-) {
-  throw new Error("Database enviroment variables not set");
+if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASS || !process.env.DB_NAME) {
+  throw new Error('Database enviroment variables not set');
 }
 
 export const sql = postgres({
@@ -17,5 +12,5 @@ export const sql = postgres({
   password: process.env.DB_PASS,
   database: process.env.DB_NAME,
   idle_timeout: 20,
-  max_lifetime: 60 * 30,
+  max_lifetime: 60 * 30
 });

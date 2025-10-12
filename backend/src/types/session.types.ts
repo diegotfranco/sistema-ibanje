@@ -5,5 +5,5 @@ export type User = {
   email: string;
   name: string;
   permissions: Permission[];
-  role: string;
+  role?: string;
 };

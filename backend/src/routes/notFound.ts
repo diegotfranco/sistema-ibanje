@@ -1,6 +1,7 @@
-import type { Request, Response } from "express";
+import type { Request, Response } from 'express';
+import { Errors } from '@/utils/errorFactory';
 
-export const notFound = (req: Request, res: Response): void => {
+export const notFound = (req: Request, _res: Response): void => {
   console.log(req.ip, req.url, req.method, req.body);
-  res.status(404).json({ msg: "not found" });
+  throw Errors.notFound('Rota não encontrada');
 };

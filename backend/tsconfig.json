@@ -1,31 +1,46 @@
 {
   "compilerOptions": {
-    "lib": ["ES2024"],
-    "module": "NodeNext",
-    "target": "ES2024",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "moduleResolution": "NodeNext",
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": "src",
+    /* ===== Output Configuration ===== */
+    "outDir": "./dist", // compiled JS output directory
+    "rootDir": "./src", // source TypeScript root
+    "removeComments": true, // cleaner compiled output
+    "sourceMap": true, // allows stack traces to map to .ts files
+    "noEmitOnError": true, // don't emit JS if there are TS errors
+
+    /* ===== Module Resolution ===== */
+    "module": "ESNext", // native ESM syntax for modern Node
+    "moduleResolution": "Bundler", // best for ESM projects (Node >=18)
+    "esModuleInterop": true, // allows default imports from CJS modules
+    "allowSyntheticDefaultImports": true, // interop for CJS default imports
+    "forceConsistentCasingInFileNames": true, // ensures that file imports use consistent letter casing
+    "resolveJsonModule": true, // enables importing JSON files
+    "types": ["node"], // load Node.js global types
+    "typeRoots": ["./src/types", "./node_modules/@types"],
+
+    /* ===== Target & Language Features ===== */
+    "target": "ES2023", // modern syntax supported in Node 22+
+    "lib": ["ES2023"], // standard library definitions
+    "useDefineForClassFields": true, // aligns with JS class field behavior
+
+    /* ===== Strictness ===== */
+    "strict": true, // enables all strict type-checking options
+    "noImplicitAny": true, // forces explicit typing
+    "strictNullChecks": true, // prevents null/undefined pitfalls
+    "strictBindCallApply": true, // ensures correct function usage
+    "noFallthroughCasesInSwitch": true, // prevents fallthrough bugs in switch
+    "noUnusedLocals": true, // helps keep code clean
+    "noUnusedParameters": false, // keep false for flexibility
+    "noImplicitReturns": true, // ensures all code paths return a value
+
+    /* ===== Path Aliases ===== */
+    "baseUrl": "./src", // base directory for non-relative imports
     "paths": {
-      "controllers/*": ["controllers/*"],
-      "db/*": ["db/*"],
-      "dtos/*": ["dtos/*"],
-      "enums/*": ["enums/*"],
-      "middlewares/*": ["middlewares/*"],
-      "routes/*": ["routes/*"],
-      "services/*": ["services/*"],
-      "repositories/*": ["repositories/*"],
-      "types/*": ["types/*"],
-      "utils/*": ["utils/*"]
+      "@/*": ["*"] // allows imports like "@/application/..."
     },
-    "typeRoots": ["node_modules/@types", "src/types"],
-    "allowJs": true,
-    "resolveJsonModule": true,
-    "noEmit": true
+
+    /* === Performance === */
+    "skipLibCheck": true // faster builds, skip type-checking node_modules
   },
-  "include": ["src"],
-  "exclude": ["src/utils/generatePassword.js"]
+  "include": ["src/**/*.ts"], // all source files
+  "exclude": ["node_modules", "dist", "tests", "**/*.test.ts"] // exclude unnecessary dirs
 }
