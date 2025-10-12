@@ -1,14 +1,35 @@
 import type { ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { usePermission } from '@/hooks/usePermission';
-import { Navigate } from 'react-router';
 
-interface ProtectedLayoutProps {
+type ProtectedLayoutProps = {
   children: ReactNode;
   area: number;
   acao: number;
-}
+};
 
 export const ProtectedLayout = ({ children, area, acao }: ProtectedLayoutProps) => {
+  const { isAuthenticated, isLoading } = useAuthStore();
   const { can } = usePermission();
-  return can(area, acao) ? <>{children}</> : <Navigate to="/unauthorized" replace />;
+  const location = useLocation();
+
+  // While auth state is initializing, avoid flicker
+  if (isLoading) {
+    return null; // or a spinner if preferred
+  }
+
+  // 🔒 1. User not logged in
+  if (!isAuthenticated()) {
+    // Preserve where they were trying to go
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // 🚫 2. User logged in but lacks permission
+  if (!can(area, acao)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  // ✅ 3. Authorized — show content
+  return <>{children}</>;
 };

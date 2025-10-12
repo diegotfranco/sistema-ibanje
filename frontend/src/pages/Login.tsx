@@ -4,12 +4,16 @@ import { Input } from '@/components/ui/input';
 import { InputPassword } from '@/components/InputPassword';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Link } from 'react-router';
+import { Link, Navigate } from 'react-router';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { useLoginForm } from '@/hooks/useLoginForm';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 const Login = () => {
   const { form, onSubmit, showPassword, toggleShowPassword, isPending } = useLoginForm();
+
+  const { user } = useAuthStore();
+  if (user) return <Navigate to="/" replace />;
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>

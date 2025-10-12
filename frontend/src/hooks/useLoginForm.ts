@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '@/schemas/loginSchema';
-import { useNavigate } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { toast } from 'sonner';
 
@@ -22,11 +22,15 @@ export const useLoginForm = () => {
   const navigate = useNavigate();
   const { mutate: login, isPending } = useLoginMutation();
 
+  const location = useLocation();
+  const from = (location.state as { from?: Location })?.from?.pathname || '/';
+
   const onSubmit = (values: LoginSchema) => {
     login(values, {
-      onSuccess: () => {
+      onSuccess: async () => {
         toast.success('Login realizado com sucesso!');
-        navigate('/');
+        // navigate('/');
+        navigate(from, { replace: true }); // 👈 redirect to previous page or "/"
       },
       onError: (error: any) => {
         toast.error(error.message || 'Falha no login');
