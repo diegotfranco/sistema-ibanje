@@ -1,5 +1,4 @@
 import axios from '@/lib/axios';
-import { useAuthStore } from '@/stores/useAuthStore';
 import type { RegisterRequest, LoginRequest, User } from '@/types/auth.types';
 
 export const authService = {
@@ -19,14 +18,8 @@ export const authService = {
   },
 
   async refreshSession(): Promise<User | null> {
-    try {
-      const res = await axios.get<User>('/v1/auth/session');
-      const user = res.data;
-      useAuthStore.getState().setUser(user);
-      return user;
-    } catch {
-      useAuthStore.getState().clearUser();
-      return null;
-    }
+    const res = await axios.get<User>('/v1/auth/session');
+    const user = res.data;
+    return user;
   }
 };

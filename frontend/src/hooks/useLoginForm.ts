@@ -1,48 +1,31 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { loginSchema, type LoginSchema } from '@/schemas/loginSchema';
-import { useLocation, useNavigate } from 'react-router';
+import { useAuthNavigation } from '@/hooks/useAuthNavigation';
 import { useLoginMutation } from '@/hooks/useAuthMutations';
 import { toast } from 'sonner';
 
 export const useLoginForm = () => {
   const form = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: '',
-      password: '',
-      rememberMe: true
-    }
+    defaultValues: { email: '', password: '', rememberMe: true }
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const toggleShowPassword = () => setShowPassword((p) => !p);
-
-  const navigate = useNavigate();
+  const { redirectAfterLogin } = useAuthNavigation();
   const { mutate: login, isPending } = useLoginMutation();
-
-  const location = useLocation();
-  const from = (location.state as { from?: Location })?.from?.pathname || '/';
 
   const onSubmit = (values: LoginSchema) => {
     login(values, {
-      onSuccess: async () => {
+      onSuccess: () => {
         toast.success('Login realizado com sucesso!');
-        // navigate('/');
-        navigate(from, { replace: true }); // 👈 redirect to previous page or "/"
+        redirectAfterLogin();
       },
       onError: (error: any) => {
-        toast.error(error.message || 'Falha no login');
+        const message = error?.response?.data?.message ?? 'Falha no login.';
+        toast.error(message);
       }
     });
   };
 
-  return {
-    form,
-    showPassword,
-    toggleShowPassword,
-    onSubmit,
-    isPending
-  };
+  return { form, onSubmit, isPending };
 };

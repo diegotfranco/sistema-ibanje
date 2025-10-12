@@ -16,7 +16,6 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   const { email, password } = parsed.data;
 
   const user = await service.login(email, password);
-  if (!user) throw Errors.unauthorized('Credenciais inválidas');
 
   req.session.user = user;
 

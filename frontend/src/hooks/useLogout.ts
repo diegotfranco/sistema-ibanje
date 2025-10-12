@@ -1,19 +1,19 @@
 import { useLogoutMutation } from '@/hooks/useAuthMutations';
-import { useNavigate } from 'react-router';
+import { useAuthNavigation } from '@/hooks/useAuthNavigation';
 import { toast } from 'sonner';
 
 export const useLogout = () => {
-  const navigate = useNavigate();
+  const { redirectToLogin } = useAuthNavigation();
   const { mutate: logoutMutation, isPending } = useLogoutMutation();
 
   const logout = () => {
     logoutMutation(undefined, {
       onSuccess: () => {
-        toast.success('Você saiu da conta.');
-        navigate('/login');
+        toast.success('Sessão encerrada com sucesso.');
+        redirectToLogin();
       },
       onError: () => {
-        toast.error('Erro ao sair.');
+        toast.error('Erro ao encerrar sessão.');
       }
     });
   };

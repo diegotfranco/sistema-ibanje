@@ -1,14 +1,14 @@
 import HandFinanceGraph from '@/components/icons/HandFinanceGraph';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { InputPassword } from '@/components/InputPassword';
+import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { useCadastroForm } from '@/hooks/useCadastroForm';
 
 const Cadastro = () => {
-  const { form, onSubmit, showPassword, toggleShowPassword, isPending } = useCadastroForm();
+  const { form, onSubmit, isPending } = useCadastroForm();
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>
@@ -66,12 +66,7 @@ const Cadastro = () => {
                 <FormItem>
                   <FormLabel className="text-slate-700">Senha</FormLabel>
                   <FormControl>
-                    <InputPassword
-                      placeholder="********"
-                      {...field}
-                      showPassword={showPassword}
-                      onToggleShowPassword={toggleShowPassword}
-                    />
+                    <PasswordInput placeholder="********" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -86,12 +81,7 @@ const Cadastro = () => {
                 <FormItem>
                   <FormLabel className="text-slate-700">Confirmar Senha</FormLabel>
                   <FormControl>
-                    <InputPassword
-                      placeholder="********"
-                      {...field}
-                      showPassword={showPassword}
-                      onToggleShowPassword={toggleShowPassword}
-                    />
+                    <PasswordInput placeholder="********" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -1,7 +1,7 @@
 import HandFinanceGraph from '@/components/icons/HandFinanceGraph';
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { InputPassword } from '@/components/InputPassword';
+import { PasswordInput } from '@/components/PasswordInput';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Link, Navigate } from 'react-router';
@@ -10,9 +10,9 @@ import { useLoginForm } from '@/hooks/useLoginForm';
 import { useAuthStore } from '@/stores/useAuthStore';
 
 const Login = () => {
-  const { form, onSubmit, showPassword, toggleShowPassword, isPending } = useLoginForm();
-
+  const { form, onSubmit, isPending } = useLoginForm();
   const { user } = useAuthStore();
+
   if (user) return <Navigate to="/" replace />;
 
   return (
@@ -54,12 +54,7 @@ const Login = () => {
                 <FormItem>
                   <FormLabel className="text-slate-700">Senha</FormLabel>
                   <FormControl>
-                    <InputPassword
-                      placeholder="********"
-                      {...field}
-                      showPassword={showPassword}
-                      onToggleShowPassword={toggleShowPassword}
-                    />
+                    <PasswordInput placeholder="********" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

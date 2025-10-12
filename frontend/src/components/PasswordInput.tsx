@@ -1,23 +1,22 @@
+import { useState, type InputHTMLAttributes } from 'react';
 import { InputGroup, InputGroupInput, InputGroupAddon, InputGroupButton } from '@/components/ui/input-group';
-import { type InputHTMLAttributes } from 'react';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
-type InputPasswordProps = {
-  showPassword: boolean;
-  onToggleShowPassword: () => void;
-} & InputHTMLAttributes<HTMLInputElement>;
+type PasswordInputProps = InputHTMLAttributes<HTMLInputElement>;
 
-export const InputPassword = ({ showPassword, onToggleShowPassword, ...props }: InputPasswordProps) => {
+export const PasswordInput = (props: PasswordInputProps) => {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
     <InputGroup>
       <InputGroupInput {...props} type={showPassword ? 'text' : 'password'} />
       <InputGroupAddon align="inline-end">
         <InputGroupButton
-          aria-label="Mostrar senha"
-          title="Mostrar senha"
+          aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+          title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           size="icon-xs"
           type="button"
-          onClick={onToggleShowPassword}>
+          onClick={() => setShowPassword((prev) => !prev)}>
           {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
         </InputGroupButton>
       </InputGroupAddon>

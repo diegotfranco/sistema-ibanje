@@ -7,6 +7,7 @@ export type RegisterRequest = {
 export type LoginRequest = {
   email: string;
   password: string;
+  rememberMe: boolean;
 };
 
 export type PermissionEntry = [number, number[]]; // [area, [actions]]
