@@ -15,6 +15,7 @@ logs
 
 node_modules
 dist
+bd
 *.local
 .env
 .env.development

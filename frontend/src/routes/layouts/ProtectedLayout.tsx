@@ -10,14 +10,9 @@ type ProtectedLayoutProps = {
 };
 
 export const ProtectedLayout = ({ children, area, acao }: ProtectedLayoutProps) => {
-  const { isAuthenticated, isLoading } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const { can } = usePermission();
   const location = useLocation();
-
-  // While auth state is initializing, avoid flicker
-  if (isLoading) {
-    return null; // or a spinner if preferred
-  }
 
   // 🔒 1. User not logged in
   if (!isAuthenticated()) {

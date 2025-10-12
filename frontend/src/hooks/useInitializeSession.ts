@@ -4,26 +4,30 @@ import { useAuthStore } from '@/stores/useAuthStore';
 import { useEffect } from 'react';
 
 export const useInitializeSession = () => {
-  const setUser = useAuthStore((s) => s.setUser);
-  const setLoading = useAuthStore((s) => s.setLoading);
+  const { rememberMe, setUser, clearUser, setLoading } = useAuthStore();
 
-  // React Query handles fetch, caching, retries, etc.
   const query = useQuery({
     queryKey: ['session'],
     queryFn: authService.refreshSession,
+    enabled: rememberMe, // 🔑 only run if rememberMe = true
     retry: false
   });
 
-  // ✅ handle side effects through useEffect instead of onSuccess/onError
   useEffect(() => {
+    if (!rememberMe) {
+      // User didn’t choose to persist session
+      setLoading(false);
+      return;
+    }
+
     if (query.isSuccess) {
-      setUser(query.data);
+      setUser(query.data, rememberMe);
       setLoading(false);
     } else if (query.isError) {
-      setUser(null);
+      clearUser();
       setLoading(false);
     }
-  }, [query.isSuccess, query.isError, query.data, setUser, setLoading]);
+  }, [rememberMe, query.isSuccess, query.isError, query.data, setUser, clearUser, setLoading]);
 
   return query;
 };
