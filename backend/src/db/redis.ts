@@ -3,15 +3,13 @@ import 'dotenv/config';
 
 const { DB_HOST, DB_USER, DB_PASS } = process.env;
 
-const password = encodeURIComponent(DB_PASS || '');
-
 export const redisClient = createClient({
   socket: {
     host: DB_HOST,
     port: 6379
   },
   username: DB_USER,
-  password: password
+  password: DB_PASS
 });
 
 redisClient.connect().catch((error) => {
