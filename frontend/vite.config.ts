@@ -7,7 +7,7 @@ import path from 'path';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: '/var/www/sistema-ibanje/frontend',
+    outDir: '/var/www/sistema-ibanje/frontend/dist',
     emptyOutDir: true
   },
   server: {
