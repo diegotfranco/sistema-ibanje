@@ -4,8 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: '/sistema-ibanje/',
+export default defineConfig(({ mode }) => ({
+  base: mode === 'production' ? '/sistema-ibanje/' : '/',
   plugins: [react(), tailwindcss()],
   build: {
     outDir: '/var/www/sistema-ibanje/frontend/dist',
@@ -19,4 +19,4 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   }
-});
+}));
