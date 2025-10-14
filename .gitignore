@@ -20,3 +20,4 @@ bd
 .env
 .env.development
 .env.production
+ecosystem.config.cjs 
