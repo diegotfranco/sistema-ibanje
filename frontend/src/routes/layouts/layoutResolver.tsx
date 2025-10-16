@@ -3,7 +3,7 @@ import { MenuLayout } from './MenuLayout';
 import { PlainLayout } from './PlainLayout';
 import { ProtectedLayout } from './ProtectedLayout';
 
-export function resolveLayout(route: Route, routes: Route[]) {
+export function resolveLayout(route: Route) {
   const { element, hasMenu, permission } = route;
 
   if (permission) {
@@ -13,9 +13,9 @@ export function resolveLayout(route: Route, routes: Route[]) {
       </ProtectedLayout>
     );
 
-    return hasMenu ? <MenuLayout routes={routes}>{protectedElement}</MenuLayout> : protectedElement;
+    return hasMenu ? <MenuLayout>{protectedElement}</MenuLayout> : protectedElement;
   }
 
   // Public routes
-  return hasMenu ? <MenuLayout routes={routes}>{element}</MenuLayout> : <PlainLayout>{element}</PlainLayout>;
+  return hasMenu ? <MenuLayout>{element}</MenuLayout> : <PlainLayout>{element}</PlainLayout>;
 }

@@ -16,7 +16,7 @@ export const Root = () => {
   }
 
   return (
-    <div className="flex h-dvh bg-background font-roboto">
+    <div className="flex h-dvh font-roboto">
       <Outlet />
     </div>
   );

@@ -7,20 +7,21 @@ import RoutesEnum from '@/enums/routesEnum';
 
 const routesWithLayout = routes.map((route) => ({
   ...route,
-  element: resolveLayout(route, routes)
+  element: resolveLayout(route)
 }));
 
 export const router = createBrowserRouter(
   [
     {
-      path: RoutesEnum.ROOT,
+      ...RoutesEnum.ROOT,
       element: <Root />,
       errorElement: <Error />,
       children: routesWithLayout
     }
-  ],
-  {
-    // 👉 Use /sistema-ibanje in production, but / in development
-    basename: import.meta.env.PROD ? '/sistema-ibanje' : '/'
-  }
+  ]
+  // ],
+  // {
+  //   // 👉 Use /sistema-ibanje in production, but / in development
+  //   basename: import.meta.env.PROD ? '/sistema-ibanje' : '/'
+  // }
 );

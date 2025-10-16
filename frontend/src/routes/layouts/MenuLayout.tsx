@@ -1,15 +1,18 @@
-import MenuLateral from '@/components/MenuLateral';
-import type { Route } from '@/types/routes.types';
+import { AppSidebar } from '@/components/Sidebar';
+import Topbar from '@/components/Topbar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import type { ReactNode } from 'react';
 
-interface MenuLayoutProps {
-  routes: Route[];
+type MenuLayoutProps = {
   children?: ReactNode;
-}
+};
 
-export const MenuLayout = ({ routes, children }: MenuLayoutProps) => (
-  <div className="flex">
-    <MenuLateral routes={routes} />
-    <main className="flex-1 p-6">{children}</main>
-  </div>
+export const MenuLayout = ({ children }: MenuLayoutProps) => (
+  <SidebarProvider>
+    <AppSidebar />
+    <div className="flex-1 overflow-y-auto bg-gray-100">
+      <Topbar />
+      <main>{children}</main>
+    </div>
+  </SidebarProvider>
 );

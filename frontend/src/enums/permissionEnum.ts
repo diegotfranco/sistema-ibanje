@@ -9,7 +9,9 @@ export const AREA = {
   PERMISSOES: 8,
   AREAS: 9,
   STATUS: 10,
-  DASHBOARD: 11
+  DASHBOARD: 11,
+  EXTRATO: 12,
+  CARGOS: 13
 } as const;
 
 export const ACAO = {

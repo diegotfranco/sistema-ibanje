@@ -1,5 +1,5 @@
+import type { JSX } from 'react';
 import type { RouteObject } from 'react-router';
-import type { ReactElement } from 'react';
 
 export type Route = RouteObject & {
   name: string;
@@ -7,5 +7,8 @@ export type Route = RouteObject & {
   isProtected?: boolean;
   isVisible?: boolean;
   permission?: { area: number; acao: number };
-  icon?: ReactElement;
+  fullPath?: string;
+  icon?: JSX.Element;
+  group?: string;
+  children?: Route[];
 };
