@@ -18,10 +18,9 @@ export const router = createBrowserRouter(
       errorElement: <Error />,
       children: routesWithLayout
     }
-  ]
-  // ],
-  // {
-  //   // 👉 Use /sistema-ibanje in production, but / in development
-  //   basename: import.meta.env.PROD ? '/sistema-ibanje' : '/'
-  // }
+  ],
+  {
+    // 👉 Use /sistema-ibanje in production, but / in development
+    basename: import.meta.env.PROD ? '/sistema-ibanje' : '/'
+  }
 );
