@@ -49,9 +49,6 @@ export async function checkPasswordStrength(
   // Combine all for zxcvbn contextual checking
   const inputsForMatcher = [...nameParts, emailPrefix];
 
-  // Optionally log for debugging
-  console.log('Password check:', { password, inputsForMatcher });
-
   // Use async version for pwned + advanced matchers
   return await zxcvbnAsync(password, inputsForMatcher);
 }

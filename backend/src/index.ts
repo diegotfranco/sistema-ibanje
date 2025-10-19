@@ -17,7 +17,7 @@ async function init() {
     const app = express();
     if (app.get('env') === 'production') {
       app.set('trust proxy', 1); // trust first proxy
-      // secureCookie = true; // serve secure cookies
+      secureCookie = true; // serve secure cookies
     }
     // app.use(morgan('dev'));
     app.use(express.json());
