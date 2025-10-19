@@ -9,13 +9,17 @@ export const PasswordInput = (props: PasswordInputProps) => {
 
   return (
     <InputGroup>
-      <InputGroupInput {...props} type={showPassword ? 'text' : 'password'} />
+      <InputGroupInput
+        {...props}
+        type={showPassword ? 'text' : 'password'}
+        data-slot="input-group-control"
+        maxLength={64}
+      />
       <InputGroupAddon align="inline-end">
         <InputGroupButton
           aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
           size="icon-xs"
-          type="button"
           onClick={() => setShowPassword((prev) => !prev)}>
           {showPassword ? <AiOutlineEyeInvisible /> : <AiOutlineEye />}
         </InputGroupButton>

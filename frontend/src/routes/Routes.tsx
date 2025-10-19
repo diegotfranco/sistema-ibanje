@@ -32,8 +32,8 @@ import Areas from '@/pages/Areas';
 import Status from '@/pages/Status';
 
 import Dashboard from '@/pages/Dashboard';
-import Login from '@/pages/Login';
-import Cadastro from '@/pages/Cadastro';
+import Login from '@/pages/Auth/Login';
+import Cadastro from '@/pages/Auth/Cadastro';
 import Unauthorized from '@/pages/Unauthorized';
 
 export const routes: Route[] = [

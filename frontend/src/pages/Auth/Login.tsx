@@ -16,23 +16,28 @@ const Login = () => {
   if (user) return <Navigate to="/" replace />;
 
   return (
-    <AuthLayout illustration={<HandFinanceGraph className="text-slate-50" />}>
+    <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
+          noValidate
           className="w-full max-w-sm bg-white rounded-2xl shadow-md p-6">
-          <h1 className="font-light text-center text-2xl underline underline-offset-8 decoration-teal-600 decoration-1 mb-8">
-            Tesouraria Ibanje
-          </h1>
+          <header className="mb-8 text-center">
+            <h1 className="text-2xl font-light underline underline-offset-8 decoration-teal-600 decoration-1">
+              Tesouraria Ibanje
+            </h1>
+          </header>
 
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg text-teal-600 mb-4">Login</h2>
-            <Link to="/cadastro" className="font-light text-slate-600 text-sm mb-4 block">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg text-teal-600">Login</h2>
+            <Link
+              to="/cadastro"
+              className="text-sm font-light text-slate-700 hover:underline underline-offset-4 decoration-teal-600">
               Não tem uma conta?
             </Link>
           </div>
 
-          <div className="flex flex-col gap-4">
+          <div className="space-y-4">
             <FormField
               control={form.control}
               name="email"
@@ -40,7 +45,13 @@ const Login = () => {
                 <FormItem>
                   <FormLabel className="text-slate-700">E-mail</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="exemplo@mail.com" {...field} />
+                    <Input
+                      type="email"
+                      placeholder="exemplo@mail.com"
+                      autoComplete="email"
+                      maxLength={100}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -54,13 +65,14 @@ const Login = () => {
                 <FormItem>
                   <FormLabel className="text-slate-700">Senha</FormLabel>
                   <FormControl>
-                    <PasswordInput placeholder="********" {...field} />
+                    <PasswordInput placeholder="********" autoComplete="current-password" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
+            {/* Remember Me + Forgot Password */}
             <div className="flex items-center justify-between">
               <FormField
                 control={form.control}
@@ -71,22 +83,26 @@ const Login = () => {
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
-                        className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 cursor-pointer h-4 w-4"
+                        className="h-4 w-4 cursor-pointer data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
                       />
                     </FormControl>
-                    <FormLabel className="text-slate-600 text-sm font-light cursor-pointer">
+                    <FormLabel className="text-sm font-light text-slate-700 cursor-pointer">
                       Lembrar de mim
                     </FormLabel>
                   </FormItem>
                 )}
               />
-              <Link to="#" className="text-slate-600 text-sm font-light underline-offset-4 hover:underline">
+
+              <Link
+                to="/#"
+                aria-label="Esqueci minha senha"
+                className="text-sm font-light text-slate-700 hover:underline underline-offset-4 decoration-teal-600">
                 Esqueceu sua senha?
               </Link>
             </div>
           </div>
 
-          <Button type="submit" className="w-full mt-6 bg-teal-700 hover:bg-teal-800" disabled={isPending}>
+          <Button type="submit" disabled={isPending} className="w-full mt-6 bg-teal-700 hover:bg-teal-800">
             {isPending ? 'Entrando...' : 'Entrar'}
           </Button>
         </form>

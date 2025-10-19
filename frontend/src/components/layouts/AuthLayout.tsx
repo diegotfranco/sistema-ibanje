@@ -1,23 +1,18 @@
+import type { ReactNode } from 'react';
+
 type AuthLayoutProps = {
-  illustration?: React.ReactNode;
-  leftBgClass?: string;
-  leftPadding?: string;
-  children: React.ReactNode;
+  illustration?: ReactNode;
+  children: ReactNode;
 };
 
-export const AuthLayout = ({
-  illustration,
-  leftBgClass = 'bg-teal-900',
-  leftPadding = 'p-24',
-  children
-}: AuthLayoutProps) => {
+export const AuthLayout = ({ illustration, children }: AuthLayoutProps) => {
   return (
-    <div className="flex w-full min-h-screen">
-      <div className={`w-4/12 ${leftBgClass} flex justify-center items-center ${leftPadding}`}>
+    <div className="flex min-h-screen w-full bg-gradient-to-tr from-teal-100 via-slate-100 to-slate-50 lg:bg-none lg:bg-slate-50">
+      <div className="hidden lg:flex lg:w-5/12 2xl:w-4/12 justify-center items-center bg-teal-900 px-12">
         {illustration}
       </div>
 
-      <div className="grow flex justify-center items-center bg-slate-50">{children}</div>
+      <div className="flex flex-1 justify-center items-center px-4 sm:px-8">{children}</div>
     </div>
   );
 };

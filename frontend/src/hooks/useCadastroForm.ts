@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 export const useCadastroForm = () => {
   const form = useForm<CadastroSchema>({
     resolver: zodResolver(cadastroSchema),
+    mode: 'onSubmit', // ensures async schema runs properly
     defaultValues: {
       name: '',
       email: '',
