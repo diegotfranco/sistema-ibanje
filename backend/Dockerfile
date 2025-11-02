@@ -32,6 +32,9 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Install curl for the healthcheck
 RUN apk add --no-cache curl
 
+# Install db-migrate globally to make it available for the startup command
+RUN npm install -g db-migrate db-migrate-pg
+
 # Copy package files with correct ownership
 COPY --chown=appuser:appgroup package*.json ./
 
