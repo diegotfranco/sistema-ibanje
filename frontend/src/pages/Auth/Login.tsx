@@ -8,12 +8,13 @@ import { Link, Navigate } from 'react-router';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { useLoginForm } from '@/hooks/useLoginForm';
 import { useAuthStore } from '@/stores/useAuthStore';
+import routes from '@/enums/routes.enum';
 
 const Login = () => {
   const { form, onSubmit, isPending } = useLoginForm();
   const { user } = useAuthStore();
 
-  if (user) return <Navigate to="/" replace />;
+  if (user) return <Navigate to={routes.ROOT.path} replace />;
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
@@ -24,14 +25,14 @@ const Login = () => {
           className="w-full max-w-sm bg-white rounded-2xl shadow-md p-6">
           <header className="mb-8 text-center">
             <h1 className="text-2xl font-light underline underline-offset-8 decoration-teal-600 decoration-1">
-              Tesouraria Ibanje
+              Sistema Ibanje
             </h1>
           </header>
 
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg text-teal-600">Login</h2>
+            <h2 className="text-teal-600">Login</h2>
             <Link
-              to="/cadastro"
+              to={routes.SIGNUP.path}
               className="text-sm font-light text-slate-700 hover:underline underline-offset-4 decoration-teal-600">
               Não tem uma conta?
             </Link>
@@ -49,7 +50,7 @@ const Login = () => {
                       type="email"
                       placeholder="exemplo@mail.com"
                       autoComplete="email"
-                      maxLength={100}
+                      maxLength={96}
                       {...field}
                     />
                   </FormControl>
@@ -94,7 +95,7 @@ const Login = () => {
               />
 
               <Link
-                to="/#"
+                to={routes.FORGOT_PASSWORD.path}
                 aria-label="Esqueci minha senha"
                 className="text-sm font-light text-slate-700 hover:underline underline-offset-4 decoration-teal-600">
                 Esqueceu sua senha?

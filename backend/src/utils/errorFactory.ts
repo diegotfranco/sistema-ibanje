@@ -1,12 +1,16 @@
-export type AppError = {
-  message: string;
-  statusCode: number;
-  isOperational: boolean;
-};
+export class AppError extends Error {
+  public readonly statusCode: number;
+  public readonly isOperational: boolean;
 
-function createError(message: string, statusCode: number, isOperational = true): AppError {
-  return { message, statusCode, isOperational };
+  constructor(message: string, statusCode: number, isOperational = true) {
+    super(message);
+    this.statusCode = statusCode;
+    this.isOperational = isOperational;
+    Object.setPrototypeOf(this, new.target.prototype); // Restore prototype chain
+  }
 }
+
+//create success definitions enum and rename file to httpFactory (or smth like that)
 
 const errorDefinitions = {
   badRequest: { defaultMessage: 'Bad Request', statusCode: 400 },
@@ -20,7 +24,7 @@ const errorDefinitions = {
 export const Errors = Object.entries(errorDefinitions).reduce(
   (acc, [key, { defaultMessage, statusCode }]) => {
     acc[key as keyof typeof errorDefinitions] = (message?: string): AppError =>
-      createError(message ?? defaultMessage, statusCode);
+      new AppError(message ?? defaultMessage, statusCode);
     return acc;
   },
   {} as Record<keyof typeof errorDefinitions, (message?: string) => AppError>

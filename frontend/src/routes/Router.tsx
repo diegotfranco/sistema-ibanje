@@ -1,9 +1,8 @@
 import { createBrowserRouter } from 'react-router';
 import { routes } from './Routes';
 import { resolveLayout } from './layouts/layoutResolver';
-import { Root } from './Root';
 import Error from '@/pages/Error';
-import RoutesEnum from '@/enums/routesEnum';
+import routesEnum from '@/enums/routes.enum';
 
 const routesWithLayout = routes.map((route) => ({
   ...route,
@@ -13,8 +12,7 @@ const routesWithLayout = routes.map((route) => ({
 export const router = createBrowserRouter(
   [
     {
-      ...RoutesEnum.ROOT,
-      element: <Root />,
+      ...routesEnum.ROOT,
       errorElement: <Error />,
       children: routesWithLayout
     }

@@ -1,55 +1,33 @@
-name: CI/CD Deploy
+name: Build and Deploy Full Stack
 
 on:
   push:
-    branches: [main]
+    branches: ["main"]
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.20.0
-          cache: "npm"
+          node-version: "24"
 
-      - name: Build frontend
-        working-directory: frontend
+      - name: Build Frontend
         run: |
+          cd frontend
           npm ci
           npm run build
 
-      - name: Build backend
-        working-directory: backend
+      - name: Build and Deploy Services
         run: |
-          npm ci
-          npm run build
-
-      - name: Upload build files to server
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          target: ${{ secrets.DEPLOY_PATH }}
-          source: |
-            backend/dist/
-            backend/package.json
-            backend/ecosystem.config.cjs
-            frontend/dist/
-
-      - name: Restart PM2 backend
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            cd ${{ secrets.DEPLOY_PATH }}/backend
-            npm ci --omit=dev
-            pm2 reload ecosystem.config.cjs --env production || pm2 start ecosystem.config.cjs --env production
+          cd ~/sistema-ibanje
+          # Rebuild the backend image if its code changed
+          docker-compose build backend
+          # Bring up all services.
+          # --force-recreate will ensure Nginx picks up the new frontend files from the volume.
+          docker-compose up -d --force-recreate nginx backend

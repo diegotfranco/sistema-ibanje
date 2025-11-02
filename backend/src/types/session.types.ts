@@ -6,4 +6,5 @@ export type User = {
   name: string;
   permissions: Permission[];
   role?: string;
+  role_id: number | null;
 };

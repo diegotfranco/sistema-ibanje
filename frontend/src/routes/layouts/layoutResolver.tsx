@@ -8,7 +8,7 @@ export function resolveLayout(route: Route) {
 
   if (permission) {
     const protectedElement = (
-      <ProtectedLayout area={permission.area} acao={permission.acao}>
+      <ProtectedLayout module={permission.module} action={permission.action}>
         {element}
       </ProtectedLayout>
     );

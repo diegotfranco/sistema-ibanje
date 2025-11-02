@@ -7,13 +7,10 @@ import { hasPermission } from '@/utils';
 type AuthState = {
   user: User | null;
   rememberMe: boolean;
-  isLoading: boolean;
 
-  setLoading: (loading: boolean) => void;
-
-  can: (area: number, acao: number) => boolean;
+  can: (module: number, action: number) => boolean;
   isAuthenticated: () => boolean;
-  hasRole: (roleName: string) => boolean;
+  hasRole: (role: number) => boolean;
 
   setUser: (user: User | null, rememberMe?: boolean) => void;
   clearUser: () => void;
@@ -24,17 +21,14 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       user: null,
       rememberMe: false,
-      isLoading: true,
 
-      setLoading: (loading) => set({ isLoading: loading }),
-
-      can: (area, acao) => {
+      can: (module, action) => {
         const user = get().user;
-        return hasPermission(user, area, acao);
+        return hasPermission(user, module, action);
       },
 
       isAuthenticated: () => !!get().user,
-      hasRole: (roleName) => get().user?.role === roleName,
+      hasRole: (role) => get().user?.role === role,
 
       setUser: (user, rememberMe = false) => {
         // if user logs in with rememberMe=true, persist to localStorage
@@ -52,7 +46,11 @@ export const useAuthStore = create<AuthState>()(
         set({ user: null, rememberMe: false });
         sessionStorage.removeItem('auth-storage');
         localStorage.removeItem('auth-storage');
-        queryClient.clear(); // ✅ ensures sensitive cached data is removed
+        // Instead of clearing the entire cache (which causes a refetch loop),
+        // we remove all queries EXCEPT the initial session query.
+        queryClient.removeQueries({
+          predicate: (query) => query.queryKey[0] !== 'session'
+        });
       }
     }),
     {

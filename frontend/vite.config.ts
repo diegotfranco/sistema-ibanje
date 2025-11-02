@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
   base: mode === 'production' ? '/sistema-ibanje/' : '/',
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: '/var/www/sistema-ibanje/frontend/dist',
+    outDir: 'dist',
     emptyOutDir: true
   },
   server: {

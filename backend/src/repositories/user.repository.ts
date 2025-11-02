@@ -4,62 +4,87 @@ import type { UserCreateDTO, UserUpdateDTO } from '@/dtos/user.dto';
 
 export const userRepository = {
   async findAll(): Promise<UserSafeEntity[]> {
-    return await sql<UserSafeEntity[]>`
-      SELECT id, email, nome, id_cargo
-      FROM usuarios
-      WHERE id_status = 1
+    return sql<UserSafeEntity[]>`
+      SELECT id, email, name, role_id
+      FROM users
+      WHERE status = 'ativo'
       ORDER BY id
     `;
   },
 
   async findById(id: number): Promise<UserSafeEntity | null> {
     const [user] = await sql<UserSafeEntity[]>`
-      SELECT id, email, nome, id_cargo
-      FROM usuarios
-      WHERE id = ${id} AND id_status = 1
+      SELECT id, email, name, role_id
+      FROM users
+      WHERE id = ${id} AND status = 'ativo'
     `;
     return user ?? null;
   },
 
   async findByEmail(email: string): Promise<UserEntity | null> {
     const [user] = await sql<UserEntity[]>`
-      SELECT id, email, nome, hash, id_cargo
-      FROM usuarios
-      WHERE email = ${email} AND id_status = 1
+      SELECT id, email, name, password_hash, role_id
+      FROM users
+      WHERE email = ${email} AND status = 'ativo'
     `;
     return user ?? null;
   },
 
-  async create(data: UserCreateDTO & { hash: string }): Promise<UserEntity> {
+  async create(
+    data: Omit<UserCreateDTO, 'password'> & { password_hash: string },
+    status?: 'ativo' | 'inativo' | 'pendente'
+  ): Promise<UserEntity | null> {
+    const newData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries({ ...data, status })) {
+      if (value !== undefined) {
+        newData[key] = value;
+      }
+    }
+
+    if (!Object.keys(newData).length) return null;
+
     const [newUser] = await sql<UserEntity[]>`
-      INSERT INTO usuarios (nome, email, hash, id_cargo, id_status)
-      VALUES (${data.nome}, ${data.email}, ${data.hash}, ${data.id_cargo}, 1)
-      RETURNING id, email, nome, hash, id_cargo
+    INSERT INTO users ${sql(newData)}
+    RETURNING id, email, name, password_hash, role_id
     `;
     return newUser;
   },
 
-  async update(id: number, data: UserUpdateDTO & { hash?: string }): Promise<UserEntity | null> {
+  async update(id: number, data: UserUpdateDTO): Promise<UserEntity | null> {
     const updates: Record<string, unknown> = {};
+
     for (const [key, value] of Object.entries(data)) {
-      if (value !== undefined) updates[key === 'password' ? 'hash' : key] = value;
+      if (value !== undefined) {
+        updates[key] = value;
+      }
     }
 
     if (!Object.keys(updates).length) return null;
 
     const [user] = await sql<UserEntity[]>`
-    UPDATE usuarios
+    UPDATE users
     SET ${sql(updates)}
     WHERE id = ${id}
-    RETURNING id, email, nome, hash, id_cargo
+    RETURNING id, email, name, password_hash, role_id
   `;
-
     return user ?? null;
+  },
+
+  async updatePassword(id: number, password_hash: string): Promise<boolean> {
+    const result = await sql`
+      UPDATE users
+      SET password_hash = ${password_hash}
+      WHERE id = ${id}
+    `;
+    return result.count > 0;
   },
 
   async delete(id: number): Promise<boolean> {
     const result = await sql`
-      UPDATE usuarios SET id_status = 0 WHERE id = ${id}
+      UPDATE users
+      SET status = 'inativo'
+      WHERE id = ${id}
     `;
     return result.count > 0;
   }

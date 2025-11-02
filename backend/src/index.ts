@@ -1,5 +1,4 @@
 import express from 'express';
-import 'dotenv/config';
 import configCors from '@/middlewares/configCors';
 import createSession from '@/middlewares/createSession';
 import routes from '@/routes/index';
@@ -8,21 +7,22 @@ import { errorHandler } from '@/middlewares/errorHandler';
 import shutdown from '@/utils/shutdown';
 
 async function init() {
-  // const port = Number(process.env.PORT) || 5000;
-  const port = 5000;
+  const port = Number(process.env.PORT) || 5000;
   const url = process.env.BASE_URL || 'localhost';
   let secureCookie = false;
+  let isHttps = false;
 
   try {
     const app = express();
     if (app.get('env') === 'production') {
       app.set('trust proxy', 1); // trust first proxy
       secureCookie = true; // serve secure cookies
+      isHttps = true;
     }
     // app.use(morgan('dev'));
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
-    app.use(configCors(3000, false));
+    app.use(configCors(isHttps));
 
     app.use(createSession(secureCookie));
     // app.use(cookieParser());

@@ -5,26 +5,22 @@ import { usePermission } from '@/hooks/usePermission';
 
 type ProtectedLayoutProps = {
   children: ReactNode;
-  area: number;
-  acao: number;
+  module: number;
+  action: number;
 };
 
-export const ProtectedLayout = ({ children, area, acao }: ProtectedLayoutProps) => {
+export const ProtectedLayout = ({ children, module, action }: ProtectedLayoutProps) => {
   const { isAuthenticated } = useAuthStore();
   const { can } = usePermission();
   const location = useLocation();
 
-  // 🔒 1. User not logged in
   if (!isAuthenticated()) {
-    // Preserve where they were trying to go
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // 🚫 2. User logged in but lacks permission
-  if (!can(area, acao)) {
+  if (!can(module, action)) {
     return <Navigate to="/unauthorized" replace />;
   }
 
-  // ✅ 3. Authorized — show content
   return <>{children}</>;
 };

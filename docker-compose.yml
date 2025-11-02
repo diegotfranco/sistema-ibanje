@@ -1,0 +1,104 @@
+services:
+  # The Backend Express.js Application
+  backend:
+    build: ./backend # Tells Docker to build an image from the 'backend' folder
+    command: sh -c "npm run migrate && npm start"
+    restart: always
+    env_file: .env # Loads environment variables from the .env file
+    environment:
+      # Variables for postgres.js and db-migrate
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      # Variables for redis
+      - REDIS_HOST=redis
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy # Wait for postgres to be healthy
+      redis:
+        condition: service_healthy # Wait for redis to be healthy
+    networks:
+      - app-network
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:18-alpine # Using a specific, lightweight version
+    restart: always
+    env_file: .env # Uses the same .env file for secrets
+    volumes:
+      - pgdata:/var/lib/postgresql/data # Persists database data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # Redis Session Store
+  redis:
+    image: redis:8-alpine
+    restart: always
+    env_file: .env
+    command: redis-server --requirepass ${REDIS_PASSWORD} # Sets password on start
+    volumes:
+      - redisdata:/data # Persists session data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  # MinIO S3-Compatible Storage
+  minio:
+    image: minio/minio
+    restart: always
+    env_file: .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - miniodata:/data # Persists file storage
+    networks:
+      - app-network
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:latest
+    restart: always
+    ports:
+      - "80:80" # Exposes port 80 to the world
+      - "443:443" # Exposes port 443 for future SSL
+    volumes:
+      # Mount your custom Nginx config
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+      # Mount the built frontend files into the container
+      - ./frontend/dist:/usr/share/nginx/html
+
+      # Mount the Let's Encrypt certificates (read-only)
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+
+      # Add this new volume for Certbot verification
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - backend
+      - minio
+    networks:
+      - app-network
+
+# Named volumes for persistent data storage
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+
+# Custom network for secure communication between containers
+networks:
+  app-network:
+    driver: bridge

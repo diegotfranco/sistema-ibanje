@@ -6,7 +6,7 @@ export type Route = RouteObject & {
   hasMenu?: boolean;
   isProtected?: boolean;
   isVisible?: boolean;
-  permission?: { area: number; acao: number };
+  permission?: { module: number; action: number };
   fullPath?: string;
   icon?: JSX.Element;
   group?: string;

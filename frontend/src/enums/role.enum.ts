@@ -1,0 +1,10 @@
+export const role = {
+  ADMIN: 1,
+  PRESIDENT: 2,
+  VICE_PRESIDENT: 3,
+  HEAD_SECRETARY: 4,
+  SECRETARY: 5,
+  HEAD_TREASURER: 6,
+  TREASURER: 7,
+  MEMBER: 8
+} as const;

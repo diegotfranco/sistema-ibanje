@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/useAuthStore';
-import { AREA, ACAO } from '@/enums/permissionEnum';
+import { module, action } from '@/enums/permission.enum';
 
 export function usePermission() {
   const { can, hasRole, user } = useAuthStore();
-  return { can, hasRole, user, AREA, ACAO };
+  return { can, hasRole, user, module, action };
 }

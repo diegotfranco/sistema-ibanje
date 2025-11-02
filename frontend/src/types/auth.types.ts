@@ -1,7 +1,11 @@
-export type RegisterRequest = {
-  name: string;
+export type Permission = [number, number[]]; // [module], [actions]]
+
+export type User = {
   email: string;
-  password: string;
+  name: string;
+  role_name: string;
+  role: number;
+  permissions: Permission[];
 };
 
 export type LoginRequest = {
@@ -10,12 +14,17 @@ export type LoginRequest = {
   rememberMe: boolean;
 };
 
-export type PermissionEntry = [number, number[]]; // [area, [actions]]
-
-export type User = {
-  id: number;
-  email: string;
+export type SignUpRequest = {
   name: string;
-  role: string;
-  permissions: PermissionEntry[];
+  email: string;
+  password: string;
+};
+
+export type ForgotPasswordRequest = {
+  email: string;
+};
+
+export type ResetPasswordRequest = {
+  password: string;
+  token: string;
 };

@@ -1,23 +1,14 @@
-# Logs
-logs
-*.log
+# Node.js
+node_modules/
+dist/
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Docker - Do not commit local development overrides
+docker-compose.override.yml
+nginx/default.dev.conf
+backend/Dockerfile.dev
+frontend/Dockerfile.dev
 
-node_modules
-dist
-bd
-*.local
+# Environment variables - DO NOT COMMIT SECRETS
 .env
-.env.development
-.env.production
-ecosystem.config.cjs 
+.env.*
+!.env.example

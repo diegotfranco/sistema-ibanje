@@ -5,7 +5,7 @@ import type { RoleRepository } from '@/repositories/role.repository';
 import type { UserRepository } from '@/repositories/user.repository';
 import type { UserCreateDTO, UserUpdateDTO } from '@/dtos/user.dto';
 import { UserEntity } from '@/entities/user.entity';
-import { generateHash } from '@/utils/auth';
+import { hashPassword } from '@/utils/auth';
 
 export const makeUserService = (
   userRepo: UserRepository,
@@ -19,36 +19,35 @@ export const makeUserService = (
   },
 
   async getById(id: number) {
+    let role: string | undefined;
     const user = await userRepo.findById(id);
-    if (!user) throw Errors.notFound('Usuário não encontrado');
 
-    const role = await roleRepo.findById(user.id_cargo);
+    if (!user) throw Errors.notFound('Usuário não encontrado');
+    if (user.role_id) role = (await roleRepo.findById(user.role_id))?.name;
     const permissions = await permissionRepo.findByUserId(user.id);
 
     return {
       ...user,
-      role: role?.nome,
+      role,
       permissions: groupPermissions(permissions)
     };
   },
 
-  async create(data: UserCreateDTO) {
+  async create(data: UserCreateDTO, status: 'ativo' | 'inativo' | 'pendente' = 'ativo') {
     const existing = await userRepo.findByEmail(data.email);
     if (existing) throw Errors.conflict('Usuário já existe');
 
-    const hash = generateHash(data.password);
-    const user = await userRepo.create({ ...data, hash });
+    const { password, ...rest } = data;
+    const password_hash = await hashPassword(password);
+    const user = await userRepo.create({ ...rest, password_hash }, status);
 
     return UserEntity.parse(user);
   },
 
   async update(id: number, data: UserUpdateDTO) {
-    if (!data || Object.keys(data).length === 0) throw Errors.badRequest('Sem dados a serem atualizados');
+    if (Object.keys(data).length === 0) throw Errors.badRequest('Sem dados a serem atualizados');
 
-    const updated = await userRepo.update(id, {
-      ...data,
-      ...(data.password ? { hash: generateHash(data.password) } : {})
-    });
+    const updated = await userRepo.update(id, { ...data });
 
     if (!updated) throw Errors.notFound('Usuário não encontrado');
     return UserEntity.parse(updated);

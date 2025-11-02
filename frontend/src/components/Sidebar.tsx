@@ -26,7 +26,7 @@ export function AppSidebar() {
   const renderRoute = useCallback(
     (route: Route): boolean => {
       if (route.isVisible === false) return false;
-      if (route.permission && !can(route.permission.area, route.permission.acao)) return false;
+      if (route.permission && !can(route.permission.module, route.permission.action)) return false;
       if (route.children?.length) return route.children.some((child: Route) => renderRoute(child));
       return true;
     },
@@ -92,7 +92,7 @@ export function AppSidebar() {
                                           ? 'text-teal-600 underline underline-offset-3'
                                           : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                                       )}>
-                                      <NavLink to={(child.fullPath ?? child.path)!}>
+                                      <NavLink to={child.fullPath ?? child.path ?? '/'}>
                                         {child.icon}
                                         <span className="group-data-[state=collapsed]/sidebar:hidden">
                                           {child.name}
@@ -119,7 +119,7 @@ export function AppSidebar() {
                             ? 'text-teal-600 underline underline-offset-3'
                             : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
                         )}>
-                        <NavLink to={(route.fullPath ?? route.path)!}>
+                        <NavLink to={route.fullPath ?? route.path ?? '/'}>
                           {route.icon}
                           <span className="group-data-[state=collapsed]/sidebar:hidden">{route.name}</span>
                         </NavLink>

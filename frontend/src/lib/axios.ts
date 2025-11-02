@@ -10,7 +10,10 @@ const _axios: AxiosInstance = axios.create({
 _axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+
+    // If any API call (that is not a login attempt) returns a 401, handle it as a session expiry.
+    if (error.response?.status === 401 && originalRequest && !originalRequest.url?.endsWith('/auth/login')) {
       handleSessionExpired();
     }
     return Promise.reject(error);
