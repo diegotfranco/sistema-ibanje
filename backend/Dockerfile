@@ -24,6 +24,8 @@ FROM node:24-alpine
 # Set the environment to production
 ENV NODE_ENV=production
 
+WORKDIR /usr/src/app
+
 # Create a non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
@@ -31,8 +33,6 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 RUN chown -R appuser:appgroup /usr/src/app
 
 USER appuser
-
-WORKDIR /usr/src/app
 
 # Copy package files again
 COPY package*.json ./

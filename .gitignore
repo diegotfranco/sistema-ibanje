@@ -12,6 +12,3 @@ frontend/Dockerfile.dev
 .env
 .env.*
 !.env.example
-
-# Ignore runtime artifacts created by Docker on the host
-certbot/
