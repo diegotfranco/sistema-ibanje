@@ -12,7 +12,7 @@ services:
         condition: service_healthy # Wait for redis to be healthy
     healthcheck:
       # This command curls the health check endpoint inside the container.
-      test: ["CMD", "curl", "-f", "http://localhost:5000/health-check"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/v1/health"]
       interval: 10s
       timeout: 10s
       retries: 5
