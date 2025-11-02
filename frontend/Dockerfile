@@ -5,11 +5,11 @@ FROM node:24-alpine AS builder
 WORKDIR /app
 
 # Copy package files and install dependencies
-COPY package*.json ./
+COPY frontend/package*.json ./
 RUN npm ci
 
 # Copy the rest of the source code and build the app
-COPY . .
+COPY frontend/ ./
 RUN npm run build
 
 # ---- Production Stage ----
