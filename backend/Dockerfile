@@ -24,28 +24,25 @@ FROM node:24-alpine
 # Set the environment to production
 ENV NODE_ENV=production
 
-# Create a non-root user and group
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
 WORKDIR /usr/src/app
 
-USER appuser
+# Create a non-root user and group
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Copy package files with correct ownership
 COPY --chown=appuser:appgroup package*.json ./
 
-# Copy migration configuration with correct ownership
-COPY --chown=appuser:appgroup database.json ./
-
 # Install ONLY production dependencies and remove the npm cache
 RUN npm install --omit=dev && npm cache clean --force
 
-# Copy the compiled code and migrations from the 'builder' stage with correct ownership
+# Switch to the non-root user for the rest of the build
+USER appuser
+
+# Copy the rest of the application files with correct ownership
+COPY --chown=appuser:appgroup database.json ./
 COPY --chown=appuser:appgroup --from=builder /usr/src/app/dist ./dist
 COPY --chown=appuser:appgroup migrations ./migrations
 
-# Expose the port your Express app runs on (e.g., 5000)
-# Make sure this matches the port in your application code
 EXPOSE 5000
 
 # The command to start your app, using the 'start' script from package.json
