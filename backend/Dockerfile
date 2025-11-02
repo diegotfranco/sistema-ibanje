@@ -29,6 +29,9 @@ WORKDIR /usr/src/app
 # Create a non-root user and group
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
+# Install curl for the healthcheck
+RUN apk add --no-cache curl
+
 # Copy package files with correct ownership
 COPY --chown=appuser:appgroup package*.json ./
 
