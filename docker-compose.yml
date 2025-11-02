@@ -69,23 +69,20 @@ services:
 
   # Nginx Reverse Proxy
   nginx:
-    image: nginx:latest
+    build: ./frontend # Build the frontend image using its Dockerfile
     restart: always
     ports:
       - "80:80" # Exposes port 80 to the world
       - "443:443" # Exposes port 443 for future SSL
     volumes:
       # Mount your custom Nginx config
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
-
-      # Mount the built frontend files into the container
-      - ./frontend/dist:/usr/share/nginx/html
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
 
       # Mount the Let's Encrypt certificates (read-only)
       - /etc/letsencrypt:/etc/letsencrypt:ro
 
       # Add this new volume for Certbot verification
-      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
       - minio

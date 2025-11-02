@@ -12,22 +12,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-
-      - name: Build Frontend
-        run: |
-          cd frontend
-          npm ci
-          npm run build
-
       - name: Build and Deploy Services
         run: |
           cd ~/sistema-ibanje
-          # Rebuild the backend image if its code changed
-          docker-compose build backend
-          # Bring up all services.
-          # --force-recreate will ensure Nginx picks up the new frontend files from the volume.
-          docker-compose up -d --force-recreate nginx backend
+          # Build new images for services that have changed
+          docker-compose build
+          # Bring up all services, recreating containers for services that were rebuilt
+          docker-compose up -d --force-recreate --remove-orphans
+          # Clean up old, unused images
+          docker image prune -f
