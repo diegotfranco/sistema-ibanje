@@ -22,20 +22,20 @@ jobs:
           echo "REDIS_HOST=redis" >> .env
 
           # Database, Redis, and MinIO Secrets
-          echo "POSTGRES_DB=${{ secrets.POSTGRES_DB }}" >> .env
-          echo "POSTGRES_USER=${{ secrets.POSTGRES_USER }}" >> .env
-          echo "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" >> .env
-          echo "REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}" >> .env
-          echo "MINIO_ROOT_USER=${{ secrets.MINIO_ROOT_USER }}" >> .env
-          echo "MINIO_ROOT_PASSWORD=${{ secrets.MINIO_ROOT_PASSWORD }}" >> .env
+          echo "POSTGRES_DB='${{ secrets.POSTGRES_DB }}'" >> .env
+          echo "POSTGRES_USER='${{ secrets.POSTGRES_USER }}'" >> .env
+          echo "POSTGRES_PASSWORD='${{ secrets.POSTGRES_PASSWORD }}'" >> .env
+          echo "REDIS_PASSWORD='${{ secrets.REDIS_PASSWORD }}'" >> .env
+          echo "MINIO_ROOT_USER='${{ secrets.MINIO_ROOT_USER }}'" >> .env
+          echo "MINIO_ROOT_PASSWORD='${{ secrets.MINIO_ROOT_PASSWORD }}'" >> .env
 
           # Application and SMTP Secrets
-          echo "FRONTEND_BASE_URL=${{ secrets.FRONTEND_BASE_URL }}" >> .env
-          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> .env
-          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> .env
-          echo "SMTP_USER=${{ secrets.SMTP_USER }}" >> .env
-          echo "SMTP_PASS=${{ secrets.SMTP_PASS }}" >> .env
-          echo "EMAIL_FROM=${{ secrets.EMAIL_FROM }}" >> .env
+          echo "FRONTEND_BASE_URL='${{ secrets.FRONTEND_BASE_URL }}'" >> .env
+          echo "SMTP_HOST='${{ secrets.SMTP_HOST }}'" >> .env
+          echo "SMTP_PORT='${{ secrets.SMTP_PORT }}'" >> .env
+          echo "SMTP_USER='${{ secrets.SMTP_USER }}'" >> .env
+          echo "SMTP_PASS='${{ secrets.SMTP_PASS }}'" >> .env
+          echo "EMAIL_FROM='${{ secrets.EMAIL_FROM }}'" >> .env
 
       - name: Build and Deploy Services
         run: |
