@@ -5,15 +5,6 @@ services:
     command: sh -c "npm run migrate && npm start"
     restart: always
     env_file: .env # Loads environment variables from the .env file
-    environment:
-      # Variables for postgres.js and db-migrate
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      # Variables for redis
-      - REDIS_HOST=redis
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy # Wait for postgres to be healthy
@@ -64,6 +55,11 @@ services:
     command: server /data --console-address ":9001"
     volumes:
       - miniodata:/data # Persists file storage
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     networks:
       - app-network
 
