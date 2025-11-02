@@ -71,7 +71,9 @@ services:
 
   # Nginx Reverse Proxy
   nginx:
-    build: ./frontend # Build the frontend image using its Dockerfile
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
     restart: always
     ports:
       - "80:80" # Exposes port 80 to the world
