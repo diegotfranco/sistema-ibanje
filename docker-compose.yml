@@ -10,6 +10,12 @@ services:
         condition: service_healthy # Wait for postgres to be healthy
       redis:
         condition: service_healthy # Wait for redis to be healthy
+    healthcheck:
+      # This command curls the health check endpoint inside the container.
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health-check"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     networks:
       - app-network
 
@@ -80,8 +86,10 @@ services:
       # Add this new volume for Certbot verification
       - ./certbot/www:/var/www/certbot
     depends_on:
-      - backend
-      - minio
+      backend:
+        condition: service_healthy # Wait for the backend to be healthy before starting Nginx
+      minio:
+        condition: service_healthy # Wait for MinIO to be healthy as well
     networks:
       - app-network
 

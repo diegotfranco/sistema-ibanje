@@ -24,6 +24,14 @@ FROM node:24-alpine
 # Set the environment to production
 ENV NODE_ENV=production
 
+# Create a non-root user and group
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Set ownership of the app directory
+RUN chown -R appuser:appgroup /usr/src/app
+
+USER appuser
+
 WORKDIR /usr/src/app
 
 # Copy package files again
