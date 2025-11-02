@@ -47,7 +47,7 @@ USER appuser
 # Copy the rest of the application files with correct ownership
 COPY --chown=appuser:appgroup database.json ./
 COPY --chown=appuser:appgroup --from=builder /usr/src/app/dist ./dist
-COPY --chown=appuser:appgroup migrations ./migrations
+COPY --chown=appuser:appgroup --from=builder /usr/src/app/migrations ./migrations
 
 EXPOSE 5000
 

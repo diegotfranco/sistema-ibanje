@@ -19,5 +19,8 @@ FROM nginx:1.28-alpine
 # Copy the built files from the 'builder' stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Copy our custom Nginx configuration into the image, overwriting the default.
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+
 # Expose port 80
 EXPOSE 80
