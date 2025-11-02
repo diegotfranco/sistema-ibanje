@@ -14,10 +14,9 @@ jobs:
 
       - name: Build and Deploy Services
         run: |
-          cd ~/sistema-ibanje
           # Build new images for services that have changed
-          docker-compose build
+          docker compose build
           # Bring up all services, recreating containers for services that were rebuilt
-          docker-compose up -d --force-recreate --remove-orphans
+          docker compose up -d --force-recreate --remove-orphans
           # Clean up old, unused images
           docker image prune -f
