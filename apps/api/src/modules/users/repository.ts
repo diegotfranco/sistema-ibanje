@@ -1,5 +1,7 @@
 import { eq, inArray, count } from 'drizzle-orm';
 import { db } from '../../db';
+
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 import {
   users,
   roles,
@@ -188,7 +190,7 @@ export async function findMemberById(id: number) {
   return result[0] ?? null;
 }
 
-export async function copyRolePermissionsToUser(roleId: number, userId: number, tx?: any) {
+export async function copyRolePermissionsToUser(roleId: number, userId: number, tx?: Tx) {
   const executor = tx ?? db;
   const rolePerms = await executor
     .select()
@@ -196,7 +198,7 @@ export async function copyRolePermissionsToUser(roleId: number, userId: number, 
     .where(eq(roleModulePermissions.roleId, roleId));
   if (rolePerms.length > 0) {
     await executor.insert(userModulePermissions).values(
-      rolePerms.map((rmp: any) => ({
+      rolePerms.map((rmp) => ({
         userId,
         moduleId: rmp.moduleId,
         permissionId: rmp.permissionId

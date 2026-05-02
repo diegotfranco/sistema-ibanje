@@ -14,6 +14,8 @@ import type {
 } from './schema';
 import { httpError } from '../../lib/errors';
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 async function assertPermission(userId: number, moduleName: string, permissionName: string) {
   const allowed = await hasPermission(userId, moduleName, permissionName);
   if (!allowed) {
@@ -150,7 +152,7 @@ export async function setUserPermissions(
   await repo.setUserPermissions(targetId, rows);
 }
 
-async function generateInviteToken(tx: any, userId: number, email: string) {
+async function generateInviteToken(tx: Tx, userId: number, email: string) {
   const rawToken = randomBytes(32).toString('hex');
   const tokenHash = createHash('sha256').update(rawToken).digest('hex');
   const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
