@@ -7,10 +7,7 @@ import { eq } from 'drizzle-orm'
 import * as repo from './repository'
 import { hasPermission } from '../../lib/permissions'
 import type { UpdateUserRequest, UpdatePasswordRequest, UserResponse, CreateUserRequest } from './schema'
-
-function httpError(statusCode: number, message: string): Error & { statusCode: number } {
-  return Object.assign(new Error(message), { statusCode })
-}
+import { httpError } from '../../lib/errors'
 
 async function assertPermission(userId: number, moduleName: string, permissionName: string) {
   const allowed = await hasPermission(userId, moduleName, permissionName)
