@@ -73,3 +73,9 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
 
   return true
 }
+
+export async function register(name: string, email: string) {
+  const membroRole = await repo.findRoleByName('Membro')
+  if (!membroRole) throw new Error('Membro role not found')
+  await repo.createPendingUser({ name, email, roleId: membroRole.id })
+}

@@ -14,9 +14,15 @@ export const ResetPasswordRequestSchema = z.object({
   newPassword: z.string().min(8),
 })
 
+export const RegisterRequestSchema = z.object({
+  name: z.string().min(1).max(96),
+  email: z.email(),
+})
+
 export type LoginRequest = z.infer<typeof LoginRequestSchema>
 export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>
+export type RegisterRequest = z.infer<typeof RegisterRequestSchema>
 
 export type MeResponse = {
   id: number

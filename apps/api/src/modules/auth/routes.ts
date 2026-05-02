@@ -17,6 +17,11 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.get('/auth/me', { preHandler: [requireAuth] }, controller.me)
 
+  app.post('/auth/register', {
+    preHandler: [app.csrfProtection],
+    config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
+  }, controller.register)
+
   app.post('/auth/password-reset/request', {
     preHandler: [app.csrfProtection],
     config: { rateLimit: { max: 3, timeWindow: '1 hour' } },

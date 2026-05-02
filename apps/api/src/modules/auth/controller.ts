@@ -3,6 +3,7 @@ import {
   LoginRequestSchema,
   PasswordResetRequestSchema,
   ResetPasswordRequestSchema,
+  RegisterRequestSchema,
 } from './schema'
 import * as service from './service'
 
@@ -61,4 +62,10 @@ export async function confirmPasswordReset(req: FastifyRequest, reply: FastifyRe
   }
 
   return reply.send({ message: 'Password updated successfully' })
+}
+
+export async function register(req: FastifyRequest, reply: FastifyReply) {
+  const body = RegisterRequestSchema.parse(req.body)
+  await service.register(body.name, body.email)
+  return reply.code(201).send({ message: 'Registration submitted. An admin will review your request.' })
 }

@@ -78,3 +78,16 @@ export async function updateUserPasswordHash(userId: number, passwordHash: strin
     .set({ passwordHash, updatedAt: new Date() })
     .where(eq(users.id, userId))
 }
+
+export async function findRoleByName(name: string) {
+  const result = await db.select().from(roles).where(eq(roles.name, name)).limit(1)
+  return result[0] ?? null
+}
+
+export async function createPendingUser(data: { name: string; email: string; roleId: number }) {
+  const result = await db
+    .insert(users)
+    .values({ ...data, status: 'pendente' })
+    .returning({ id: users.id, name: users.name, email: users.email, roleId: users.roleId, status: users.status, createdAt: users.createdAt })
+  return result[0]
+}
