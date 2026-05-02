@@ -10,6 +10,8 @@
     "format": "turbo format"
   },
   "devDependencies": {
-    "turbo": "latest"
+    "eslint-config-prettier": "^10.1.8",
+    "turbo": "latest",
+    "typescript-eslint": "^8.59.1"
   }
 }

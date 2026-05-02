@@ -1,16 +1,24 @@
-import { eq, inArray, count } from 'drizzle-orm'
-import { db } from '../../db'
-import { users, roles, userModulePermissions, modules, permissions, members, roleModulePermissions } from '../../db/schema'
+import { eq, inArray, count } from 'drizzle-orm';
+import { db } from '../../db';
+import {
+  users,
+  roles,
+  userModulePermissions,
+  modules,
+  permissions,
+  members,
+  roleModulePermissions
+} from '../../db/schema';
 
 export type UserRow = {
-  id: number
-  name: string
-  email: string
-  roleId: number
-  roleName: string
-  status: string
-  createdAt: Date
-}
+  id: number;
+  name: string;
+  email: string;
+  roleId: number;
+  roleName: string;
+  status: string;
+  createdAt: Date;
+};
 
 export async function listUsers(skip: number, take: number) {
   const rows = await db
@@ -21,21 +29,19 @@ export async function listUsers(skip: number, take: number) {
       roleId: users.roleId,
       roleName: roles.name,
       status: users.status,
-      createdAt: users.createdAt,
+      createdAt: users.createdAt
     })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
     .orderBy(users.id)
     .offset(skip)
-    .limit(take)
+    .limit(take);
 
-  const countResult = await db
-    .select({ count: count() })
-    .from(users)
+  const countResult = await db.select({ count: count() }).from(users);
 
-  const total = countResult[0]?.count ?? 0
+  const total = countResult[0]?.count ?? 0;
 
-  return { rows, total }
+  return { rows, total };
 }
 
 export async function findUserById(id: number) {
@@ -47,31 +53,31 @@ export async function findUserById(id: number) {
       roleId: users.roleId,
       roleName: roles.name,
       status: users.status,
-      createdAt: users.createdAt,
+      createdAt: users.createdAt
     })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
     .where(eq(users.id, id))
-    .limit(1)
+    .limit(1);
 
-  return result[0] ?? null
+  return result[0] ?? null;
 }
 
 export async function updateUser(
   id: number,
   data: {
-    name?: string
-    email?: string
-    roleId?: number
+    name?: string;
+    email?: string;
+    roleId?: number;
   }
 ) {
   await db
     .update(users)
     .set({
       ...data,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
-    .where(eq(users.id, id))
+    .where(eq(users.id, id));
 }
 
 export async function deactivateUser(id: number) {
@@ -79,9 +85,9 @@ export async function deactivateUser(id: number) {
     .update(users)
     .set({
       status: 'inativo',
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
-    .where(eq(users.id, id))
+    .where(eq(users.id, id));
 }
 
 export async function findUserPasswordHash(id: number) {
@@ -89,9 +95,9 @@ export async function findUserPasswordHash(id: number) {
     .select({ passwordHash: users.passwordHash })
     .from(users)
     .where(eq(users.id, id))
-    .limit(1)
+    .limit(1);
 
-  return result[0]?.passwordHash ?? null
+  return result[0]?.passwordHash ?? null;
 }
 
 export async function updateUserPasswordHash(id: number, passwordHash: string) {
@@ -99,24 +105,24 @@ export async function updateUserPasswordHash(id: number, passwordHash: string) {
     .update(users)
     .set({
       passwordHash,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
-    .where(eq(users.id, id))
+    .where(eq(users.id, id));
 }
 
 export async function getUserPermissions(userId: number) {
   const result = await db
     .select({
       moduleName: modules.name,
-      permissionName: permissions.name,
+      permissionName: permissions.name
     })
     .from(userModulePermissions)
     .innerJoin(modules, eq(modules.id, userModulePermissions.moduleId))
     .innerJoin(permissions, eq(permissions.id, userModulePermissions.permissionId))
     .where(eq(userModulePermissions.userId, userId))
-    .orderBy(modules.name, permissions.name)
+    .orderBy(modules.name, permissions.name);
 
-  return result
+  return result;
 }
 
 export async function setUserPermissions(
@@ -124,53 +130,53 @@ export async function setUserPermissions(
   rows: Array<{ moduleId: number; permissionId: number }>
 ) {
   await db.transaction(async (tx) => {
-    await tx.delete(userModulePermissions).where(eq(userModulePermissions.userId, userId))
+    await tx.delete(userModulePermissions).where(eq(userModulePermissions.userId, userId));
 
     if (rows.length > 0) {
       await tx.insert(userModulePermissions).values(
         rows.map((row) => ({
           userId,
           moduleId: row.moduleId,
-          permissionId: row.permissionId,
+          permissionId: row.permissionId
         }))
-      )
+      );
     }
-  })
+  });
 }
 
 export async function resolvePermissionRows(permissionsMap: Record<string, string[]>) {
-  const moduleNames = Object.keys(permissionsMap)
-  const permissionNames = Array.from(new Set(Object.values(permissionsMap).flat()))
+  const moduleNames = Object.keys(permissionsMap);
+  const permissionNames = Array.from(new Set(Object.values(permissionsMap).flat()));
 
   const foundModules = await db
     .select({ id: modules.id, name: modules.name })
     .from(modules)
-    .where(inArray(modules.name, moduleNames))
+    .where(inArray(modules.name, moduleNames));
 
   const foundPermissions = await db
     .select({ id: permissions.id, name: permissions.name })
     .from(permissions)
-    .where(inArray(permissions.name, permissionNames))
+    .where(inArray(permissions.name, permissionNames));
 
-  const moduleMap = new Map(foundModules.map((m) => [m.name, m.id]))
-  const permissionMap = new Map(foundPermissions.map((p) => [p.name, p.id]))
+  const moduleMap = new Map(foundModules.map((m) => [m.name, m.id]));
+  const permissionMap = new Map(foundPermissions.map((p) => [p.name, p.id]));
 
-  const unknownModules = moduleNames.filter((n) => !moduleMap.has(n))
-  const unknownPermissions = permissionNames.filter((n) => !permissionMap.has(n))
+  const unknownModules = moduleNames.filter((n) => !moduleMap.has(n));
+  const unknownPermissions = permissionNames.filter((n) => !permissionMap.has(n));
 
-  const rows: Array<{ moduleId: number; permissionId: number }> = []
+  const rows: Array<{ moduleId: number; permissionId: number }> = [];
   for (const [moduleName, permNames] of Object.entries(permissionsMap)) {
-    const moduleId = moduleMap.get(moduleName)
-    if (moduleId === undefined) continue
+    const moduleId = moduleMap.get(moduleName);
+    if (moduleId === undefined) continue;
     for (const permName of permNames) {
-      const permissionId = permissionMap.get(permName)
+      const permissionId = permissionMap.get(permName);
       if (permissionId !== undefined) {
-        rows.push({ moduleId, permissionId })
+        rows.push({ moduleId, permissionId });
       }
     }
   }
 
-  return { rows, unknownModules, unknownPermissions }
+  return { rows, unknownModules, unknownPermissions };
 }
 
 export async function findMemberById(id: number) {
@@ -178,19 +184,23 @@ export async function findMemberById(id: number) {
     .select({ id: members.id, userId: members.userId, name: members.name })
     .from(members)
     .where(eq(members.id, id))
-    .limit(1)
-  return result[0] ?? null
+    .limit(1);
+  return result[0] ?? null;
 }
 
 export async function copyRolePermissionsToUser(roleId: number, userId: number, tx?: any) {
-  const executor = tx ?? db
+  const executor = tx ?? db;
   const rolePerms = await executor
     .select()
     .from(roleModulePermissions)
-    .where(eq(roleModulePermissions.roleId, roleId))
+    .where(eq(roleModulePermissions.roleId, roleId));
   if (rolePerms.length > 0) {
     await executor.insert(userModulePermissions).values(
-      rolePerms.map((rmp: any) => ({ userId, moduleId: rmp.moduleId, permissionId: rmp.permissionId }))
-    )
+      rolePerms.map((rmp: any) => ({
+        userId,
+        moduleId: rmp.moduleId,
+        permissionId: rmp.permissionId
+      }))
+    );
   }
 }

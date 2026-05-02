@@ -1,7 +1,7 @@
-import { FastifyRequest, FastifyReply } from 'fastify'
+import { FastifyRequest, FastifyReply } from 'fastify';
 
 export async function requireAuth(req: FastifyRequest, reply: FastifyReply) {
   if (!req.session.userId) {
-    return reply.code(401).send({ message: 'Unauthorized' })
+    return reply.code(401).send({ message: 'Unauthorized' });
   }
 }

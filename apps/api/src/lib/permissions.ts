@@ -1,8 +1,12 @@
-import { db } from '../db'
-import { userModulePermissions, modules, permissions } from '../db/schema'
-import { eq, and } from 'drizzle-orm'
+import { db } from '../db';
+import { userModulePermissions, modules, permissions } from '../db/schema';
+import { eq, and } from 'drizzle-orm';
 
-export async function hasPermission(userId: number, moduleName: string, permissionName: string): Promise<boolean> {
+export async function hasPermission(
+  userId: number,
+  moduleName: string,
+  permissionName: string
+): Promise<boolean> {
   const result = await db
     .select({ id: userModulePermissions.userId })
     .from(userModulePermissions)
@@ -15,7 +19,7 @@ export async function hasPermission(userId: number, moduleName: string, permissi
         eq(permissions.name, permissionName)
       )
     )
-    .limit(1)
+    .limit(1);
 
-  return result.length > 0
+  return result.length > 0;
 }
