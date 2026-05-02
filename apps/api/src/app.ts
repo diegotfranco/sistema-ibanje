@@ -1,9 +1,14 @@
 import Fastify from 'fastify'
 import { env } from './config/env'
 import { sql } from './db'
+import { registerSessionPlugin } from './plugins/session'
+import { registerRateLimitPlugin } from './plugins/rateLimit'
+import { registerCsrfPlugin } from './plugins/csrf'
+import { registerErrorHandler } from './plugins/errorHandler'
+import { authRoutes } from './modules/auth/routes'
 
-export function buildApp() {
-  return Fastify({
+export async function buildApp() {
+  const app = Fastify({
     logger: {
       level: env.LOG_LEVEL,
       transport:
@@ -12,10 +17,20 @@ export function buildApp() {
           : undefined,
     },
   })
+
+  await registerSessionPlugin(app)
+  await registerRateLimitPlugin(app)
+  await registerCsrfPlugin(app)
+
+  registerErrorHandler(app)
+
+  await app.register(authRoutes)
+
+  return app
 }
 
 async function start() {
-  const app = buildApp()
+  const app = await buildApp()
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'shutdown signal received')
