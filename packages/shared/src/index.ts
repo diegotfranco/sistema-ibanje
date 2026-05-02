@@ -1,1 +1,1 @@
-export * from './schemas/member.schema'
+export {};

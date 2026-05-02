@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 export const ListUsersRequestSchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20)
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
 export const UpdateUserRequestSchema = z

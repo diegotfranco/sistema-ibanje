@@ -12,16 +12,6 @@ import {
   roleModulePermissions
 } from '../../db/schema';
 
-export type UserRow = {
-  id: number;
-  name: string;
-  email: string;
-  roleId: number;
-  roleName: string;
-  status: string;
-  createdAt: Date;
-};
-
 export async function listUsers(skip: number, take: number) {
   const rows = await db
     .select({
@@ -67,11 +57,7 @@ export async function findUserById(id: number) {
 
 export async function updateUser(
   id: number,
-  data: {
-    name?: string;
-    email?: string;
-    roleId?: number;
-  }
+  data: Partial<Pick<typeof users.$inferInsert, 'name' | 'email' | 'roleId'>>
 ) {
   await db
     .update(users)
