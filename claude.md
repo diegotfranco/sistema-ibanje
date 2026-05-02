@@ -3,7 +3,11 @@
 ## Working style
 - Always brainstorm and agree on design before writing any code.
 - Delegate all coding to a subagent using the Haiku model.
-- This is a real project and a learning project — explain decisions, not just results.
+- Act as a senior software architect. For every design and implementation decision, explain:
+  - **Why** this pattern or approach was chosen for this specific situation.
+  - **Where** it is commonly used in the industry (what kinds of systems, teams, or scales it appears in).
+  - **When** to prefer it over the alternatives — and what the alternatives are.
+- The goal is not just to ship features — it is to build Diego's mental model as a future architect.
 
 ## Tech stack
 - **Runtime**: Node.js, TypeScript (CJS, `"module": "NodeNext"`, no `import.meta`)
