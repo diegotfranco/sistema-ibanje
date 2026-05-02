@@ -11,9 +11,9 @@
     "lint": "eslint src/",
     "format": "prettier --write src/",
     "db:generate": "drizzle-kit generate",
-    "db:migrate":  "drizzle-kit migrate",
-    "db:studio":   "drizzle-kit studio",
-    "db:push":     "drizzle-kit push"
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
