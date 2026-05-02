@@ -5,7 +5,8 @@ import { db } from '../../db';
 import { passwordResetTokens, users, roles, members } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import * as repo from './repository';
-import { hasPermission } from '../../lib/permissions';
+import { assertPermission } from '../../lib/permissions';
+import { paginate } from '../../lib/pagination';
 import type {
   UpdateUserRequest,
   UpdatePasswordRequest,
@@ -16,19 +17,12 @@ import { httpError } from '../../lib/errors';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-async function assertPermission(userId: number, moduleName: string, permissionName: string) {
-  const allowed = await hasPermission(userId, moduleName, permissionName);
-  if (!allowed) {
-    throw httpError(403, 'Forbidden');
-  }
-}
-
 export async function listUsers(page: number, limit: number) {
   const skip = (page - 1) * limit;
   const { rows, total } = await repo.listUsers(skip, limit);
 
-  return {
-    data: rows.map(
+  return paginate(
+    rows.map(
       (row): UserResponse => ({
         id: row.id,
         name: row.name,
@@ -41,9 +35,8 @@ export async function listUsers(page: number, limit: number) {
     ),
     total,
     page,
-    limit,
-    totalPages: Math.ceil(total / limit)
-  };
+    limit
+  );
 }
 
 export async function getUserById(id: number): Promise<UserResponse | null> {

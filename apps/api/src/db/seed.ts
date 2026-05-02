@@ -337,7 +337,7 @@ async function seed() {
     const insertedICs = await tx
       .insert(incomeCategories)
       .values([
-        { name: 'Dízimo' },
+        { name: 'Dízimo', requiresDonor: true },
         { name: 'Oferta' },
         { name: 'Doações' },
         { name: 'Missões' },

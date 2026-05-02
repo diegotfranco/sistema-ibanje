@@ -1,5 +1,4 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { z } from 'zod';
 import {
   ListRolesRequestSchema,
   CreateRoleRequestSchema,
@@ -7,8 +6,7 @@ import {
   SetRolePermissionsRequestSchema
 } from './schema.js';
 import * as service from './service.js';
-
-const IdParamSchema = z.object({ id: z.coerce.number().int().positive() });
+import { IdParamSchema } from '../../lib/validation.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const query = ListRolesRequestSchema.parse(req.query);

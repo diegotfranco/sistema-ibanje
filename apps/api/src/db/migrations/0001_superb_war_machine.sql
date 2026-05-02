@@ -1,0 +1,1 @@
+ALTER TABLE "income_categories" ADD COLUMN "requires_donor" boolean DEFAULT false NOT NULL;

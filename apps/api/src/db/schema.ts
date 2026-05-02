@@ -168,6 +168,7 @@ export const incomeCategories = pgTable('income_categories', {
   parentId: integer('parent_id').references((): AnyPgColumn => incomeCategories.id),
   name: varchar('name', { length: 64 }).notNull(),
   description: varchar('description', { length: 256 }),
+  requiresDonor: boolean('requires_donor').default(false).notNull(),
   status: activeStatus('status').default('ativo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()

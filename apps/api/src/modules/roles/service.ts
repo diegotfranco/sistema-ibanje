@@ -1,6 +1,7 @@
 import * as repo from './repository.js';
-import { hasPermission } from '../../lib/permissions.js';
+import { assertPermission } from '../../lib/permissions.js';
 import { httpError } from '../../lib/errors.js';
+import { paginate } from '../../lib/pagination.js';
 import type {
   CreateRoleRequest,
   UpdateRoleRequest,
@@ -9,24 +10,13 @@ import type {
   RolePermissionResponse
 } from './schema.js';
 
-async function assertPermission(userId: number, permissionName: string) {
-  const allowed = await hasPermission(userId, 'Cargos', permissionName);
-  if (!allowed) throw httpError(403, 'Forbidden');
-}
-
 export async function listRoles(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, 'Acessar');
+  await assertPermission(callerId, 'Cargos', 'Acessar');
 
   const skip = (page - 1) * limit;
   const { rows, total } = await repo.listRoles(skip, limit);
 
-  return {
-    data: rows.map((r): RoleResponse => r),
-    total,
-    page,
-    limit,
-    totalPages: Math.ceil(total / limit)
-  };
+  return paginate(rows.map((r): RoleResponse => r), total, page, limit);
 }
 
 export async function getRoleById(id: number): Promise<RoleResponse | null> {
@@ -34,7 +24,7 @@ export async function getRoleById(id: number): Promise<RoleResponse | null> {
 }
 
 export async function createRole(callerId: number, body: CreateRoleRequest): Promise<RoleResponse> {
-  await assertPermission(callerId, 'Cadastrar');
+  await assertPermission(callerId, 'Cargos', 'Cadastrar');
 
   const created = await repo.insertRole(body);
   if (!created) throw new Error('Failed to create role');
@@ -47,7 +37,7 @@ export async function updateRole(
   targetId: number,
   body: UpdateRoleRequest
 ): Promise<RoleResponse | null> {
-  await assertPermission(callerId, 'Editar');
+  await assertPermission(callerId, 'Cargos', 'Editar');
 
   const role = await repo.findRoleById(targetId);
   if (!role) return null;
@@ -56,7 +46,7 @@ export async function updateRole(
 }
 
 export async function deactivateRole(callerId: number, targetId: number): Promise<void | null> {
-  await assertPermission(callerId, 'Remover');
+  await assertPermission(callerId, 'Cargos', 'Remover');
 
   const role = await repo.findRoleById(targetId);
   if (!role) return null;
@@ -79,7 +69,7 @@ export async function setRolePermissions(
   targetId: number,
   body: SetRolePermissionsRequest
 ): Promise<void | null> {
-  await assertPermission(callerId, 'Editar');
+  await assertPermission(callerId, 'Cargos', 'Editar');
 
   const role = await repo.findRoleById(targetId);
   if (!role) return null;

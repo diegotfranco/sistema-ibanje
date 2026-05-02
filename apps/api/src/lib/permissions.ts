@@ -1,6 +1,7 @@
 import { db } from '../db';
 import { userModulePermissions, modules, permissions } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
+import { httpError } from './errors';
 
 export async function hasPermission(
   userId: number,
@@ -22,4 +23,13 @@ export async function hasPermission(
     .limit(1);
 
   return result.length > 0;
+}
+
+export async function assertPermission(
+  userId: number,
+  moduleName: string,
+  permissionName: string
+) {
+  const allowed = await hasPermission(userId, moduleName, permissionName);
+  if (!allowed) throw httpError(403, 'Forbidden');
 }

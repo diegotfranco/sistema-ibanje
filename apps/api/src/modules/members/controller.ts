@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { ListMembersRequestSchema, CreateMemberRequestSchema, UpdateMemberRequestSchema } from './schema.js';
 import * as service from './service.js';
-import { z } from 'zod';
+import { IdParamSchema } from '../../lib/validation.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const query = ListMembersRequestSchema.parse(req.query);
@@ -12,7 +12,7 @@ export async function list(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
 
   const member = await service.getMemberById(id);
 
@@ -32,7 +32,7 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function update(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
   const body = UpdateMemberRequestSchema.parse(req.body);
 
   const member = await service.updateMember(req.session.userId!, id, body);
@@ -45,7 +45,7 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
 
   const result = await service.deactivateMember(req.session.userId!, id);
 

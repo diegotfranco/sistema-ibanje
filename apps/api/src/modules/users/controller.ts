@@ -7,7 +7,7 @@ import {
   CreateUserRequestSchema
 } from './schema';
 import * as service from './service';
-import { z } from 'zod';
+import { IdParamSchema } from '../../lib/validation';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const query = ListUsersRequestSchema.parse(req.query);
@@ -18,7 +18,7 @@ export async function list(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
 
   const user = await service.getUserById(id);
 
@@ -30,7 +30,7 @@ export async function getById(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function update(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
   const body = UpdateUserRequestSchema.parse(req.body);
 
   const user = await service.updateUser(req.session.userId!, id, body);
@@ -43,7 +43,7 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
 
   const result = await service.deactivateUser(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'User not found' });
@@ -52,7 +52,7 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function changePassword(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
   const body = UpdatePasswordRequestSchema.parse(req.body);
 
   await service.changePassword(req.session.userId!, id, body);
@@ -61,7 +61,7 @@ export async function changePassword(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function getPermissions(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
 
   const result = await service.getUserPermissions(id);
 
@@ -69,7 +69,7 @@ export async function getPermissions(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function setPermissions(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
   const body = UpdatePermissionsRequestSchema.parse(req.body);
 
   await service.setUserPermissions(req.session.userId!, id, body.permissions);
@@ -86,7 +86,7 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function approve(req: FastifyRequest, reply: FastifyReply) {
-  const { id } = z.object({ id: z.coerce.number().int().positive() }).parse(req.params);
+  const { id } = IdParamSchema.parse(req.params);
   const user = await service.approveUser(id, (token, email) => {
     req.log.info({ inviteToken: token, email }, 'TODO: send invite email');
   });

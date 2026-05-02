@@ -1,17 +1,11 @@
 import * as repo from './repository.js';
-import { hasPermission } from '../../lib/permissions.js';
+import { assertPermission } from '../../lib/permissions.js';
 import { httpError } from '../../lib/errors.js';
+import { paginate } from '../../lib/pagination.js';
 import type { CreateMemberRequest, UpdateMemberRequest, MemberResponse } from './schema.js';
 import { db } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
 import { users, members } from '../../db/schema.js';
-
-async function assertPermission(userId: number, moduleName: string, permissionName: string) {
-  const allowed = await hasPermission(userId, moduleName, permissionName);
-  if (!allowed) {
-    throw httpError(403, 'Forbidden');
-  }
-}
 
 export async function listMembers(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, 'Membros', 'Acessar');
@@ -19,8 +13,8 @@ export async function listMembers(callerId: number, page: number, limit: number)
   const skip = (page - 1) * limit;
   const { rows, total } = await repo.listMembers(skip, limit);
 
-  return {
-    data: rows.map(
+  return paginate(
+    rows.map(
       (row): MemberResponse => ({
         id: row.id,
         userId: row.userId,
@@ -41,9 +35,8 @@ export async function listMembers(callerId: number, page: number, limit: number)
     ),
     total,
     page,
-    limit,
-    totalPages: Math.ceil(total / limit)
-  };
+    limit
+  );
 }
 
 export async function getMemberById(id: number): Promise<MemberResponse | null> {
