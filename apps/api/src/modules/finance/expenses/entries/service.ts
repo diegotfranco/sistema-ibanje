@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import * as repo from './repository';
 import { findExpenseCategoryById } from '../categories/repository';
 import { findPaymentMethodById } from '../../payment-methods/repository';
@@ -7,6 +8,12 @@ import { assertPermission } from '../../../../lib/permissions';
 import { Module, Action } from '../../../../lib/constants';
 import { httpError } from '../../../../lib/errors';
 import { paginate } from '../../../../lib/pagination';
+import { uploadFile, deleteFile, getPresignedUrl, ALLOWED_MIME_TYPES } from '../../../../lib/storage';
+import type {
+  CreateExpenseEntryRequest,
+  UpdateExpenseEntryRequest,
+  ExpenseEntryResponse
+} from './schema';
 
 async function assertPeriodEditable(referenceDate: string): Promise<void> {
   const year = parseInt(referenceDate.substring(0, 4));
@@ -24,11 +31,6 @@ async function assertPeriodEditable(referenceDate: string): Promise<void> {
     throw httpError(409, 'Previous period must be fechado before editing entries for this period');
   }
 }
-import type {
-  CreateExpenseEntryRequest,
-  UpdateExpenseEntryRequest,
-  ExpenseEntryResponse
-} from './schema';
 
 async function validateEntry(data: {
   categoryId: number;
@@ -57,21 +59,31 @@ async function validateEntry(data: {
   }
 }
 
+function buildReceiptKey(referenceDate: string, ext: string): string {
+  const year = referenceDate.substring(0, 4);
+  const month = referenceDate.substring(5, 7);
+  return `receipts/${year}/${month}/${randomUUID()}.${ext}`;
+}
+
+type Row = NonNullable<Awaited<ReturnType<typeof repo.findExpenseEntryById>>>;
+
+async function toResponse(row: Row): Promise<ExpenseEntryResponse> {
+  const receipt = row.receipt ? await getPresignedUrl(row.receipt) : null;
+  return { ...row, receipt } as ExpenseEntryResponse;
+}
+
 export async function listExpenseEntries(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.ExpenseEntries, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listExpenseEntries(offset, limit);
-  return paginate(
-    rows.map((r): ExpenseEntryResponse => r as any),
-    total,
-    page,
-    limit
-  );
+  const enriched = await Promise.all(rows.map(toResponse));
+  return paginate(enriched, total, page, limit);
 }
 
 export async function getExpenseEntryById(id: number): Promise<ExpenseEntryResponse | null> {
   const entry = await repo.findExpenseEntryById(id);
-  return entry as any;
+  if (!entry) return null;
+  return toResponse(entry);
 }
 
 export async function createExpenseEntry(
@@ -86,12 +98,10 @@ export async function createExpenseEntry(
     designatedFundId: body.designatedFundId,
     parentId: body.parentId
   });
-  const created = await repo.insertExpenseEntry({
-    ...body,
-    userId: callerId
-  });
+
+  const created = await repo.insertExpenseEntry({ ...body, userId: callerId });
   if (!created) throw new Error('Failed to create expense entry');
-  return created as any;
+  return toResponse(created);
 }
 
 export async function updateExpenseEntry(
@@ -113,7 +123,9 @@ export async function updateExpenseEntry(
   };
   await validateEntry(mergedValues);
 
-  return (await repo.updateExpenseEntry(targetId, body as any)) as any;
+  const updated = await repo.updateExpenseEntry(targetId, body as any);
+  if (!updated) return null;
+  return toResponse(updated);
 }
 
 export async function cancelExpenseEntry(
@@ -125,4 +137,41 @@ export async function cancelExpenseEntry(
   if (!entry) return null;
   await assertPeriodEditable(entry.referenceDate);
   await repo.cancelExpenseEntry(targetId);
+}
+
+export async function uploadExpenseReceipt(
+  callerId: number,
+  entryId: number,
+  buffer: Buffer,
+  mimetype: string
+): Promise<ExpenseEntryResponse | null> {
+  await assertPermission(callerId, Module.ExpenseEntries, Action.Update);
+  const entry = await repo.findExpenseEntryById(entryId);
+  if (!entry) return null;
+
+  const ext = ALLOWED_MIME_TYPES[mimetype];
+  if (!ext) throw httpError(400, 'Unsupported file type. Allowed: JPEG, PNG, PDF');
+
+  if (entry.receipt) await deleteFile(entry.receipt);
+
+  const key = buildReceiptKey(entry.referenceDate, ext);
+  await uploadFile(key, buffer, mimetype);
+  await repo.updateReceiptKey(entryId, key);
+
+  const updated = await repo.findExpenseEntryById(entryId);
+  return toResponse(updated!);
+}
+
+export async function deleteExpenseReceipt(
+  callerId: number,
+  entryId: number
+): Promise<'not_found' | 'no_receipt' | 'ok'> {
+  await assertPermission(callerId, Module.ExpenseEntries, Action.Update);
+  const entry = await repo.findExpenseEntryById(entryId);
+  if (!entry) return 'not_found';
+  if (!entry.receipt) return 'no_receipt';
+
+  await deleteFile(entry.receipt);
+  await repo.updateReceiptKey(entryId, null);
+  return 'ok';
 }

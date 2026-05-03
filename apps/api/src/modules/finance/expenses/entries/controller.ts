@@ -35,3 +35,23 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   if (result === null) return reply.code(404).send({ message: 'Expense entry not found' });
   return reply.code(204).send();
 }
+
+export async function uploadReceipt(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+
+  const file = await req.file();
+  if (!file) return reply.code(400).send({ message: 'No file uploaded' });
+
+  const buffer = await file.toBuffer();
+  const entry = await service.uploadExpenseReceipt(req.session.userId!, id, buffer, file.mimetype);
+  if (!entry) return reply.code(404).send({ message: 'Expense entry not found' });
+  return reply.send(entry);
+}
+
+export async function deleteReceipt(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const result = await service.deleteExpenseReceipt(req.session.userId!, id);
+  if (result === 'not_found') return reply.code(404).send({ message: 'Expense entry not found' });
+  if (result === 'no_receipt') return reply.code(404).send({ message: 'No receipt attached to this entry' });
+  return reply.code(204).send();
+}

@@ -52,4 +52,23 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     },
     controller.remove
   );
+
+  // Receipt sub-resource — accepts multipart/form-data with a single 'receipt' file field
+  app.post(
+    '/expense-entries/:id/receipt',
+    {
+      schema: { tags: ['Expense Entries'], params: IdParamSchema },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)],
+    },
+    controller.uploadReceipt
+  );
+
+  app.delete(
+    '/expense-entries/:id/receipt',
+    {
+      schema: { tags: ['Expense Entries'], params: IdParamSchema },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)],
+    },
+    controller.deleteReceipt
+  );
 }

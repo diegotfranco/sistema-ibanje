@@ -16,11 +16,21 @@ export const CreateExpenseEntryRequestSchema = z.object({
   paymentMethodId: z.number().int().positive(),
   designatedFundId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
-  receipt: z.string().optional(),
   notes: z.string().max(1000).optional()
 });
 
-export const UpdateExpenseEntryRequestSchema = CreateExpenseEntryRequestSchema.partial().extend({
+export const UpdateExpenseEntryRequestSchema = z.object({
+  referenceDate: z.string().date().optional(),
+  description: z.string().min(1).max(256).optional(),
+  total: z.number().nonnegative().optional(),
+  amount: z.number().positive().optional(),
+  installment: z.number().int().positive().optional(),
+  totalInstallments: z.number().int().positive().optional(),
+  categoryId: z.number().int().positive().optional(),
+  paymentMethodId: z.number().int().positive().optional(),
+  designatedFundId: z.number().int().positive().optional(),
+  parentId: z.number().int().positive().optional(),
+  notes: z.string().max(1000).optional(),
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
@@ -42,7 +52,7 @@ export type ExpenseEntryResponse = {
   paymentMethodName: string;
   designatedFundId: number | null;
   designatedFundName: string | null;
-  receipt: string | null;
+  receipt: string | null; // presigned GET URL when set, null otherwise
   notes: string | null;
   userId: number;
   status: string;

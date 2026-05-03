@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import multipart from '@fastify/multipart';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { env } from './config/env';
 import { sql } from './db';
@@ -8,6 +9,7 @@ import { registerRateLimitPlugin } from './plugins/rateLimit';
 import { registerCsrfPlugin } from './plugins/csrf';
 import { registerErrorHandler } from './plugins/errorHandler';
 import { registerRoutes } from './modules/index';
+import { initStorage } from './lib/storage';
 
 export async function buildApp() {
   const app = Fastify({
@@ -20,10 +22,12 @@ export async function buildApp() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
   await registerSwaggerPlugin(app);
   await registerSessionPlugin(app);
   await registerRateLimitPlugin(app);
   await registerCsrfPlugin(app);
+  await initStorage();
 
   registerErrorHandler(app);
 

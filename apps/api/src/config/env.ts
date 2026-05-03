@@ -11,7 +11,11 @@ const envSchema = z.object({
   DATABASE_URL: z.url(),
   REDIS_URL: z.url(),
   SESSION_SECRET: z.string().min(32),
-  ARGON2_PEPPER: z.string().min(32)
+  ARGON2_PEPPER: z.string().min(32),
+  MINIO_ENDPOINT: z.url(),
+  MINIO_ACCESS_KEY: z.string().min(1),
+  MINIO_SECRET_KEY: z.string().min(1),
+  MINIO_BUCKET: z.string().min(1)
 });
 
 export const env = envSchema.parse(process.env);

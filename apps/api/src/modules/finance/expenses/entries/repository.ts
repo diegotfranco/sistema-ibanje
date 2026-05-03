@@ -114,3 +114,10 @@ export async function cancelExpenseEntry(id: number) {
     .set({ status: 'cancelada', updatedAt: new Date() })
     .where(eq(expenseEntries.id, id));
 }
+
+export async function updateReceiptKey(id: number, key: string | null) {
+  await db
+    .update(expenseEntries)
+    .set({ receipt: key, updatedAt: new Date() })
+    .where(eq(expenseEntries.id, id));
+}
