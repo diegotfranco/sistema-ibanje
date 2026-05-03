@@ -1,10 +1,29 @@
 import * as repo from './repository';
 import { findExpenseCategoryById } from '../categories/repository';
 import { findPaymentMethodById } from '../../payment-methods/repository';
+import { findDesignatedFundById } from '../../designated-funds/repository';
+import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
 import { assertPermission } from '../../../../lib/permissions';
 import { Module, Action } from '../../../../lib/constants';
 import { httpError } from '../../../../lib/errors';
 import { paginate } from '../../../../lib/pagination';
+
+async function assertPeriodEditable(referenceDate: string): Promise<void> {
+  const year = parseInt(referenceDate.substring(0, 4));
+  const month = parseInt(referenceDate.substring(5, 7));
+
+  const closing = await findMonthlyClosingByPeriod(year, month);
+  if (closing && closing.status !== 'aberto') {
+    throw httpError(409, 'This period is locked for editing');
+  }
+
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevClosing = await findMonthlyClosingByPeriod(prevYear, prevMonth);
+  if (prevClosing && prevClosing.status !== 'fechado') {
+    throw httpError(409, 'Previous period must be fechado before editing entries for this period');
+  }
+}
 import type {
   CreateExpenseEntryRequest,
   UpdateExpenseEntryRequest,
@@ -14,6 +33,7 @@ import type {
 async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
+  designatedFundId?: number;
   parentId?: number;
 }) {
   const category = await findExpenseCategoryById(data.categoryId);
@@ -24,6 +44,11 @@ async function validateEntry(data: {
 
   if (!paymentMethod.allowsOutflow) {
     throw httpError(400, 'Selected payment method does not allow outflow');
+  }
+
+  if (data.designatedFundId) {
+    const fund = await findDesignatedFundById(data.designatedFundId);
+    if (!fund) throw httpError(404, 'Designated fund not found');
   }
 
   if (data.parentId) {
@@ -54,9 +79,11 @@ export async function createExpenseEntry(
   body: CreateExpenseEntryRequest
 ): Promise<ExpenseEntryResponse> {
   await assertPermission(callerId, Module.ExpenseEntries, Action.Create);
+  await assertPeriodEditable(body.referenceDate);
   await validateEntry({
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
+    designatedFundId: body.designatedFundId,
     parentId: body.parentId
   });
   const created = await repo.insertExpenseEntry({
@@ -76,9 +103,12 @@ export async function updateExpenseEntry(
   const entry = await repo.findExpenseEntryById(targetId);
   if (!entry) return null;
 
+  await assertPeriodEditable(body.referenceDate ?? entry.referenceDate);
+
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
+    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined
   };
   await validateEntry(mergedValues);
@@ -93,5 +123,6 @@ export async function cancelExpenseEntry(
   await assertPermission(callerId, Module.ExpenseEntries, Action.Delete);
   const entry = await repo.findExpenseEntryById(targetId);
   if (!entry) return null;
+  await assertPeriodEditable(entry.referenceDate);
   await repo.cancelExpenseEntry(targetId);
 }

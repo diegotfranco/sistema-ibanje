@@ -227,6 +227,7 @@ export const expenseEntries = pgTable(
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),
+    designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
     receipt: text('receipt'),
     notes: text('notes'),
     userId: integer('user_id')
@@ -246,13 +247,24 @@ export const expenseEntries = pgTable(
   ]
 );
 
-export const treasuryClosings = pgTable(
-  'treasury_closings',
+export const financeSettings = pgTable(
+  'finance_settings',
+  {
+    id: integer('id').primaryKey().default(1),
+    openingBalance: numeric('opening_balance', { precision: 12, scale: 2 }).default('0').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [check('chk_finance_settings_singleton', sql`${table.id} = 1`)]
+);
+
+export const monthlyClosings = pgTable(
+  'monthly_closings',
   {
     id: serial('id').primaryKey(),
     periodYear: integer('period_year').notNull(),
     periodMonth: integer('period_month').notNull(),
-    availableBalance: numeric('available_balance', { precision: 12, scale: 2 }),
+    closingBalance: numeric('closing_balance', { precision: 12, scale: 2 }),
     treasurerNotes: text('treasurer_notes'),
     accountantNotes: text('accountant_notes'),
     status: closingStatus('status').default('aberto').notNull(),
@@ -266,7 +278,7 @@ export const treasuryClosings = pgTable(
   },
   (table) => [
     check('chk_period_month_valid', sql`${table.periodMonth} BETWEEN 1 AND 12`),
-    unique('uq_treasury_closing_period').on(table.periodYear, table.periodMonth)
+    unique('uq_monthly_closing_period').on(table.periodYear, table.periodMonth)
   ]
 );
 
@@ -370,8 +382,10 @@ export type ExpenseCategory = typeof expenseCategories.$inferSelect;
 export type NewExpenseCategory = typeof expenseCategories.$inferInsert;
 export type ExpenseEntry = typeof expenseEntries.$inferSelect;
 export type NewExpenseEntry = typeof expenseEntries.$inferInsert;
-export type TreasuryClosing = typeof treasuryClosings.$inferSelect;
-export type NewTreasuryClosing = typeof treasuryClosings.$inferInsert;
+export type FinanceSettings = typeof financeSettings.$inferSelect;
+export type NewFinanceSettings = typeof financeSettings.$inferInsert;
+export type MonthlyClosing = typeof monthlyClosings.$inferSelect;
+export type NewMonthlyClosing = typeof monthlyClosings.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type BoardMeeting = typeof boardMeetings.$inferSelect;

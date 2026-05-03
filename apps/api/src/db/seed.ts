@@ -18,7 +18,8 @@ import {
   boardMeetings,
   minutes,
   minuteVersions,
-  treasuryClosings
+  monthlyClosings,
+  financeSettings
 } from './schema';
 
 async function hashPassword(password: string) {
@@ -77,6 +78,7 @@ async function seed() {
         { name: 'Cadastrar', description: 'Permite adicionar um registro' },
         { name: 'Editar', description: 'Permite editar um registro' },
         { name: 'Remover', description: 'Permite remover um registro' },
+        { name: 'Revisar', description: 'Permite revisar e aprovar um registro' },
         { name: 'Relatórios', description: 'Permite gerar relatórios' }
       ])
       .returning();
@@ -109,6 +111,7 @@ async function seed() {
           name: 'Relatórios',
           description: 'Área destinada à geração de relatórios financeiros e administrativos'
         },
+        { name: 'Fechamentos Mensais', description: 'Gerencia os fechamentos mensais de tesouraria' },
         { name: 'Pautas', description: 'Gerencia as pautas das reuniões da diretoria' },
         { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' }
       ])
@@ -288,6 +291,34 @@ async function seed() {
       ),
       ...cross(roleByName['Vice-Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
       ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
+
+      // Tesoureiro: closings — create + submit only
+      ...cross(
+        roleByName['Tesoureiro'].id,
+        ['Fechamentos Mensais'],
+        ['Acessar', 'Cadastrar'].map((n) => permByName[n].id)
+      ),
+
+      // Tesoureiro Responsável: closings — full (including review + close)
+      ...cross(
+        roleByName['Tesoureiro Responsável'].id,
+        ['Fechamentos Mensais'],
+        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
+      ),
+
+      // Presidente: closings — full
+      ...cross(
+        roleByName['Presidente'].id,
+        ['Fechamentos Mensais'],
+        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
+      ),
+
+      // Vice-Presidente: closings — full
+      ...cross(
+        roleByName['Vice-Presidente'].id,
+        ['Fechamentos Mensais'],
+        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
+      ),
 
       // Membro: view only
       ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id])
@@ -906,12 +937,15 @@ async function seed() {
       }
     ]);
 
-    // --- Treasury Closings ---
-    await tx.insert(treasuryClosings).values([
+    // --- Finance Settings (singleton — stores initial opening balance) ---
+    await tx.insert(financeSettings).values({ openingBalance: '0.00' });
+
+    // --- Monthly Closings ---
+    await tx.insert(monthlyClosings).values([
       {
         periodYear: 2025,
         periodMonth: 8,
-        availableBalance: '-220.00',
+        closingBalance: '-220.00',
         treasurerNotes: 'Mês com déficit devido a gastos extraordinários.',
         status: 'fechado' as const,
         submittedByUserId: tesoureiroId,
@@ -923,7 +957,7 @@ async function seed() {
       {
         periodYear: 2025,
         periodMonth: 9,
-        availableBalance: '710.00',
+        closingBalance: '710.00',
         treasurerNotes: 'Mês regular, sem intercorrências.',
         status: 'aprovado' as const,
         submittedByUserId: tesoureiroId,

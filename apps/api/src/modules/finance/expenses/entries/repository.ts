@@ -3,7 +3,8 @@ import { db } from '../../../../db/index';
 import {
   expenseEntries,
   expenseCategories,
-  paymentMethods
+  paymentMethods,
+  designatedFunds
 } from '../../../../db/schema';
 
 const selectFields = {
@@ -19,6 +20,8 @@ const selectFields = {
   categoryName: expenseCategories.name,
   paymentMethodId: expenseEntries.paymentMethodId,
   paymentMethodName: paymentMethods.name,
+  designatedFundId: expenseEntries.designatedFundId,
+  designatedFundName: designatedFunds.name,
   receipt: expenseEntries.receipt,
   notes: expenseEntries.notes,
   userId: expenseEntries.userId,
@@ -32,7 +35,8 @@ function baseQuery() {
     .select(selectFields)
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
-    .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id));
+    .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
+    .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id));
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
@@ -62,6 +66,7 @@ export async function insertExpenseEntry(data: {
   totalInstallments?: number;
   categoryId: number;
   paymentMethodId: number;
+  designatedFundId?: number;
   parentId?: number;
   receipt?: string;
   notes?: string;
@@ -83,7 +88,7 @@ export async function updateExpenseEntry(
   data: Partial<
     Pick<
       typeof expenseEntries.$inferInsert,
-      'referenceDate' | 'description' | 'total' | 'amount' | 'installment' | 'totalInstallments' | 'categoryId' | 'paymentMethodId' | 'parentId' | 'receipt' | 'notes' | 'status'
+      'referenceDate' | 'description' | 'total' | 'amount' | 'installment' | 'totalInstallments' | 'categoryId' | 'paymentMethodId' | 'designatedFundId' | 'parentId' | 'receipt' | 'notes' | 'status'
     >
   >
 ) {

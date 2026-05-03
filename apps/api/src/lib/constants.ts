@@ -8,6 +8,7 @@ export const Module = {
   ExpenseCategories: 'Categorias de Saídas',
   IncomeEntries: 'Lançamentos de Entradas',
   ExpenseEntries: 'Lançamentos de Saídas',
+  MonthlyClosings: 'Fechamentos Mensais',
   Dashboard: 'Painel',
   Reports: 'Relatórios',
   Agendas: 'Pautas',
@@ -24,6 +25,7 @@ export const Action = {
   Create: 'Cadastrar',
   Update: 'Editar',
   Delete: 'Remover',
+  Review: 'Revisar',
   Report: 'Relatórios',
 } as const;
 

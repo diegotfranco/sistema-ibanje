@@ -2,10 +2,28 @@ import * as repo from './repository';
 import { findIncomeCategoryById } from '../categories/repository';
 import { findPaymentMethodById } from '../../payment-methods/repository';
 import { findDesignatedFundById } from '../../designated-funds/repository';
+import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
 import { assertPermission } from '../../../../lib/permissions';
 import { Module, Action } from '../../../../lib/constants';
 import { httpError } from '../../../../lib/errors';
 import { paginate } from '../../../../lib/pagination';
+
+async function assertPeriodEditable(referenceDate: string): Promise<void> {
+  const year = parseInt(referenceDate.substring(0, 4));
+  const month = parseInt(referenceDate.substring(5, 7));
+
+  const closing = await findMonthlyClosingByPeriod(year, month);
+  if (closing && closing.status !== 'aberto') {
+    throw httpError(409, 'This period is locked for editing');
+  }
+
+  const prevYear = month === 1 ? year - 1 : year;
+  const prevMonth = month === 1 ? 12 : month - 1;
+  const prevClosing = await findMonthlyClosingByPeriod(prevYear, prevMonth);
+  if (prevClosing && prevClosing.status !== 'fechado') {
+    throw httpError(409, 'Previous period must be fechado before editing entries for this period');
+  }
+}
 import type {
   CreateIncomeEntryRequest,
   UpdateIncomeEntryRequest,
@@ -60,6 +78,7 @@ export async function createIncomeEntry(
   body: CreateIncomeEntryRequest
 ): Promise<IncomeEntryResponse> {
   await assertPermission(callerId, Module.IncomeEntries, Action.Create);
+  await assertPeriodEditable(body.referenceDate);
   await validateEntry({
     categoryId: body.categoryId,
     memberId: body.memberId,
@@ -82,6 +101,8 @@ export async function updateIncomeEntry(
   await assertPermission(callerId, Module.IncomeEntries, Action.Update);
   const entry = await repo.findIncomeEntryById(targetId);
   if (!entry) return null;
+
+  await assertPeriodEditable(body.referenceDate ?? entry.referenceDate);
 
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
@@ -106,5 +127,6 @@ export async function cancelIncomeEntry(
   await assertPermission(callerId, Module.IncomeEntries, Action.Delete);
   const entry = await repo.findIncomeEntryById(targetId);
   if (!entry) return null;
+  await assertPeriodEditable(entry.referenceDate);
   await repo.cancelIncomeEntry(targetId);
 }

@@ -14,6 +14,7 @@ export const CreateExpenseEntryRequestSchema = z.object({
   totalInstallments: z.number().int().positive().default(1),
   categoryId: z.number().int().positive(),
   paymentMethodId: z.number().int().positive(),
+  designatedFundId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
   receipt: z.string().optional(),
   notes: z.string().max(1000).optional()
@@ -39,6 +40,8 @@ export type ExpenseEntryResponse = {
   categoryName: string;
   paymentMethodId: number;
   paymentMethodName: string;
+  designatedFundId: number | null;
+  designatedFundName: string | null;
   receipt: string | null;
   notes: string | null;
   userId: number;
