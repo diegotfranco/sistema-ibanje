@@ -37,6 +37,8 @@ async function start() {
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'shutdown signal received');
+    const gracePeriod = env.NODE_ENV === 'development' ? 1000 : 10_000;
+    setTimeout(() => process.exit(1), gracePeriod).unref();
     try {
       await app.close();
       await sql.end();

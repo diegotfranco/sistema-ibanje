@@ -6,7 +6,7 @@
   "main": "./dist/app.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/app.ts",
+    "dev": "node --watch --import tsx src/app.ts",
     "start": "node dist/app.js",
     "lint": "eslint src/",
     "format": "prettier --write src/",
