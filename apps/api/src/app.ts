@@ -1,6 +1,8 @@
 import Fastify from 'fastify';
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { env } from './config/env';
 import { sql } from './db';
+import { registerSwaggerPlugin } from './plugins/swagger';
 import { registerSessionPlugin } from './plugins/session';
 import { registerRateLimitPlugin } from './plugins/rateLimit';
 import { registerCsrfPlugin } from './plugins/csrf';
@@ -15,6 +17,10 @@ export async function buildApp() {
     }
   });
 
+  app.setValidatorCompiler(validatorCompiler);
+  app.setSerializerCompiler(serializerCompiler);
+
+  await registerSwaggerPlugin(app);
   await registerSessionPlugin(app);
   await registerRateLimitPlugin(app);
   await registerCsrfPlugin(app);

@@ -2,32 +2,54 @@ import { FastifyInstance } from 'fastify';
 import { requireAuth } from '../../../hooks/requireAuth';
 import { checkPermission } from '../../../hooks/checkPermission';
 import { Module, Action } from '../../../lib/constants';
+import { IdParamSchema } from '../../../lib/validation';
+import {
+  ListPaymentMethodsRequestSchema,
+  CreatePaymentMethodRequestSchema,
+  UpdatePaymentMethodRequestSchema,
+} from './schema';
 import * as controller from './controller';
 
 export async function paymentMethodsRoutes(app: FastifyInstance) {
   app.get(
     '/payment-methods',
-    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.View)] },
+    {
+      schema: { tags: ['Payment Methods'], querystring: ListPaymentMethodsRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.View)],
+    },
     controller.list
   );
 
-  app.get('/payment-methods/:id', { preHandler: [requireAuth] }, controller.getById);
+  app.get(
+    '/payment-methods/:id',
+    { schema: { tags: ['Payment Methods'], params: IdParamSchema }, preHandler: [requireAuth] },
+    controller.getById
+  );
 
   app.post(
     '/payment-methods',
-    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Create)] },
+    {
+      schema: { tags: ['Payment Methods'], body: CreatePaymentMethodRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Create)],
+    },
     controller.create
   );
 
   app.patch(
     '/payment-methods/:id',
-    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Update)] },
+    {
+      schema: { tags: ['Payment Methods'], params: IdParamSchema, body: UpdatePaymentMethodRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Update)],
+    },
     controller.update
   );
 
   app.delete(
     '/payment-methods/:id',
-    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)] },
+    {
+      schema: { tags: ['Payment Methods'], params: IdParamSchema },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)],
+    },
     controller.remove
   );
 }

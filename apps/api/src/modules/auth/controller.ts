@@ -1,18 +1,18 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import {
-  LoginRequestSchema,
-  PasswordResetRequestSchema,
-  ResetPasswordRequestSchema,
-  RegisterRequestSchema
-} from './schema';
+import type { LoginRequest, PasswordResetRequest, ResetPasswordRequest, RegisterRequest } from './schema';
 import * as service from './service';
 
-export async function login(req: FastifyRequest, reply: FastifyReply) {
-  const body = LoginRequestSchema.parse(req.body);
+export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
+  const token = reply.generateCsrf();
+  return reply.send({ csrfToken: token });
+}
 
-  const result = await service.login(body.email, body.password);
+export async function login(req: FastifyRequest, reply: FastifyReply) {
+  const { email, password } = req.body as LoginRequest;
+
+  const result = await service.login(email, password);
   if (!result) {
-    req.log.warn({ email: body.email, ip: req.ip }, 'failed login attempt');
+    req.log.warn({ email, ip: req.ip }, 'failed login attempt');
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
 
@@ -22,7 +22,7 @@ export async function login(req: FastifyRequest, reply: FastifyReply) {
   return reply.send({
     name: result.name,
     email: result.email,
-    role: result.role
+    role: result.role,
   });
 }
 
@@ -42,17 +42,17 @@ export async function me(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function requestPasswordReset(req: FastifyRequest, reply: FastifyReply) {
-  const body = PasswordResetRequestSchema.parse(req.body);
+  const { email } = req.body as PasswordResetRequest;
 
-  await service.requestPasswordReset(body.email, req.ip, req.headers['user-agent']);
+  await service.requestPasswordReset(email, req.ip, req.headers['user-agent']);
 
   return reply.send({ message: 'If that email exists, a reset link was sent' });
 }
 
 export async function confirmPasswordReset(req: FastifyRequest, reply: FastifyReply) {
-  const body = ResetPasswordRequestSchema.parse(req.body);
+  const { token, newPassword } = req.body as ResetPasswordRequest;
 
-  const success = await service.confirmPasswordReset(body.token, body.newPassword);
+  const success = await service.confirmPasswordReset(token, newPassword);
   if (!success) {
     return reply.code(400).send({ message: 'Invalid or expired token' });
   }
@@ -61,8 +61,8 @@ export async function confirmPasswordReset(req: FastifyRequest, reply: FastifyRe
 }
 
 export async function register(req: FastifyRequest, reply: FastifyReply) {
-  const body = RegisterRequestSchema.parse(req.body);
-  await service.register(body.name, body.email);
+  const { name, email } = req.body as RegisterRequest;
+  await service.register(name, email);
   return reply
     .code(201)
     .send({ message: 'Registration submitted. An admin will review your request.' });
