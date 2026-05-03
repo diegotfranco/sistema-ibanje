@@ -4,9 +4,9 @@ import {
   CreateRoleRequestSchema,
   UpdateRoleRequestSchema,
   SetRolePermissionsRequestSchema
-} from './schema.js';
-import * as service from './service.js';
-import { IdParamSchema } from '../../lib/validation.js';
+} from './schema';
+import * as service from './service';
+import { IdParamSchema } from '../../lib/validation';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const query = ListRolesRequestSchema.parse(req.query);

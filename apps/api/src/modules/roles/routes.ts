@@ -1,12 +1,13 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../hooks/requireAuth.js';
-import { checkPermission } from '../../hooks/checkPermission.js';
-import * as controller from './controller.js';
+import { requireAuth } from '../../hooks/requireAuth';
+import { checkPermission } from '../../hooks/checkPermission';
+import { Module, Action } from '../../lib/constants';
+import * as controller from './controller';
 
 export async function rolesRoutes(app: FastifyInstance) {
   app.get(
     '/roles',
-    { preHandler: [requireAuth, checkPermission('Cargos', 'Acessar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Roles, Action.View)] },
     controller.list
   );
 
@@ -14,19 +15,19 @@ export async function rolesRoutes(app: FastifyInstance) {
 
   app.post(
     '/roles',
-    { preHandler: [requireAuth, checkPermission('Cargos', 'Cadastrar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Roles, Action.Create)] },
     controller.create
   );
 
   app.patch(
     '/roles/:id',
-    { preHandler: [requireAuth, checkPermission('Cargos', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)] },
     controller.update
   );
 
   app.delete(
     '/roles/:id',
-    { preHandler: [requireAuth, checkPermission('Cargos', 'Remover')] },
+    { preHandler: [requireAuth, checkPermission(Module.Roles, Action.Delete)] },
     controller.remove
   );
 
@@ -34,7 +35,7 @@ export async function rolesRoutes(app: FastifyInstance) {
 
   app.put(
     '/roles/:id/permissions',
-    { preHandler: [requireAuth, checkPermission('Cargos', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)] },
     controller.setPermissions
   );
 

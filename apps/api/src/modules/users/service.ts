@@ -6,6 +6,7 @@ import { passwordResetTokens, users, roles, members } from '../../db/schema';
 import { eq } from 'drizzle-orm';
 import * as repo from './repository';
 import { assertPermission } from '../../lib/permissions';
+import { Module, Action } from '../../lib/constants';
 import { paginate } from '../../lib/pagination';
 import type {
   UpdateUserRequest,
@@ -18,8 +19,8 @@ import { httpError } from '../../lib/errors';
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 export async function listUsers(page: number, limit: number) {
-  const skip = (page - 1) * limit;
-  const { rows, total } = await repo.listUsers(skip, limit);
+  const offset = (page - 1) * limit;
+  const { rows, total } = await repo.listUsers(offset, limit);
 
   return paginate(
     rows.map(
@@ -60,7 +61,7 @@ export async function updateUser(callerId: number, targetId: number, body: Updat
       throw httpError(403, 'Cannot change your own role');
     }
   } else {
-    await assertPermission(callerId, 'Usuários', 'Editar');
+    await assertPermission(callerId, Module.Users, Action.Update);
   }
 
   const user = await repo.findUserById(targetId);
@@ -101,7 +102,7 @@ export async function changePassword(
       throw httpError(400, 'Current password is incorrect');
     }
   } else {
-    await assertPermission(callerId, 'Usuários', 'Editar');
+    await assertPermission(callerId, Module.Users, Action.Update);
   }
 
   const newPasswordHash = await argon2.hash(body.newPassword + env.ARGON2_PEPPER, {

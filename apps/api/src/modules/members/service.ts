@@ -1,17 +1,18 @@
-import * as repo from './repository.js';
-import { assertPermission } from '../../lib/permissions.js';
-import { httpError } from '../../lib/errors.js';
-import { paginate } from '../../lib/pagination.js';
-import type { CreateMemberRequest, UpdateMemberRequest, MemberResponse } from './schema.js';
-import { db } from '../../db/index.js';
+import * as repo from './repository';
+import { assertPermission } from '../../lib/permissions';
+import { Module, Action } from '../../lib/constants';
+import { httpError } from '../../lib/errors';
+import { paginate } from '../../lib/pagination';
+import type { CreateMemberRequest, UpdateMemberRequest, MemberResponse } from './schema';
+import { db } from '../../db/index';
 import { eq } from 'drizzle-orm';
-import { users, members } from '../../db/schema.js';
+import { users, members } from '../../db/schema';
 
 export async function listMembers(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, 'Membros', 'Acessar');
+  await assertPermission(callerId, Module.Members, Action.View);
 
-  const skip = (page - 1) * limit;
-  const { rows, total } = await repo.listMembers(skip, limit);
+  const offset = (page - 1) * limit;
+  const { rows, total } = await repo.listMembers(offset, limit);
 
   return paginate(
     rows.map(
@@ -66,7 +67,7 @@ export async function createMember(
   callerId: number,
   body: CreateMemberRequest
 ): Promise<MemberResponse> {
-  await assertPermission(callerId, 'Membros', 'Cadastrar');
+  await assertPermission(callerId, Module.Members, Action.Create);
 
   if (body.userId !== undefined) {
     const user = await db
@@ -133,7 +134,7 @@ export async function updateMember(
   targetId: number,
   body: UpdateMemberRequest
 ): Promise<MemberResponse | null> {
-  await assertPermission(callerId, 'Membros', 'Editar');
+  await assertPermission(callerId, Module.Members, Action.Update);
 
   const member = await repo.findMemberById(targetId);
   if (!member) return null;
@@ -183,7 +184,7 @@ export async function updateMember(
 }
 
 export async function deactivateMember(callerId: number, targetId: number): Promise<void | null> {
-  await assertPermission(callerId, 'Membros', 'Remover');
+  await assertPermission(callerId, Module.Members, Action.Delete);
 
   const member = await repo.findMemberById(targetId);
   if (!member) return null;

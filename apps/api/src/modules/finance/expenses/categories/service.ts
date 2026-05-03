@@ -1,12 +1,13 @@
-import * as repo from './repository.js';
-import { assertPermission } from '../../../lib/permissions.js';
-import { httpError } from '../../../lib/errors.js';
-import { paginate } from '../../../lib/pagination.js';
+import * as repo from './repository';
+import { assertPermission } from '../../../../lib/permissions';
+import { Module, Action } from '../../../../lib/constants';
+import { httpError } from '../../../../lib/errors';
+import { paginate } from '../../../../lib/pagination';
 import type {
   CreateExpenseCategoryRequest,
   UpdateExpenseCategoryRequest,
   ExpenseCategoryResponse
-} from './schema.js';
+} from './schema';
 
 async function assertParentExists(parentId: number) {
   const parent = await repo.findExpenseCategoryById(parentId);
@@ -14,9 +15,9 @@ async function assertParentExists(parentId: number) {
 }
 
 export async function listExpenseCategories(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, 'Categorias de Saídas', 'Acessar');
-  const skip = (page - 1) * limit;
-  const { rows, total } = await repo.listExpenseCategories(skip, limit);
+  await assertPermission(callerId, Module.ExpenseCategories, Action.View);
+  const offset = (page - 1) * limit;
+  const { rows, total } = await repo.listExpenseCategories(offset, limit);
   return paginate(rows.map((r): ExpenseCategoryResponse => r), total, page, limit);
 }
 
@@ -28,7 +29,7 @@ export async function createExpenseCategory(
   callerId: number,
   body: CreateExpenseCategoryRequest
 ): Promise<ExpenseCategoryResponse> {
-  await assertPermission(callerId, 'Categorias de Saídas', 'Cadastrar');
+  await assertPermission(callerId, Module.ExpenseCategories, Action.Create);
   if (body.parentId) await assertParentExists(body.parentId);
   const created = await repo.insertExpenseCategory(body);
   if (!created) throw new Error('Failed to create expense category');
@@ -40,7 +41,7 @@ export async function updateExpenseCategory(
   targetId: number,
   body: UpdateExpenseCategoryRequest
 ): Promise<ExpenseCategoryResponse | null> {
-  await assertPermission(callerId, 'Categorias de Saídas', 'Editar');
+  await assertPermission(callerId, Module.ExpenseCategories, Action.Update);
   const category = await repo.findExpenseCategoryById(targetId);
   if (!category) return null;
   if (body.parentId) await assertParentExists(body.parentId);
@@ -51,7 +52,7 @@ export async function deactivateExpenseCategory(
   callerId: number,
   targetId: number
 ): Promise<void | null> {
-  await assertPermission(callerId, 'Categorias de Saídas', 'Remover');
+  await assertPermission(callerId, Module.ExpenseCategories, Action.Delete);
   const category = await repo.findExpenseCategoryById(targetId);
   if (!category) return null;
   await repo.deactivateExpenseCategory(targetId);

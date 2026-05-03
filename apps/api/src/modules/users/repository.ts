@@ -12,7 +12,7 @@ import {
   roleModulePermissions
 } from '../../db/schema';
 
-export async function listUsers(skip: number, take: number) {
+export async function listUsers(offset: number, limit: number) {
   const rows = await db
     .select({
       id: users.id,
@@ -26,8 +26,8 @@ export async function listUsers(skip: number, take: number) {
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
     .orderBy(users.id)
-    .offset(skip)
-    .limit(take);
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(users);
 

@@ -1,12 +1,13 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../../hooks/requireAuth.js';
-import { checkPermission } from '../../../hooks/checkPermission.js';
-import * as controller from './controller.js';
+import { requireAuth } from '../../../hooks/requireAuth';
+import { checkPermission } from '../../../hooks/checkPermission';
+import { Module, Action } from '../../../lib/constants';
+import * as controller from './controller';
 
 export async function paymentMethodsRoutes(app: FastifyInstance) {
   app.get(
     '/payment-methods',
-    { preHandler: [requireAuth, checkPermission('Formas de Pagamento', 'Acessar')] },
+    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.View)] },
     controller.list
   );
 
@@ -14,19 +15,19 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
 
   app.post(
     '/payment-methods',
-    { preHandler: [requireAuth, checkPermission('Formas de Pagamento', 'Cadastrar')] },
+    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Create)] },
     controller.create
   );
 
   app.patch(
     '/payment-methods/:id',
-    { preHandler: [requireAuth, checkPermission('Formas de Pagamento', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Update)] },
     controller.update
   );
 
   app.delete(
     '/payment-methods/:id',
-    { preHandler: [requireAuth, checkPermission('Formas de Pagamento', 'Remover')] },
+    { preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)] },
     controller.remove
   );
 }

@@ -1,18 +1,19 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../hooks/requireAuth.js';
-import { checkPermission } from '../../hooks/checkPermission.js';
-import * as controller from './controller.js';
+import { requireAuth } from '../../hooks/requireAuth';
+import { checkPermission } from '../../hooks/checkPermission';
+import { Module, Action } from '../../lib/constants';
+import * as controller from './controller';
 
 export async function membersRoutes(app: FastifyInstance) {
   app.post(
     '/members',
-    { preHandler: [requireAuth, checkPermission('Membros', 'Cadastrar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Members, Action.Create)] },
     controller.create
   );
 
   app.get(
     '/members',
-    { preHandler: [requireAuth, checkPermission('Membros', 'Acessar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Members, Action.View)] },
     controller.list
   );
 
@@ -20,13 +21,13 @@ export async function membersRoutes(app: FastifyInstance) {
 
   app.patch(
     '/members/:id',
-    { preHandler: [requireAuth, checkPermission('Membros', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Members, Action.Update)] },
     controller.update
   );
 
   app.delete(
     '/members/:id',
-    { preHandler: [requireAuth, checkPermission('Membros', 'Remover')] },
+    { preHandler: [requireAuth, checkPermission(Module.Members, Action.Delete)] },
     controller.remove
   );
 }

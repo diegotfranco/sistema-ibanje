@@ -1,18 +1,19 @@
 import { FastifyInstance } from 'fastify';
 import { requireAuth } from '../../hooks/requireAuth';
 import { checkPermission } from '../../hooks/checkPermission';
+import { Module, Action } from '../../lib/constants';
 import * as controller from './controller';
 
 export async function usersRoutes(app: FastifyInstance) {
   app.post(
     '/users',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Cadastrar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.Create)] },
     controller.create
   );
 
   app.get(
     '/users',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Acessar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.View)] },
     controller.list
   );
 
@@ -22,7 +23,7 @@ export async function usersRoutes(app: FastifyInstance) {
 
   app.delete(
     '/users/:id',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Remover')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.Delete)] },
     controller.remove
   );
 
@@ -30,19 +31,19 @@ export async function usersRoutes(app: FastifyInstance) {
 
   app.patch(
     '/users/:id/approve',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)] },
     controller.approve
   );
 
   app.get(
     '/users/:id/permissions',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Acessar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.View)] },
     controller.getPermissions
   );
 
   app.put(
     '/users/:id/permissions',
-    { preHandler: [requireAuth, checkPermission('Usuários', 'Editar')] },
+    { preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)] },
     controller.setPermissions
   );
 }

@@ -1,8 +1,8 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../db/index.js';
-import { members } from '../../db/schema.js';
+import { db } from '../../db/index';
+import { members } from '../../db/schema';
 
-export async function listMembers(skip: number, take: number) {
+export async function listMembers(offset: number, limit: number) {
   const rows = await db
     .select({
       id: members.id,
@@ -24,8 +24,8 @@ export async function listMembers(skip: number, take: number) {
     })
     .from(members)
     .orderBy(members.id)
-    .offset(skip)
-    .limit(take);
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(members);
 

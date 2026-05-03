@@ -1,6 +1,6 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../../db/index.js';
-import { expenseCategories } from '../../../db/schema.js';
+import { db } from '../../../../db/index';
+import { expenseCategories } from '../../../../db/schema';
 
 const selectFields = {
   id: expenseCategories.id,
@@ -11,13 +11,13 @@ const selectFields = {
   createdAt: expenseCategories.createdAt
 };
 
-export async function listExpenseCategories(skip: number, take: number) {
+export async function listExpenseCategories(offset: number, limit: number) {
   const rows = await db
     .select(selectFields)
     .from(expenseCategories)
     .orderBy(expenseCategories.id)
-    .offset(skip)
-    .limit(take);
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(expenseCategories);
   return { rows, total: countResult[0]?.count ?? 0 };

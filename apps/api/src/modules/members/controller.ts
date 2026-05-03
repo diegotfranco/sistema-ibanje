@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { ListMembersRequestSchema, CreateMemberRequestSchema, UpdateMemberRequestSchema } from './schema.js';
-import * as service from './service.js';
-import { IdParamSchema } from '../../lib/validation.js';
+import { ListMembersRequestSchema, CreateMemberRequestSchema, UpdateMemberRequestSchema } from './schema';
+import * as service from './service';
+import { IdParamSchema } from '../../lib/validation';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const query = ListMembersRequestSchema.parse(req.query);

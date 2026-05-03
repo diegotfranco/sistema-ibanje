@@ -5,7 +5,7 @@ import { registerSessionPlugin } from './plugins/session';
 import { registerRateLimitPlugin } from './plugins/rateLimit';
 import { registerCsrfPlugin } from './plugins/csrf';
 import { registerErrorHandler } from './plugins/errorHandler';
-import { registerRoutes } from './modules/index.js';
+import { registerRoutes } from './modules/index';
 
 export async function buildApp() {
   const app = Fastify({

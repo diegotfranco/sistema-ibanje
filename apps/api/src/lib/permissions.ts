@@ -2,11 +2,12 @@ import { db } from '../db';
 import { userModulePermissions, modules, permissions } from '../db/schema';
 import { eq, and } from 'drizzle-orm';
 import { httpError } from './errors';
+import { ModuleName, ActionName } from './constants';
 
 export async function hasPermission(
   userId: number,
-  moduleName: string,
-  permissionName: string
+  moduleName: ModuleName,
+  permissionName: ActionName
 ): Promise<boolean> {
   const result = await db
     .select({ id: userModulePermissions.userId })
@@ -27,8 +28,8 @@ export async function hasPermission(
 
 export async function assertPermission(
   userId: number,
-  moduleName: string,
-  permissionName: string
+  moduleName: ModuleName,
+  permissionName: ActionName
 ) {
   const allowed = await hasPermission(userId, moduleName, permissionName);
   if (!allowed) throw httpError(403, 'Forbidden');

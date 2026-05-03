@@ -1,17 +1,18 @@
-import * as repo from './repository.js';
-import { assertPermission } from '../../../lib/permissions.js';
-import { httpError } from '../../../lib/errors.js';
-import { paginate } from '../../../lib/pagination.js';
+import * as repo from './repository';
+import { assertPermission } from '../../../lib/permissions';
+import { Module, Action } from '../../../lib/constants';
+import { httpError } from '../../../lib/errors';
+import { paginate } from '../../../lib/pagination';
 import type {
   CreatePaymentMethodRequest,
   UpdatePaymentMethodRequest,
   PaymentMethodResponse
-} from './schema.js';
+} from './schema';
 
 export async function listPaymentMethods(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, 'Formas de Pagamento', 'Acessar');
-  const skip = (page - 1) * limit;
-  const { rows, total } = await repo.listPaymentMethods(skip, limit);
+  await assertPermission(callerId, Module.PaymentMethods, Action.View);
+  const offset = (page - 1) * limit;
+  const { rows, total } = await repo.listPaymentMethods(offset, limit);
   return paginate(rows.map((r): PaymentMethodResponse => r), total, page, limit);
 }
 
@@ -23,7 +24,7 @@ export async function createPaymentMethod(
   callerId: number,
   body: CreatePaymentMethodRequest
 ): Promise<PaymentMethodResponse> {
-  await assertPermission(callerId, 'Formas de Pagamento', 'Cadastrar');
+  await assertPermission(callerId, Module.PaymentMethods, Action.Create);
   const created = await repo.insertPaymentMethod(body);
   if (!created) throw new Error('Failed to create payment method');
   return created;
@@ -34,7 +35,7 @@ export async function updatePaymentMethod(
   targetId: number,
   body: UpdatePaymentMethodRequest
 ): Promise<PaymentMethodResponse | null> {
-  await assertPermission(callerId, 'Formas de Pagamento', 'Editar');
+  await assertPermission(callerId, Module.PaymentMethods, Action.Update);
 
   const current = await repo.findPaymentMethodById(targetId);
   if (!current) return null;
@@ -54,7 +55,7 @@ export async function deactivatePaymentMethod(
   callerId: number,
   targetId: number
 ): Promise<void | null> {
-  await assertPermission(callerId, 'Formas de Pagamento', 'Remover');
+  await assertPermission(callerId, Module.PaymentMethods, Action.Delete);
   const pm = await repo.findPaymentMethodById(targetId);
   if (!pm) return null;
   await repo.deactivatePaymentMethod(targetId);

@@ -1,8 +1,8 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../db/index.js';
-import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema.js';
+import { db } from '../../db/index';
+import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema';
 
-export async function listRoles(skip: number, take: number) {
+export async function listRoles(offset: number, limit: number) {
   const rows = await db
     .select({
       id: roles.id,
@@ -13,8 +13,8 @@ export async function listRoles(skip: number, take: number) {
     })
     .from(roles)
     .orderBy(roles.id)
-    .offset(skip)
-    .limit(take);
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(roles);
   const total = countResult[0]?.count ?? 0;

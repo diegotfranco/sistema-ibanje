@@ -103,7 +103,7 @@ async function seed() {
         { name: 'Categorias de Saídas', description: 'Gerencia os tipos de saídas financeiras' },
         { name: 'Lançamentos de Saídas', description: 'Gerencia o registro de saídas financeiras' },
         { name: 'Formas de Pagamento', description: 'Gerencia as formas de pagamento disponíveis' },
-        { name: 'Caixa', description: 'Gerencia os fundos e saldos da igreja' },
+        { name: 'Fundos Designados', description: 'Gerencia os fundos designados da igreja' },
         { name: 'Painel', description: 'Painel com informações e estatísticas do sistema' },
         {
           name: 'Relatórios',
@@ -205,7 +205,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         writePermIds
       ),
@@ -221,7 +221,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         fullPermIds
       ),
@@ -237,7 +237,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         readPermIds
       ),
@@ -252,7 +252,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         readPermIds
       ),
@@ -266,7 +266,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         fullPermIds
       ),
@@ -282,7 +282,7 @@ async function seed() {
           'Categorias de Saídas',
           'Lançamentos de Saídas',
           'Formas de Pagamento',
-          'Caixa'
+          'Fundos Designados'
         ],
         fullPermIds
       ),
