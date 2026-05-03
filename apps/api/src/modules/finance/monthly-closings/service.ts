@@ -16,31 +16,58 @@ async function buildResponse(
   closing: MonthlyClosing,
   includeReservedFunds = true
 ): Promise<MonthlyClosingResponse> {
-  const [totalIncome, totalExpenses, reservedFunds] = await Promise.all([
+  const [totalIncome, totalExpenses, totalReservedFunds] = await Promise.all([
     repo.sumIncomeForPeriod(closing.periodYear, closing.periodMonth),
     repo.sumExpensesForPeriod(closing.periodYear, closing.periodMonth),
     includeReservedFunds
-      ? repo.getReservedFundBalances(closing.periodYear, closing.periodMonth)
+      ? repo.getTotalReservedFunds(closing.periodYear, closing.periodMonth)
       : Promise.resolve(undefined)
   ]);
 
+  let openingBalance: string;
+  let openingBalancePending: boolean;
   let closingBalance: string;
+
   if (closing.status === 'fechado' && closing.closingBalance !== null) {
     closingBalance = closing.closingBalance;
+    openingBalancePending = false;
+    openingBalance = (
+      parseFloat(closingBalance) -
+      parseFloat(totalIncome) +
+      parseFloat(totalExpenses)
+    ).toFixed(2);
   } else {
-    const prevClosing = await repo.findPreviousFechadoClosing(
-      closing.periodYear,
-      closing.periodMonth
-    );
-    let openingBal: string;
-    if (prevClosing) {
-      openingBal = prevClosing.closingBalance ?? '0';
+    const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
+    const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
+
+    const lastFechado = await repo.findPreviousFechadoClosing(closing.periodYear, closing.periodMonth);
+
+    let baseBal: string;
+    let rangeStart: string;
+    if (lastFechado) {
+      baseBal = lastFechado.closingBalance ?? '0';
+      rangeStart = repo.periodEnd(lastFechado.periodYear, lastFechado.periodMonth);
     } else {
       const settings = await repo.findFinanceSettings();
-      openingBal = settings?.openingBalance ?? '0';
+      baseBal = settings?.openingBalance ?? '0';
+      rangeStart = '2020-01-01';
     }
+
+    const rangeEnd = repo.periodStart(closing.periodYear, closing.periodMonth);
+    const lastFechadoIsPrevMonth =
+      lastFechado?.periodYear === prevYear && lastFechado?.periodMonth === prevMonth;
+
+    if (!lastFechadoIsPrevMonth) {
+      const intermediateNet = await repo.sumNetForDateRange(rangeStart, rangeEnd);
+      openingBalance = (parseFloat(baseBal) + parseFloat(intermediateNet)).toFixed(2);
+      openingBalancePending = true;
+    } else {
+      openingBalance = baseBal;
+      openingBalancePending = false;
+    }
+
     closingBalance = (
-      parseFloat(openingBal) +
+      parseFloat(openingBalance) +
       parseFloat(totalIncome) -
       parseFloat(totalExpenses)
     ).toFixed(2);
@@ -51,6 +78,8 @@ async function buildResponse(
     periodYear: closing.periodYear,
     periodMonth: closing.periodMonth,
     status: closing.status,
+    openingBalance,
+    openingBalancePending,
     closingBalance,
     totalIncome,
     totalExpenses,
@@ -63,7 +92,7 @@ async function buildResponse(
     closedAt: closing.closedAt,
     createdAt: closing.createdAt,
     updatedAt: closing.updatedAt,
-    reservedFunds
+    totalReservedFunds
   };
 }
 
@@ -107,7 +136,7 @@ export async function submitMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'aberto') throw httpError(409, 'Only aberto closings can be submitted');
+  if (closing.status !== 'aberto') throw httpError(409, 'Only open closings can be submitted');
 
   const updated = await repo.updateMonthlyClosing(id, {
     status: 'em revisão',
@@ -128,7 +157,7 @@ export async function approveMonthlyClosing(
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
   if (closing.status !== 'em revisão')
-    throw httpError(409, 'Only em revisão closings can be approved');
+    throw httpError(409, 'Only pending review closings can be approved');
 
   const updated = await repo.updateMonthlyClosing(id, {
     status: 'aprovado',
@@ -148,7 +177,7 @@ export async function rejectMonthlyClosing(
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
   if (closing.status !== 'em revisão')
-    throw httpError(409, 'Only em revisão closings can be rejected');
+    throw httpError(409, 'Only pending review closings can be rejected');
 
   const updated = await repo.updateMonthlyClosing(id, {
     status: 'aberto',
@@ -166,7 +195,14 @@ export async function closeMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'aprovado') throw httpError(409, 'Only aprovado closings can be closed');
+  if (closing.status !== 'aprovado') throw httpError(409, 'Only approved closings can be closed');
+
+  const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
+  const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
+  const prevMonthClosing = await repo.findMonthlyClosingByPeriod(prevYear, prevMonth);
+  if (prevMonthClosing && prevMonthClosing.status !== 'fechado') {
+    throw httpError(409, 'Previous period must be closed before closing this period');
+  }
 
   const [totalIncome, totalExpenses] = await Promise.all([
     repo.sumIncomeForPeriod(closing.periodYear, closing.periodMonth),
@@ -207,7 +243,7 @@ export async function deleteMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) return null;
-  if (closing.status !== 'aberto') throw httpError(409, 'Only aberto closings can be deleted');
+  if (closing.status !== 'aberto') throw httpError(409, 'Only open closings can be deleted');
 
   await repo.deleteMonthlyClosing(id);
 }

@@ -27,17 +27,13 @@ export type SubmitMonthlyClosingRequest = z.infer<typeof SubmitMonthlyClosingReq
 export type ApproveMonthlyClosingRequest = z.infer<typeof ApproveMonthlyClosingRequestSchema>;
 export type RejectMonthlyClosingRequest = z.infer<typeof RejectMonthlyClosingRequestSchema>;
 
-export type ReservedFundBalance = {
-  fundId: number;
-  fundName: string;
-  balance: string;
-};
-
 export type MonthlyClosingResponse = {
   id: number;
   periodYear: number;
   periodMonth: number;
   status: string;
+  openingBalance: string;
+  openingBalancePending: boolean;
   closingBalance: string;
   totalIncome: string;
   totalExpenses: string;
@@ -50,5 +46,5 @@ export type MonthlyClosingResponse = {
   closedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  reservedFunds?: ReservedFundBalance[];
+  totalReservedFunds?: string;
 };

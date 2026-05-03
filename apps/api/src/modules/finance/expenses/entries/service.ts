@@ -23,13 +23,6 @@ async function assertPeriodEditable(referenceDate: string): Promise<void> {
   if (closing && closing.status !== 'aberto') {
     throw httpError(409, 'This period is locked for editing');
   }
-
-  const prevYear = month === 1 ? year - 1 : year;
-  const prevMonth = month === 1 ? 12 : month - 1;
-  const prevClosing = await findMonthlyClosingByPeriod(prevYear, prevMonth);
-  if (prevClosing && prevClosing.status !== 'fechado') {
-    throw httpError(409, 'Previous period must be fechado before editing entries for this period');
-  }
 }
 
 async function validateEntry(data: {

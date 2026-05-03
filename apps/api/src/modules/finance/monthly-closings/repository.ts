@@ -1,19 +1,18 @@
-import { eq, gte, lt, sum, count, and, or, desc, isNotNull, inArray } from 'drizzle-orm';
+import { eq, gte, lt, sum, count, and, or, desc, isNotNull } from 'drizzle-orm';
 import { db } from '../../../db/index';
 import {
   monthlyClosings,
   incomeEntries,
   expenseEntries,
-  designatedFunds,
   financeSettings,
   type MonthlyClosing
 } from '../../../db/schema';
 
-function periodStart(year: number, month: number): string {
+export function periodStart(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}-01`;
 }
 
-function periodEnd(year: number, month: number): string {
+export function periodEnd(year: number, month: number): string {
   if (month === 12) return `${year + 1}-01-01`;
   return `${year}-${String(month + 1).padStart(2, '0')}-01`;
 }
@@ -141,13 +140,13 @@ export async function sumExpensesForPeriod(year: number, month: number): Promise
   return result[0]?.total ?? '0';
 }
 
-export async function getReservedFundBalances(year: number, month: number) {
+export async function getTotalReservedFunds(year: number, month: number): Promise<string> {
   const start = periodStart(year, month);
   const end = periodEnd(year, month);
 
-  const [incomeByFund, expensesByFund] = await Promise.all([
+  const [incomeResult, expensesResult] = await Promise.all([
     db
-      .select({ fundId: incomeEntries.designatedFundId, total: sum(incomeEntries.amount) })
+      .select({ total: sum(incomeEntries.amount) })
       .from(incomeEntries)
       .where(
         and(
@@ -156,10 +155,9 @@ export async function getReservedFundBalances(year: number, month: number) {
           eq(incomeEntries.status, 'paga'),
           isNotNull(incomeEntries.designatedFundId)
         )
-      )
-      .groupBy(incomeEntries.designatedFundId),
+      ),
     db
-      .select({ fundId: expenseEntries.designatedFundId, total: sum(expenseEntries.amount) })
+      .select({ total: sum(expenseEntries.amount) })
       .from(expenseEntries)
       .where(
         and(
@@ -169,36 +167,40 @@ export async function getReservedFundBalances(year: number, month: number) {
           isNotNull(expenseEntries.designatedFundId)
         )
       )
-      .groupBy(expenseEntries.designatedFundId)
   ]);
 
-  const fundIds = [
-    ...new Set([
-      ...incomeByFund.map((r) => r.fundId!),
-      ...expensesByFund.map((r) => r.fundId!)
-    ])
-  ];
+  const totalIncome = parseFloat(incomeResult[0]?.total ?? '0');
+  const totalExpenses = parseFloat(expensesResult[0]?.total ?? '0');
+  return (totalIncome - totalExpenses).toFixed(2);
+}
 
-  if (fundIds.length === 0) return [];
+export async function sumNetForDateRange(startDate: string, endDate: string): Promise<string> {
+  const [incomeResult, expensesResult] = await Promise.all([
+    db
+      .select({ total: sum(incomeEntries.amount) })
+      .from(incomeEntries)
+      .where(
+        and(
+          gte(incomeEntries.referenceDate, startDate),
+          lt(incomeEntries.referenceDate, endDate),
+          eq(incomeEntries.status, 'paga')
+        )
+      ),
+    db
+      .select({ total: sum(expenseEntries.amount) })
+      .from(expenseEntries)
+      .where(
+        and(
+          gte(expenseEntries.referenceDate, startDate),
+          lt(expenseEntries.referenceDate, endDate),
+          eq(expenseEntries.status, 'paga')
+        )
+      )
+  ]);
 
-  const funds = await db
-    .select({ id: designatedFunds.id, name: designatedFunds.name })
-    .from(designatedFunds)
-    .where(inArray(designatedFunds.id, fundIds));
-
-  const fundNameById = Object.fromEntries(funds.map((f) => [f.id, f.name]));
-  const incomeMap = Object.fromEntries(
-    incomeByFund.map((r) => [r.fundId!, parseFloat(r.total ?? '0')])
-  );
-  const expenseMap = Object.fromEntries(
-    expensesByFund.map((r) => [r.fundId!, parseFloat(r.total ?? '0')])
-  );
-
-  return fundIds.map((fundId) => ({
-    fundId,
-    fundName: fundNameById[fundId] ?? '',
-    balance: ((incomeMap[fundId] ?? 0) - (expenseMap[fundId] ?? 0)).toFixed(2)
-  }));
+  const totalIncome = parseFloat(incomeResult[0]?.total ?? '0');
+  const totalExpenses = parseFloat(expensesResult[0]?.total ?? '0');
+  return (totalIncome - totalExpenses).toFixed(2);
 }
 
 export async function findFinanceSettings() {
