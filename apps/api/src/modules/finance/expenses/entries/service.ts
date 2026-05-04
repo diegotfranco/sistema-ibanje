@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import * as repo from './repository';
-import { findExpenseCategoryById } from '../categories/repository';
+import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository';
+import { findMemberById } from '../../../members/repository';
 import { findPaymentMethodById } from '../../payment-methods/repository';
 import { findDesignatedFundById } from '../../designated-funds/repository';
 import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
@@ -29,10 +30,20 @@ async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  memberId?: number;
   parentId?: number;
 }) {
   const category = await findExpenseCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Expense category not found');
+
+  if (await hasChildrenExpenseCategory(data.categoryId)) {
+    throw httpError(400, 'Cannot select a parent category; choose a specific sub-category');
+  }
+
+  if (data.memberId) {
+    const member = await findMemberById(data.memberId);
+    if (!member) throw httpError(404, 'Member not found');
+  }
 
   const paymentMethod = await findPaymentMethodById(data.paymentMethodId);
   if (!paymentMethod) throw httpError(404, 'Payment method not found');
@@ -89,6 +100,7 @@ export async function createExpenseEntry(
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
+    memberId: body.memberId,
     parentId: body.parentId
   });
 
@@ -112,6 +124,7 @@ export async function updateExpenseEntry(
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
     designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
+    memberId: body.memberId ?? entry.memberId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined
   };
   await validateEntry(mergedValues);

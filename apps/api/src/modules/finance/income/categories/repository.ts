@@ -7,7 +7,7 @@ const selectFields = {
   parentId: incomeCategories.parentId,
   name: incomeCategories.name,
   description: incomeCategories.description,
-  requiresDonor: incomeCategories.requiresDonor,
+  requiresMember: incomeCategories.requiresMember,
   status: incomeCategories.status,
   createdAt: incomeCategories.createdAt
 };
@@ -38,7 +38,7 @@ export async function insertIncomeCategory(data: {
   name: string;
   description?: string;
   parentId?: number;
-  requiresDonor: boolean;
+  requiresMember: boolean;
 }) {
   const result = await db.insert(incomeCategories).values(data).returning(selectFields);
   return result[0] ?? null;
@@ -46,7 +46,7 @@ export async function insertIncomeCategory(data: {
 
 export async function updateIncomeCategory(
   id: number,
-  data: Partial<Pick<typeof incomeCategories.$inferInsert, 'name' | 'description' | 'parentId' | 'requiresDonor'>>
+  data: Partial<Pick<typeof incomeCategories.$inferInsert, 'name' | 'description' | 'parentId' | 'requiresMember'>>
 ) {
   const result = await db
     .update(incomeCategories)
@@ -62,4 +62,13 @@ export async function deactivateIncomeCategory(id: number) {
     .update(incomeCategories)
     .set({ status: 'inativo', updatedAt: new Date() })
     .where(eq(incomeCategories.id, id));
+}
+
+export async function hasChildrenIncomeCategory(parentId: number): Promise<boolean> {
+  const result = await db
+    .select({ id: incomeCategories.id })
+    .from(incomeCategories)
+    .where(eq(incomeCategories.parentId, parentId))
+    .limit(1);
+  return result.length > 0;
 }

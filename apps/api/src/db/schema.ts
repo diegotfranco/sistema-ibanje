@@ -157,7 +157,7 @@ export const designatedFunds = pgTable('designated_funds', {
   id: serial('id').primaryKey(),
   name: varchar('name', { length: 96 }).notNull(),
   description: text('description'),
-  goalAmount: numeric('goal_amount', { precision: 12, scale: 2 }),
+  targetAmount: numeric('target_amount', { precision: 12, scale: 2 }),
   status: activeStatus('status').default('ativo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
@@ -168,7 +168,7 @@ export const incomeCategories = pgTable('income_categories', {
   parentId: integer('parent_id').references((): AnyPgColumn => incomeCategories.id),
   name: varchar('name', { length: 64 }).notNull(),
   description: varchar('description', { length: 256 }),
-  requiresDonor: boolean('requires_donor').default(false).notNull(),
+  requiresMember: boolean('requires_member').default(false).notNull(),
   status: activeStatus('status').default('ativo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
@@ -224,6 +224,7 @@ export const expenseEntries = pgTable(
     categoryId: integer('category_id')
       .notNull()
       .references(() => expenseCategories.id),
+    memberId: integer('member_id').references(() => members.id),
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),

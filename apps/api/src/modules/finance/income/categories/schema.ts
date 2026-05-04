@@ -9,7 +9,7 @@ export const CreateIncomeCategoryRequestSchema = z.object({
   name: z.string().min(2).max(64),
   description: z.string().max(256).optional(),
   parentId: z.number().int().positive().optional(),
-  requiresDonor: z.boolean().default(false)
+  requiresMember: z.boolean().default(false)
 });
 
 export const UpdateIncomeCategoryRequestSchema = CreateIncomeCategoryRequestSchema.partial();
@@ -22,7 +22,7 @@ export type IncomeCategoryResponse = {
   parentId: number | null;
   name: string;
   description: string | null;
-  requiresDonor: boolean;
+  requiresMember: boolean;
   status: string;
   createdAt: Date;
 };

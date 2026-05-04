@@ -61,3 +61,12 @@ export async function deactivateExpenseCategory(id: number) {
     .set({ status: 'inativo', updatedAt: new Date() })
     .where(eq(expenseCategories.id, id));
 }
+
+export async function hasChildrenExpenseCategory(parentId: number): Promise<boolean> {
+  const result = await db
+    .select({ id: expenseCategories.id })
+    .from(expenseCategories)
+    .where(eq(expenseCategories.parentId, parentId))
+    .limit(1);
+  return result.length > 0;
+}

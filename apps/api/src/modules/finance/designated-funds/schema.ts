@@ -8,9 +8,9 @@ export const ListDesignatedFundsRequestSchema = z.object({
 export const CreateDesignatedFundRequestSchema = z.object({
   name: z.string().min(2).max(96),
   description: z.string().optional(),
-  goalAmount: z
+  targetAmount: z
     .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'goalAmount must be a positive decimal with up to 2 decimal places')
+    .regex(/^\d+(\.\d{1,2})?$/, 'targetAmount must be a positive decimal with up to 2 decimal places')
     .optional()
 });
 
@@ -23,7 +23,7 @@ export type DesignatedFundResponse = {
   id: number;
   name: string;
   description: string | null;
-  goalAmount: string | null;
+  targetAmount: string | null;
   status: string;
   createdAt: Date;
 };

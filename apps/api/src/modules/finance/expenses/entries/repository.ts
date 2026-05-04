@@ -4,7 +4,8 @@ import {
   expenseEntries,
   expenseCategories,
   paymentMethods,
-  designatedFunds
+  designatedFunds,
+  members
 } from '../../../../db/schema';
 
 const selectFields = {
@@ -22,6 +23,8 @@ const selectFields = {
   paymentMethodName: paymentMethods.name,
   designatedFundId: expenseEntries.designatedFundId,
   designatedFundName: designatedFunds.name,
+  memberId: expenseEntries.memberId,
+  memberName: members.name,
   receipt: expenseEntries.receipt,
   notes: expenseEntries.notes,
   userId: expenseEntries.userId,
@@ -36,7 +39,8 @@ function baseQuery() {
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
-    .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id));
+    .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(members, eq(expenseEntries.memberId, members.id));
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
@@ -67,6 +71,7 @@ export async function insertExpenseEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  memberId?: number;
   parentId?: number;
   receipt?: string;
   notes?: string;
@@ -88,7 +93,7 @@ export async function updateExpenseEntry(
   data: Partial<
     Pick<
       typeof expenseEntries.$inferInsert,
-      'referenceDate' | 'description' | 'total' | 'amount' | 'installment' | 'totalInstallments' | 'categoryId' | 'paymentMethodId' | 'designatedFundId' | 'parentId' | 'receipt' | 'notes' | 'status'
+      'referenceDate' | 'description' | 'total' | 'amount' | 'installment' | 'totalInstallments' | 'categoryId' | 'paymentMethodId' | 'designatedFundId' | 'memberId' | 'parentId' | 'receipt' | 'notes' | 'status'
     >
   >
 ) {

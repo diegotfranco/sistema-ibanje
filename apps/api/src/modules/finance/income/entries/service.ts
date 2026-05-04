@@ -1,5 +1,5 @@
 import * as repo from './repository';
-import { findIncomeCategoryById } from '../categories/repository';
+import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository';
 import { findPaymentMethodById } from '../../payment-methods/repository';
 import { findDesignatedFundById } from '../../designated-funds/repository';
 import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
@@ -32,8 +32,12 @@ async function validateEntry(data: {
   const category = await findIncomeCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Income category not found');
 
-  if (category.requiresDonor && !data.memberId) {
-    throw httpError(400, 'This category requires a donor (memberId)');
+  if (category.requiresMember && !data.memberId) {
+    throw httpError(400, 'This income category requires a donor (memberId)');
+  }
+
+  if (await hasChildrenIncomeCategory(data.categoryId)) {
+    throw httpError(400, 'Cannot select a parent category; choose a specific sub-category');
   }
 
   const paymentMethod = await findPaymentMethodById(data.paymentMethodId);

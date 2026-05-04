@@ -6,7 +6,7 @@ const selectFields = {
   id: designatedFunds.id,
   name: designatedFunds.name,
   description: designatedFunds.description,
-  goalAmount: designatedFunds.goalAmount,
+  targetAmount: designatedFunds.targetAmount,
   status: designatedFunds.status,
   createdAt: designatedFunds.createdAt
 };
@@ -36,7 +36,7 @@ export async function findDesignatedFundById(id: number) {
 export async function insertDesignatedFund(data: {
   name: string;
   description?: string;
-  goalAmount?: string;
+  targetAmount?: string;
 }) {
   const result = await db.insert(designatedFunds).values(data).returning(selectFields);
   return result[0] ?? null;
@@ -44,7 +44,7 @@ export async function insertDesignatedFund(data: {
 
 export async function updateDesignatedFund(
   id: number,
-  data: Partial<Pick<typeof designatedFunds.$inferInsert, 'name' | 'description' | 'goalAmount'>>
+  data: Partial<Pick<typeof designatedFunds.$inferInsert, 'name' | 'description' | 'targetAmount'>>
 ) {
   const result = await db
     .update(designatedFunds)

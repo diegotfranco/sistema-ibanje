@@ -15,6 +15,7 @@ export const CreateExpenseEntryRequestSchema = z.object({
   categoryId: z.number().int().positive(),
   paymentMethodId: z.number().int().positive(),
   designatedFundId: z.number().int().positive().optional(),
+  memberId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional()
 });
@@ -29,6 +30,7 @@ export const UpdateExpenseEntryRequestSchema = z.object({
   categoryId: z.number().int().positive().optional(),
   paymentMethodId: z.number().int().positive().optional(),
   designatedFundId: z.number().int().positive().optional(),
+  memberId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional(),
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()
@@ -52,6 +54,8 @@ export type ExpenseEntryResponse = {
   paymentMethodName: string;
   designatedFundId: number | null;
   designatedFundName: string | null;
+  memberId: number | null;
+  memberName: string | null;
   receipt: string | null; // presigned GET URL when set, null otherwise
   notes: string | null;
   userId: number;

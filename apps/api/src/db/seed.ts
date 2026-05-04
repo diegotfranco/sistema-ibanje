@@ -1,4 +1,5 @@
 import * as argon2 from 'argon2';
+import { sql as drizzleSql } from 'drizzle-orm';
 import { env } from '../config/env';
 import { db, sql } from '.';
 import {
@@ -30,6 +31,16 @@ async function seed() {
   console.log('Seeding database...');
 
   await db.transaction(async (tx) => {
+    // Wipe all tables in dependency order so the seed is idempotent on a live DB
+    await tx.execute(
+      drizzleSql`TRUNCATE roles, permissions, modules, users, role_module_permissions,
+          user_module_permissions, payment_methods, designated_funds,
+          income_categories, expense_categories, members, income_entries,
+          expense_entries, board_meetings, minutes, minute_versions,
+          monthly_closings, finance_settings
+          RESTART IDENTITY CASCADE`
+    );
+
     // --- Roles ---
     const insertedRoles = await tx
       .insert(roles)
@@ -355,67 +366,79 @@ async function seed() {
     const insertedFunds = await tx
       .insert(designatedFunds)
       .values([
-        { name: 'Fundo de Obras', description: 'Reserva para reformas e melhorias da sede' },
+        {
+          name: 'Fundo de Obras',
+          description: 'Reserva para reformas e melhorias da sede',
+          targetAmount: '50000.00'
+        },
         {
           name: 'Fundo Missionário',
           description: 'Recursos destinados ao apoio de missionários e seminaristas'
+        },
+        {
+          name: 'Dia das Crianças',
+          description: 'Campanha anual para o evento infantil',
+          targetAmount: '2000.00'
         }
       ])
       .returning();
     const dfByName = Object.fromEntries(insertedFunds.map((f) => [f.name, f]));
 
-    // --- Income Categories (root) ---
+    // --- Income Categories (2-level chart of accounts) ---
+    const [icContribuicoes, icOutrasReceitas] = await tx
+      .insert(incomeCategories)
+      .values([{ name: 'Contribuições' }, { name: 'Outras Receitas' }])
+      .returning();
+
     const insertedICs = await tx
       .insert(incomeCategories)
       .values([
-        { name: 'Dízimo', requiresDonor: true },
-        { name: 'Oferta' },
-        { name: 'Doações' },
-        { name: 'Missões' },
-        { name: 'PAM' }
+        { name: 'Dízimo', parentId: icContribuicoes.id, requiresMember: true },
+        { name: 'Oferta de Culto', parentId: icContribuicoes.id },
+        { name: 'Oferta Missionária', parentId: icContribuicoes.id },
+        { name: 'Doação', parentId: icContribuicoes.id },
+        { name: 'Rendimentos Financeiros', parentId: icOutrasReceitas.id },
+        { name: 'Eventos / Campanhas', parentId: icOutrasReceitas.id }
       ])
       .returning();
     const icByName: Record<string, (typeof insertedICs)[0]> = Object.fromEntries(
       insertedICs.map((c) => [c.name, c])
     );
 
-    // Income subcategory — demonstrates hierarchy
-    const [ofertaMissionaria] = await tx
-      .insert(incomeCategories)
-      .values({
-        name: 'Oferta Missionária',
-        parentId: icByName['Oferta'].id
-      })
+    // --- Expense Categories (2-level chart of accounts) ---
+    const [ecPessoal, ecOperacional, ecManutencao, ecEquipamentos, ecEventos] = await tx
+      .insert(expenseCategories)
+      .values([
+        { name: 'Pessoal' },
+        { name: 'Operacional' },
+        { name: 'Manutenção' },
+        { name: 'Equipamentos' },
+        { name: 'Eventos / Programas' }
+      ])
       .returning();
-    icByName['Oferta Missionária'] = ofertaMissionaria;
 
-    // --- Expense Categories (root) ---
     const insertedECs = await tx
       .insert(expenseCategories)
       .values([
-        { name: 'FGTM Pastoral' },
-        { name: 'Honorário Pastoral' },
-        { name: 'Fatura Água' },
-        { name: 'Fatura Energia' },
-        { name: 'Vigilância Patrimonial' },
-        { name: 'Tarifa Bancária' },
-        { name: 'Equipamentos' },
-        { name: 'Manutenção Predial' }
+        { name: 'Honorários Pastorais', parentId: ecPessoal.id },
+        { name: 'FGTM', parentId: ecPessoal.id },
+        { name: 'Encargos', parentId: ecPessoal.id },
+        { name: 'Água', parentId: ecOperacional.id },
+        { name: 'Energia', parentId: ecOperacional.id },
+        { name: 'Internet / Telefone', parentId: ecOperacional.id },
+        { name: 'Vigilância Patrimonial', parentId: ecOperacional.id },
+        { name: 'Tarifa Bancária', parentId: ecOperacional.id },
+        { name: 'Material de Limpeza', parentId: ecOperacional.id },
+        { name: 'Manutenção Predial', parentId: ecManutencao.id },
+        { name: 'Reparo Hidráulico', parentId: ecManutencao.id },
+        { name: 'Reparo Elétrico', parentId: ecManutencao.id },
+        { name: 'Compra de Equipamentos', parentId: ecEquipamentos.id },
+        { name: 'Despesas com Eventos', parentId: ecEventos.id }
       ])
       .returning();
     const ecByName: Record<string, (typeof insertedECs)[0]> = Object.fromEntries(
       insertedECs.map((c) => [c.name, c])
     );
-
-    // Expense subcategory — demonstrates hierarchy
-    const [reparoHidraulico] = await tx
-      .insert(expenseCategories)
-      .values({
-        name: 'Reparo Hidráulico',
-        parentId: ecByName['Manutenção Predial'].id
-      })
-      .returning();
-    ecByName['Reparo Hidráulico'] = reparoHidraulico;
 
     // --- Members ---
     // João da Silva is linked to the membro user to demonstrate the member-user relationship
@@ -499,7 +522,7 @@ async function seed() {
         referenceDate: '2025-08-10',
         depositDate: '2025-08-10',
         amount: '250.00',
-        categoryId: icByName['Oferta'].id,
+        categoryId: icByName['Oferta de Culto'].id,
         paymentMethodId: pmByName['Dinheiro'].id,
         status: 'paga',
         userId: tesoureiroId
@@ -519,7 +542,7 @@ async function seed() {
         referenceDate: '2025-09-07',
         depositDate: '2025-09-07',
         amount: '320.00',
-        categoryId: icByName['Oferta'].id,
+        categoryId: icByName['Oferta de Culto'].id,
         paymentMethodId: pmByName['Dinheiro'].id,
         status: 'paga',
         userId: tesoureiroId
@@ -528,7 +551,7 @@ async function seed() {
         referenceDate: '2025-09-30',
         depositDate: '2025-09-30',
         amount: '200.00',
-        categoryId: icByName['Doações'].id,
+        categoryId: icByName['Doação'].id,
         memberId: memberByName['João da Silva'].id,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'paga',
@@ -549,7 +572,7 @@ async function seed() {
         referenceDate: '2025-10-12',
         depositDate: '2025-10-12',
         amount: '150.00',
-        categoryId: icByName['Oferta'].id,
+        categoryId: icByName['Oferta de Culto'].id,
         paymentMethodId: pmByName['Dinheiro'].id,
         status: 'paga',
         userId: tesoureiroId
@@ -558,7 +581,7 @@ async function seed() {
         referenceDate: '2025-10-19',
         depositDate: '2025-10-19',
         amount: '350.00',
-        categoryId: icByName['Missões'].id,
+        categoryId: icByName['Oferta Missionária'].id,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'paga',
         userId: tesoureiroId,
@@ -577,10 +600,32 @@ async function seed() {
         referenceDate: '2025-10-20',
         depositDate: '2025-10-21',
         amount: '1000.00',
-        categoryId: icByName['Doações'].id,
+        categoryId: icByName['Doação'].id,
         memberId: memberByName['Maria Oliveira'].id,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'pendente',
+        userId: tesoureiroId
+      },
+      // Dia das Crianças campaign — income side
+      {
+        referenceDate: '2025-10-05',
+        depositDate: '2025-10-05',
+        amount: '800.00',
+        categoryId: icByName['Eventos / Campanhas'].id,
+        paymentMethodId: pmByName['Dinheiro'].id,
+        status: 'paga',
+        userId: tesoureiroId,
+        designatedFundId: dfByName['Dia das Crianças'].id
+      },
+      // Maria sponsors the freezer — donation income paired with sponsored expense
+      {
+        referenceDate: '2025-11-10',
+        depositDate: '2025-11-10',
+        amount: '500.00',
+        categoryId: icByName['Doação'].id,
+        memberId: memberByName['Maria Oliveira'].id,
+        paymentMethodId: pmByName['Transferência Bancária'].id,
+        status: 'paga',
         userId: tesoureiroId
       }
     ]);
@@ -590,30 +635,30 @@ async function seed() {
       // August 2025
       {
         referenceDate: '2025-08-15',
-        description: 'Fatura Água',
+        description: 'Conta de água – agosto',
         total: '260.00',
         amount: '260.00',
-        categoryId: ecByName['Fatura Água'].id,
+        categoryId: ecByName['Água'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-08-20',
-        description: 'Honorário Pastoral',
+        description: 'Honorário pastoral – agosto',
         total: '400.00',
         amount: '400.00',
-        categoryId: ecByName['Honorário Pastoral'].id,
+        categoryId: ecByName['Honorários Pastorais'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-08-25',
-        description: 'Fatura Energia',
+        description: 'Conta de energia – agosto',
         total: '360.00',
         amount: '360.00',
-        categoryId: ecByName['Fatura Energia'].id,
+        categoryId: ecByName['Energia'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'paga'
@@ -621,7 +666,7 @@ async function seed() {
       // September 2025
       {
         referenceDate: '2025-09-05',
-        description: 'Serviço de Jardinagem',
+        description: 'Serviço de jardinagem',
         total: '180.00',
         amount: '180.00',
         categoryId: ecByName['Manutenção Predial'].id,
@@ -641,30 +686,30 @@ async function seed() {
       },
       {
         referenceDate: '2025-09-15',
-        description: 'Fatura Água',
+        description: 'Conta de água – setembro',
         total: '255.00',
         amount: '255.00',
-        categoryId: ecByName['Fatura Água'].id,
+        categoryId: ecByName['Água'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-09-20',
-        description: 'Honorário Pastoral',
+        description: 'Honorário pastoral – setembro',
         total: '400.00',
         amount: '400.00',
-        categoryId: ecByName['Honorário Pastoral'].id,
+        categoryId: ecByName['Honorários Pastorais'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-09-25',
-        description: 'Fatura Energia',
+        description: 'Conta de energia – setembro',
         total: '355.00',
         amount: '355.00',
-        categoryId: ecByName['Fatura Energia'].id,
+        categoryId: ecByName['Energia'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'paga'
@@ -672,33 +717,45 @@ async function seed() {
       // October 2025
       {
         referenceDate: '2025-10-10',
-        description: 'Fatura Água',
+        description: 'Conta de água – outubro',
         total: '250.00',
         amount: '250.00',
-        categoryId: ecByName['Fatura Água'].id,
+        categoryId: ecByName['Água'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-10-15',
-        description: 'Honorário Pastoral',
+        description: 'Honorário pastoral – outubro',
         total: '400.00',
         amount: '400.00',
-        categoryId: ecByName['Honorário Pastoral'].id,
+        categoryId: ecByName['Honorários Pastorais'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Transferência Bancária'].id,
         status: 'paga'
       },
       {
         referenceDate: '2025-10-25',
-        description: 'Fatura Energia',
+        description: 'Conta de energia – outubro',
         total: '350.00',
         amount: '350.00',
-        categoryId: ecByName['Fatura Energia'].id,
+        categoryId: ecByName['Energia'].id,
         userId: tesoureiroId,
         paymentMethodId: pmByName['Boleto Bancário'].id,
         status: 'pendente'
+      },
+      // Dia das Crianças campaign — expense side
+      {
+        referenceDate: '2025-10-05',
+        description: 'Despesas com Dia das Crianças',
+        total: '650.00',
+        amount: '650.00',
+        categoryId: ecByName['Despesas com Eventos'].id,
+        userId: tesoureiroId,
+        paymentMethodId: pmByName['Dinheiro'].id,
+        status: 'paga',
+        designatedFundId: dfByName['Dia das Crianças'].id
       }
     ]);
 
@@ -707,12 +764,12 @@ async function seed() {
       .insert(expenseEntries)
       .values({
         referenceDate: '2025-10-01',
-        description: 'Projetor Multimídia - Parcela 1/3',
+        description: 'Projetor Multimídia – Parcela 1/3',
         total: '1500.00',
         amount: '500.00',
         installment: 1,
         totalInstallments: 3,
-        categoryId: ecByName['Equipamentos'].id,
+        categoryId: ecByName['Compra de Equipamentos'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Cartão de Crédito'].id,
         status: 'paga'
@@ -723,12 +780,12 @@ async function seed() {
       {
         parentId: projInst1.id,
         referenceDate: '2025-11-01',
-        description: 'Projetor Multimídia - Parcela 2/3',
+        description: 'Projetor Multimídia – Parcela 2/3',
         total: '1500.00',
         amount: '500.00',
         installment: 2,
         totalInstallments: 3,
-        categoryId: ecByName['Equipamentos'].id,
+        categoryId: ecByName['Compra de Equipamentos'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Cartão de Crédito'].id,
         status: 'pendente'
@@ -736,15 +793,64 @@ async function seed() {
       {
         parentId: projInst1.id,
         referenceDate: '2025-12-01',
-        description: 'Projetor Multimídia - Parcela 3/3',
+        description: 'Projetor Multimídia – Parcela 3/3',
         total: '1500.00',
         amount: '500.00',
         installment: 3,
         totalInstallments: 3,
-        categoryId: ecByName['Equipamentos'].id,
+        categoryId: ecByName['Compra de Equipamentos'].id,
         userId: tesRespId,
         paymentMethodId: pmByName['Cartão de Crédito'].id,
         status: 'pendente'
+      }
+    ]);
+
+    // Multi-installment expense sponsored by Maria — freezer, 10 installments
+    const [freezerInst1] = await tx
+      .insert(expenseEntries)
+      .values({
+        referenceDate: '2025-09-10',
+        description: 'Freezer – Parcela 1/10',
+        total: '5000.00',
+        amount: '500.00',
+        installment: 1,
+        totalInstallments: 10,
+        categoryId: ecByName['Compra de Equipamentos'].id,
+        userId: tesRespId,
+        paymentMethodId: pmByName['Transferência Bancária'].id,
+        status: 'paga',
+        memberId: memberByName['Maria Oliveira'].id
+      })
+      .returning();
+
+    await tx.insert(expenseEntries).values([
+      {
+        parentId: freezerInst1.id,
+        referenceDate: '2025-10-10',
+        description: 'Freezer – Parcela 2/10',
+        total: '5000.00',
+        amount: '500.00',
+        installment: 2,
+        totalInstallments: 10,
+        categoryId: ecByName['Compra de Equipamentos'].id,
+        userId: tesRespId,
+        paymentMethodId: pmByName['Transferência Bancária'].id,
+        status: 'paga',
+        memberId: memberByName['Maria Oliveira'].id
+      },
+      {
+        parentId: freezerInst1.id,
+        referenceDate: '2025-11-10',
+        description: 'Freezer – Parcela 3/10',
+        total: '5000.00',
+        amount: '500.00',
+        installment: 3,
+        totalInstallments: 10,
+        categoryId: ecByName['Compra de Equipamentos'].id,
+        userId: tesRespId,
+        paymentMethodId: pmByName['Transferência Bancária'].id,
+        status: 'paga',
+        memberId: memberByName['Maria Oliveira'].id
       }
     ]);
 
