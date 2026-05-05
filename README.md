@@ -52,25 +52,25 @@ pnpm format                              # format everything
 
 ## API stack
 
-| Tool | Purpose |
-|---|---|
-| Fastify 5 | HTTP framework |
-| Drizzle ORM + postgres.js | Database access (PostgreSQL 18) |
-| Zod v4 | Schema validation |
-| @fastify/session + Redis | Session-based auth |
-| MinIO | Receipt file storage (S3-compatible) |
-| @react-pdf/renderer | PDF report generation |
+| Tool                      | Purpose                              |
+| ------------------------- | ------------------------------------ |
+| Fastify 5                 | HTTP framework                       |
+| Drizzle ORM + postgres.js | Database access (PostgreSQL 18)      |
+| Zod v4                    | Schema validation                    |
+| @fastify/session + Redis  | Session-based auth                   |
+| MinIO                     | Receipt file storage (S3-compatible) |
+| @react-pdf/renderer       | PDF report generation                |
 
 ## Web stack
 
-| Tool | Purpose |
-|---|---|
-| React 19 + Vite 8 | UI + bundler |
-| Tailwind CSS v4 | Styling (CSS-first, no config file) |
-| shadcn/ui | Component library (new-york style, zinc base) |
-| TanStack Query v5 | Server state and caching |
-| React Router v7 | Client-side routing |
-| React Compiler | Auto-memoization via Babel plugin |
+| Tool              | Purpose                                       |
+| ----------------- | --------------------------------------------- |
+| React 19 + Vite 8 | UI + bundler                                  |
+| Tailwind CSS v4   | Styling (CSS-first, no config file)           |
+| shadcn/ui         | Component library (new-york style, zinc base) |
+| TanStack Query v5 | Server state and caching                      |
+| React Router v7   | Client-side routing                           |
+| React Compiler    | Auto-memoization via Babel plugin             |
 
 ### Adding shadcn components
 
@@ -88,8 +88,8 @@ Components are copied into `src/components/ui/` as plain `.tsx` files you own an
 `@/` maps to `apps/web/src/`. Use it for all internal imports:
 
 ```ts
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 ```
 
 ### API client
@@ -97,10 +97,10 @@ import { Button } from '@/components/ui/button'
 `src/lib/api.ts` provides typed `get`, `post`, `patch`, `delete` helpers that handle CSRF automatically:
 
 ```ts
-import { api } from '@/lib/api'
+import { api } from '@/lib/api';
 
-const members = await api.get<Member[]>('/members')
-await api.post('/members', { name: 'João' })
+const members = await api.get<Member[]>('/members');
+await api.post('/members', { name: 'João' });
 ```
 
 ## Environment

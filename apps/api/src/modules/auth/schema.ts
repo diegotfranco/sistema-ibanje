@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export type { MeResponse } from '@sistema-ibanje/shared';
+
 export const LoginRequestSchema = z.object({
   email: z.email(),
   password: z.string().min(1)
@@ -23,11 +25,3 @@ export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
-
-export type MeResponse = {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-};
