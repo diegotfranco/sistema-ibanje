@@ -6,6 +6,7 @@ import { incomeEntriesRoutes } from './income/entries/routes';
 import { expenseCategoriesRoutes } from './expenses/categories/routes';
 import { expenseEntriesRoutes } from './expenses/entries/routes';
 import { monthlyClosingsRoutes } from './monthly-closings/routes';
+import { reportsRoutes } from './reports/routes';
 
 export async function financeRoutes(app: FastifyInstance) {
   await app.register(paymentMethodsRoutes);
@@ -15,4 +16,5 @@ export async function financeRoutes(app: FastifyInstance) {
   await app.register(expenseCategoriesRoutes);
   await app.register(expenseEntriesRoutes);
   await app.register(monthlyClosingsRoutes);
+  await app.register(reportsRoutes);
 }

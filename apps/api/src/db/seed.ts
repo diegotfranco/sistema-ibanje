@@ -74,6 +74,10 @@ async function seed() {
           description: 'Gestão financeira do dia-a-dia, sem permissão para remover lançamentos.'
         },
         {
+          name: 'Comissão de Exame de Contas',
+          description: 'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
+        },
+        {
           name: 'Membro',
           description: 'Acesso de visualização para transparência de atas e dados pessoais.'
         }
@@ -225,6 +229,21 @@ async function seed() {
       ),
       ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
 
+      // Comissão de Exame de Contas: financial — read
+      ...cross(
+        roleByName['Comissão de Exame de Contas'].id,
+        [
+          'Painel',
+          'Categorias de Entradas',
+          'Lançamentos de Entradas',
+          'Categorias de Saídas',
+          'Lançamentos de Saídas',
+          'Formas de Pagamento',
+          'Fundos Designados'
+        ],
+        readPermIds
+      ),
+
       // Tesoureiro Responsável: financial (panel included) full, admin (no panel) read
       ...cross(
         roleByName['Tesoureiro Responsável'].id,
@@ -329,6 +348,13 @@ async function seed() {
         roleByName['Vice-Presidente'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
+      ),
+
+        // Comissão de Exame de Contas: closings — review
+      ...cross(
+        roleByName['Comissão de Exame de Contas'].id,
+        ['Fechamentos Mensais'],
+        ['Acessar', 'Revisar'].map((n) => permByName[n].id)
       ),
 
       // Membro: view only
