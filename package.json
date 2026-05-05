@@ -2,18 +2,23 @@
   "name": "sistema-ibanje",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@10.33.2",
+  "packageManager": "pnpm@10.33.3+sha512.a19744364a7e248b92657a4ca5973f9354d21caf982579674b1c539f32c7420c47138ad8b1254df07aba9bc782d9b3029e3db34d5dbff974326eb74dac8ff489",
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
-    "format": "turbo format"
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,md,json,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,md,json,yaml,yml}\""
   },
   "devDependencies": {
-    "eslint": "^10.2.1",
+    "@typescript-eslint/parser": "^8.59.2",
+    "eslint": "^10.3.0",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "globals": "^17.6.0",
     "prettier": "^3.8.3",
     "turbo": "latest",
-    "typescript-eslint": "^8.59.1"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.59.2"
   }
 }

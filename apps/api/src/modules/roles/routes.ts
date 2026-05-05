@@ -7,7 +7,7 @@ import {
   ListRolesRequestSchema,
   CreateRoleRequestSchema,
   UpdateRoleRequestSchema,
-  SetRolePermissionsRequestSchema,
+  SetRolePermissionsRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -16,7 +16,7 @@ export async function rolesRoutes(app: FastifyInstance) {
     '/roles',
     {
       schema: { tags: ['Roles'], querystring: ListRolesRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Roles, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.View)]
     },
     controller.list
   );
@@ -31,7 +31,7 @@ export async function rolesRoutes(app: FastifyInstance) {
     '/roles',
     {
       schema: { tags: ['Roles'], body: CreateRoleRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Create)]
     },
     controller.create
   );
@@ -40,7 +40,7 @@ export async function rolesRoutes(app: FastifyInstance) {
     '/roles/:id',
     {
       schema: { tags: ['Roles'], params: IdParamSchema, body: UpdateRoleRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)]
     },
     controller.update
   );
@@ -49,7 +49,7 @@ export async function rolesRoutes(app: FastifyInstance) {
     '/roles/:id',
     {
       schema: { tags: ['Roles'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Delete)]
     },
     controller.remove
   );
@@ -64,11 +64,19 @@ export async function rolesRoutes(app: FastifyInstance) {
     '/roles/:id/permissions',
     {
       schema: { tags: ['Roles'], params: IdParamSchema, body: SetRolePermissionsRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Update)]
     },
     controller.setPermissions
   );
 
-  app.get('/modules', { schema: { tags: ['Roles'] }, preHandler: [requireAuth] }, controller.getModules);
-  app.get('/permission-types', { schema: { tags: ['Roles'] }, preHandler: [requireAuth] }, controller.getPermissionTypes);
+  app.get(
+    '/modules',
+    { schema: { tags: ['Roles'] }, preHandler: [requireAuth] },
+    controller.getModules
+  );
+  app.get(
+    '/permission-types',
+    { schema: { tags: ['Roles'] }, preHandler: [requireAuth] },
+    controller.getPermissionTypes
+  );
 }

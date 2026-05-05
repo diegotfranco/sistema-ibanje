@@ -12,7 +12,12 @@ export async function listDesignatedFunds(callerId: number, page: number, limit:
   await assertPermission(callerId, Module.DesignatedFunds, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listDesignatedFunds(offset, limit);
-  return paginate(rows.map((r): DesignatedFundResponse => r), total, page, limit);
+  return paginate(
+    rows.map((r): DesignatedFundResponse => r),
+    total,
+    page,
+    limit
+  );
 }
 
 export async function getDesignatedFundById(id: number): Promise<DesignatedFundResponse | null> {

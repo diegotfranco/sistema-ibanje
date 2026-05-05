@@ -44,19 +44,14 @@ function baseQuery() {
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
-  const rows = await baseQuery()
-    .orderBy(expenseEntries.id)
-    .offset(offset)
-    .limit(limit);
+  const rows = await baseQuery().orderBy(expenseEntries.id).offset(offset).limit(limit);
 
   const countResult = await db.select({ count: count() }).from(expenseEntries);
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
 export async function findExpenseEntryById(id: number) {
-  const result = await baseQuery()
-    .where(eq(expenseEntries.id, id))
-    .limit(1);
+  const result = await baseQuery().where(eq(expenseEntries.id, id)).limit(1);
 
   return result[0] ?? null;
 }
@@ -82,7 +77,10 @@ export async function insertExpenseEntry(data: {
     total: data.total.toString(),
     amount: data.amount.toString()
   };
-  const result = await db.insert(expenseEntries).values(insertData).returning({ id: expenseEntries.id });
+  const result = await db
+    .insert(expenseEntries)
+    .values(insertData)
+    .returning({ id: expenseEntries.id });
   const insertedId = result[0]?.id;
   if (!insertedId) throw new Error('Failed to retrieve inserted entry ID');
   return findExpenseEntryById(insertedId);
@@ -93,16 +91,29 @@ export async function updateExpenseEntry(
   data: Partial<
     Pick<
       typeof expenseEntries.$inferInsert,
-      'referenceDate' | 'description' | 'total' | 'amount' | 'installment' | 'totalInstallments' | 'categoryId' | 'paymentMethodId' | 'designatedFundId' | 'memberId' | 'parentId' | 'receipt' | 'notes' | 'status'
+      | 'referenceDate'
+      | 'description'
+      | 'total'
+      | 'amount'
+      | 'installment'
+      | 'totalInstallments'
+      | 'categoryId'
+      | 'paymentMethodId'
+      | 'designatedFundId'
+      | 'memberId'
+      | 'parentId'
+      | 'receipt'
+      | 'notes'
+      | 'status'
     >
   >
 ) {
-  const updateData: Record<string, any> = { ...data };
+  const updateData: Partial<typeof expenseEntries.$inferInsert> = { ...data };
   if (data.total !== undefined) {
-    updateData.total = data.total.toString();
+    updateData.total = String(data.total);
   }
   if (data.amount !== undefined) {
-    updateData.amount = data.amount.toString();
+    updateData.amount = String(data.amount);
   }
 
   await db

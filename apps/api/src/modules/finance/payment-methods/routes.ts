@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../lib/validation';
 import {
   ListPaymentMethodsRequestSchema,
   CreatePaymentMethodRequestSchema,
-  UpdatePaymentMethodRequestSchema,
+  UpdatePaymentMethodRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
     '/payment-methods',
     {
       schema: { tags: ['Payment Methods'], querystring: ListPaymentMethodsRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
     '/payment-methods',
     {
       schema: { tags: ['Payment Methods'], body: CreatePaymentMethodRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
   app.patch(
     '/payment-methods/:id',
     {
-      schema: { tags: ['Payment Methods'], params: IdParamSchema, body: UpdatePaymentMethodRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Update)],
+      schema: {
+        tags: ['Payment Methods'],
+        params: IdParamSchema,
+        body: UpdatePaymentMethodRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
     '/payment-methods/:id',
     {
       schema: { tags: ['Payment Methods'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)]
     },
     controller.remove
   );

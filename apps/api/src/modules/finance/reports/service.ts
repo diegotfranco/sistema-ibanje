@@ -42,7 +42,15 @@ function buildFundSummary(
     targetAmount !== null && parseFloat(targetAmount) > 0
       ? ((parseFloat(balance) / parseFloat(targetAmount)) * 100).toFixed(2)
       : null;
-  return { fundId, fundName, targetAmount, totalRaised: raised, totalExpenses: expenses, balance, progressPercentage };
+  return {
+    fundId,
+    fundName,
+    targetAmount,
+    totalRaised: raised,
+    totalExpenses: expenses,
+    balance,
+    progressPercentage
+  };
 }
 
 function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
@@ -51,7 +59,13 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
   for (const agg of aggregates) {
     const key = `${agg.columnKind}:${agg.columnRefId}`;
     if (!columnMap.has(key)) {
-      columnMap.set(key, { key, label: agg.columnLabel, kind: agg.columnKind, refId: agg.columnRefId, total: '0.00' });
+      columnMap.set(key, {
+        key,
+        label: agg.columnLabel,
+        kind: agg.columnKind,
+        refId: agg.columnRefId,
+        total: '0.00'
+      });
     }
     const col = columnMap.get(key)!;
     col.total = (parseFloat(col.total) + parseFloat(agg.total)).toFixed(2);
@@ -174,15 +188,21 @@ export async function getFinancialStatement(
   await assertPermission(callerId, Module.Reports, Action.Report);
   validateDateRange(from, to);
 
-  const [incomeByCategory, incomeByFund, expensesByCategory, totalIncome, totalExpenses, openingBalance] =
-    await Promise.all([
-      repo.getIncomeByCategoryForRange(from, to),
-      repo.getIncomeByFundForRange(from, to),
-      repo.getExpensesByCategoryForRange(from, to),
-      repo.sumIncomeForRange(from, to),
-      repo.sumExpensesForRange(from, to),
-      computeOpeningBalance(from)
-    ]);
+  const [
+    incomeByCategory,
+    incomeByFund,
+    expensesByCategory,
+    totalIncome,
+    totalExpenses,
+    openingBalance
+  ] = await Promise.all([
+    repo.getIncomeByCategoryForRange(from, to),
+    repo.getIncomeByFundForRange(from, to),
+    repo.getExpensesByCategoryForRange(from, to),
+    repo.sumIncomeForRange(from, to),
+    repo.sumExpensesForRange(from, to),
+    computeOpeningBalance(from)
+  ]);
 
   const currentBalance = (
     parseFloat(openingBalance) +
@@ -291,7 +311,9 @@ export async function renderFinancialStatementPdf(
   to: string
 ): Promise<Buffer> {
   const data = await getFinancialStatement(callerId, from, to);
-  return renderToBuffer(React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>);
+  return renderToBuffer(
+    React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
+  );
 }
 
 export async function getDetailedFinancialStatement(
@@ -336,5 +358,9 @@ export async function renderDetailedFinancialStatementPdf(
   to: string
 ): Promise<Buffer> {
   const data = await getDetailedFinancialStatement(callerId, from, to);
-  return renderToBuffer(React.createElement(DetailedFinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>);
+  return renderToBuffer(
+    React.createElement(DetailedFinancialStatementPdf, {
+      data
+    }) as React.ReactElement<DocumentProps>
+  );
 }

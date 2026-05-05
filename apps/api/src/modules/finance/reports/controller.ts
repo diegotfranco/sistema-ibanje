@@ -23,7 +23,10 @@ export async function financialStatementPdf(req: FastifyRequest, reply: FastifyR
   const pdf = await service.renderFinancialStatementPdf(req.session.userId!, from, to);
   return reply
     .header('Content-Type', 'application/pdf')
-    .header('Content-Disposition', `attachment; filename="relatorio_fechamento_simples-${from}-${to}.pdf"`)
+    .header(
+      'Content-Disposition',
+      `attachment; filename="relatorio_fechamento_simples-${from}-${to}.pdf"`
+    )
     .send(pdf);
 }
 
@@ -37,7 +40,10 @@ export async function detailedFinancialStatementPdf(req: FastifyRequest, reply: 
   const pdf = await service.renderDetailedFinancialStatementPdf(req.session.userId!, from, to);
   return reply
     .header('Content-Type', 'application/pdf')
-    .header('Content-Disposition', `attachment; filename="relatorio_fechamento_detalhado-${from}-${to}.pdf"`)
+    .header(
+      'Content-Disposition',
+      `attachment; filename="relatorio_fechamento_detalhado-${from}-${to}.pdf"`
+    )
     .send(pdf);
 }
 

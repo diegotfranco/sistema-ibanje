@@ -4,7 +4,7 @@ import type {
   UpdateUserRequest,
   UpdatePasswordRequest,
   UpdatePermissionsRequest,
-  CreateUserRequest,
+  CreateUserRequest
 } from './schema';
 import type { IdParam } from '../../lib/validation';
 import * as service from './service';

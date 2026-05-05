@@ -61,7 +61,9 @@ export async function findMemberById(id: number) {
   return result[0] ?? null;
 }
 
-export async function insertMember(data: Omit<typeof members.$inferInsert, 'id' | 'status' | 'createdAt' | 'updatedAt'>) {
+export async function insertMember(
+  data: Omit<typeof members.$inferInsert, 'id' | 'status' | 'createdAt' | 'updatedAt'>
+) {
   const result = await db
     .insert(members)
     .values({

@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../lib/validation';
 import {
   ListDesignatedFundsRequestSchema,
   CreateDesignatedFundRequestSchema,
-  UpdateDesignatedFundRequestSchema,
+  UpdateDesignatedFundRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
     '/designated-funds',
     {
       schema: { tags: ['Designated Funds'], querystring: ListDesignatedFundsRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
     '/designated-funds',
     {
       schema: { tags: ['Designated Funds'], body: CreateDesignatedFundRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
   app.patch(
     '/designated-funds/:id',
     {
-      schema: { tags: ['Designated Funds'], params: IdParamSchema, body: UpdateDesignatedFundRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)],
+      schema: {
+        tags: ['Designated Funds'],
+        params: IdParamSchema,
+        body: UpdateDesignatedFundRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
     '/designated-funds/:id',
     {
       schema: { tags: ['Designated Funds'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Delete)]
     },
     controller.remove
   );

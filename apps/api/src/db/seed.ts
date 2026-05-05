@@ -75,7 +75,8 @@ async function seed() {
         },
         {
           name: 'Comissão de Exame de Contas',
-          description: 'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
+          description:
+            'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
         },
         {
           name: 'Membro',
@@ -126,7 +127,10 @@ async function seed() {
           name: 'Relatórios',
           description: 'Área destinada à geração de relatórios financeiros e administrativos'
         },
-        { name: 'Fechamentos Mensais', description: 'Gerencia os fechamentos mensais de tesouraria' },
+        {
+          name: 'Fechamentos Mensais',
+          description: 'Gerencia os fechamentos mensais de tesouraria'
+        },
         { name: 'Pautas', description: 'Gerencia as pautas das reuniões da diretoria' },
         { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' }
       ])
@@ -350,7 +354,7 @@ async function seed() {
         ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
       ),
 
-        // Comissão de Exame de Contas: closings — review
+      // Comissão de Exame de Contas: closings — review
       ...cross(
         roleByName['Comissão de Exame de Contas'].id,
         ['Fechamentos Mensais'],

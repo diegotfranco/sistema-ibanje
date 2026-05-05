@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../lib/validation';
 import {
   ListMembersRequestSchema,
   CreateMemberRequestSchema,
-  UpdateMemberRequestSchema,
+  UpdateMemberRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function membersRoutes(app: FastifyInstance) {
     '/members',
     {
       schema: { tags: ['Members'], body: CreateMemberRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.Members, Action.Create)]
     },
     controller.create
   );
@@ -24,7 +24,7 @@ export async function membersRoutes(app: FastifyInstance) {
     '/members',
     {
       schema: { tags: ['Members'], querystring: ListMembersRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.Members, Action.View)]
     },
     controller.list
   );
@@ -39,7 +39,7 @@ export async function membersRoutes(app: FastifyInstance) {
     '/members/:id',
     {
       schema: { tags: ['Members'], params: IdParamSchema, body: UpdateMemberRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.Members, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +48,7 @@ export async function membersRoutes(app: FastifyInstance) {
     '/members/:id',
     {
       schema: { tags: ['Members'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.Members, Action.Delete)]
     },
     controller.remove
   );

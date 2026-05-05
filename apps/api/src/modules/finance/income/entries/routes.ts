@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../../lib/validation';
 import {
   ListIncomeEntriesRequestSchema,
   CreateIncomeEntryRequestSchema,
-  UpdateIncomeEntryRequestSchema,
+  UpdateIncomeEntryRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function incomeEntriesRoutes(app: FastifyInstance) {
     '/income-entries',
     {
       schema: { tags: ['Income Entries'], querystring: ListIncomeEntriesRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function incomeEntriesRoutes(app: FastifyInstance) {
     '/income-entries',
     {
       schema: { tags: ['Income Entries'], body: CreateIncomeEntryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function incomeEntriesRoutes(app: FastifyInstance) {
   app.patch(
     '/income-entries/:id',
     {
-      schema: { tags: ['Income Entries'], params: IdParamSchema, body: UpdateIncomeEntryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Update)],
+      schema: {
+        tags: ['Income Entries'],
+        params: IdParamSchema,
+        body: UpdateIncomeEntryRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function incomeEntriesRoutes(app: FastifyInstance) {
     '/income-entries/:id',
     {
       schema: { tags: ['Income Entries'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.Delete)]
     },
     controller.remove
   );

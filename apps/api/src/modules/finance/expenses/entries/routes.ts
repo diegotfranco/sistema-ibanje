@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../../lib/validation';
 import {
   ListExpenseEntriesRequestSchema,
   CreateExpenseEntryRequestSchema,
-  UpdateExpenseEntryRequestSchema,
+  UpdateExpenseEntryRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     '/expense-entries',
     {
       schema: { tags: ['Expense Entries'], querystring: ListExpenseEntriesRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     '/expense-entries',
     {
       schema: { tags: ['Expense Entries'], body: CreateExpenseEntryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
   app.patch(
     '/expense-entries/:id',
     {
-      schema: { tags: ['Expense Entries'], params: IdParamSchema, body: UpdateExpenseEntryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)],
+      schema: {
+        tags: ['Expense Entries'],
+        params: IdParamSchema,
+        body: UpdateExpenseEntryRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     '/expense-entries/:id',
     {
       schema: { tags: ['Expense Entries'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Delete)]
     },
     controller.remove
   );
@@ -58,7 +62,7 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     '/expense-entries/:id/receipt',
     {
       schema: { tags: ['Expense Entries'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)]
     },
     controller.uploadReceipt
   );
@@ -67,7 +71,7 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     '/expense-entries/:id/receipt',
     {
       schema: { tags: ['Expense Entries'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)]
     },
     controller.deleteReceipt
   );

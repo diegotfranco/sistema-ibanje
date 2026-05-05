@@ -1,16 +1,10 @@
-import tseslint from 'typescript-eslint'
-import prettier from 'eslint-config-prettier'
+import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
+import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
+  {
+    ignores: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.turbo/**']
+  },
   ...tseslint.configs.recommended,
-  prettier,
-  {
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-    },
-  },
-  {
-    ignores: ['**/dist/**', '**/node_modules/**'],
-  },
-)
+  eslintPluginPrettierRecommended
+);

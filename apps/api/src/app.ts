@@ -3,6 +3,7 @@ import multipart from '@fastify/multipart';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { env } from './config/env';
 import { sql } from './db';
+import { registerCorsPlugin } from './plugins/cors';
 import { registerSwaggerPlugin } from './plugins/swagger';
 import { registerSessionPlugin } from './plugins/session';
 import { registerRateLimitPlugin } from './plugins/rateLimit';
@@ -22,6 +23,7 @@ export async function buildApp() {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
+  await registerCorsPlugin(app);
   await app.register(multipart, { limits: { fileSize: 5 * 1024 * 1024 } });
   await registerSwaggerPlugin(app);
   await registerSessionPlugin(app);

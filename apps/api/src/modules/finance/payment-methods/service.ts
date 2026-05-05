@@ -13,7 +13,12 @@ export async function listPaymentMethods(callerId: number, page: number, limit: 
   await assertPermission(callerId, Module.PaymentMethods, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listPaymentMethods(offset, limit);
-  return paginate(rows.map((r): PaymentMethodResponse => r), total, page, limit);
+  return paginate(
+    rows.map((r): PaymentMethodResponse => r),
+    total,
+    page,
+    limit
+  );
 }
 
 export async function getPaymentMethodById(id: number): Promise<PaymentMethodResponse | null> {

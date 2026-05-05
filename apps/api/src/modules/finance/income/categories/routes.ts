@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../../lib/validation';
 import {
   ListIncomeCategoriesRequestSchema,
   CreateIncomeCategoryRequestSchema,
-  UpdateIncomeCategoryRequestSchema,
+  UpdateIncomeCategoryRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function incomeCategoriesRoutes(app: FastifyInstance) {
     '/income-categories',
     {
       schema: { tags: ['Income Categories'], querystring: ListIncomeCategoriesRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function incomeCategoriesRoutes(app: FastifyInstance) {
     '/income-categories',
     {
       schema: { tags: ['Income Categories'], body: CreateIncomeCategoryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function incomeCategoriesRoutes(app: FastifyInstance) {
   app.patch(
     '/income-categories/:id',
     {
-      schema: { tags: ['Income Categories'], params: IdParamSchema, body: UpdateIncomeCategoryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Update)],
+      schema: {
+        tags: ['Income Categories'],
+        params: IdParamSchema,
+        body: UpdateIncomeCategoryRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function incomeCategoriesRoutes(app: FastifyInstance) {
     '/income-categories/:id',
     {
       schema: { tags: ['Income Categories'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Delete)]
     },
     controller.remove
   );

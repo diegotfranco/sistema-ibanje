@@ -87,11 +87,7 @@ export async function countIncomeReportRows(from: string, to: string): Promise<n
         eq(incomeEntries.status, 'paga')
       )
     )
-    .groupBy(
-      incomeEntries.referenceDate,
-      incomeEntries.categoryId,
-      incomeEntries.designatedFundId
-    )
+    .groupBy(incomeEntries.referenceDate, incomeEntries.categoryId, incomeEntries.designatedFundId)
     .as('grouped');
   const result = await db.select({ count: count() }).from(grouped);
   return result[0]?.count ?? 0;
@@ -209,12 +205,7 @@ export async function getIncomeByCategoryForRange(
         eq(incomeEntries.status, 'paga')
       )
     )
-    .groupBy(
-      incomeCategories.id,
-      incomeCategories.name,
-      parentIncomeCat.id,
-      parentIncomeCat.name
-    );
+    .groupBy(incomeCategories.id, incomeCategories.name, parentIncomeCat.id, parentIncomeCat.name);
 
   return rows.map((r) => ({
     parentCategoryId: r.parentCategoryId ?? null,
@@ -292,8 +283,13 @@ export async function getExpensesByCategoryForRange(
   }));
 }
 
-export async function getIncomeAggregatesForRange(from: string, to: string): Promise<IncomeAggregateRow[]> {
-  const colKind = sql<'category' | 'fund'>`CASE WHEN ${incomeEntries.designatedFundId} IS NULL THEN 'category' ELSE 'fund' END`;
+export async function getIncomeAggregatesForRange(
+  from: string,
+  to: string
+): Promise<IncomeAggregateRow[]> {
+  const colKind = sql<
+    'category' | 'fund'
+  >`CASE WHEN ${incomeEntries.designatedFundId} IS NULL THEN 'category' ELSE 'fund' END`;
   const colRefId = sql<number>`COALESCE(${incomeEntries.designatedFundId}, ${incomeEntries.categoryId})`;
   const colLabel = sql<string>`COALESCE(${designatedFunds.name}, ${incomeCategories.name})`;
 
@@ -327,7 +323,10 @@ export async function getIncomeAggregatesForRange(from: string, to: string): Pro
   }));
 }
 
-export async function getAllExpenseReportRows(from: string, to: string): Promise<ExpenseReportRow[]> {
+export async function getAllExpenseReportRows(
+  from: string,
+  to: string
+): Promise<ExpenseReportRow[]> {
   const rows = await db
     .select({
       id: expenseEntries.id,
@@ -431,11 +430,7 @@ export async function findAllActiveFunds() {
 }
 
 export async function findFundById(id: number) {
-  const result = await db
-    .select()
-    .from(designatedFunds)
-    .where(eq(designatedFunds.id, id))
-    .limit(1);
+  const result = await db.select().from(designatedFunds).where(eq(designatedFunds.id, id)).limit(1);
   return result[0] ?? null;
 }
 
@@ -471,9 +466,7 @@ export async function sumAllTimeIncomeForFund(fundId: number): Promise<string> {
   const result = await db
     .select({ total: sum(incomeEntries.amount) })
     .from(incomeEntries)
-    .where(
-      and(eq(incomeEntries.status, 'paga'), eq(incomeEntries.designatedFundId, fundId))
-    );
+    .where(and(eq(incomeEntries.status, 'paga'), eq(incomeEntries.designatedFundId, fundId)));
   return result[0]?.total ?? '0.00';
 }
 
@@ -481,9 +474,7 @@ export async function sumAllTimeExpensesForFund(fundId: number): Promise<string>
   const result = await db
     .select({ total: sum(expenseEntries.amount) })
     .from(expenseEntries)
-    .where(
-      and(eq(expenseEntries.status, 'paga'), eq(expenseEntries.designatedFundId, fundId))
-    );
+    .where(and(eq(expenseEntries.status, 'paga'), eq(expenseEntries.designatedFundId, fundId)));
   return result[0]?.total ?? '0.00';
 }
 
@@ -500,9 +491,7 @@ export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEn
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(members, eq(incomeEntries.memberId, members.id))
-    .where(
-      and(eq(incomeEntries.designatedFundId, fundId), eq(incomeEntries.status, 'paga'))
-    )
+    .where(and(eq(incomeEntries.designatedFundId, fundId), eq(incomeEntries.status, 'paga')))
     .orderBy(asc(incomeEntries.referenceDate));
 
   return rows.map((r) => ({
@@ -527,9 +516,7 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
     })
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
-    .where(
-      and(eq(expenseEntries.designatedFundId, fundId), eq(expenseEntries.status, 'paga'))
-    )
+    .where(and(eq(expenseEntries.designatedFundId, fundId), eq(expenseEntries.status, 'paga')))
     .orderBy(asc(expenseEntries.referenceDate));
 
   return rows.map((r) => ({

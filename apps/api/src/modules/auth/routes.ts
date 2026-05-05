@@ -4,7 +4,7 @@ import {
   LoginRequestSchema,
   RegisterRequestSchema,
   PasswordResetRequestSchema,
-  ResetPasswordRequestSchema,
+  ResetPasswordRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -16,12 +16,16 @@ export async function authRoutes(app: FastifyInstance) {
     {
       schema: { tags: ['Auth'], body: LoginRequestSchema },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } },
+      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } }
     },
     controller.login
   );
 
-  app.post('/auth/logout', { schema: { tags: ['Auth'] }, preHandler: [app.csrfProtection, requireAuth] }, controller.logout);
+  app.post(
+    '/auth/logout',
+    { schema: { tags: ['Auth'] }, preHandler: [app.csrfProtection, requireAuth] },
+    controller.logout
+  );
 
   app.get('/auth/me', { schema: { tags: ['Auth'] }, preHandler: [requireAuth] }, controller.me);
 
@@ -30,7 +34,7 @@ export async function authRoutes(app: FastifyInstance) {
     {
       schema: { tags: ['Auth'], body: RegisterRequestSchema },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
+      config: { rateLimit: { max: 3, timeWindow: '1 hour' } }
     },
     controller.register
   );
@@ -40,7 +44,7 @@ export async function authRoutes(app: FastifyInstance) {
     {
       schema: { tags: ['Auth'], body: PasswordResetRequestSchema },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 3, timeWindow: '1 hour' } },
+      config: { rateLimit: { max: 3, timeWindow: '1 hour' } }
     },
     controller.requestPasswordReset
   );
@@ -49,7 +53,7 @@ export async function authRoutes(app: FastifyInstance) {
     '/auth/password-reset/confirm',
     {
       schema: { tags: ['Auth'], body: ResetPasswordRequestSchema },
-      preHandler: [app.csrfProtection],
+      preHandler: [app.csrfProtection]
     },
     controller.confirmPasswordReset
   );

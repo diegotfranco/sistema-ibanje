@@ -9,7 +9,12 @@ import { assertPermission } from '../../../../lib/permissions';
 import { Module, Action } from '../../../../lib/constants';
 import { httpError } from '../../../../lib/errors';
 import { paginate } from '../../../../lib/pagination';
-import { uploadFile, deleteFile, getPresignedUrl, ALLOWED_MIME_TYPES } from '../../../../lib/storage';
+import {
+  uploadFile,
+  deleteFile,
+  getPresignedUrl,
+  ALLOWED_MIME_TYPES
+} from '../../../../lib/storage';
 import type {
   CreateExpenseEntryRequest,
   UpdateExpenseEntryRequest,
@@ -129,15 +134,15 @@ export async function updateExpenseEntry(
   };
   await validateEntry(mergedValues);
 
-  const updated = await repo.updateExpenseEntry(targetId, body as any);
+  const updated = await repo.updateExpenseEntry(
+    targetId,
+    body as Parameters<typeof repo.updateExpenseEntry>[1]
+  );
   if (!updated) return null;
   return toResponse(updated);
 }
 
-export async function cancelExpenseEntry(
-  callerId: number,
-  targetId: number
-): Promise<void | null> {
+export async function cancelExpenseEntry(callerId: number, targetId: number): Promise<void | null> {
   await assertPermission(callerId, Module.ExpenseEntries, Action.Delete);
   const entry = await repo.findExpenseEntryById(targetId);
   if (!entry) return null;

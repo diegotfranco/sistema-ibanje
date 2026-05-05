@@ -15,7 +15,7 @@ export const Module = {
   Minutes: 'Atas',
   Permissions: 'Permissões',
   Areas: 'Áreas',
-  Status: 'Status',
+  Status: 'Status'
 } as const;
 
 export type ModuleName = (typeof Module)[keyof typeof Module];
@@ -26,7 +26,7 @@ export const Action = {
   Update: 'Editar',
   Delete: 'Remover',
   Review: 'Revisar',
-  Report: 'Relatórios',
+  Report: 'Relatórios'
 } as const;
 
 export type ActionName = (typeof Action)[keyof typeof Action];

@@ -49,16 +49,13 @@ export async function roleHasActiveUsers(roleId: number): Promise<boolean> {
 }
 
 export async function insertRole(data: { name: string; description?: string }) {
-  const result = await db
-    .insert(roles)
-    .values(data)
-    .returning({
-      id: roles.id,
-      name: roles.name,
-      description: roles.description,
-      status: roles.status,
-      createdAt: roles.createdAt
-    });
+  const result = await db.insert(roles).values(data).returning({
+    id: roles.id,
+    name: roles.name,
+    description: roles.description,
+    status: roles.status,
+    createdAt: roles.createdAt
+  });
 
   return result[0] ?? null;
 }
@@ -83,10 +80,7 @@ export async function updateRole(
 }
 
 export async function deactivateRole(id: number) {
-  await db
-    .update(roles)
-    .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(roles.id, id));
+  await db.update(roles).set({ status: 'inativo', updatedAt: new Date() }).where(eq(roles.id, id));
 }
 
 export async function getRolePermissions(roleId: number) {
@@ -114,7 +108,9 @@ export async function setRolePermissions(
     if (entries.length > 0) {
       await tx
         .insert(roleModulePermissions)
-        .values(entries.map((e) => ({ roleId, moduleId: e.moduleId, permissionId: e.permissionId })));
+        .values(
+          entries.map((e) => ({ roleId, moduleId: e.moduleId, permissionId: e.permissionId }))
+        );
     }
   });
 }

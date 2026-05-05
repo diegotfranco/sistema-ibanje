@@ -30,11 +30,7 @@ export async function listMonthlyClosings(offset: number, limit: number) {
 }
 
 export async function findMonthlyClosingById(id: number): Promise<MonthlyClosing | null> {
-  const result = await db
-    .select()
-    .from(monthlyClosings)
-    .where(eq(monthlyClosings.id, id))
-    .limit(1);
+  const result = await db.select().from(monthlyClosings).where(eq(monthlyClosings.id, id)).limit(1);
   return result[0] ?? null;
 }
 
@@ -204,10 +200,6 @@ export async function sumNetForDateRange(startDate: string, endDate: string): Pr
 }
 
 export async function findFinanceSettings() {
-  const result = await db
-    .select()
-    .from(financeSettings)
-    .where(eq(financeSettings.id, 1))
-    .limit(1);
+  const result = await db.select().from(financeSettings).where(eq(financeSettings.id, 1)).limit(1);
   return result[0] ?? null;
 }

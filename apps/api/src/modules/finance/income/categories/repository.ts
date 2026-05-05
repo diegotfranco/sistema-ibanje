@@ -46,7 +46,12 @@ export async function insertIncomeCategory(data: {
 
 export async function updateIncomeCategory(
   id: number,
-  data: Partial<Pick<typeof incomeCategories.$inferInsert, 'name' | 'description' | 'parentId' | 'requiresMember'>>
+  data: Partial<
+    Pick<
+      typeof incomeCategories.$inferInsert,
+      'name' | 'description' | 'parentId' | 'requiresMember'
+    >
+  >
 ) {
   const result = await db
     .update(incomeCategories)

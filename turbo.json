@@ -1,7 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["DATABASE_URL", "REDIS_URL", "MINIO_ENDPOINT", "CORS_ORIGIN", "NODE_ENV"],
   "tasks": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -11,9 +15,8 @@
       "persistent": true,
       "cache": false
     },
-    "lint": {},
-    "format": {
-      "cache": false
+    "lint": {
+      "dependsOn": ["^topo"]
     }
   }
 }

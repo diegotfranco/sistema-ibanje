@@ -52,6 +52,7 @@ export async function deleteReceipt(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const result = await service.deleteExpenseReceipt(req.session.userId!, id);
   if (result === 'not_found') return reply.code(404).send({ message: 'Expense entry not found' });
-  if (result === 'no_receipt') return reply.code(404).send({ message: 'No receipt attached to this entry' });
+  if (result === 'no_receipt')
+    return reply.code(404).send({ message: 'No receipt attached to this entry' });
   return reply.code(204).send();
 }

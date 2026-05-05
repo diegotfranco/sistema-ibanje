@@ -8,7 +8,7 @@ import {
   CreateUserRequestSchema,
   UpdateUserRequestSchema,
   UpdatePasswordRequestSchema,
-  UpdatePermissionsRequestSchema,
+  UpdatePermissionsRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -17,7 +17,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users',
     {
       schema: { tags: ['Users'], body: CreateUserRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.Create)]
     },
     controller.create
   );
@@ -26,7 +26,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users',
     {
       schema: { tags: ['Users'], querystring: ListUsersRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.View)]
     },
     controller.list
   );
@@ -41,7 +41,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id',
     {
       schema: { tags: ['Users'], params: IdParamSchema, body: UpdateUserRequestSchema },
-      preHandler: [requireAuth],
+      preHandler: [requireAuth]
     },
     controller.update
   );
@@ -50,7 +50,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id',
     {
       schema: { tags: ['Users'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.Delete)]
     },
     controller.remove
   );
@@ -59,7 +59,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id/password',
     {
       schema: { tags: ['Users'], params: IdParamSchema, body: UpdatePasswordRequestSchema },
-      preHandler: [requireAuth],
+      preHandler: [requireAuth]
     },
     controller.changePassword
   );
@@ -68,7 +68,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id/approve',
     {
       schema: { tags: ['Users'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)]
     },
     controller.approve
   );
@@ -77,7 +77,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id/permissions',
     {
       schema: { tags: ['Users'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.View)]
     },
     controller.getPermissions
   );
@@ -86,7 +86,7 @@ export async function usersRoutes(app: FastifyInstance) {
     '/users/:id/permissions',
     {
       schema: { tags: ['Users'], params: IdParamSchema, body: UpdatePermissionsRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)],
+      preHandler: [requireAuth, checkPermission(Module.Users, Action.Update)]
     },
     controller.setPermissions
   );

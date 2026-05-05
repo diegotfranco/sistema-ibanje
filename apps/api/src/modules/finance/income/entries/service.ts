@@ -7,6 +7,17 @@ import { assertPermission } from '../../../../lib/permissions';
 import { Module, Action } from '../../../../lib/constants';
 import { httpError } from '../../../../lib/errors';
 import { paginate } from '../../../../lib/pagination';
+import type {
+  CreateIncomeEntryRequest,
+  UpdateIncomeEntryRequest,
+  IncomeEntryResponse
+} from './schema';
+
+type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
+
+function toResponse(row: Row): IncomeEntryResponse {
+  return row as unknown as IncomeEntryResponse;
+}
 
 async function assertPeriodEditable(referenceDate: string): Promise<void> {
   const year = parseInt(referenceDate.substring(0, 4));
@@ -17,11 +28,6 @@ async function assertPeriodEditable(referenceDate: string): Promise<void> {
     throw httpError(409, 'This period is locked for editing');
   }
 }
-import type {
-  CreateIncomeEntryRequest,
-  UpdateIncomeEntryRequest,
-  IncomeEntryResponse
-} from './schema';
 
 async function validateEntry(data: {
   categoryId: number;
@@ -57,17 +63,13 @@ export async function listIncomeEntries(callerId: number, page: number, limit: n
   await assertPermission(callerId, Module.IncomeEntries, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listIncomeEntries(offset, limit);
-  return paginate(
-    rows.map((r): IncomeEntryResponse => r as any),
-    total,
-    page,
-    limit
-  );
+  return paginate(rows.map(toResponse), total, page, limit);
 }
 
 export async function getIncomeEntryById(id: number): Promise<IncomeEntryResponse | null> {
   const entry = await repo.findIncomeEntryById(id);
-  return entry as any;
+  if (!entry) return null;
+  return toResponse(entry);
 }
 
 export async function createIncomeEntry(
@@ -87,7 +89,7 @@ export async function createIncomeEntry(
     userId: callerId
   });
   if (!created) throw new Error('Failed to create income entry');
-  return created as any;
+  return toResponse(created);
 }
 
 export async function updateIncomeEntry(
@@ -109,18 +111,17 @@ export async function updateIncomeEntry(
   };
   await validateEntry(mergedValues);
 
-  const updateData: Record<string, any> = { ...body };
-  if (body.amount !== undefined) {
-    updateData.amount = body.amount.toString();
-  }
+  const updateData: Parameters<typeof repo.updateIncomeEntry>[1] = {
+    ...body,
+    amount: body.amount !== undefined ? body.amount.toString() : undefined
+  };
 
-  return (await repo.updateIncomeEntry(targetId, updateData)) as any;
+  const updated = await repo.updateIncomeEntry(targetId, updateData);
+  if (!updated) return null;
+  return toResponse(updated);
 }
 
-export async function cancelIncomeEntry(
-  callerId: number,
-  targetId: number
-): Promise<void | null> {
+export async function cancelIncomeEntry(callerId: number, targetId: number): Promise<void | null> {
   await assertPermission(callerId, Module.IncomeEntries, Action.Delete);
   const entry = await repo.findIncomeEntryById(targetId);
   if (!entry) return null;

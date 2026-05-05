@@ -6,7 +6,7 @@ import { IdParamSchema } from '../../../../lib/validation';
 import {
   ListExpenseCategoriesRequestSchema,
   CreateExpenseCategoryRequestSchema,
-  UpdateExpenseCategoryRequestSchema,
+  UpdateExpenseCategoryRequestSchema
 } from './schema';
 import * as controller from './controller';
 
@@ -15,7 +15,7 @@ export async function expenseCategoriesRoutes(app: FastifyInstance) {
     '/expense-categories',
     {
       schema: { tags: ['Expense Categories'], querystring: ListExpenseCategoriesRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.View)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.View)]
     },
     controller.list
   );
@@ -30,7 +30,7 @@ export async function expenseCategoriesRoutes(app: FastifyInstance) {
     '/expense-categories',
     {
       schema: { tags: ['Expense Categories'], body: CreateExpenseCategoryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Create)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Create)]
     },
     controller.create
   );
@@ -38,8 +38,12 @@ export async function expenseCategoriesRoutes(app: FastifyInstance) {
   app.patch(
     '/expense-categories/:id',
     {
-      schema: { tags: ['Expense Categories'], params: IdParamSchema, body: UpdateExpenseCategoryRequestSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Update)],
+      schema: {
+        tags: ['Expense Categories'],
+        params: IdParamSchema,
+        body: UpdateExpenseCategoryRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Update)]
     },
     controller.update
   );
@@ -48,7 +52,7 @@ export async function expenseCategoriesRoutes(app: FastifyInstance) {
     '/expense-categories/:id',
     {
       schema: { tags: ['Expense Categories'], params: IdParamSchema },
-      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Delete)],
+      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Delete)]
     },
     controller.remove
   );

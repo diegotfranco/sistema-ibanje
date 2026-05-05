@@ -10,7 +10,10 @@ export const CreateDesignatedFundRequestSchema = z.object({
   description: z.string().optional(),
   targetAmount: z
     .string()
-    .regex(/^\d+(\.\d{1,2})?$/, 'targetAmount must be a positive decimal with up to 2 decimal places')
+    .regex(
+      /^\d+(\.\d{1,2})?$/,
+      'targetAmount must be a positive decimal with up to 2 decimal places'
+    )
     .optional()
 });
 

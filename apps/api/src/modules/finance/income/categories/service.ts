@@ -18,7 +18,12 @@ export async function listIncomeCategories(callerId: number, page: number, limit
   await assertPermission(callerId, Module.IncomeCategories, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listIncomeCategories(offset, limit);
-  return paginate(rows.map((r): IncomeCategoryResponse => r), total, page, limit);
+  return paginate(
+    rows.map((r): IncomeCategoryResponse => r),
+    total,
+    page,
+    limit
+  );
 }
 
 export async function getIncomeCategoryById(id: number): Promise<IncomeCategoryResponse | null> {

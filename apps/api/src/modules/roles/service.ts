@@ -17,7 +17,12 @@ export async function listRoles(callerId: number, page: number, limit: number) {
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listRoles(offset, limit);
 
-  return paginate(rows.map((r): RoleResponse => r), total, page, limit);
+  return paginate(
+    rows.map((r): RoleResponse => r),
+    total,
+    page,
+    limit
+  );
 }
 
 export async function getRoleById(id: number): Promise<RoleResponse | null> {

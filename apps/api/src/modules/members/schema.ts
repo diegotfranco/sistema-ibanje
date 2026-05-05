@@ -15,7 +15,10 @@ export const CreateMemberRequestSchema = z.object({
   addressDistrict: z.string().max(64).optional(),
   state: z.string().length(2).optional(),
   city: z.string().max(96).optional(),
-  postalCode: z.string().regex(/^\d{8}$/).optional(),
+  postalCode: z
+    .string()
+    .regex(/^\d{8}$/)
+    .optional(),
   email: z.email().optional(),
   phone: z.string().max(16).optional()
 });

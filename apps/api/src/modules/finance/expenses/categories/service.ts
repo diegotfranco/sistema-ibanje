@@ -18,7 +18,12 @@ export async function listExpenseCategories(callerId: number, page: number, limi
   await assertPermission(callerId, Module.ExpenseCategories, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listExpenseCategories(offset, limit);
-  return paginate(rows.map((r): ExpenseCategoryResponse => r), total, page, limit);
+  return paginate(
+    rows.map((r): ExpenseCategoryResponse => r),
+    total,
+    page,
+    limit
+  );
 }
 
 export async function getExpenseCategoryById(id: number): Promise<ExpenseCategoryResponse | null> {

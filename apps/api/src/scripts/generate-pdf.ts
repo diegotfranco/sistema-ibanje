@@ -1,25 +1,25 @@
 import fs from 'fs';
 import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
-import * as repo from './src/modules/finance/reports/repository';
+import * as repo from '../modules/finance/reports/repository';
 import {
   findPreviousFechadoClosing,
   sumNetForDateRange,
   findFinanceSettings,
-  periodEnd,
-} from './src/modules/finance/monthly-closings/repository';
+  periodEnd
+} from '../modules/finance/monthly-closings/repository';
 import {
   DetailedFinancialStatementPdf,
-  FinancialStatementPdf,
-} from './src/modules/finance/reports/pdf-template';
+  FinancialStatementPdf
+} from '../modules/finance/reports/pdf-template';
 import type {
   DetailedFinancialStatementResponse,
   FinancialStatementResponse,
   IncomeAggregateRow,
   IncomePivot,
   IncomePivotColumn,
-  IncomePivotRow,
-} from './src/modules/finance/reports/schema';
+  IncomePivotRow
+} from '../modules/finance/reports/schema';
 
 const from = '2025-10-01';
 const to = '2025-10-31';
@@ -63,7 +63,13 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
   for (const agg of aggregates) {
     const key = `${agg.columnKind}:${agg.columnRefId}`;
     if (!columnMap.has(key)) {
-      columnMap.set(key, { key, label: agg.columnLabel, kind: agg.columnKind, refId: agg.columnRefId, total: '0.00' });
+      columnMap.set(key, {
+        key,
+        label: agg.columnLabel,
+        kind: agg.columnKind,
+        refId: agg.columnRefId,
+        total: '0.00'
+      });
     }
     const col = columnMap.get(key)!;
     col.total = (parseFloat(col.total) + parseFloat(agg.total)).toFixed(2);
@@ -94,7 +100,7 @@ async function generateDetailed() {
       repo.getAllExpenseReportRows(from, to),
       repo.sumIncomeForRange(from, to),
       repo.sumExpensesForRange(from, to),
-      computeOpeningBalance(from),
+      computeOpeningBalance(from)
     ]);
 
   const currentBalance = (
@@ -110,11 +116,13 @@ async function generateDetailed() {
     totalExpenses,
     currentBalance,
     incomePivot: buildIncomePivot(incomeAggregates),
-    expenseEntries,
+    expenseEntries
   };
 
   const buf = await renderToBuffer(
-    React.createElement(DetailedFinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
+    React.createElement(DetailedFinancialStatementPdf, {
+      data
+    }) as React.ReactElement<DocumentProps>
   );
 
   fs.writeFileSync('demonstrativo-detalhado.pdf', buf);
@@ -122,15 +130,21 @@ async function generateDetailed() {
 }
 
 async function generateSimplified() {
-  const [incomeByCategory, incomeByFund, expensesByCategory, totalIncome, totalExpenses, openingBalance] =
-    await Promise.all([
-      repo.getIncomeByCategoryForRange(from, to),
-      repo.getIncomeByFundForRange(from, to),
-      repo.getExpensesByCategoryForRange(from, to),
-      repo.sumIncomeForRange(from, to),
-      repo.sumExpensesForRange(from, to),
-      computeOpeningBalance(from),
-    ]);
+  const [
+    incomeByCategory,
+    incomeByFund,
+    expensesByCategory,
+    totalIncome,
+    totalExpenses,
+    openingBalance
+  ] = await Promise.all([
+    repo.getIncomeByCategoryForRange(from, to),
+    repo.getIncomeByFundForRange(from, to),
+    repo.getExpensesByCategoryForRange(from, to),
+    repo.sumIncomeForRange(from, to),
+    repo.sumExpensesForRange(from, to),
+    computeOpeningBalance(from)
+  ]);
 
   const currentBalance = (
     parseFloat(openingBalance) +
@@ -146,7 +160,7 @@ async function generateSimplified() {
     currentBalance,
     incomeByCategory,
     incomeByFund,
-    expensesByCategory,
+    expensesByCategory
   };
 
   const buf = await renderToBuffer(
@@ -166,4 +180,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

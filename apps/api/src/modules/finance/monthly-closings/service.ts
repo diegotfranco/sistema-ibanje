@@ -40,7 +40,10 @@ async function buildResponse(
     const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
     const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
 
-    const lastFechado = await repo.findPreviousFechadoClosing(closing.periodYear, closing.periodMonth);
+    const lastFechado = await repo.findPreviousFechadoClosing(
+      closing.periodYear,
+      closing.periodMonth
+    );
 
     let baseBal: string;
     let rangeStart: string;
@@ -100,7 +103,7 @@ export async function listMonthlyClosings(callerId: number, page: number, limit:
   await assertPermission(callerId, Module.MonthlyClosings, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listMonthlyClosings(offset, limit);
-  const data = await Promise.all(rows.map(r => buildResponse(r, false)));
+  const data = await Promise.all(rows.map((r) => buildResponse(r, false)));
   return paginate(data, total, page, limit);
 }
 
@@ -235,10 +238,7 @@ export async function closeMonthlyClosing(
   return buildResponse(updated!);
 }
 
-export async function deleteMonthlyClosing(
-  callerId: number,
-  id: number
-): Promise<void | null> {
+export async function deleteMonthlyClosing(callerId: number, id: number): Promise<void | null> {
   await assertPermission(callerId, Module.MonthlyClosings, Action.Delete);
 
   const closing = await repo.findMonthlyClosingById(id);

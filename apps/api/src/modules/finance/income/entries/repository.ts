@@ -39,19 +39,14 @@ function baseQuery() {
 }
 
 export async function listIncomeEntries(offset: number, limit: number) {
-  const rows = await baseQuery()
-    .orderBy(incomeEntries.id)
-    .offset(offset)
-    .limit(limit);
+  const rows = await baseQuery().orderBy(incomeEntries.id).offset(offset).limit(limit);
 
   const countResult = await db.select({ count: count() }).from(incomeEntries);
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
 export async function findIncomeEntryById(id: number) {
-  const result = await baseQuery()
-    .where(eq(incomeEntries.id, id))
-    .limit(1);
+  const result = await baseQuery().where(eq(incomeEntries.id, id)).limit(1);
 
   return result[0] ?? null;
 }
@@ -71,7 +66,10 @@ export async function insertIncomeEntry(data: {
     ...data,
     amount: data.amount.toString()
   };
-  const result = await db.insert(incomeEntries).values(insertData).returning({ id: incomeEntries.id });
+  const result = await db
+    .insert(incomeEntries)
+    .values(insertData)
+    .returning({ id: incomeEntries.id });
   const insertedId = result[0]?.id;
   if (!insertedId) throw new Error('Failed to retrieve inserted entry ID');
   return findIncomeEntryById(insertedId);
@@ -82,7 +80,15 @@ export async function updateIncomeEntry(
   data: Partial<
     Pick<
       typeof incomeEntries.$inferInsert,
-      'referenceDate' | 'depositDate' | 'amount' | 'categoryId' | 'memberId' | 'paymentMethodId' | 'designatedFundId' | 'notes' | 'status'
+      | 'referenceDate'
+      | 'depositDate'
+      | 'amount'
+      | 'categoryId'
+      | 'memberId'
+      | 'paymentMethodId'
+      | 'designatedFundId'
+      | 'notes'
+      | 'status'
     >
   >
 ) {

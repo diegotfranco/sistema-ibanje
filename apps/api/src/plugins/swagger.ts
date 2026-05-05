@@ -10,14 +10,14 @@ export async function registerSwaggerPlugin(app: FastifyInstance) {
       info: {
         title: 'Sistema Ibanje API',
         description: 'Church management system REST API',
-        version: '1.0.0',
-      },
+        version: '1.0.0'
+      }
     },
-    transform: jsonSchemaTransform,
+    transform: jsonSchemaTransform
   });
 
   await app.register(scalarFastify, {
     routePrefix: '/docs',
-    logLevel: 'silent',
+    logLevel: 'silent'
   });
 }

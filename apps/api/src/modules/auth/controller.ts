@@ -1,5 +1,10 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { LoginRequest, PasswordResetRequest, ResetPasswordRequest, RegisterRequest } from './schema';
+import type {
+  LoginRequest,
+  PasswordResetRequest,
+  ResetPasswordRequest,
+  RegisterRequest
+} from './schema';
 import * as service from './service';
 
 export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
@@ -22,7 +27,7 @@ export async function login(req: FastifyRequest, reply: FastifyReply) {
   return reply.send({
     name: result.name,
     email: result.email,
-    role: result.role,
+    role: result.role
   });
 }
 
