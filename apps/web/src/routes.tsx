@@ -5,6 +5,8 @@ import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
 import { membersRoutes } from '@/modules/members/routes';
 import { financeRoutes } from '@/modules/finance/routes';
+import { rolesRouteChildren } from '@/modules/roles/routes';
+import { usersRouteChildren } from '@/modules/users/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -18,4 +20,16 @@ export type AppRoute = {
   children?: AppRoute[];
 };
 
-export const appRoutes: AppRoute[] = [...authRoutes, ...dashboardRoutes, ...membersRoutes, ...financeRoutes];
+const adminSection: AppRoute = {
+  layout: 'app',
+  label: 'Administração',
+  children: [...rolesRouteChildren, ...usersRouteChildren]
+};
+
+export const appRoutes: AppRoute[] = [
+  ...authRoutes,
+  ...dashboardRoutes,
+  adminSection,
+  ...membersRoutes,
+  ...financeRoutes
+];
