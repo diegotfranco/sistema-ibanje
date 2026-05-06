@@ -86,11 +86,18 @@ async function requestForm<T>(method: string, path: string, body: FormData): Pro
   return res.json() as Promise<T>;
 }
 
+async function requestBlob(path: string): Promise<Blob> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'GET', credentials: 'include' });
+  if (!res.ok) throw await parseError(res);
+  return res.blob();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
   delete: <T = void>(path: string) => request<T>('DELETE', path),
-  postForm: <T>(path: string, body: FormData) => requestForm<T>('POST', path, body)
+  postForm: <T>(path: string, body: FormData) => requestForm<T>('POST', path, body),
+  getBlob: (path: string) => requestBlob(path)
 };

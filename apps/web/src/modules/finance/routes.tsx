@@ -1,7 +1,7 @@
-import { CalendarCheck, CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { BarChart2, CalendarCheck, CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
-import { Module } from '@/lib/permissions';
+import { Module, Action } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPage';
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
@@ -11,6 +11,7 @@ import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethods
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
 import ExpenseCategoriesPage from '@/modules/finance/expense-categories/ExpenseCategoriesPage';
+import ReportsPage from '@/modules/finance/reports/ReportsPage';
 
 export const financeRoutes: AppRoute[] = [
   {
@@ -110,6 +111,25 @@ export const financeRoutes: AppRoute[] = [
         label: 'Fundos Designados',
         icon: PiggyBank,
         module: Module.DesignatedFunds
+      }
+    ]
+  },
+  {
+    layout: 'app',
+    label: 'Relatórios',
+    children: [
+      {
+        path: paths.reports,
+        element: (
+          <RequirePermission module={Module.Reports} action={Action.Report}>
+            <ReportsPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        label: 'Relatórios',
+        icon: BarChart2,
+        module: Module.Reports,
+        action: Action.Report
       }
     ]
   }

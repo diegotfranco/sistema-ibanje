@@ -11,7 +11,8 @@ export const paths = {
   incomeEntries: '/income-entries',
   expenseEntries: '/expense-entries',
   monthlyClosings: '/monthly-closings',
-  monthlyClosingDetail: '/monthly-closings/:id'
+  monthlyClosingDetail: '/monthly-closings/:id',
+  reports: '/reports'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];
