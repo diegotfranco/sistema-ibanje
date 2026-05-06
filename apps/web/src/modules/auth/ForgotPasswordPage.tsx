@@ -1,12 +1,10 @@
 import { Link } from 'react-router';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { api } from '@/lib/api';
+import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import HandFinanceGraph from '@/components/icons/HandFinanceGraph';
-import routes from '@/enums/routes.enum';
+import HandFinanceGraph from '@/modules/auth/HandFinanceGraph';
+import { paths } from '@/lib/paths';
 import {
   CardHeader,
   CardTitle,
@@ -15,29 +13,10 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { zodResolver } from '@/lib/zodResolver';
-import { Controller, useForm } from 'react-hook-form';
-import { ForgotPasswordSchema, type ForgotPasswordFormValues } from '@/schemas/auth';
+import { useForgotPasswordForm } from '@/modules/auth/useForgotPasswordForm';
 
 export default function ForgotPasswordPage() {
-  const form = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(ForgotPasswordSchema),
-    defaultValues: { email: '' }
-  });
-
-  const { mutate: requestReset, isPending } = useMutation({
-    mutationFn: (data: ForgotPasswordFormValues) =>
-      api.post('/auth/password-reset/request', { email: data.email }),
-    onSuccess: () => {
-      toast.success('Se este e-mail estiver cadastrado, você receberá as instruções em breve.');
-    },
-    onError: () => {
-      // Always show the same message to avoid email enumeration
-      toast.success('Se este e-mail estiver cadastrado, você receberá as instruções em breve.');
-    }
-  });
-
-  const onSubmit = (values: ForgotPasswordFormValues) => requestReset(values);
+  const { form, onSubmit, isPending } = useForgotPasswordForm();
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
@@ -50,7 +29,7 @@ export default function ForgotPasswordPage() {
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-teal-600 text-lg font-medium">Esqueceu sua senha?</h2>
             <Link
-              to={routes.LOGIN.path}
+              to={paths.login}
               className="font-light hover:underline underline-offset-4 decoration-teal-600">
               Já possui conta?
             </Link>

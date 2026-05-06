@@ -1,13 +1,10 @@
 import { Link, Navigate } from 'react-router';
-import { useMutation } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { api, ApiError } from '@/lib/api';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import HandFinanceGraph from '@/components/icons/HandFinanceGraph';
-import routes from '@/enums/routes.enum';
+import HandFinanceGraph from '@/modules/auth/HandFinanceGraph';
+import { paths } from '@/lib/paths';
 import {
   CardContent,
   CardDescription,
@@ -16,36 +13,14 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { zodResolver } from '@/lib/zodResolver';
-import { Controller, useForm } from 'react-hook-form';
-import { RegisterSchema, type RegisterFormValues } from '@/schemas/auth';
+import { useRegisterForm } from '@/modules/auth/useRegisterForm';
+import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 
 export default function RegisterPage() {
   const { data: user } = useCurrentUser();
+  const { form, onSubmit, isPending } = useRegisterForm();
 
-  const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(RegisterSchema),
-    defaultValues: { name: '', email: '' }
-  });
-
-  const { mutate: register, isPending } = useMutation({
-    mutationFn: (data: RegisterFormValues) =>
-      api.post('/auth/register', { name: data.name, email: data.email }),
-    onSuccess: () => {
-      toast.success('Cadastro enviado! Aguarde a aprovação de um administrador.');
-    },
-    onError: (err) => {
-      if (err instanceof ApiError && err.status === 409) {
-        toast.error('Este e-mail já está cadastrado.');
-      } else {
-        toast.error('Ocorreu um erro. Tente novamente.');
-      }
-    }
-  });
-
-  if (user) return <Navigate to={routes.ROOT.path} replace />;
-
-  const onSubmit = (values: RegisterFormValues) => register(values);
+  if (user) return <Navigate to={paths.dashboard} replace />;
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
@@ -58,7 +33,7 @@ export default function RegisterPage() {
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-teal-600 text-lg font-medium">Cadastro</h2>
             <Link
-              to={routes.LOGIN.path}
+              to={paths.login}
               className="font-light hover:underline underline-offset-4 decoration-teal-600">
               Já possui conta?
             </Link>

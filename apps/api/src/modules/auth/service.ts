@@ -24,12 +24,15 @@ export async function getMe(userId: number): Promise<MeResponse | null> {
   const user = await repo.findUserById(userId);
   if (!user) return null;
 
+  const permissions = await repo.findUserPermissions(userId);
+
   return {
     id: user.id,
     name: user.name,
     email: user.email,
     role: user.roleName,
-    status: user.status
+    status: user.status,
+    permissions
   };
 }
 

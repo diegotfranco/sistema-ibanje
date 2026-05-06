@@ -1,31 +1,49 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
-import LoginPage from '@/pages/Auth/LoginPage';
-import RegisterPage from '@/pages/Auth/RegisterPage';
-import ForgotPasswordPage from '@/pages/Auth/ForgotPasswordPage';
-import ResetPasswordPage from '@/pages/Auth/ResetPasswordPage';
-import DashboardPage from '@/pages/DashboardPage';
-import routes from '@/enums/routes.enum';
+import { AppLayout } from '@/components/layouts/AppLayout';
+import { appRoutes, type AppRoute } from '@/routes';
+import { paths } from '@/lib/paths';
+import { useTheme } from '@/lib/theme';
+
+function flattenRoutes(routes: AppRoute[]): AppRoute[] {
+  return routes.flatMap((route) =>
+    route.children && route.children.length > 0
+      ? [route, ...flattenRoutes(route.children)]
+      : [route]
+  );
+}
+
+const flat = flattenRoutes(appRoutes);
+console.log(flat);
+
+const publicRoutes = flat.filter((r) => r.layout === 'auth');
+const protectedRoutes = flat.filter((r) => r.layout === 'app');
+
+function ToasterWrapper() {
+  const { resolved } = useTheme();
+  return <Toaster position="top-right" richColors theme={resolved} />;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Toaster position="top-right" richColors />
+      <ToasterWrapper />
       <Routes>
-        <Route path={routes.LOGIN.path} element={<LoginPage />} />
-        <Route path={routes.REGISTER.path} element={<RegisterPage />} />
-        <Route path={routes.FORGOT_PASSWORD.path} element={<ForgotPasswordPage />} />
-        <Route path={routes.RESET_PASSWORD.path} element={<ResetPasswordPage />} />
+        {publicRoutes.map((route) => (
+          <Route key={route.path} path={route.path} element={route.element} />
+        ))}
         <Route
-          path={routes.ROOT.path}
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <AppLayout />
             </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to={routes.LOGIN.path} replace />} />
+          }>
+          {protectedRoutes.map((route) => (
+            <Route key={route.path} path={route.path} element={route.element} />
+          ))}
+        </Route>
+        <Route path="*" element={<Navigate to={paths.login} replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { ReactNode } from 'react';
 
 type AuthLayoutProps = {
@@ -12,8 +13,13 @@ export const AuthLayout = ({ illustration, children }: AuthLayoutProps) => {
       <div className="hidden lg:flex lg:w-5/12 2xl:w-4/12 justify-center items-center bg-teal-900 px-12">
         {illustration}
       </div>
-      <div className="flex flex-1 justify-center items-center px-4 sm:px-8">
-        <Card className="w-full max-w-sm">{children}</Card>
+      <div className="flex flex-1 flex-col px-4 sm:px-8">
+        <div className="flex justify-end pt-6">
+          <ThemeToggle />
+        </div>
+        <div className="flex flex-1 justify-center items-center">
+          <Card className="w-full max-w-sm">{children}</Card>
+        </div>
       </div>
     </div>
   );

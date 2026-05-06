@@ -1,51 +1,20 @@
-import { useNavigate, Navigate, Link } from 'react-router';
-import { useMutation } from '@tanstack/react-query';
-import { api, ApiError } from '@/lib/api';
-import { queryClient } from '@/lib/queryClient';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { Navigate, Link } from 'react-router';
+import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PasswordInput } from '@/components/PasswordInput';
+import { PasswordInput } from '@/modules/auth/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import HandFinanceGraph from '@/components/icons/HandFinanceGraph';
-import routes from '@/enums/routes.enum';
-import { Controller, useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import HandFinanceGraph from '@/modules/auth/HandFinanceGraph';
+import { paths } from '@/lib/paths';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Checkbox } from '@/components/ui/checkbox';
-import { zodResolver } from '@/lib/zodResolver';
 import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { LoginSchema, type LoginFormValues } from '@/schemas/auth';
+import { useLoginForm } from '@/modules/auth/useLoginForm';
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const { data: user } = useCurrentUser();
+  const { form, onSubmit, isPending, redirect } = useLoginForm();
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(LoginSchema),
-    defaultValues: { email: '', password: '', rememberMe: true }
-  });
-
-  const { mutate: login, isPending } = useMutation({
-    mutationFn: (data: LoginFormValues) =>
-      api.post('/auth/login', { email: data.email, password: data.password }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUser'] });
-      toast.success('Seja bem-vindo!');
-      navigate(routes.ROOT.path, { replace: true });
-    },
-    onError: (err) => {
-      if (err instanceof ApiError && err.status === 401) {
-        form.setError('root', { message: 'E-mail ou senha inválidos.' });
-      } else {
-        form.setError('root', { message: 'Ocorreu um erro. Tente novamente.' });
-      }
-    }
-  });
-
-  if (user) return <Navigate to={routes.ROOT.path} replace />;
-
-  const onSubmit = (values: LoginFormValues) => login(values);
+  if (redirect) return <Navigate to={paths.dashboard} replace />;
 
   return (
     <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
@@ -58,7 +27,7 @@ const LoginPage = () => {
           <div className="flex items-center justify-between text-left">
             <h2 className="text-teal-600 text-lg font-medium">Login</h2>
             <Link
-              to={routes.REGISTER.path}
+              to={paths.register}
               className="text-sm font-light hover:underline underline-offset-4 decoration-teal-600">
               Não tem uma conta?
             </Link>
@@ -120,7 +89,7 @@ const LoginPage = () => {
               />
 
               <Link
-                to={routes.FORGOT_PASSWORD.path}
+                to={paths.forgotPassword}
                 aria-label="Esqueci minha senha"
                 className="text-sm font-light hover:underline underline-offset-4 decoration-teal-600">
                 Esqueceu sua senha?

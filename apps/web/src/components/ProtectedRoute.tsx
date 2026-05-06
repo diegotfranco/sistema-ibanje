@@ -1,6 +1,6 @@
 import { Navigate } from 'react-router';
 import { Loader2 } from 'lucide-react';
-import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading, isError } = useCurrentUser();
