@@ -65,10 +65,32 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   return res.json() as Promise<T>;
 }
 
+async function requestForm<T>(method: string, path: string, body: FormData): Promise<T> {
+  const csrf = await ensureCsrfToken();
+  const headers: Record<string, string> = { 'x-csrf-token': csrf };
+  const init: RequestInit = { method, credentials: 'include', headers, body };
+
+  const res = await fetch(`${BASE_URL}${path}`, init);
+  if (!res.ok) {
+    if (res.status === 403) {
+      csrfToken = null;
+      const retryHeaders = { 'x-csrf-token': await ensureCsrfToken() };
+      const retry = await fetch(`${BASE_URL}${path}`, { ...init, headers: retryHeaders });
+      if (!retry.ok) throw await parseError(retry);
+      if (retry.status === 204) return undefined as T;
+      return retry.json() as Promise<T>;
+    }
+    throw await parseError(res);
+  }
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
   put: <T>(path: string, body?: unknown) => request<T>('PUT', path, body),
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
-  delete: <T = void>(path: string) => request<T>('DELETE', path)
+  delete: <T = void>(path: string) => request<T>('DELETE', path),
+  postForm: <T>(path: string, body: FormData) => requestForm<T>('POST', path, body)
 };

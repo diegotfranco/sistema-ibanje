@@ -1,9 +1,10 @@
-import { CreditCard, FolderTree, PiggyBank, TrendingUp, Wallet } from 'lucide-react';
+import { CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPage';
+import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
 import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
@@ -25,6 +26,18 @@ export const financeRoutes: AppRoute[] = [
         label: 'Lançamentos de Entradas',
         icon: TrendingUp,
         module: Module.IncomeEntries
+      },
+      {
+        path: paths.expenseEntries,
+        element: (
+          <RequirePermission module={Module.ExpenseEntries}>
+            <ExpenseEntriesPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        label: 'Lançamentos de Saídas',
+        icon: TrendingDown,
+        module: Module.ExpenseEntries
       },
       {
         path: paths.incomeCategories,

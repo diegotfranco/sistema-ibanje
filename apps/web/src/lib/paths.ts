@@ -8,7 +8,8 @@ export const paths = {
   designatedFunds: '/designated-funds',
   incomeCategories: '/income-categories',
   expenseCategories: '/expense-categories',
-  incomeEntries: '/income-entries'
+  incomeEntries: '/income-entries',
+  expenseEntries: '/expense-entries'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];
