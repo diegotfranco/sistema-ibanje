@@ -3,7 +3,6 @@ import { Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/modules/auth/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import HandFinanceGraph from '@/modules/auth/HandFinanceGraph';
 import { paths } from '@/lib/paths';
 import {
   CardHeader,
@@ -23,16 +22,16 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
+      <AuthLayout>
         <div className="text-center">
           <CardHeader className="text-center pb-6">
-            <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-teal-600 decoration-1 mb-8">
+            <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-primary decoration-1 mb-8">
               Sistema Ibanje
             </CardTitle>
             <CardDescription>Link de redefinição inválido ou ausente.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-center bg-transparent border-none">
-            <Link to={paths.forgotPassword} className="text-teal-600 hover:underline font-medium">
+            <Link to={paths.forgotPassword} className="text-primary hover:underline font-medium">
               Solicitar novo link
             </Link>
           </CardFooter>
@@ -42,16 +41,16 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
+    <AuthLayout>
       <form id="form-reset-password" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <CardHeader className="text-center pb-6">
-          <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-teal-600 decoration-1 mb-8">
+          <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-primary decoration-1 mb-8">
             Sistema Ibanje
           </CardTitle>
 
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-teal-600 text-lg font-medium">Definir senha</h2>
-            <Link to={paths.login} className="text-teal-600 hover:underline font-medium">
+            <h2 className="text-primary text-lg font-medium">Definir senha</h2>
+            <Link to={paths.login} className="text-primary hover:underline font-medium">
               Voltar ao login
             </Link>
           </div>
@@ -71,7 +70,7 @@ export default function ResetPasswordPage() {
                   <PasswordInput
                     {...field}
                     id="newPassword"
-                    placeholder="********"
+                    placeholder="••••••••"
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
@@ -89,7 +88,7 @@ export default function ResetPasswordPage() {
                   <PasswordInput
                     {...field}
                     id="confirmPassword"
-                    placeholder="********"
+                    placeholder="••••••••"
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />

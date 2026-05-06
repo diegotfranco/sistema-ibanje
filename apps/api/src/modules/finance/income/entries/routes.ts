@@ -1,14 +1,14 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../../../hooks/requireAuth';
-import { checkPermission } from '../../../../hooks/checkPermission';
-import { Module, Action } from '../../../../lib/constants';
-import { IdParamSchema } from '../../../../lib/validation';
+import { requireAuth } from '../../../../hooks/requireAuth.js';
+import { checkPermission } from '../../../../hooks/checkPermission.js';
+import { Module, Action } from '../../../../lib/constants.js';
+import { IdParamSchema } from '../../../../lib/validation.js';
 import {
   ListIncomeEntriesRequestSchema,
   CreateIncomeEntryRequestSchema,
   UpdateIncomeEntryRequestSchema
-} from './schema';
-import * as controller from './controller';
+} from './schema.js';
+import * as controller from './controller.js';
 
 export async function incomeEntriesRoutes(app: FastifyInstance) {
   app.get(

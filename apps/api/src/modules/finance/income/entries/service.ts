@@ -1,17 +1,17 @@
-import * as repo from './repository';
-import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository';
-import { findPaymentMethodById } from '../../payment-methods/repository';
-import { findDesignatedFundById } from '../../designated-funds/repository';
-import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
-import { assertPermission } from '../../../../lib/permissions';
-import { Module, Action } from '../../../../lib/constants';
-import { httpError } from '../../../../lib/errors';
-import { paginate } from '../../../../lib/pagination';
+import * as repo from './repository.js';
+import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository.js';
+import { findPaymentMethodById } from '../../payment-methods/repository.js';
+import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository.js';
+import { assertPermission } from '../../../../lib/permissions.js';
+import { Module, Action } from '../../../../lib/constants.js';
+import { httpError } from '../../../../lib/errors.js';
+import { paginate } from '../../../../lib/pagination.js';
 import type {
   CreateIncomeEntryRequest,
   UpdateIncomeEntryRequest,
   IncomeEntryResponse
-} from './schema';
+} from './schema.js';
 
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
 

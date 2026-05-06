@@ -1,12 +1,12 @@
 import { eq, gte, lt, sum, count, and, or, desc, isNotNull } from 'drizzle-orm';
-import { db } from '../../../db/index';
+import { db } from '../../../db/index.js';
 import {
   monthlyClosings,
   incomeEntries,
   expenseEntries,
   financeSettings,
   type MonthlyClosing
-} from '../../../db/schema';
+} from '../../../db/schema.js';
 
 export function periodStart(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, '0')}-01`;

@@ -1,13 +1,13 @@
-import * as repo from './repository';
-import { assertPermission } from '../../../../lib/permissions';
-import { Module, Action } from '../../../../lib/constants';
-import { httpError } from '../../../../lib/errors';
-import { paginate } from '../../../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../../../lib/permissions.js';
+import { Module, Action } from '../../../../lib/constants.js';
+import { httpError } from '../../../../lib/errors.js';
+import { paginate } from '../../../../lib/pagination.js';
 import type {
   CreateIncomeCategoryRequest,
   UpdateIncomeCategoryRequest,
   IncomeCategoryResponse
-} from './schema';
+} from './schema.js';
 
 async function assertParentExists(parentId: number) {
   const parent = await repo.findIncomeCategoryById(parentId);

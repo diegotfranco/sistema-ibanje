@@ -1,6 +1,6 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../../../db/index';
-import { incomeCategories } from '../../../../db/schema';
+import { db } from '../../../../db/index.js';
+import { incomeCategories } from '../../../../db/schema.js';
 
 const selectFields = {
   id: incomeCategories.id,

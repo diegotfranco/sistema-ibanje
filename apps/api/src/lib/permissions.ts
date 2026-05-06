@@ -1,8 +1,8 @@
-import { db } from '../db';
-import { userModulePermissions, modules, permissions } from '../db/schema';
+import { db } from '../db/index.js';
+import { userModulePermissions, modules, permissions } from '../db/schema.js';
 import { eq, and } from 'drizzle-orm';
-import { httpError } from './errors';
-import { ModuleName, ActionName } from './constants';
+import { httpError } from './errors.js';
+import { ModuleName, ActionName } from './constants.js';
 
 export async function hasPermission(
   userId: number,

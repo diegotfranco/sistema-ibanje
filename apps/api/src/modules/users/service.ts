@@ -1,20 +1,20 @@
 import * as argon2 from 'argon2';
 import { randomBytes, createHash } from 'node:crypto';
-import { env } from '../../config/env';
-import { db } from '../../db';
-import { passwordResetTokens, users, roles, members } from '../../db/schema';
+import { env } from '../../config/env.js';
+import { db } from '../../db/index.js';
+import { passwordResetTokens, users, roles, members } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
-import * as repo from './repository';
-import { assertPermission } from '../../lib/permissions';
-import { Module, Action } from '../../lib/constants';
-import { paginate } from '../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../lib/permissions.js';
+import { Module, Action } from '../../lib/constants.js';
+import { paginate } from '../../lib/pagination.js';
 import type {
   UpdateUserRequest,
   UpdatePasswordRequest,
   UserResponse,
   CreateUserRequest
-} from './schema';
-import { httpError } from '../../lib/errors';
+} from './schema.js';
+import { httpError } from '../../lib/errors.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

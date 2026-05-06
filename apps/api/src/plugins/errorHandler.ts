@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { ZodError } from 'zod';
-import { isHttpError } from '../lib/errors';
+import { isHttpError } from '../lib/errors.js';
 
 export function registerErrorHandler(app: FastifyInstance) {
   app.setErrorHandler((error, _req, reply) => {

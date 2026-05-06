@@ -1,6 +1,6 @@
 import { eq, gte, lte, sum, count, and, isNotNull, asc, inArray, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
-import { db } from '../../../db/index';
+import { db } from '../../../db/index.js';
 import {
   incomeEntries,
   expenseEntries,
@@ -8,7 +8,7 @@ import {
   expenseCategories,
   designatedFunds,
   members
-} from '../../../db/schema';
+} from '../../../db/schema.js';
 import type {
   IncomeReportRow,
   ExpenseReportRow,
@@ -18,7 +18,7 @@ import type {
   FundIncomeEntry,
   FundExpenseEntry,
   IncomeAggregateRow
-} from './schema';
+} from './schema.js';
 
 const parentIncomeCat = alias(incomeCategories, 'parent_income_cat');
 const parentExpenseCat = alias(expenseCategories, 'parent_expense_cat');

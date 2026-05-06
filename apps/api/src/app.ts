@@ -1,16 +1,16 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import { env } from './config/env';
-import { sql } from './db';
-import { registerCorsPlugin } from './plugins/cors';
-import { registerSwaggerPlugin } from './plugins/swagger';
-import { registerSessionPlugin } from './plugins/session';
-import { registerRateLimitPlugin } from './plugins/rateLimit';
-import { registerCsrfPlugin } from './plugins/csrf';
-import { registerErrorHandler } from './plugins/errorHandler';
-import { registerRoutes } from './modules/index';
-import { initStorage } from './lib/storage';
+import { env } from './config/env.js';
+import { sql } from './db/index.js';
+import { registerCorsPlugin } from './plugins/cors.js';
+import { registerSwaggerPlugin } from './plugins/swagger.js';
+import { registerSessionPlugin } from './plugins/session.js';
+import { registerRateLimitPlugin } from './plugins/rateLimit.js';
+import { registerCsrfPlugin } from './plugins/csrf.js';
+import { registerErrorHandler } from './plugins/errorHandler.js';
+import { registerRoutes } from './modules/index.js';
+import { initStorage } from './lib/storage.js';
 
 export async function buildApp() {
   const app = Fastify({

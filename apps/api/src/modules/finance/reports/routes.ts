@@ -1,10 +1,10 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../../hooks/requireAuth';
-import { checkPermission } from '../../../hooks/checkPermission';
-import { Module, Action } from '../../../lib/constants';
-import { IdParamSchema } from '../../../lib/validation';
-import { PaginatedDateRangeQuerySchema, DateRangeQuerySchema } from './schema';
-import * as controller from './controller';
+import { requireAuth } from '../../../hooks/requireAuth.js';
+import { checkPermission } from '../../../hooks/checkPermission.js';
+import { Module, Action } from '../../../lib/constants.js';
+import { IdParamSchema } from '../../../lib/validation.js';
+import { PaginatedDateRangeQuerySchema, DateRangeQuerySchema } from './schema.js';
+import * as controller from './controller.js';
 
 export async function reportsRoutes(app: FastifyInstance) {
   app.get(

@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
-import * as repo from './repository';
-import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository';
+import * as repo from './repository.js';
+import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
 import { findMemberById } from '../../../members/repository';
-import { findPaymentMethodById } from '../../payment-methods/repository';
-import { findDesignatedFundById } from '../../designated-funds/repository';
-import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository';
-import { assertPermission } from '../../../../lib/permissions';
-import { Module, Action } from '../../../../lib/constants';
-import { httpError } from '../../../../lib/errors';
-import { paginate } from '../../../../lib/pagination';
+import { findPaymentMethodById } from '../../payment-methods/repository.js';
+import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository.js';
+import { assertPermission } from '../../../../lib/permissions.js';
+import { Module, Action } from '../../../../lib/constants.js';
+import { httpError } from '../../../../lib/errors.js';
+import { paginate } from '../../../../lib/pagination.js';
 import {
   uploadFile,
   deleteFile,
@@ -19,7 +19,7 @@ import type {
   CreateExpenseEntryRequest,
   UpdateExpenseEntryRequest,
   ExpenseEntryResponse
-} from './schema';
+} from './schema.js';
 
 async function assertPeriodEditable(referenceDate: string): Promise<void> {
   const year = parseInt(referenceDate.substring(0, 4));

@@ -1,5 +1,5 @@
 import { eq, inArray, count } from 'drizzle-orm';
-import { db } from '../../db';
+import { db } from '../../db/index.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 import {
@@ -10,7 +10,7 @@ import {
   permissions,
   members,
   roleModulePermissions
-} from '../../db/schema';
+} from '../../db/schema.js';
 
 export async function listUsers(offset: number, limit: number) {
   const rows = await db

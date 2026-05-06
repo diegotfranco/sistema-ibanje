@@ -1,12 +1,12 @@
-import * as repo from './repository';
-import { assertPermission } from '../../../lib/permissions';
-import { Module, Action } from '../../../lib/constants';
-import { paginate } from '../../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../../lib/permissions.js';
+import { Module, Action } from '../../../lib/constants.js';
+import { paginate } from '../../../lib/pagination.js';
 import type {
   CreateDesignatedFundRequest,
   UpdateDesignatedFundRequest,
   DesignatedFundResponse
-} from './schema';
+} from './schema.js';
 
 export async function listDesignatedFunds(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.DesignatedFunds, Action.View);

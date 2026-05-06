@@ -27,9 +27,11 @@ export function useLoginForm() {
     },
     onError: (err) => {
       if (err instanceof ApiError && err.status === 401) {
-        form.setError('root', { message: 'E-mail ou senha inválidos.' });
+        toast.error('E-mail ou senha inválidos');
+        // form.setError('root', { message: 'E-mail ou senha inválidos.' });
       } else {
-        form.setError('root', { message: 'Ocorreu um erro. Tente novamente.' });
+        toast.error('Ocorreu um erro. Tente novamente');
+        // form.setError('root', { message: 'Ocorreu um erro. Tente novamente.' });
       }
     }
   });

@@ -1,17 +1,17 @@
 import fs from 'fs';
 import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
-import * as repo from '../modules/finance/reports/repository';
+import * as repo from '../modules/finance/reports/repository.js';
 import {
   findPreviousFechadoClosing,
   sumNetForDateRange,
   findFinanceSettings,
   periodEnd
-} from '../modules/finance/monthly-closings/repository';
+} from '../modules/finance/monthly-closings/repository.js';
 import {
   DetailedFinancialStatementPdf,
   FinancialStatementPdf
-} from '../modules/finance/reports/pdf-template';
+} from '../modules/finance/reports/pdf-template.js';
 import type {
   DetailedFinancialStatementResponse,
   FinancialStatementResponse,
@@ -19,7 +19,7 @@ import type {
   IncomePivot,
   IncomePivotColumn,
   IncomePivotRow
-} from '../modules/finance/reports/schema';
+} from '../modules/finance/reports/schema.js';
 
 const from = '2025-10-01';
 const to = '2025-10-31';

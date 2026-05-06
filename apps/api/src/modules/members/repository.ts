@@ -1,6 +1,6 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../db/index';
-import { members } from '../../db/schema';
+import { db } from '../../db/index.js';
+import { members } from '../../db/schema.js';
 
 export async function listMembers(offset: number, limit: number) {
   const rows = await db

@@ -1,12 +1,12 @@
-import * as repo from './repository';
-import { assertPermission } from '../../lib/permissions';
-import { Module, Action } from '../../lib/constants';
-import { httpError } from '../../lib/errors';
-import { paginate } from '../../lib/pagination';
-import type { CreateMemberRequest, UpdateMemberRequest, MemberResponse } from './schema';
-import { db } from '../../db/index';
+import * as repo from './repository.js';
+import { assertPermission } from '../../lib/permissions.js';
+import { Module, Action } from '../../lib/constants.js';
+import { httpError } from '../../lib/errors.js';
+import { paginate } from '../../lib/pagination.js';
+import type { CreateMemberRequest, UpdateMemberRequest, MemberResponse } from './schema.js';
+import { db } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
-import { users, members } from '../../db/schema';
+import { users, members } from '../../db/schema.js';
 
 export async function listMembers(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.Members, Action.View);

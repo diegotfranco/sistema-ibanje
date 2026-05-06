@@ -1,8 +1,8 @@
 import * as argon2 from 'argon2';
 import { randomBytes, createHash } from 'node:crypto';
-import { env } from '../../config/env';
-import * as repo from './repository';
-import type { MeResponse } from './schema';
+import { env } from '../../config/env.js';
+import * as repo from './repository.js';
+import type { MeResponse } from './schema.js';
 
 export async function login(email: string, password: string) {
   const user = await repo.findUserByEmail(email);

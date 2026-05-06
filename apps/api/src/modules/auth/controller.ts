@@ -4,8 +4,8 @@ import type {
   PasswordResetRequest,
   ResetPasswordRequest,
   RegisterRequest
-} from './schema';
-import * as service from './service';
+} from './schema.js';
+import * as service from './service.js';
 
 export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
   const token = reply.generateCsrf();

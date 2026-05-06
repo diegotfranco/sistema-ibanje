@@ -1,15 +1,15 @@
-import * as repo from './repository';
-import { assertPermission } from '../../lib/permissions';
-import { Module, Action } from '../../lib/constants';
-import { httpError } from '../../lib/errors';
-import { paginate } from '../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../lib/permissions.js';
+import { Module, Action } from '../../lib/constants.js';
+import { httpError } from '../../lib/errors.js';
+import { paginate } from '../../lib/pagination.js';
 import type {
   CreateRoleRequest,
   UpdateRoleRequest,
   SetRolePermissionsRequest,
   RoleResponse,
   RolePermissionResponse
-} from './schema';
+} from './schema.js';
 
 export async function listRoles(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.Roles, Action.View);

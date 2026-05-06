@@ -1,6 +1,6 @@
 import { eq, count } from 'drizzle-orm';
-import { db } from '../../db/index';
-import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema';
+import { db } from '../../db/index.js';
+import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema.js';
 
 export async function listRoles(offset: number, limit: number) {
   const rows = await db

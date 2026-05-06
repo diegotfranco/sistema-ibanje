@@ -3,7 +3,7 @@ import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import { RedisStore } from 'connect-redis';
 import { createClient } from 'redis';
-import { env } from '../config/env';
+import { env } from '../config/env.js';
 
 declare module '@fastify/session' {
   interface FastifySessionObject {

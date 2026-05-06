@@ -5,9 +5,9 @@ import type {
   UpdatePasswordRequest,
   UpdatePermissionsRequest,
   CreateUserRequest
-} from './schema';
-import type { IdParam } from '../../lib/validation';
-import * as service from './service';
+} from './schema.js';
+import type { IdParam } from '../../lib/validation.js';
+import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit } = req.query as ListUsersRequest;

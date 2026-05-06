@@ -1,16 +1,16 @@
-import * as repo from './repository';
-import { assertPermission } from '../../../lib/permissions';
-import { Module, Action } from '../../../lib/constants';
-import { httpError } from '../../../lib/errors';
-import { paginate } from '../../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../../lib/permissions.js';
+import { Module, Action } from '../../../lib/constants.js';
+import { httpError } from '../../../lib/errors.js';
+import { paginate } from '../../../lib/pagination.js';
 import type {
   CreateMonthlyClosingRequest,
   SubmitMonthlyClosingRequest,
   ApproveMonthlyClosingRequest,
   RejectMonthlyClosingRequest,
   MonthlyClosingResponse
-} from './schema';
-import type { MonthlyClosing } from '../../../db/schema';
+} from './schema.js';
+import type { MonthlyClosing } from '../../../db/schema.js';
 
 async function buildResponse(
   closing: MonthlyClosing,

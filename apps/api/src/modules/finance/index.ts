@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import { paymentMethodsRoutes } from './payment-methods/routes';
-import { designatedFundsRoutes } from './designated-funds/routes';
-import { incomeCategoriesRoutes } from './income/categories/routes';
-import { incomeEntriesRoutes } from './income/entries/routes';
-import { expenseCategoriesRoutes } from './expenses/categories/routes';
-import { expenseEntriesRoutes } from './expenses/entries/routes';
-import { monthlyClosingsRoutes } from './monthly-closings/routes';
-import { reportsRoutes } from './reports/routes';
+import { paymentMethodsRoutes } from './payment-methods/routes.js';
+import { designatedFundsRoutes } from './designated-funds/routes.js';
+import { incomeCategoriesRoutes } from './income/categories/routes.js';
+import { incomeEntriesRoutes } from './income/entries/routes.js';
+import { expenseCategoriesRoutes } from './expenses/categories/routes.js';
+import { expenseEntriesRoutes } from './expenses/entries/routes.js';
+import { monthlyClosingsRoutes } from './monthly-closings/routes.js';
+import { reportsRoutes } from './reports/routes.js';
 
 export async function financeRoutes(app: FastifyInstance) {
   await app.register(paymentMethodsRoutes);

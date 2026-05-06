@@ -1,12 +1,12 @@
 import { FastifyInstance } from 'fastify';
-import { requireAuth } from '../../hooks/requireAuth';
+import { requireAuth } from '../../hooks/requireAuth.js';
 import {
   LoginRequestSchema,
   RegisterRequestSchema,
   PasswordResetRequestSchema,
   ResetPasswordRequestSchema
-} from './schema';
-import * as controller from './controller';
+} from './schema.js';
+import * as controller from './controller.js';
 
 export async function authRoutes(app: FastifyInstance) {
   app.get('/auth/csrf-token', { schema: { tags: ['Auth'] } }, controller.getCsrfToken);

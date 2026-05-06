@@ -1,13 +1,13 @@
-import * as repo from './repository';
-import { assertPermission } from '../../../lib/permissions';
-import { Module, Action } from '../../../lib/constants';
-import { httpError } from '../../../lib/errors';
-import { paginate } from '../../../lib/pagination';
+import * as repo from './repository.js';
+import { assertPermission } from '../../../lib/permissions.js';
+import { Module, Action } from '../../../lib/constants.js';
+import { httpError } from '../../../lib/errors.js';
+import { paginate } from '../../../lib/pagination.js';
 import type {
   CreatePaymentMethodRequest,
   UpdatePaymentMethodRequest,
   PaymentMethodResponse
-} from './schema';
+} from './schema.js';
 
 export async function listPaymentMethods(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.PaymentMethods, Action.View);

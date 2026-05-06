@@ -1,16 +1,16 @@
 import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
-import * as repo from './repository';
+import * as repo from './repository.js';
 import {
   findPreviousFechadoClosing,
   sumNetForDateRange,
   findFinanceSettings,
   periodEnd
-} from '../monthly-closings/repository';
-import { assertPermission } from '../../../lib/permissions';
-import { Module, Action } from '../../../lib/constants';
-import { httpError } from '../../../lib/errors';
-import { FinancialStatementPdf, DetailedFinancialStatementPdf } from './pdf-template';
+} from '../monthly-closings/repository.js';
+import { assertPermission } from '../../../lib/permissions.js';
+import { Module, Action } from '../../../lib/constants.js';
+import { httpError } from '../../../lib/errors.js';
+import { FinancialStatementPdf, DetailedFinancialStatementPdf } from './pdf-template.js';
 import type {
   IncomeReportResponse,
   ExpenseReportResponse,
@@ -24,7 +24,7 @@ import type {
   IncomePivotColumn,
   IncomePivotRow,
   IncomeAggregateRow
-} from './schema';
+} from './schema.js';
 
 function validateDateRange(from: string, to: string) {
   if (from > to) throw httpError(400, "'from' must be on or before 'to'");

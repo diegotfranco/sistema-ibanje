@@ -10,8 +10,7 @@ import type {
   IncomePivot
 } from './schema.js';
 
-// __dirname resolves to apps/api/src/modules/finance/reports/
-const FONTSOURCE = path.resolve(__dirname, '../../../../node_modules/@fontsource');
+const FONTSOURCE = path.resolve(import.meta.dirname, '../../../../node_modules/@fontsource');
 
 Font.register({
   family: 'Roboto',

@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { CreateIncomeEntryRequest, UpdateIncomeEntryRequest } from './schema';
-import type { IdParam } from '../../../../lib/validation';
-import type { PaginationQuery } from '../../../../lib/pagination';
-import * as service from './service';
+import type { CreateIncomeEntryRequest, UpdateIncomeEntryRequest } from './schema.js';
+import type { IdParam } from '../../../../lib/validation.js';
+import type { PaginationQuery } from '../../../../lib/pagination.js';
+import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit } = req.query as PaginationQuery;

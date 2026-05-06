@@ -1,7 +1,7 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { IdParam } from '../../../lib/validation';
-import type { PaginatedDateRangeQuery, DateRangeQuery } from './schema';
-import * as service from './service';
+import type { IdParam } from '../../../lib/validation.js';
+import type { PaginatedDateRangeQuery, DateRangeQuery } from './schema.js';
+import * as service from './service.js';
 
 export async function incomeReport(req: FastifyRequest, reply: FastifyReply) {
   const { from, to, page, limit } = req.query as PaginatedDateRangeQuery;

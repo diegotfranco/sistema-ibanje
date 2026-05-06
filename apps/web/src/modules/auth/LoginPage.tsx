@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/modules/auth/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
-import HandFinanceGraph from '@/modules/auth/HandFinanceGraph';
 import { paths } from '@/lib/paths';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -17,18 +16,18 @@ const LoginPage = () => {
   if (redirect) return <Navigate to={paths.dashboard} replace />;
 
   return (
-    <AuthLayout illustration={<HandFinanceGraph className="text-slate-50 max-w-xs" />}>
+    <AuthLayout>
       <form id="form-login" onSubmit={form.handleSubmit(onSubmit)} noValidate>
         <CardHeader className="space-y-8 pb-6 text-center">
-          <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-teal-600 decoration-1">
+          <CardTitle className="text-2xl font-light underline underline-offset-8 decoration-primary decoration-1">
             Sistema Ibanje
           </CardTitle>
 
           <div className="flex items-center justify-between text-left">
-            <h2 className="text-teal-600 text-lg font-medium">Login</h2>
+            <h2 className="text-primary text-lg font-medium">Login</h2>
             <Link
               to={paths.register}
-              className="text-sm font-light hover:underline underline-offset-4 decoration-teal-600">
+              className="text-sm font-light hover:underline underline-offset-4 decoration-primary">
               Não tem uma conta?
             </Link>
           </div>
@@ -63,7 +62,7 @@ const LoginPage = () => {
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel>Senha</FieldLabel>
                   <PasswordInput
-                    placeholder="********"
+                    placeholder="••••••••"
                     autoComplete="current-password"
                     {...field}
                   />
@@ -91,14 +90,10 @@ const LoginPage = () => {
               <Link
                 to={paths.forgotPassword}
                 aria-label="Esqueci minha senha"
-                className="text-sm font-light hover:underline underline-offset-4 decoration-teal-600">
+                className="text-sm text-nowrap font-light hover:underline underline-offset-4 decoration-primary">
                 Esqueceu sua senha?
               </Link>
             </div>
-
-            {form.formState.errors.root && (
-              <p className="text-sm text-red-600">{form.formState.errors.root.message}</p>
-            )}
           </FieldGroup>
         </CardContent>
 
