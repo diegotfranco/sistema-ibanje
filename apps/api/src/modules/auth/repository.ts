@@ -1,13 +1,6 @@
 import { eq, and, gt, isNull } from 'drizzle-orm';
-import { db } from '../../db';
-import {
-  users,
-  roles,
-  passwordResetTokens,
-  userModulePermissions,
-  modules,
-  permissions
-} from '../../db/schema';
+import { db } from '../../db/index.js';
+import { users, roles, passwordResetTokens, userModulePermissions } from '../../db/schema.js';
 
 export async function findUserByEmail(email: string) {
   const result = await db
@@ -103,11 +96,18 @@ export async function createPendingUser(data: { name: string; email: string; rol
   return result[0];
 }
 
-export async function findUserPermissions(userId: number) {
-  return db
-    .select({ module: modules.name, action: permissions.name })
+export async function findUserPermissions(userId: number): Promise<Record<number, number>> {
+  const rows = await db
+    .select({
+      moduleId: userModulePermissions.moduleId,
+      permissionId: userModulePermissions.permissionId
+    })
     .from(userModulePermissions)
-    .innerJoin(modules, eq(modules.id, userModulePermissions.moduleId))
-    .innerJoin(permissions, eq(permissions.id, userModulePermissions.permissionId))
     .where(eq(userModulePermissions.userId, userId));
+
+  const out: Record<number, number> = {};
+  for (const r of rows) {
+    out[r.moduleId] = (out[r.moduleId] ?? 0) | (1 << (r.permissionId - 1));
+  }
+  return out;
 }

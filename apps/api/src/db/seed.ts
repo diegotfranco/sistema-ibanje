@@ -1,7 +1,7 @@
 import * as argon2 from 'argon2';
 import { sql as drizzleSql } from 'drizzle-orm';
-import { env } from '../config/env';
-import { db, sql } from '.';
+import { env } from '../config/env.js';
+import { db, sql } from './index.js';
 import {
   roles,
   permissions,
@@ -21,7 +21,7 @@ import {
   minuteVersions,
   monthlyClosings,
   financeSettings
-} from './schema';
+} from './schema.js';
 
 async function hashPassword(password: string) {
   return argon2.hash(password + env.ARGON2_PEPPER, { type: argon2.argon2id });
@@ -86,6 +86,8 @@ async function seed() {
       .returning();
     const roleByName = Object.fromEntries(insertedRoles.map((r) => [r.name, r]));
 
+    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
+    // constants by packages/shared/src/index.ts (Action enum). APPEND ONLY.
     // --- Permissions ---
     const insertedPerms = await tx
       .insert(permissions)
@@ -100,6 +102,21 @@ async function seed() {
       .returning();
     const permByName = Object.fromEntries(insertedPerms.map((p) => [p.name, p]));
 
+    if (
+      insertedPerms[0].name !== 'Acessar' ||
+      insertedPerms[1].name !== 'Cadastrar' ||
+      insertedPerms[2].name !== 'Editar' ||
+      insertedPerms[3].name !== 'Remover' ||
+      insertedPerms[4].name !== 'Revisar' ||
+      insertedPerms[5].name !== 'Relatórios'
+    ) {
+      throw new Error(
+        'Seed permission order changed — update packages/shared/src/index.ts Action enum to match.'
+      );
+    }
+
+    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
+    // constants by packages/shared/src/index.ts (Module enum). APPEND ONLY.
     // --- Modules ---
     const insertedMods = await tx
       .insert(modules)
@@ -136,6 +153,33 @@ async function seed() {
       ])
       .returning();
     const modByName = Object.fromEntries(insertedMods.map((m) => [m.name, m]));
+
+    const expectedModuleOrder = [
+      'Usuários',
+      'Cargos',
+      'Permissões',
+      'Áreas',
+      'Status',
+      'Membros',
+      'Categorias de Entradas',
+      'Lançamentos de Entradas',
+      'Categorias de Saídas',
+      'Lançamentos de Saídas',
+      'Formas de Pagamento',
+      'Fundos Designados',
+      'Painel',
+      'Relatórios',
+      'Fechamentos Mensais',
+      'Pautas',
+      'Atas'
+    ];
+    for (let i = 0; i < expectedModuleOrder.length; i++) {
+      if (insertedMods[i]?.name !== expectedModuleOrder[i]) {
+        throw new Error(
+          `Seed module order changed at index ${i} — update packages/shared/src/index.ts Module enum to match.`
+        );
+      }
+    }
 
     // --- Users ---
     const insertedUsers = await tx

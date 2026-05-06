@@ -1,11 +1,12 @@
 import { Navigate } from 'react-router';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { paths } from '@/lib/paths';
-import { hasPermission, Action } from '@/lib/permissions';
+import { hasPermission, Action, type Module } from '@/lib/permissions';
+import type { Action as ActionType } from '@/lib/permissions';
 
 interface RequirePermissionProps {
-  module: string;
-  action?: string;
+  module: Module;
+  action?: ActionType;
   children: React.ReactNode;
 }
 
