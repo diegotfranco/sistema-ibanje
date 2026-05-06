@@ -1,10 +1,12 @@
-import { CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import { CalendarCheck, CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPage';
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
+import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosingsPage';
+import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
 import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
@@ -38,6 +40,28 @@ export const financeRoutes: AppRoute[] = [
         label: 'Lançamentos de Saídas',
         icon: TrendingDown,
         module: Module.ExpenseEntries
+      },
+      {
+        path: paths.monthlyClosings,
+        element: (
+          <RequirePermission module={Module.MonthlyClosings}>
+            <MonthlyClosingsPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        label: 'Fechamentos Mensais',
+        icon: CalendarCheck,
+        module: Module.MonthlyClosings
+      },
+      {
+        path: paths.monthlyClosingDetail,
+        element: (
+          <RequirePermission module={Module.MonthlyClosings}>
+            <MonthlyClosingDetailPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        module: Module.MonthlyClosings
       },
       {
         path: paths.incomeCategories,
