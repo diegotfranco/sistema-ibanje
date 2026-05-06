@@ -7,7 +7,8 @@ export const paths = {
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
   incomeCategories: '/income-categories',
-  expenseCategories: '/expense-categories'
+  expenseCategories: '/expense-categories',
+  incomeEntries: '/income-entries'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];
