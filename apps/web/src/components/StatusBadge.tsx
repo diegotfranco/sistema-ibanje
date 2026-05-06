@@ -20,9 +20,7 @@ export default function StatusBadge({ status, className }: Props) {
   const label = status.charAt(0).toUpperCase() + status.slice(1);
 
   return (
-    <Badge
-      variant="outline"
-      className={cn(STATUS_CLASSES[status] ?? '', className)}>
+    <Badge variant="outline" className={cn(STATUS_CLASSES[status] ?? '', className)}>
       {label}
     </Badge>
   );

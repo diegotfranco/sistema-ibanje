@@ -4,6 +4,7 @@ export const paths = {
   forgotPassword: '/forgot-password',
   resetPassword: '/reset-password',
   dashboard: '/dashboard',
+  members: '/members',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
   incomeCategories: '/income-categories',

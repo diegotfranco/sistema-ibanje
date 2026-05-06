@@ -1,7 +1,14 @@
 import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
@@ -69,7 +76,9 @@ const EntityPicker = React.forwardRef<HTMLButtonElement, EntityPickerProps<any>>
                       onChange(null);
                       setOpen(false);
                     }}>
-                    <Check className={cn('mr-2 h-4 w-4', value === null ? 'opacity-100' : 'opacity-0')} />
+                    <Check
+                      className={cn('mr-2 h-4 w-4', value === null ? 'opacity-100' : 'opacity-0')}
+                    />
                     Limpar seleção
                   </CommandItem>
                 )}
@@ -84,7 +93,10 @@ const EntityPicker = React.forwardRef<HTMLButtonElement, EntityPickerProps<any>>
                         setOpen(false);
                       }}>
                       <Check
-                        className={cn('mr-2 h-4 w-4', value === itemValue ? 'opacity-100' : 'opacity-0')}
+                        className={cn(
+                          'mr-2 h-4 w-4',
+                          value === itemValue ? 'opacity-100' : 'opacity-0'
+                        )}
                       />
                       {getLabel(item)}
                     </CommandItem>

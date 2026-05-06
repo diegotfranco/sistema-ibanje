@@ -3,6 +3,7 @@ import type { LucideIcon } from 'lucide-react';
 import type { Module, Action } from '@/lib/permissions';
 import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
+import { membersRoutes } from '@/modules/members/routes';
 import { financeRoutes } from '@/modules/finance/routes';
 
 export type AppRoute = {
@@ -17,4 +18,4 @@ export type AppRoute = {
   children?: AppRoute[];
 };
 
-export const appRoutes: AppRoute[] = [...authRoutes, ...dashboardRoutes, ...financeRoutes];
+export const appRoutes: AppRoute[] = [...authRoutes, ...dashboardRoutes, ...membersRoutes, ...financeRoutes];
