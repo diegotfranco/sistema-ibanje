@@ -1,11 +1,21 @@
 import { NavLink, useLocation } from 'react-router';
-import { LogOut, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
 import { appRoutes } from '@/routes';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { hasPermission, Action } from '@/lib/permissions';
 import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+// Make sure to import these Dropdown components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 
 import {
   Sidebar as ShadcnSidebar,
@@ -74,7 +84,12 @@ export function Sidebar() {
               <SidebarGroup key={route.path || index} className="py-2">
                 <SidebarMenu>
                   <SidebarMenuItem>
-                    <SidebarMenuButton asChild isActive={isActive} tooltip={route.label}>
+                    {/* Added the custom text classes here */}
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                      tooltip={route.label}
+                      className="text-muted-foreground hover:text-foreground">
                       <NavLink to={route.path!}>
                         {route.icon && <route.icon />}
                         <span>{route.label}</span>
@@ -109,7 +124,12 @@ export function Sidebar() {
 
                     return (
                       <SidebarMenuItem key={child.path}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={child.label}>
+                        {/* Added the custom text classes here */}
+                        <SidebarMenuButton
+                          asChild
+                          isActive={isActive}
+                          tooltip={child.label}
+                          className="text-muted-foreground hover:text-foreground">
                           <NavLink to={child.path!}>
                             {child.icon && <child.icon />}
                             <span>{child.label}</span>
@@ -125,18 +145,43 @@ export function Sidebar() {
         })}
       </SidebarContent>
 
-      {/* Bottom Actions */}
+      {/* Bottom Actions - User Menu Dropdown */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => logout()}
-              disabled={isPending}
-              tooltip="Sair"
-              className="text-muted-foreground hover:text-foreground">
-              <LogOut />
-              <span>{isPending ? 'Saindo...' : 'Sair'}</span>
-            </SidebarMenuButton>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="w-full justify-between data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    {isCollapsed ? (
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                        <User size={14} />
+                      </div>
+                    ) : (
+                      <span className="truncate text-sm font-medium">
+                        {user?.name || 'Carregando...'}
+                      </span>
+                    )}
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                side="top"
+                align="start"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 mb-2 z-10">
+                <DropdownMenuLabel>Ações do Usuário</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => logout()}
+                  disabled={isPending}
+                  className="text-destructive focus:text-destructive cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>{isPending ? 'Saindo...' : 'Sair'}</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>

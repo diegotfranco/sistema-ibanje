@@ -15,10 +15,9 @@ function flattenRoutes(routes: AppRoute[]): AppRoute[] {
 }
 
 const flat = flattenRoutes(appRoutes);
-console.log(flat);
 
-const publicRoutes = flat.filter((r) => r.layout === 'auth');
-const protectedRoutes = flat.filter((r) => r.layout === 'app');
+const publicRoutes = flat.filter((r) => r.layout === 'auth' && r.path && r.element);
+const protectedRoutes = flat.filter((r) => r.layout === 'app' && r.path && r.element);
 
 function ToasterWrapper() {
   const { resolved } = useTheme();
