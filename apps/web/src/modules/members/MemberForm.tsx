@@ -113,8 +113,15 @@ export default function MemberForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="postalCode">CEP</Label>
-              <Input id="postalCode" {...register('postalCode')} maxLength={8} placeholder="00000000" />
-              {errors.postalCode && <p className="text-xs text-red-500">{errors.postalCode.message}</p>}
+              <Input
+                id="postalCode"
+                {...register('postalCode')}
+                maxLength={8}
+                placeholder="00000000"
+              />
+              {errors.postalCode && (
+                <p className="text-xs text-red-500">{errors.postalCode.message}</p>
+              )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="state">Estado (UF)</Label>
@@ -160,7 +167,11 @@ export default function MemberForm({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>

@@ -7,9 +7,9 @@ export const IncomeEntryFormSchema = z.object({
     .string()
     .min(1, 'Valor é obrigatório.')
     .regex(/^\d+(\.\d{1,2})?$/, 'Use formato decimal (ex.: 100.00).'),
-  categoryId: z.number({ message: 'Categoria é obrigatória.' }).int().positive(),
+  categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
   memberId: z.number().int().positive().optional(),
-  paymentMethodId: z.number({ message: 'Forma de pagamento é obrigatória.' }).int().positive(),
+  paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
   designatedFundId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional().or(z.literal('')),
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()

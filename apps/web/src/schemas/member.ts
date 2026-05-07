@@ -5,7 +5,7 @@ export const MemberFormSchema = z.object({
   userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   phone: z.string().max(16, 'Máximo de 16 caracteres').optional().nullable(),
-  email: z.string().email().optional().nullable(),
+  email: z.email().optional().nullable(),
   addressStreet: z.string().max(96).optional().nullable(),
   addressNumber: z.number().int().positive().optional().nullable(),
   addressComplement: z.string().max(64).optional().nullable(),

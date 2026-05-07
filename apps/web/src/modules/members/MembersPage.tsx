@@ -28,11 +28,18 @@ export default function MembersPage() {
     if (editing) {
       mutations.update.mutate(
         { id: editing.id, body: values },
-        { onSuccess: () => { setDialogOpen(false); setEditing(null); } }
+        {
+          onSuccess: () => {
+            setDialogOpen(false);
+            setEditing(null);
+          }
+        }
       );
     } else {
       mutations.create.mutate(values, {
-        onSuccess: () => { setDialogOpen(false); }
+        onSuccess: () => {
+          setDialogOpen(false);
+        }
       });
     }
   }
@@ -73,7 +80,7 @@ export default function MembersPage() {
           },
           {
             header: 'Cidade',
-            cell: (row) => row.city ? `${row.city}${row.state ? ` / ${row.state}` : ''}` : '—'
+            cell: (row) => (row.city ? `${row.city}${row.state ? ` / ${row.state}` : ''}` : '—')
           },
           {
             header: 'Status',
@@ -82,8 +89,22 @@ export default function MembersPage() {
         ]}
         data={items}
         isLoading={list.isLoading}
-        onCreate={canCreate ? () => { setEditing(null); setDialogOpen(true); } : undefined}
-        onEdit={canEdit ? (r) => { setEditing(r); setDialogOpen(true); } : undefined}
+        onCreate={
+          canCreate
+            ? () => {
+                setEditing(null);
+                setDialogOpen(true);
+              }
+            : undefined
+        }
+        onEdit={
+          canEdit
+            ? (r) => {
+                setEditing(r);
+                setDialogOpen(true);
+              }
+            : undefined
+        }
         onDelete={canDelete ? (r) => setDeleteTarget(r) : undefined}
         canCreate={canCreate}
         canEdit={canEdit}
@@ -102,10 +123,13 @@ export default function MembersPage() {
 
       <ConfirmDeleteDialog
         open={!!deleteTarget}
-        onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}
+        onOpenChange={(v) => {
+          if (!v) setDeleteTarget(null);
+        }}
         description={`Remover "${deleteTarget?.name}"? Esta ação desativa o membro.`}
         onConfirm={() => {
-          if (deleteTarget) mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+          if (deleteTarget)
+            mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
         }}
         isPending={mutations.remove.isPending}
       />

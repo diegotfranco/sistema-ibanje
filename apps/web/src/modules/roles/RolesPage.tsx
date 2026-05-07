@@ -2,12 +2,7 @@ import { useState } from 'react';
 import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
   TableBody,

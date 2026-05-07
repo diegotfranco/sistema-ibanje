@@ -55,9 +55,7 @@ export default function RoleForm({ initialValues, isPending, onSubmit, onCancel 
       <div className="space-y-1">
         <Label htmlFor="description">Descrição</Label>
         <Textarea id="description" {...register('description')} rows={3} />
-        {errors.description && (
-          <p className="text-xs text-red-500">{errors.description.message}</p>
-        )}
+        {errors.description && <p className="text-xs text-red-500">{errors.description.message}</p>}
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
