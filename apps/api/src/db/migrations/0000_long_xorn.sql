@@ -13,6 +13,7 @@ CREATE TABLE "board_meetings" (
 	"agenda_author_id" integer,
 	"agenda_created_at" timestamp with time zone,
 	"is_public" boolean DEFAULT false NOT NULL,
+	"status" "active_status" DEFAULT 'ativo' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -21,7 +22,8 @@ CREATE TABLE "designated_funds" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" varchar(96) NOT NULL,
 	"description" text,
-	"goal_amount" numeric(12, 2),
+	"target_amount" numeric(12, 2),
+	"target_date" date,
 	"status" "active_status" DEFAULT 'ativo' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -64,7 +66,9 @@ CREATE TABLE "expense_entries" (
 	"installment" integer DEFAULT 1 NOT NULL,
 	"total_installments" integer DEFAULT 1 NOT NULL,
 	"category_id" integer NOT NULL,
+	"member_id" integer,
 	"payment_method_id" integer NOT NULL,
+	"designated_fund_id" integer,
 	"receipt" text,
 	"notes" text,
 	"user_id" integer NOT NULL,
@@ -76,11 +80,20 @@ CREATE TABLE "expense_entries" (
 	CONSTRAINT "chk_expense_installments_valid" CHECK ("expense_entries"."installment" > 0 AND "expense_entries"."total_installments" > 0 AND "expense_entries"."installment" <= "expense_entries"."total_installments")
 );
 --> statement-breakpoint
+CREATE TABLE "finance_settings" (
+	"id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
+	"opening_balance" numeric(12, 2) DEFAULT '0' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "chk_finance_settings_singleton" CHECK ("finance_settings"."id" = 1)
+);
+--> statement-breakpoint
 CREATE TABLE "income_categories" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"parent_id" integer,
 	"name" varchar(64) NOT NULL,
 	"description" varchar(256),
+	"requires_member" boolean DEFAULT false NOT NULL,
 	"status" "active_status" DEFAULT 'ativo' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
@@ -159,6 +172,25 @@ CREATE TABLE "modules" (
 	CONSTRAINT "modules_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
+CREATE TABLE "monthly_closings" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"period_year" integer NOT NULL,
+	"period_month" integer NOT NULL,
+	"closing_balance" numeric(12, 2),
+	"treasurer_notes" text,
+	"accountant_notes" text,
+	"status" "closing_status" DEFAULT 'aberto' NOT NULL,
+	"submitted_by_user_id" integer,
+	"submitted_at" timestamp with time zone,
+	"reviewed_at" timestamp with time zone,
+	"closed_by_user_id" integer,
+	"closed_at" timestamp with time zone,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "uq_monthly_closing_period" UNIQUE("period_year","period_month"),
+	CONSTRAINT "chk_period_month_valid" CHECK ("monthly_closings"."period_month" BETWEEN 1 AND 12)
+);
+--> statement-breakpoint
 CREATE TABLE "password_reset_tokens" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"user_id" integer,
@@ -211,25 +243,6 @@ CREATE TABLE "roles" (
 	CONSTRAINT "roles_name_unique" UNIQUE("name")
 );
 --> statement-breakpoint
-CREATE TABLE "treasury_closings" (
-	"id" serial PRIMARY KEY NOT NULL,
-	"period_year" integer NOT NULL,
-	"period_month" integer NOT NULL,
-	"available_balance" numeric(12, 2),
-	"treasurer_notes" text,
-	"accountant_notes" text,
-	"status" "closing_status" DEFAULT 'aberto' NOT NULL,
-	"submitted_by_user_id" integer,
-	"submitted_at" timestamp with time zone,
-	"reviewed_at" timestamp with time zone,
-	"closed_by_user_id" integer,
-	"closed_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "uq_treasury_closing_period" UNIQUE("period_year","period_month"),
-	CONSTRAINT "chk_period_month_valid" CHECK ("treasury_closings"."period_month" BETWEEN 1 AND 12)
-);
---> statement-breakpoint
 CREATE TABLE "user_module_permissions" (
 	"user_id" integer NOT NULL,
 	"module_id" integer NOT NULL,
@@ -254,7 +267,9 @@ ALTER TABLE "events" ADD CONSTRAINT "events_created_by_user_id_users_id_fk" FORE
 ALTER TABLE "expense_categories" ADD CONSTRAINT "expense_categories_parent_id_expense_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."expense_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_parent_id_expense_entries_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."expense_entries"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_category_id_expense_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."expense_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_payment_method_id_payment_methods_id_fk" FOREIGN KEY ("payment_method_id") REFERENCES "public"."payment_methods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_designated_fund_id_designated_funds_id_fk" FOREIGN KEY ("designated_fund_id") REFERENCES "public"."designated_funds"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_categories" ADD CONSTRAINT "income_categories_parent_id_income_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."income_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_category_id_income_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."income_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -268,12 +283,12 @@ ALTER TABLE "minute_versions" ADD CONSTRAINT "minute_versions_created_by_user_id
 ALTER TABLE "minute_versions" ADD CONSTRAINT "minute_versions_approved_at_meeting_id_board_meetings_id_fk" FOREIGN KEY ("approved_at_meeting_id") REFERENCES "public"."board_meetings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "minutes" ADD CONSTRAINT "minutes_board_meeting_id_board_meetings_id_fk" FOREIGN KEY ("board_meeting_id") REFERENCES "public"."board_meetings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "minutes" ADD CONSTRAINT "minutes_corrects_minute_id_minutes_id_fk" FOREIGN KEY ("corrects_minute_id") REFERENCES "public"."minutes"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "monthly_closings" ADD CONSTRAINT "monthly_closings_submitted_by_user_id_users_id_fk" FOREIGN KEY ("submitted_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "monthly_closings" ADD CONSTRAINT "monthly_closings_closed_by_user_id_users_id_fk" FOREIGN KEY ("closed_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "role_module_permissions" ADD CONSTRAINT "role_module_permissions_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "role_module_permissions" ADD CONSTRAINT "role_module_permissions_module_id_modules_id_fk" FOREIGN KEY ("module_id") REFERENCES "public"."modules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "role_module_permissions" ADD CONSTRAINT "role_module_permissions_permission_id_permissions_id_fk" FOREIGN KEY ("permission_id") REFERENCES "public"."permissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treasury_closings" ADD CONSTRAINT "treasury_closings_submitted_by_user_id_users_id_fk" FOREIGN KEY ("submitted_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "treasury_closings" ADD CONSTRAINT "treasury_closings_closed_by_user_id_users_id_fk" FOREIGN KEY ("closed_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_module_id_modules_id_fk" FOREIGN KEY ("module_id") REFERENCES "public"."modules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_permission_id_permissions_id_fk" FOREIGN KEY ("permission_id") REFERENCES "public"."permissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

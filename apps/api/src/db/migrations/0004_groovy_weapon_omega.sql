@@ -1,1 +1,0 @@
-ALTER TABLE "designated_funds" ADD COLUMN "target_date" date;

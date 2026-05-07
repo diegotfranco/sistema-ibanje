@@ -7,6 +7,8 @@ import { membersRoutes } from '@/modules/members/routes';
 import { financeRoutes } from '@/modules/finance/routes';
 import { rolesRouteChildren } from '@/modules/roles/routes';
 import { usersRouteChildren } from '@/modules/users/routes';
+import { pautasRouteChildren } from '@/modules/pautas/routes';
+import { atasRouteChildren } from '@/modules/atas/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -26,10 +28,17 @@ const adminSection: AppRoute = {
   children: [...rolesRouteChildren, ...usersRouteChildren]
 };
 
+const assembleiaSection: AppRoute = {
+  layout: 'app',
+  label: 'Assembleia',
+  children: [...pautasRouteChildren, ...atasRouteChildren]
+};
+
 export const appRoutes: AppRoute[] = [
   ...authRoutes,
   ...dashboardRoutes,
   adminSection,
   ...membersRoutes,
-  ...financeRoutes
+  ...financeRoutes,
+  assembleiaSection
 ];

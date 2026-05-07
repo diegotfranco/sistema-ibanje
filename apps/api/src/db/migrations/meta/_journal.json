@@ -5,36 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1777685653773,
-      "tag": "0000_fine_lilith",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1777749862280,
-      "tag": "0001_superb_war_machine",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1777814742704,
-      "tag": "0002_flimsy_red_ghost",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1777850897914,
-      "tag": "0003_tiny_lorna_dane",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1778105493752,
-      "tag": "0004_groovy_weapon_omega",
+      "when": 1778118964231,
+      "tag": "0000_long_xorn",
       "breakpoints": true
     }
   ]

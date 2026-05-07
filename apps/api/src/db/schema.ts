@@ -324,6 +324,7 @@ export const boardMeetings = pgTable('board_meetings', {
   agendaAuthorId: integer('agenda_author_id').references(() => users.id),
   agendaCreatedAt: timestamp('agenda_created_at', { withTimezone: true }),
   isPublic: boolean('is_public').default(false).notNull(),
+  status: activeStatus('status').default('ativo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
