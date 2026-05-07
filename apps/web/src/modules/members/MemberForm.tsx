@@ -21,6 +21,7 @@ interface MemberFormProps {
   defaultValues?: MemberFormValues;
   onSubmit: (values: MemberFormValues) => void;
   isPending: boolean;
+  formRef?: React.Ref<ReturnType<typeof useForm<MemberFormValues>> | null>;
 }
 
 const EMPTY: MemberFormValues = {
@@ -43,21 +44,31 @@ export default function MemberForm({
   onOpenChange,
   defaultValues,
   onSubmit,
-  isPending
+  isPending,
+  formRef
 }: MemberFormProps) {
+  const form = useForm<MemberFormValues>({
+    resolver: zodResolver(MemberFormSchema),
+    defaultValues: defaultValues ?? EMPTY
+  });
+
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors }
-  } = useForm<MemberFormValues>({
-    resolver: zodResolver(MemberFormSchema),
-    defaultValues: defaultValues ?? EMPTY
-  });
+  } = form;
 
   useEffect(() => {
+    // Populate form ref for error handling from parent
+    if (formRef) {
+      if ('current' in formRef) {
+        formRef.current = form;
+      }
+    }
+
     if (open) reset(defaultValues ?? EMPTY);
-  }, [open, defaultValues, reset]);
+  }, [open, defaultValues, reset, formRef, form]);
 
   function prepare(values: MemberFormValues): MemberFormValues {
     return {

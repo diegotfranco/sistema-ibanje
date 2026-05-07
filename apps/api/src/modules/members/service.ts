@@ -87,7 +87,9 @@ export async function createMember(
       .limit(1);
 
     if (existingMember[0]) {
-      throw httpError(409, 'User is already linked to another member');
+      throw httpError(409, 'User is already linked to another member', {
+        fieldErrors: { userId: 'Usuário já possui membro vinculado' }
+      });
     }
   }
 
@@ -157,7 +159,9 @@ export async function updateMember(
       .limit(1);
 
     if (existingMember[0] && existingMember[0].id !== targetId) {
-      throw httpError(409, 'User is already linked to another member');
+      throw httpError(409, 'User is already linked to another member', {
+        fieldErrors: { userId: 'Usuário já possui membro vinculado' }
+      });
     }
   }
 

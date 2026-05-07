@@ -22,9 +22,19 @@ interface UserFormProps {
   isPending: boolean;
   onSubmit: (values: UserCreateFormValues | UserEditFormValues) => void;
   onCancel: () => void;
+  formRef?: React.MutableRefObject<{
+    createForm: ReturnType<typeof useForm<UserCreateFormValues>> | null;
+    editForm: ReturnType<typeof useForm<UserEditFormValues>> | null;
+  } | null>;
 }
 
-export default function UserForm({ initialValues, isPending, onSubmit, onCancel }: UserFormProps) {
+export default function UserForm({
+  initialValues,
+  isPending,
+  onSubmit,
+  onCancel,
+  formRef
+}: UserFormProps) {
   const isEditing = initialValues !== undefined;
 
   const rolesList = useRoles();
@@ -46,6 +56,11 @@ export default function UserForm({ initialValues, isPending, onSubmit, onCancel 
   });
 
   useEffect(() => {
+    // Populate form ref for error handling from parent
+    if (formRef) {
+      formRef.current = { createForm, editForm };
+    }
+
     if (isEditing && initialValues) {
       editForm.reset({
         name: initialValues.name,
@@ -60,7 +75,7 @@ export default function UserForm({ initialValues, isPending, onSubmit, onCancel 
         memberId: null
       });
     }
-  }, [initialValues, isEditing, editForm, createForm]);
+  }, [initialValues, isEditing, editForm, createForm, formRef]);
 
   if (isEditing) {
     const {

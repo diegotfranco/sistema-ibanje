@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useForm } from 'react-hook-form';
 import { CheckCircle, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,14 +12,21 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { toast } from 'sonner';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
+import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useUsers, useUserMutations } from './useUsers';
 import UserForm from './UserForm';
 import UserPermissionsDialog from './UserPermissionsDialog';
 import type { UserCreateFormValues, UserEditFormValues, UserResponse } from '@/schemas/user';
+
+type UserFormRefs = {
+  createForm: ReturnType<typeof useForm<UserCreateFormValues>> | null;
+  editForm: ReturnType<typeof useForm<UserEditFormValues>> | null;
+};
 
 export default function UsersPage() {
   const { data: user } = useCurrentUser();
@@ -34,15 +42,31 @@ export default function UsersPage() {
   const [deleting, setDeleting] = useState<UserResponse | null>(null);
   const [permissionsTarget, setPermissionsTarget] = useState<UserResponse | null>(null);
 
+  const formRef = useRef<UserFormRefs | null>(null);
+
   function handleSubmit(values: UserCreateFormValues | UserEditFormValues) {
     if (editing === 'new') {
       mutations.create.mutate(values as UserCreateFormValues, {
+        onError: (err) => {
+          const form = formRef.current?.createForm;
+          if (form && !applyFieldErrors(err, form)) {
+            toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+          }
+        },
         onSuccess: () => setEditing(null)
       });
     } else if (editing) {
       mutations.update.mutate(
         { id: editing.id, body: values as UserEditFormValues },
-        { onSuccess: () => setEditing(null) }
+        {
+          onError: (err) => {
+            const form = formRef.current?.editForm;
+            if (form && !applyFieldErrors(err, form)) {
+              toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+            }
+          },
+          onSuccess: () => setEditing(null)
+        }
       );
     }
   }
@@ -164,6 +188,7 @@ export default function UsersPage() {
               isPending={mutations.create.isPending || mutations.update.isPending}
               onSubmit={handleSubmit}
               onCancel={() => setEditing(null)}
+              formRef={formRef}
             />
           )}
         </DialogContent>

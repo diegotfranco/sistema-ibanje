@@ -1,12 +1,17 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMembers, useMemberMutations } from './useMembers';
 import MemberForm from './MemberForm';
 import StatusBadge from '@/components/StatusBadge';
 import type { MemberResponse, MemberFormValues } from '@/schemas/member';
+
+type MemberFormInstance = ReturnType<typeof useForm<MemberFormValues>>;
 
 export default function MembersPage() {
   const { data: user } = useCurrentUser();
@@ -22,6 +27,8 @@ export default function MembersPage() {
   const [editing, setEditing] = useState<MemberResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MemberResponse | null>(null);
 
+  const formRef = useRef<MemberFormInstance | null>(null);
+
   const items = list.data?.data;
 
   function handleSubmit(values: MemberFormValues) {
@@ -29,6 +36,11 @@ export default function MembersPage() {
       mutations.update.mutate(
         { id: editing.id, body: values },
         {
+          onError: (err) => {
+            if (formRef.current && !applyFieldErrors(err, formRef.current)) {
+              toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+            }
+          },
           onSuccess: () => {
             setDialogOpen(false);
             setEditing(null);
@@ -37,6 +49,11 @@ export default function MembersPage() {
       );
     } else {
       mutations.create.mutate(values, {
+        onError: (err) => {
+          if (formRef.current && !applyFieldErrors(err, formRef.current)) {
+            toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+          }
+        },
         onSuccess: () => {
           setDialogOpen(false);
         }
@@ -119,6 +136,7 @@ export default function MembersPage() {
         defaultValues={editing ? convertToFormValues(editing) : undefined}
         onSubmit={handleSubmit}
         isPending={mutations.create.isPending || mutations.update.isPending}
+        formRef={formRef}
       />
 
       <ConfirmDeleteDialog

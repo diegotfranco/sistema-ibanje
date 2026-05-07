@@ -14,7 +14,7 @@ import type {
   UserResponse,
   CreateUserRequest
 } from './schema.js';
-import { httpError } from '../../lib/errors.js';
+import { httpError, isUniqueViolation } from '../../lib/errors.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -67,7 +67,17 @@ export async function updateUser(callerId: number, targetId: number, body: Updat
   const user = await repo.findUserById(targetId);
   if (!user) return null;
 
-  await repo.updateUser(targetId, body);
+  try {
+    await repo.updateUser(targetId, body);
+  } catch (err) {
+    if (isUniqueViolation(err, 'users_email_unique')) {
+      throw httpError(409, 'E-mail já cadastrado', {
+        fieldErrors: { email: 'E-mail já cadastrado' }
+      });
+    }
+    throw err;
+  }
+
   return await getUserById(targetId);
 }
 
@@ -165,26 +175,38 @@ export async function createUser(
         throw httpError(404, 'Member not found');
       }
       if (member.userId !== null) {
-        throw httpError(409, 'Member already has a user account');
+        throw httpError(409, 'Member already has a user account', {
+          fieldErrors: { memberId: 'Membro já possui usuário vinculado' }
+        });
       }
     }
 
-    const result = await tx
-      .insert(users)
-      .values({
-        name: body.name,
-        email: body.email,
-        roleId: body.roleId,
-        status: 'ativo'
-      })
-      .returning({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        roleId: users.roleId,
-        status: users.status,
-        createdAt: users.createdAt
-      });
+    let result;
+    try {
+      result = await tx
+        .insert(users)
+        .values({
+          name: body.name,
+          email: body.email,
+          roleId: body.roleId,
+          status: 'ativo'
+        })
+        .returning({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          roleId: users.roleId,
+          status: users.status,
+          createdAt: users.createdAt
+        });
+    } catch (err) {
+      if (isUniqueViolation(err, 'users_email_unique')) {
+        throw httpError(409, 'E-mail já cadastrado', {
+          fieldErrors: { email: 'E-mail já cadastrado' }
+        });
+      }
+      throw err;
+    }
 
     const newUser = result[0];
     if (!newUser) throw new Error('Failed to create user');

@@ -2,6 +2,7 @@ import * as argon2 from 'argon2';
 import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env.js';
 import * as repo from './repository.js';
+import { httpError, isUniqueViolation } from '../../lib/errors.js';
 import type { MeResponse } from './schema.js';
 
 export async function login(email: string, password: string) {
@@ -76,5 +77,14 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
 export async function register(name: string, email: string) {
   const membroRole = await repo.findRoleByName('Membro');
   if (!membroRole) throw new Error('Membro role not found');
-  await repo.createPendingUser({ name, email, roleId: membroRole.id });
+  try {
+    await repo.createPendingUser({ name, email, roleId: membroRole.id });
+  } catch (err) {
+    if (isUniqueViolation(err, 'users_email_unique')) {
+      throw httpError(409, 'E-mail já cadastrado', {
+        fieldErrors: { email: 'E-mail já cadastrado' }
+      });
+    }
+    throw err;
+  }
 }

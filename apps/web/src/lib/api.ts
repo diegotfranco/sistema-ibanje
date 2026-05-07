@@ -2,10 +2,12 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 export class ApiError extends Error {
   readonly status: number;
+  readonly fieldErrors?: Record<string, string>;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, fieldErrors?: Record<string, string>) {
     super(message);
     this.status = status;
+    this.fieldErrors = fieldErrors;
     this.name = 'ApiError';
   }
 }
@@ -34,8 +36,11 @@ async function ensureCsrfToken(): Promise<string> {
 }
 
 async function parseError(res: Response): Promise<ApiError> {
-  const body = (await res.json().catch(() => ({}))) as { message?: string };
-  return new ApiError(res.status, body.message ?? res.statusText);
+  const body = (await res.json().catch(() => ({}))) as {
+    message?: string;
+    fieldErrors?: Record<string, string>;
+  };
+  return new ApiError(res.status, body.message ?? res.statusText, body.fieldErrors);
 }
 
 async function throwApiError(path: string, res: Response): Promise<never> {
