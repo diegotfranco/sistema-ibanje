@@ -3,7 +3,14 @@ import { Pencil, Plus, Trash2, ClipboardEdit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -37,7 +44,12 @@ export default function PautasPage() {
     if (editing) {
       mutations.update.mutate(
         { id: editing.id, body: values },
-        { onSuccess: () => { setFormOpen(false); setEditing(null); } }
+        {
+          onSuccess: () => {
+            setFormOpen(false);
+            setEditing(null);
+          }
+        }
       );
     } else {
       mutations.create.mutate(values, { onSuccess: () => setFormOpen(false) });
@@ -51,7 +63,12 @@ export default function PautasPage() {
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-xl">Pautas de Reuniões</CardTitle>
             {canCreate && (
-              <Button onClick={() => { setEditing(null); setFormOpen(true); }} size="sm">
+              <Button
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+                size="sm">
                 <Plus className="h-4 w-4" />
                 Nova
               </Button>
@@ -116,16 +133,14 @@ export default function PautasPage() {
                               onClick={() => {
                                 setEditing(row);
                                 setFormOpen(true);
-                              }}
-                            >
+                              }}>
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
                               size="icon"
                               variant="ghost"
                               aria-label="Definir pauta"
-                              onClick={() => setAgendaTarget(row)}
-                            >
+                              onClick={() => setAgendaTarget(row)}>
                               <ClipboardEdit className="h-4 w-4" />
                             </Button>
                           </>
@@ -137,8 +152,7 @@ export default function PautasPage() {
                             aria-label="Excluir"
                             disabled={row.hasMinutes}
                             className="text-red-600 hover:text-red-700 disabled:opacity-30"
-                            onClick={() => setDeleteTarget(row)}
-                          >
+                            onClick={() => setDeleteTarget(row)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
@@ -182,7 +196,8 @@ export default function PautasPage() {
         }}
         description={`Remover a reunião de ${deleteTarget ? formatDate(deleteTarget.meetingDate) : ''}?`}
         onConfirm={() => {
-          if (deleteTarget) mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+          if (deleteTarget)
+            mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
         }}
         isPending={mutations.remove.isPending}
       />

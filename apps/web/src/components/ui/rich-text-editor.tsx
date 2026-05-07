@@ -19,7 +19,7 @@ export function RichTextEditor({ value, onChange, disabled, className }: RichTex
     editable: !disabled,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
-    },
+    }
   });
 
   if (!editor) return null;

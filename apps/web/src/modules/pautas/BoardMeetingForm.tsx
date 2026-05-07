@@ -2,9 +2,21 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/DateInput';
 import { BoardMeetingFormSchema, type BoardMeetingFormValues } from '@/schemas/board-meeting';
@@ -26,7 +38,13 @@ export default function BoardMeetingForm({
   onSubmit,
   isPending
 }: BoardMeetingFormProps) {
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<BoardMeetingFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors }
+  } = useForm<BoardMeetingFormValues>({
     resolver: zodResolver(BoardMeetingFormSchema),
     defaultValues: defaultValues ?? EMPTY
   });
@@ -45,7 +63,9 @@ export default function BoardMeetingForm({
           <div className="space-y-1">
             <Label htmlFor="meetingDate">Data *</Label>
             <DateInput id="meetingDate" {...register('meetingDate')} />
-            {errors.meetingDate && <p className="text-xs text-red-500">{errors.meetingDate.message}</p>}
+            {errors.meetingDate && (
+              <p className="text-xs text-red-500">{errors.meetingDate.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -73,18 +93,18 @@ export default function BoardMeetingForm({
               control={control}
               name="isPublic"
               render={({ field }) => (
-                <Checkbox
-                  id="isPublic"
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
+                <Checkbox id="isPublic" checked={field.value} onCheckedChange={field.onChange} />
               )}
             />
             <Label htmlFor="isPublic">Reunião pública</Label>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>

@@ -2,10 +2,22 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { MinuteFormSchema, type MinuteFormValues } from '@/schemas/minute';
 import { useBoardMeetings } from '@/modules/pautas/useBoardMeetings';
@@ -28,7 +40,13 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
   const meetings = useBoardMeetings();
   const availableMeetings = (meetings.data?.data ?? []).filter((m) => !m.hasMinutes);
 
-  const { register, handleSubmit, reset, control, formState: { errors } } = useForm<MinuteFormValues>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    formState: { errors }
+  } = useForm<MinuteFormValues>({
     resolver: zodResolver(MinuteFormSchema),
     defaultValues: EMPTY
   });
@@ -66,13 +84,17 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
                 </Select>
               )}
             />
-            {errors.boardMeetingId && <p className="text-xs text-red-500">{errors.boardMeetingId.message}</p>}
+            {errors.boardMeetingId && (
+              <p className="text-xs text-red-500">{errors.boardMeetingId.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
             <Label htmlFor="minuteNumber">Número da Ata *</Label>
             <Input id="minuteNumber" placeholder="Ata 001/2025" {...register('minuteNumber')} />
-            {errors.minuteNumber && <p className="text-xs text-red-500">{errors.minuteNumber.message}</p>}
+            {errors.minuteNumber && (
+              <p className="text-xs text-red-500">{errors.minuteNumber.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
@@ -88,7 +110,11 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}>
               Cancelar
             </Button>
             <Button type="submit" disabled={isPending}>

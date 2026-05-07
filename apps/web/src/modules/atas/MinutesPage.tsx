@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -12,8 +19,10 @@ import MinuteForm from './MinuteForm';
 import type { MinuteResponse, MinuteFormValues } from '@/schemas/minute';
 
 function statusVariant(status: string) {
-  if (status === 'aprovada') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === 'substituída') return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+  if (status === 'aprovada')
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+  if (status === 'substituída')
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
   return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
 }
 
@@ -68,28 +77,44 @@ export default function MinutesPage() {
               <TableBody>
                 {list.isLoading && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">Carregando...</TableCell>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      Carregando...
+                    </TableCell>
                   </TableRow>
                 )}
                 {!list.isLoading && items.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">Nenhuma ata encontrada.</TableCell>
+                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      Nenhuma ata encontrada.
+                    </TableCell>
                   </TableRow>
                 )}
                 {items.map((row) => (
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.minuteNumber}</TableCell>
-                    <TableCell className="text-muted-foreground">Reunião #{row.boardMeetingId}</TableCell>
-                    <TableCell>{row.currentVersion ? `v${row.currentVersion.version}` : '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      Reunião #{row.boardMeetingId}
+                    </TableCell>
                     <TableCell>
-                      {row.currentVersion
-                        ? <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusVariant(row.currentVersion.status)}`}>{row.currentVersion.status}</span>
-                        : '—'}
+                      {row.currentVersion ? `v${row.currentVersion.version}` : '—'}
+                    </TableCell>
+                    <TableCell>
+                      {row.currentVersion ? (
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusVariant(row.currentVersion.status)}`}>
+                          {row.currentVersion.status}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
                     </TableCell>
                     <TableCell>{row.isNotarized ? 'Sim' : 'Não'}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button size="sm" variant="outline" onClick={() => navigate(`/minutes/${row.id}`)}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => navigate(`/minutes/${row.id}`)}>
                           Abrir
                         </Button>
                         {canDelete && canDeleteRow(row) && (
@@ -111,14 +136,22 @@ export default function MinutesPage() {
         </Card>
       </div>
 
-      <MinuteForm open={formOpen} onOpenChange={setFormOpen} onSubmit={handleCreate} isPending={createMinute.isPending} />
+      <MinuteForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSubmit={handleCreate}
+        isPending={createMinute.isPending}
+      />
 
       <ConfirmDeleteDialog
         open={!!deleteTarget}
-        onOpenChange={(v) => { if (!v) setDeleteTarget(null); }}
+        onOpenChange={(v) => {
+          if (!v) setDeleteTarget(null);
+        }}
         description={`Remover a ata "${deleteTarget?.minuteNumber}"? Esta ação é irreversível.`}
         onConfirm={() => {
-          if (deleteTarget) deleteMinute.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
+          if (deleteTarget)
+            deleteMinute.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
         }}
         isPending={deleteMinute.isPending}
       />

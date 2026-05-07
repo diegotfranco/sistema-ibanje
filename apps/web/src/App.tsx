@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layouts/AppLayout';
+import { AuthErrorListener } from '@/components/AuthErrorListener';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { useTheme } from '@/lib/theme';
@@ -27,6 +28,7 @@ function ToasterWrapper() {
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthErrorListener />
       <ToasterWrapper />
       <Routes>
         {publicRoutes.map((route) => (

@@ -5,8 +5,21 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor, RichTextDisplay } from '@/components/ui/rich-text-editor';
@@ -21,8 +34,10 @@ import {
 import { EditApprovedMinuteSchema, type EditApprovedMinuteValues } from '@/schemas/minute';
 
 function statusClass(status: string) {
-  if (status === 'aprovada') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === 'substituída') return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
+  if (status === 'aprovada')
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
+  if (status === 'substituída')
+    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
   return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
 }
 
@@ -74,7 +89,8 @@ export default function MinuteDetailPage() {
         <div>
           <h1 className="text-2xl font-semibold">{minute.minuteNumber}</h1>
           {current && (
-            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${statusClass(current.status)}`}>
+            <span
+              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${statusClass(current.status)}`}>
               {current.status}
             </span>
           )}
@@ -86,24 +102,21 @@ export default function MinuteDetailPage() {
           <CardTitle>Conteúdo</CardTitle>
         </CardHeader>
         <CardContent>
-          {current
-            ? <RichTextDisplay html={current.content} className="text-sm" />
-            : <p className="text-muted-foreground text-sm">Sem conteúdo.</p>}
+          {current ? (
+            <RichTextDisplay html={current.content} className="text-sm" />
+          ) : (
+            <p className="text-muted-foreground text-sm">Sem conteúdo.</p>
+          )}
 
           {current && (
             <div className="flex gap-2 mt-4">
               {current.status === 'aguardando aprovação' && canEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditPendingOpen(true)}>
+                <Button size="sm" variant="outline" onClick={() => setEditPendingOpen(true)}>
                   Editar Rascunho
                 </Button>
               )}
               {current.status === 'aguardando aprovação' && canReview && (
-                <Button
-                  size="sm"
-                  onClick={() => setApproveOpen(true)}>
+                <Button size="sm" onClick={() => setApproveOpen(true)}>
                   Aprovar
                 </Button>
               )}
@@ -111,7 +124,10 @@ export default function MinuteDetailPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => { editApprovedForm.reset({ content: current.content, reasonForChange: '' }); setEditApprovedOpen(true); }}>
+                  onClick={() => {
+                    editApprovedForm.reset({ content: current.content, reasonForChange: '' });
+                    setEditApprovedOpen(true);
+                  }}>
                   Criar Nova Versão
                 </Button>
               )}
@@ -137,18 +153,23 @@ export default function MinuteDetailPage() {
             <TableBody>
               {sortedVersions.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground">Sem versões.</TableCell>
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                    Sem versões.
+                  </TableCell>
                 </TableRow>
               )}
               {sortedVersions.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell>v{v.version}</TableCell>
                   <TableCell>
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(v.status)}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(v.status)}`}>
                       {v.status}
                     </span>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{v.reasonForChange ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {v.reasonForChange ?? '—'}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{formatDate(v.createdAt)}</TableCell>
                 </TableRow>
               ))}
@@ -162,7 +183,9 @@ export default function MinuteDetailPage() {
         open={editPendingOpen}
         onOpenChange={setEditPendingOpen}
         currentContent={current?.content ?? ''}
-        onSubmit={(content) => updatePending.mutate({ content }, { onSuccess: () => setEditPendingOpen(false) })}
+        onSubmit={(content) =>
+          updatePending.mutate({ content }, { onSuccess: () => setEditPendingOpen(false) })
+        }
         isPending={updatePending.isPending}
       />
 
@@ -172,9 +195,16 @@ export default function MinuteDetailPage() {
           <DialogHeader>
             <DialogTitle>Aprovar Ata</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">Confirmar a aprovação da versão atual? Esta ação não pode ser desfeita.</p>
+          <p className="text-sm text-muted-foreground">
+            Confirmar a aprovação da versão atual? Esta ação não pode ser desfeita.
+          </p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setApproveOpen(false)} disabled={approveMinute.isPending}>Cancelar</Button>
+            <Button
+              variant="outline"
+              onClick={() => setApproveOpen(false)}
+              disabled={approveMinute.isPending}>
+              Cancelar
+            </Button>
             <Button
               onClick={() => approveMinute.mutate({}, { onSuccess: () => setApproveOpen(false) })}
               disabled={approveMinute.isPending}>
@@ -190,7 +220,11 @@ export default function MinuteDetailPage() {
           <DialogHeader>
             <DialogTitle>Criar Nova Versão</DialogTitle>
           </DialogHeader>
-          <form onSubmit={editApprovedForm.handleSubmit((v) => editApproved.mutate(v, { onSuccess: () => setEditApprovedOpen(false) }))} className="space-y-4">
+          <form
+            onSubmit={editApprovedForm.handleSubmit((v) =>
+              editApproved.mutate(v, { onSuccess: () => setEditApprovedOpen(false) })
+            )}
+            className="space-y-4">
             <div className="space-y-1">
               <Label>Conteúdo *</Label>
               <Controller
@@ -200,15 +234,29 @@ export default function MinuteDetailPage() {
                   <RichTextEditor value={field.value} onChange={field.onChange} />
                 )}
               />
-              {editApprovedForm.formState.errors.content && <p className="text-xs text-red-500">{editApprovedForm.formState.errors.content.message}</p>}
+              {editApprovedForm.formState.errors.content && (
+                <p className="text-xs text-red-500">
+                  {editApprovedForm.formState.errors.content.message}
+                </p>
+              )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="ea-reason">Motivo da alteração *</Label>
               <Input id="ea-reason" {...editApprovedForm.register('reasonForChange')} />
-              {editApprovedForm.formState.errors.reasonForChange && <p className="text-xs text-red-500">{editApprovedForm.formState.errors.reasonForChange.message}</p>}
+              {editApprovedForm.formState.errors.reasonForChange && (
+                <p className="text-xs text-red-500">
+                  {editApprovedForm.formState.errors.reasonForChange.message}
+                </p>
+              )}
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setEditApprovedOpen(false)} disabled={editApproved.isPending}>Cancelar</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditApprovedOpen(false)}
+                disabled={editApproved.isPending}>
+                Cancelar
+              </Button>
               <Button type="submit" disabled={editApproved.isPending}>
                 {editApproved.isPending ? 'Salvando...' : 'Salvar Nova Versão'}
               </Button>
@@ -228,13 +276,24 @@ interface EditPendingDialogProps {
   isPending: boolean;
 }
 
-function EditPendingDialog({ open, onOpenChange, currentContent, onSubmit, isPending }: EditPendingDialogProps) {
+function EditPendingDialog({
+  open,
+  onOpenChange,
+  currentContent,
+  onSubmit,
+  isPending
+}: EditPendingDialogProps) {
   const { handleSubmit, reset, control } = useForm<{ content: string }>({
     defaultValues: { content: currentContent }
   });
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (v) reset({ content: currentContent }); onOpenChange(v); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (v) reset({ content: currentContent });
+        onOpenChange(v);
+      }}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Editar Rascunho</DialogTitle>
@@ -251,8 +310,16 @@ function EditPendingDialog({ open, onOpenChange, currentContent, onSubmit, isPen
             />
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>Cancelar</Button>
-            <Button type="submit" disabled={isPending}>{isPending ? 'Salvando...' : 'Salvar'}</Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isPending}>
+              {isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

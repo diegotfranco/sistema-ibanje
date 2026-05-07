@@ -32,7 +32,6 @@ export function useSetAgenda() {
       qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
       toast.success('Pauta salva.');
     },
-    onError: (err) =>
-      toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar pauta.')
+    onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar pauta.')
   });
 }

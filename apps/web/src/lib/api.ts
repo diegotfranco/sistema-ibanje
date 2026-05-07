@@ -10,6 +10,13 @@ export class ApiError extends Error {
   }
 }
 
+type AuthErrorHandler = () => void;
+let authErrorHandler: AuthErrorHandler | null = null;
+
+export function setAuthErrorHandler(handler: AuthErrorHandler | null) {
+  authErrorHandler = handler;
+}
+
 let csrfToken: string | null = null;
 
 export function invalidateCsrfToken() {
@@ -29,6 +36,13 @@ async function ensureCsrfToken(): Promise<string> {
 async function parseError(res: Response): Promise<ApiError> {
   const body = (await res.json().catch(() => ({}))) as { message?: string };
   return new ApiError(res.status, body.message ?? res.statusText);
+}
+
+async function throwApiError(path: string, res: Response): Promise<never> {
+  if (res.status === 401 && path !== '/auth/login') {
+    authErrorHandler?.();
+  }
+  throw await parseError(res);
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -54,11 +68,11 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
       csrfToken = null;
       headers['x-csrf-token'] = await ensureCsrfToken();
       const retry = await fetch(`${BASE_URL}${path}`, init);
-      if (!retry.ok) throw await parseError(retry);
+      if (!retry.ok) await throwApiError(path, retry);
       if (retry.status === 204) return undefined as T;
       return retry.json() as Promise<T>;
     }
-    throw await parseError(res);
+    await throwApiError(path, res);
   }
 
   if (res.status === 204) return undefined as T;
@@ -76,11 +90,11 @@ async function requestForm<T>(method: string, path: string, body: FormData): Pro
       csrfToken = null;
       const retryHeaders = { 'x-csrf-token': await ensureCsrfToken() };
       const retry = await fetch(`${BASE_URL}${path}`, { ...init, headers: retryHeaders });
-      if (!retry.ok) throw await parseError(retry);
+      if (!retry.ok) await throwApiError(path, retry);
       if (retry.status === 204) return undefined as T;
       return retry.json() as Promise<T>;
     }
-    throw await parseError(res);
+    await throwApiError(path, res);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
@@ -88,7 +102,7 @@ async function requestForm<T>(method: string, path: string, body: FormData): Pro
 
 async function requestBlob(path: string): Promise<Blob> {
   const res = await fetch(`${BASE_URL}${path}`, { method: 'GET', credentials: 'include' });
-  if (!res.ok) throw await parseError(res);
+  if (!res.ok) await throwApiError(path, res);
   return res.blob();
 }
 
