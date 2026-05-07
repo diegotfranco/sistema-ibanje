@@ -14,7 +14,10 @@ import * as controller from './controller.js';
 export async function boardMeetingsRoutes(app: FastifyInstance) {
   app.get(
     '/board-meetings',
-    { schema: { tags: ['Board Meetings'], querystring: ListBoardMeetingsRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Agendas, Action.View)] },
+    {
+      schema: { tags: ['Board Meetings'], querystring: ListBoardMeetingsRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Agendas, Action.View)]
+    },
     controller.list
   );
 
@@ -26,25 +29,41 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
 
   app.post(
     '/board-meetings',
-    { schema: { tags: ['Board Meetings'], body: CreateBoardMeetingRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Create)] },
+    {
+      schema: { tags: ['Board Meetings'], body: CreateBoardMeetingRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Create)]
+    },
     controller.create
   );
 
   app.patch(
     '/board-meetings/:id',
-    { schema: { tags: ['Board Meetings'], params: IdParamSchema, body: UpdateBoardMeetingRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Update)] },
+    {
+      schema: {
+        tags: ['Board Meetings'],
+        params: IdParamSchema,
+        body: UpdateBoardMeetingRequestSchema
+      },
+      preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Update)]
+    },
     controller.update
   );
 
   app.put(
     '/board-meetings/:id/agenda',
-    { schema: { tags: ['Board Meetings'], params: IdParamSchema, body: SetAgendaRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Update)] },
+    {
+      schema: { tags: ['Board Meetings'], params: IdParamSchema, body: SetAgendaRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Update)]
+    },
     controller.setAgenda
   );
 
   app.delete(
     '/board-meetings/:id',
-    { schema: { tags: ['Board Meetings'], params: IdParamSchema }, preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Delete)] },
+    {
+      schema: { tags: ['Board Meetings'], params: IdParamSchema },
+      preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Delete)]
+    },
     controller.remove
   );
 }

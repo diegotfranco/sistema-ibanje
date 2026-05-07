@@ -8,18 +8,18 @@ This document is a candid assessment of how the project measures against industr
 
 ## TL;DR
 
-| Dimension | Score | Verdict |
-|---|---|---|
-| Architectural design | **9/10** | Textbook layering, clean module structure, modern stack choices |
-| Code quality | **8/10** | Consistent patterns, strong typing, minimal dead code |
-| Security fundamentals | **7/10** | Solid auth primitives; gaps in token rate-limit, MIME sniffing, audit log |
-| Database engineering | **5/10** | Good schema/constraints; **no indexes**, missing transactions, N+1 risk |
-| Frontend resilience | **7/10** | Excellent state mgmt; missing 401 handler, error boundary, server-error mapping |
-| Testing | **0/10** | Zero tests anywhere — biggest single gap |
-| Operational readiness | **3/10** | No CI, no Dockerfile, no backups, no email, seed unsafe in prod |
-| Documentation | **9/10** | `claude.md` and README are above the bar for solo projects |
+| Dimension             | Score    | Verdict                                                                         |
+| --------------------- | -------- | ------------------------------------------------------------------------------- |
+| Architectural design  | **9/10** | Textbook layering, clean module structure, modern stack choices                 |
+| Code quality          | **8/10** | Consistent patterns, strong typing, minimal dead code                           |
+| Security fundamentals | **7/10** | Solid auth primitives; gaps in token rate-limit, MIME sniffing, audit log       |
+| Database engineering  | **5/10** | Good schema/constraints; **no indexes**, missing transactions, N+1 risk         |
+| Frontend resilience   | **7/10** | Excellent state mgmt; missing 401 handler, error boundary, server-error mapping |
+| Testing               | **0/10** | Zero tests anywhere — biggest single gap                                        |
+| Operational readiness | **3/10** | No CI, no Dockerfile, no backups, no email, seed unsafe in prod                 |
+| Documentation         | **9/10** | `claude.md` and README are above the bar for solo projects                      |
 
-**Overall:** the architecture is genuinely good. The codebase is what a small team would ship after a few iterations of taste. The remaining gaps are operational and resilience concerns, not design flaws — and they are the *exact* gaps every greenfield project carries when it crosses from "feature-complete" to "production-ready."
+**Overall:** the architecture is genuinely good. The codebase is what a small team would ship after a few iterations of taste. The remaining gaps are operational and resilience concerns, not design flaws — and they are the _exact_ gaps every greenfield project carries when it crosses from "feature-complete" to "production-ready."
 
 ---
 
@@ -34,7 +34,7 @@ The single-aggregator pattern in [apps/api/src/modules/index.ts](apps/api/src/mo
 ### 2. Type system and validation — modern and rigorous
 
 - **Zod v4 everywhere** — request schemas, form schemas, env validation. The `IdParamSchema`/`IdParam` pattern in [apps/api/src/lib/validation.ts](apps/api/src/lib/validation.ts) and the `Module`/`Action` const-object pattern in [apps/api/src/lib/constants.ts](apps/api/src/lib/constants.ts) eliminate magic strings at compile time.
-- **fastify-type-provider-zod** bridges Zod into Fastify's runtime validation *and* the OpenAPI generator. This is how mature TS APIs are built in 2026 — see ts-rest, tRPC, Hono with Zod.
+- **fastify-type-provider-zod** bridges Zod into Fastify's runtime validation _and_ the OpenAPI generator. This is how mature TS APIs are built in 2026 — see ts-rest, tRPC, Hono with Zod.
 - **`$inferInsert`/`$inferSelect`** for Drizzle insert/update parameter types instead of hand-written DTOs. Industry-standard since Drizzle ~0.30.
 
 ### 3. Auth and session model — correct primitives
@@ -46,13 +46,13 @@ The single-aggregator pattern in [apps/api/src/modules/index.ts](apps/api/src/mo
 
 ### 4. RBAC model — well-thought-out
 
-The dual `role_module_permissions` (template, copy-on-create) + `user_module_permissions` (runtime truth) split is *exactly* how modern admin panels handle "role changes shouldn't retroactively rewrite users." Same model used in Auth0 (organizations + per-user grants) and AWS IAM (group policies + attached user policies). Many codebases get this wrong with a single join table; this one got it right.
+The dual `role_module_permissions` (template, copy-on-create) + `user_module_permissions` (runtime truth) split is _exactly_ how modern admin panels handle "role changes shouldn't retroactively rewrite users." Same model used in Auth0 (organizations + per-user grants) and AWS IAM (group policies + attached user policies). Many codebases get this wrong with a single join table; this one got it right.
 
 ### 5. Frontend state architecture — gold standard
 
-Zero Redux/Zustand. **Server state in TanStack Query, form state in RHF, URL in router, ephemeral UI in `useState`/Context.** This is the consensus 2025–2026 React architecture. The custom [resourceQuery.ts](apps/web/src/lib/resourceQuery.ts) abstraction (`useResourceList`/`useResourceMutations`) is *earned* — used by 7+ pages — not premature.
+Zero Redux/Zustand. **Server state in TanStack Query, form state in RHF, URL in router, ephemeral UI in `useState`/Context.** This is the consensus 2025–2026 React architecture. The custom [resourceQuery.ts](apps/web/src/lib/resourceQuery.ts) abstraction (`useResourceList`/`useResourceMutations`) is _earned_ — used by 7+ pages — not premature.
 
-The single-source-of-truth route metadata driving both the router tree *and* the recursive `filterRoutesByPermission()` sidebar ([apps/web/src/components/Sidebar.tsx](apps/web/src/components/Sidebar.tsx)) is a pattern most teams reinvent badly.
+The single-source-of-truth route metadata driving both the router tree _and_ the recursive `filterRoutesByPermission()` sidebar ([apps/web/src/components/Sidebar.tsx](apps/web/src/components/Sidebar.tsx)) is a pattern most teams reinvent badly.
 
 ### 6. Schema design — strong constraints, good modelling
 
@@ -60,7 +60,7 @@ The 2-level chart of accounts (parent group → leaf, entries reject parents at 
 
 ### 7. Documentation — above the solo-project bar
 
-[claude.md](claude.md) at the repo root is the single best onboarding artifact in this project. It documents *why* — pepper choice, NodeNext + CJS rationale, RBAC philosophy, self-service rules. This kind of documentation is what separates "code that survives the founding engineer's departure" from "tribal knowledge."
+[claude.md](claude.md) at the repo root is the single best onboarding artifact in this project. It documents _why_ — pepper choice, NodeNext + CJS rationale, RBAC philosophy, self-service rules. This kind of documentation is what separates "code that survives the founding engineer's departure" from "tribal knowledge."
 
 ---
 
@@ -75,6 +75,7 @@ Ordered by impact, not by effort.
 The migration ([0000_long_xorn.sql](apps/api/src/db/migrations/0000_long_xorn.sql)) creates 20 tables with **no secondary indexes**. Every permission check (the hottest read path in the app) full-scans `user_module_permissions`. Foreign keys are not auto-indexed in Postgres. At 100 members this is invisible; at 5,000 it stalls.
 
 Add at minimum:
+
 - `user_module_permissions(user_id)` — every authorised request
 - `users(role_id)`, `members(user_id)`
 - `income_entries(category_id, reference_date)`, `expense_entries(category_id, reference_date)`, `(designated_fund_id)`
@@ -86,6 +87,7 @@ Industry rule of thumb: **every FK gets an index unless you have proven you neve
 #### G2. Multi-step writes are not transactional
 
 Several services do read-modify-write or two-table inserts without `db.transaction(...)`:
+
 - Minute create → minute version insert
 - User create → copy role permissions
 - Monthly closing state transitions
@@ -117,13 +119,14 @@ if (env.NODE_ENV === 'production') throw new Error('seed disabled in production'
 
 #### G7. Zero tests
 
-No `*.test.ts`, no Vitest config, no Playwright. For a financial system this is *the* highest-leverage gap. You don't need 80% coverage; you need:
+No `*.test.ts`, no Vitest config, no Playwright. For a financial system this is _the_ highest-leverage gap. You don't need 80% coverage; you need:
+
 - Permission checking (`hasPermission`, `assertPermission`) — pure function, easy
 - Monthly closing state machine + opening balance computation
 - Period-editable rule
 - One end-to-end smoke test of the critical path (login → create entry → close month)
 
-10–15 well-chosen tests would catch the regressions that *will* eventually happen as you keep editing.
+10–15 well-chosen tests would catch the regressions that _will_ eventually happen as you keep editing.
 
 #### G8. No CI
 
@@ -160,7 +163,7 @@ For context calibration:
 - **Better than 90% of solo MVPs** on architectural cleanliness, type safety, RBAC modeling, and documentation.
 - **Comparable to early-stage startup codebases** (~Series A engineering team) on module structure, validation discipline, and frontend state architecture.
 - **Below typical startup standards** on testing, CI, observability, and deploy automation. Most companies of any size have these even when their architecture is messier.
-- **Below enterprise standards** on audit logging, transactions, indexing rigor, and backup automation. Enterprise codebases are *worse* in many ways but rarely miss these specific items because compliance forces the issue.
+- **Below enterprise standards** on audit logging, transactions, indexing rigor, and backup automation. Enterprise codebases are _worse_ in many ways but rarely miss these specific items because compliance forces the issue.
 
 Translation: the **design** here is at a senior level. The **operational maturity** is at a mid-level — and that's not unusual for a feature-complete-but-not-launched project. The good news is that operational maturity is mechanical to add; design quality is the hard part, and it is already done.
 
@@ -169,6 +172,7 @@ Translation: the **design** here is at a senior level. The **operational maturit
 ## Prioritized Gap List
 
 ### Tier 1 — must fix before going live
+
 1. **G5** — wire email delivery (Resend / SES / Postmark)
 2. **G1** — add the 6–8 missing database indexes
 3. **G2** — wrap multi-step writes in `db.transaction()`
@@ -177,6 +181,7 @@ Translation: the **design** here is at a senior level. The **operational maturit
 6. **G6** — guard `db:seed` against production
 
 ### Tier 2 — must fix before scale or first incident
+
 7. **G7** — add Vitest + first 10 tests
 8. **G8** — add CI (GitHub Actions: lint + typecheck + build)
 9. **G9** — production Dockerfile + deploy runbook + `.env.production.example`
@@ -185,6 +190,7 @@ Translation: the **design** here is at a senior level. The **operational maturit
 12. **G10c** — map server `fieldErrors` → `form.setError` in mutation hooks
 
 ### Tier 3 — polish, when convenient
+
 13. Response schemas in OpenAPI route definitions
 14. Replace `listMinutes` N+1 with single query
 15. MIME magic-byte sniffing on receipt uploads
@@ -198,4 +204,4 @@ Translation: the **design** here is at a senior level. The **operational maturit
 
 ## Closing Note
 
-This is a project that a senior engineer would be proud to have shipped, with the operational gaps that every senior engineer's project has on day one. The architecture choices show internalized understanding of *why* patterns exist, not just *what* they are. The remaining work is execution-level — important, but mechanical.
+This is a project that a senior engineer would be proud to have shipped, with the operational gaps that every senior engineer's project has on day one. The architecture choices show internalized understanding of _why_ patterns exist, not just _what_ they are. The remaining work is execution-level — important, but mechanical.

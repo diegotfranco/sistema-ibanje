@@ -1,8 +1,7 @@
-import { Navigate } from 'react-router';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { paths } from '@/lib/paths';
 import { hasPermission, Action, type Module } from '@/lib/permissions';
 import type { Action as ActionType } from '@/lib/permissions';
+import { UnauthorizedPage } from '@/components/status/UnauthorizedPage';
 
 interface RequirePermissionProps {
   module: Module;
@@ -18,7 +17,7 @@ export function RequirePermission({
   const { data: user } = useCurrentUser();
 
   if (!hasPermission(user?.permissions, module, action)) {
-    return <Navigate to={paths.dashboard} replace />;
+    return <UnauthorizedPage />;
   }
 
   return <>{children}</>;

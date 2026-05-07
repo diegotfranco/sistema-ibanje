@@ -15,7 +15,10 @@ import * as controller from './controller.js';
 export async function minutesRoutes(app: FastifyInstance) {
   app.get(
     '/minutes',
-    { schema: { tags: ['Minutes'], querystring: ListMinutesRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.View)] },
+    {
+      schema: { tags: ['Minutes'], querystring: ListMinutesRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.View)]
+    },
     controller.list
   );
 
@@ -27,31 +30,46 @@ export async function minutesRoutes(app: FastifyInstance) {
 
   app.post(
     '/minutes',
-    { schema: { tags: ['Minutes'], body: CreateMinuteRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Create)] },
+    {
+      schema: { tags: ['Minutes'], body: CreateMinuteRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Create)]
+    },
     controller.create
   );
 
   app.patch(
     '/minutes/:id/pending',
-    { schema: { tags: ['Minutes'], params: IdParamSchema, body: UpdateMinuteVersionRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)] },
+    {
+      schema: { tags: ['Minutes'], params: IdParamSchema, body: UpdateMinuteVersionRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
+    },
     controller.updatePending
   );
 
   app.post(
     '/minutes/:id/edit-approved',
-    { schema: { tags: ['Minutes'], params: IdParamSchema, body: EditApprovedMinuteRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)] },
+    {
+      schema: { tags: ['Minutes'], params: IdParamSchema, body: EditApprovedMinuteRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
+    },
     controller.editApproved
   );
 
   app.post(
     '/minutes/:id/approve',
-    { schema: { tags: ['Minutes'], params: IdParamSchema, body: ApproveMinuteRequestSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Review)] },
+    {
+      schema: { tags: ['Minutes'], params: IdParamSchema, body: ApproveMinuteRequestSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Review)]
+    },
     controller.approve
   );
 
   app.delete(
     '/minutes/:id',
-    { schema: { tags: ['Minutes'], params: IdParamSchema }, preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Delete)] },
+    {
+      schema: { tags: ['Minutes'], params: IdParamSchema },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Delete)]
+    },
     controller.remove
   );
 }

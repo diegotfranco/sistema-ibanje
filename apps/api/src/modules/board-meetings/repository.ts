@@ -24,12 +24,19 @@ export async function findBoardMeetingById(id: number) {
   return result[0] ?? null;
 }
 
-export async function insertBoardMeeting(data: { meetingDate: string; type: 'ordinária' | 'extraordinária'; isPublic: boolean }) {
+export async function insertBoardMeeting(data: {
+  meetingDate: string;
+  type: 'ordinária' | 'extraordinária';
+  isPublic: boolean;
+}) {
   const result = await db.insert(boardMeetings).values(data).returning();
   return result[0] ?? null;
 }
 
-export async function updateBoardMeeting(id: number, data: Partial<{ meetingDate: string; type: 'ordinária' | 'extraordinária'; isPublic: boolean }>) {
+export async function updateBoardMeeting(
+  id: number,
+  data: Partial<{ meetingDate: string; type: 'ordinária' | 'extraordinária'; isPublic: boolean }>
+) {
   const result = await db
     .update(boardMeetings)
     .set({ ...data, updatedAt: new Date() })
@@ -41,17 +48,28 @@ export async function updateBoardMeeting(id: number, data: Partial<{ meetingDate
 export async function setAgenda(id: number, items: string[], authorId: number) {
   const result = await db
     .update(boardMeetings)
-    .set({ agendaContent: items, agendaAuthorId: authorId, agendaCreatedAt: new Date(), updatedAt: new Date() })
+    .set({
+      agendaContent: items,
+      agendaAuthorId: authorId,
+      agendaCreatedAt: new Date(),
+      updatedAt: new Date()
+    })
     .where(eq(boardMeetings.id, id))
     .returning();
   return result[0] ?? null;
 }
 
 export async function deactivateBoardMeeting(id: number) {
-  await db.update(boardMeetings).set({ status: 'inativo', updatedAt: new Date() }).where(eq(boardMeetings.id, id));
+  await db
+    .update(boardMeetings)
+    .set({ status: 'inativo', updatedAt: new Date() })
+    .where(eq(boardMeetings.id, id));
 }
 
 export async function hasMinutes(boardMeetingId: number): Promise<boolean> {
-  const result = await db.select({ count: count() }).from(minutes).where(eq(minutes.boardMeetingId, boardMeetingId));
+  const result = await db
+    .select({ count: count() })
+    .from(minutes)
+    .where(eq(minutes.boardMeetingId, boardMeetingId));
   return (result[0]?.count ?? 0) > 0;
 }

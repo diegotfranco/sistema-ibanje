@@ -28,7 +28,8 @@ function buildVersionResponse(v: MinuteVersion): MinuteVersionResponse {
 
 function buildMinuteResponse(minute: Minute, versions: MinuteVersion[]): MinuteResponse {
   const sorted = [...versions].sort((a, b) => a.version - b.version);
-  const currentVersion = sorted.length > 0 ? buildVersionResponse(sorted[sorted.length - 1]!) : null;
+  const currentVersion =
+    sorted.length > 0 ? buildVersionResponse(sorted[sorted.length - 1]!) : null;
   return {
     id: minute.id,
     boardMeetingId: minute.boardMeetingId,
@@ -47,10 +48,12 @@ export async function listMinutes(callerId: number, page: number, limit: number)
   await assertPermission(callerId, Module.Minutes, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listMinutes(offset, limit);
-  const responses = await Promise.all(rows.map(async (row) => {
-    const latest = await repo.findLatestVersion(row.id);
-    return buildMinuteResponse(row, latest ? [latest] : []);
-  }));
+  const responses = await Promise.all(
+    rows.map(async (row) => {
+      const latest = await repo.findLatestVersion(row.id);
+      return buildMinuteResponse(row, latest ? [latest] : []);
+    })
+  );
   return paginate(responses, total, page, limit);
 }
 
@@ -61,17 +64,25 @@ export async function getMinuteById(id: number): Promise<MinuteResponse | null> 
   return buildMinuteResponse(minute, versions);
 }
 
-export async function createMinute(callerId: number, body: CreateMinuteRequest): Promise<MinuteResponse> {
+export async function createMinute(
+  callerId: number,
+  body: CreateMinuteRequest
+): Promise<MinuteResponse> {
   await assertPermission(callerId, Module.Minutes, Action.Create);
 
   const meeting = await repo.findBoardMeetingById(body.boardMeetingId);
   if (!meeting) throw httpError(404, 'Board meeting not found');
   if (meeting.status === 'inativo') throw httpError(400, 'Board meeting is inactive');
 
-  if (await repo.findMinuteByNumber(body.minuteNumber)) throw httpError(409, 'Minute number already exists');
-  if (await repo.findMinuteByBoardMeetingId(body.boardMeetingId)) throw httpError(409, 'This meeting already has minutes');
+  if (await repo.findMinuteByNumber(body.minuteNumber))
+    throw httpError(409, 'Minute number already exists');
+  if (await repo.findMinuteByBoardMeetingId(body.boardMeetingId))
+    throw httpError(409, 'This meeting already has minutes');
 
-  const minute = await repo.insertMinute({ boardMeetingId: body.boardMeetingId, minuteNumber: body.minuteNumber });
+  const minute = await repo.insertMinute({
+    boardMeetingId: body.boardMeetingId,
+    minuteNumber: body.minuteNumber
+  });
   const version = await repo.insertMinuteVersion({
     minuteId: minute.id,
     content: { text: body.content },
@@ -83,26 +94,36 @@ export async function createMinute(callerId: number, body: CreateMinuteRequest):
   return buildMinuteResponse(minute, [version]);
 }
 
-export async function updatePendingVersion(callerId: number, minuteId: number, body: UpdateMinuteVersionRequest): Promise<MinuteResponse | null> {
+export async function updatePendingVersion(
+  callerId: number,
+  minuteId: number,
+  body: UpdateMinuteVersionRequest
+): Promise<MinuteResponse | null> {
   await assertPermission(callerId, Module.Minutes, Action.Update);
   const minute = await repo.findMinuteById(minuteId);
   if (!minute) return null;
 
   const latest = await repo.findLatestVersion(minuteId);
-  if (!latest || latest.status !== 'aguardando aprovação') throw httpError(409, 'No pending version to update');
+  if (!latest || latest.status !== 'aguardando aprovação')
+    throw httpError(409, 'No pending version to update');
 
   await repo.updateMinuteVersion(latest.id, { content: { text: body.content } });
   const versions = await repo.getVersionsForMinute(minuteId);
   return buildMinuteResponse(minute, versions);
 }
 
-export async function editApprovedMinute(callerId: number, minuteId: number, body: EditApprovedMinuteRequest): Promise<MinuteResponse | null> {
+export async function editApprovedMinute(
+  callerId: number,
+  minuteId: number,
+  body: EditApprovedMinuteRequest
+): Promise<MinuteResponse | null> {
   await assertPermission(callerId, Module.Minutes, Action.Update);
   const minute = await repo.findMinuteById(minuteId);
   if (!minute) return null;
 
   const latest = await repo.findLatestVersion(minuteId);
-  if (!latest || latest.status !== 'aprovada') throw httpError(409, 'Latest version must be approved to create a new one');
+  if (!latest || latest.status !== 'aprovada')
+    throw httpError(409, 'Latest version must be approved to create a new one');
 
   await repo.updateMinuteVersion(latest.id, { status: 'substituída' });
   await repo.insertMinuteVersion({
@@ -118,13 +139,18 @@ export async function editApprovedMinute(callerId: number, minuteId: number, bod
   return buildMinuteResponse(minute, versions);
 }
 
-export async function approveMinute(callerId: number, minuteId: number, body: ApproveMinuteRequest): Promise<MinuteResponse | null> {
+export async function approveMinute(
+  callerId: number,
+  minuteId: number,
+  body: ApproveMinuteRequest
+): Promise<MinuteResponse | null> {
   await assertPermission(callerId, Module.Minutes, Action.Review);
   const minute = await repo.findMinuteById(minuteId);
   if (!minute) return null;
 
   const latest = await repo.findLatestVersion(minuteId);
-  if (!latest || latest.status !== 'aguardando aprovação') throw httpError(409, 'No pending version to approve');
+  if (!latest || latest.status !== 'aguardando aprovação')
+    throw httpError(409, 'No pending version to approve');
 
   await repo.updateMinuteVersion(latest.id, {
     status: 'aprovada',
@@ -141,7 +167,8 @@ export async function deleteMinute(callerId: number, minuteId: number): Promise<
   if (!minute) return null;
 
   const versions = await repo.getVersionsForMinute(minuteId);
-  if (versions.some((v) => v.status === 'aprovada')) throw httpError(409, 'Cannot delete a minute with an approved version');
+  if (versions.some((v) => v.status === 'aprovada'))
+    throw httpError(409, 'Cannot delete a minute with an approved version');
 
   await repo.deleteMinute(minuteId);
 }

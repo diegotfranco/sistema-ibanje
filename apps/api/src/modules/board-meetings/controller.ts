@@ -1,5 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { CreateBoardMeetingRequest, UpdateBoardMeetingRequest, SetAgendaRequest } from './schema.js';
+import type {
+  CreateBoardMeetingRequest,
+  UpdateBoardMeetingRequest,
+  SetAgendaRequest
+} from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
 import * as service from './service.js';

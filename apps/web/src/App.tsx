@@ -3,6 +3,7 @@ import { Toaster } from '@/components/ui/sonner';
 import { ProtectedRoute } from '@/components/ProtectedRoute';
 import { AppLayout } from '@/components/layouts/AppLayout';
 import { AuthErrorListener } from '@/components/AuthErrorListener';
+import { NotFoundPage } from '@/components/status/NotFoundPage';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { useTheme } from '@/lib/theme';
@@ -43,6 +44,7 @@ export default function App() {
           {protectedRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="*" element={<Navigate to={paths.login} replace />} />
       </Routes>
