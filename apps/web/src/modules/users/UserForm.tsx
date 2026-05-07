@@ -45,7 +45,7 @@ export default function UserForm({
 
   const createForm = useForm<UserCreateFormValues>({
     resolver: zodResolver(UserCreateFormSchema),
-    defaultValues: { name: '', email: '', roleId: undefined as unknown as number, memberId: null }
+    defaultValues: { name: '', email: '', memberId: null }
   });
 
   const editForm = useForm<UserEditFormValues>({
@@ -71,7 +71,6 @@ export default function UserForm({
       createForm.reset({
         name: '',
         email: '',
-        roleId: undefined as unknown as number,
         memberId: null
       });
     }
