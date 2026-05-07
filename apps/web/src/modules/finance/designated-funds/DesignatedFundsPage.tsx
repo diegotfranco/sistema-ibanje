@@ -8,6 +8,12 @@ import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedF
 import { DesignatedFundForm } from './DesignatedFundForm';
 import type { DesignatedFundResponse } from '@/schemas/designated-fund';
 
+const formatDate = (s: string | null) => {
+  if (!s) return '—';
+  const [y, m, d] = s.split('-');
+  return `${d}/${m}/${y}`;
+};
+
 export default function DesignatedFundsPage() {
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
@@ -39,6 +45,10 @@ export default function DesignatedFundsPage() {
           {
             header: 'Meta',
             cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—')
+          },
+          {
+            header: 'Encerra em',
+            cell: (row) => formatDate(row.targetDate)
           }
         ]}
         data={items}

@@ -11,74 +11,82 @@ import type {
   FundDetailResponse
 } from '@/schemas/report';
 
-function buildParams(from: string, to: string, page?: number, limit?: number) {
-  const p = new URLSearchParams({ from, to });
+function buildParams(month: string, page?: number, limit?: number) {
+  const p = new URLSearchParams({ month });
   if (page !== undefined) p.set('page', String(page));
   if (limit !== undefined) p.set('limit', String(limit));
   return p.toString();
 }
 
-const enabled = (from: string, to: string) => from.length > 0 && to.length > 0;
+function buildParamsOptional(month: string | undefined, page?: number, limit?: number) {
+  const p = new URLSearchParams();
+  if (month) p.set('month', month);
+  if (page !== undefined) p.set('page', String(page));
+  if (limit !== undefined) p.set('limit', String(limit));
+  return p.toString();
+}
 
-export function useIncomeReport(from: string, to: string, page = 1) {
+const enabled = (month: string) => month.length > 0;
+
+export function useIncomeReport(month: string, page = 1) {
   return useQuery({
-    queryKey: ['reports', 'income', from, to, page],
-    queryFn: () =>
-      api.get<IncomeReportResponse>(`/reports/income?${buildParams(from, to, page, 50)}`),
-    enabled: enabled(from, to)
+    queryKey: ['reports', 'income', month, page],
+    queryFn: () => api.get<IncomeReportResponse>(`/reports/income?${buildParams(month, page, 50)}`),
+    enabled: enabled(month)
   });
 }
 
-export function useExpenseReport(from: string, to: string, page = 1) {
+export function useExpenseReport(month: string, page = 1) {
   return useQuery({
-    queryKey: ['reports', 'expenses', from, to, page],
+    queryKey: ['reports', 'expenses', month, page],
     queryFn: () =>
-      api.get<ExpenseReportResponse>(`/reports/expenses?${buildParams(from, to, page, 50)}`),
-    enabled: enabled(from, to)
+      api.get<ExpenseReportResponse>(`/reports/expenses?${buildParams(month, page, 50)}`),
+    enabled: enabled(month)
   });
 }
 
-export function useFinancialStatement(from: string, to: string) {
+export function useFinancialStatement(month: string) {
   return useQuery({
-    queryKey: ['reports', 'statement', from, to],
+    queryKey: ['reports', 'statement', month],
     queryFn: () =>
-      api.get<FinancialStatementResponse>(`/reports/financial-statement?${buildParams(from, to)}`),
-    enabled: enabled(from, to)
+      api.get<FinancialStatementResponse>(`/reports/financial-statement?${buildParams(month)}`),
+    enabled: enabled(month)
   });
 }
 
-export function useDetailedStatement(from: string, to: string) {
+export function useDetailedStatement(month: string) {
   return useQuery({
-    queryKey: ['reports', 'statement-detailed', from, to],
+    queryKey: ['reports', 'statement-detailed', month],
     queryFn: () =>
       api.get<DetailedFinancialStatementResponse>(
-        `/reports/financial-statement/detailed?${buildParams(from, to)}`
+        `/reports/financial-statement/detailed?${buildParams(month)}`
       ),
-    enabled: enabled(from, to)
+    enabled: enabled(month)
   });
 }
 
-export function useMembersReport(from: string, to: string) {
+export function useMembersReport(month: string) {
   return useQuery({
-    queryKey: ['reports', 'members', from, to],
-    queryFn: () => api.get<MembersReportResponse>(`/reports/members?${buildParams(from, to)}`),
-    enabled: enabled(from, to)
+    queryKey: ['reports', 'members', month],
+    queryFn: () => api.get<MembersReportResponse>(`/reports/members?${buildParams(month)}`),
+    enabled: enabled(month)
   });
 }
 
-export function useFundsReport(from: string, to: string) {
+export function useFundsReport(month?: string) {
   return useQuery({
-    queryKey: ['reports', 'funds', from, to],
-    queryFn: () => api.get<FundListResponse>(`/reports/funds?${buildParams(from, to)}`),
-    enabled: enabled(from, to)
+    queryKey: ['reports', 'funds', month],
+    queryFn: () => api.get<FundListResponse>(`/reports/funds?${buildParamsOptional(month)}`),
+    enabled: true
   });
 }
 
-export function useFundDetail(id: number, from: string, to: string) {
+export function useFundDetail(id: number, month?: string) {
   return useQuery({
-    queryKey: ['reports', 'fund', id, from, to],
-    queryFn: () => api.get<FundDetailResponse>(`/reports/funds/${id}?${buildParams(from, to)}`),
-    enabled: enabled(from, to) && id > 0
+    queryKey: ['reports', 'fund', id, month],
+    queryFn: () =>
+      api.get<FundDetailResponse>(`/reports/funds/${id}?${buildParamsOptional(month)}`),
+    enabled: id > 0
   });
 }
 

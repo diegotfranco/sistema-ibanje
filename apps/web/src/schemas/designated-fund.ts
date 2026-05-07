@@ -7,7 +7,8 @@ export const DesignatedFundFormSchema = z.object({
     .string()
     .regex(/^\d+(\.\d{1,2})?$/, 'Use formato decimal com até 2 casas (ex.: 1000.00).')
     .optional()
-    .or(z.literal(''))
+    .or(z.literal('')),
+  targetDate: z.string().optional().nullable()
 });
 
 export type DesignatedFundFormValues = z.infer<typeof DesignatedFundFormSchema>;
@@ -17,6 +18,7 @@ export type DesignatedFundResponse = {
   name: string;
   description: string | null;
   targetAmount: string | null;
+  targetDate: string | null;
   status: string;
   createdAt: string;
 };

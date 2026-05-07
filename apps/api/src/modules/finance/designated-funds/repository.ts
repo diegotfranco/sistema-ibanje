@@ -7,6 +7,7 @@ const selectFields = {
   name: designatedFunds.name,
   description: designatedFunds.description,
   targetAmount: designatedFunds.targetAmount,
+  targetDate: designatedFunds.targetDate,
   status: designatedFunds.status,
   createdAt: designatedFunds.createdAt
 };
@@ -37,6 +38,7 @@ export async function insertDesignatedFund(data: {
   name: string;
   description?: string;
   targetAmount?: string;
+  targetDate?: string | null;
 }) {
   const result = await db.insert(designatedFunds).values(data).returning(selectFields);
   return result[0] ?? null;
@@ -44,7 +46,12 @@ export async function insertDesignatedFund(data: {
 
 export async function updateDesignatedFund(
   id: number,
-  data: Partial<Pick<typeof designatedFunds.$inferInsert, 'name' | 'description' | 'targetAmount'>>
+  data: Partial<
+    Pick<
+      typeof designatedFunds.$inferInsert,
+      'name' | 'description' | 'targetAmount' | 'targetDate'
+    >
+  >
 ) {
   const result = await db
     .update(designatedFunds)

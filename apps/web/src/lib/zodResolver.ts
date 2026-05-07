@@ -3,8 +3,10 @@
 // bypasses overload resolution so the version mismatch never surfaces.
 import { zodResolver as _zodResolver } from '@hookform/resolvers/zod';
 import type { Resolver, FieldValues } from 'react-hook-form';
+import type { ZodSchema } from 'zod';
 
-export function zodResolver<T extends FieldValues>(schema: object): Resolver<T> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (_zodResolver as any)(schema) as Resolver<T>;
+type ZodResolverFn = <T extends FieldValues>(schema: ZodSchema<unknown>) => Resolver<T>;
+
+export function zodResolver<T extends FieldValues>(schema: ZodSchema<unknown>): Resolver<T> {
+  return (_zodResolver as unknown as ZodResolverFn)(schema);
 }

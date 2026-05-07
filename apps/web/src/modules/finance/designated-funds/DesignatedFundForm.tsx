@@ -4,6 +4,7 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import DateInput from '@/components/DateInput';
 import { zodResolver } from '@/lib/zodResolver';
 import {
   DesignatedFundFormSchema,
@@ -24,7 +25,8 @@ export function DesignatedFundForm({ initialValues, isPending, onSubmit, onCance
     defaultValues: {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
-      targetAmount: initialValues?.targetAmount ?? ''
+      targetAmount: initialValues?.targetAmount ?? '',
+      targetDate: initialValues?.targetDate ?? null
     }
   });
 
@@ -32,7 +34,8 @@ export function DesignatedFundForm({ initialValues, isPending, onSubmit, onCance
     const transformed = {
       ...values,
       description: values.description || undefined,
-      targetAmount: values.targetAmount || undefined
+      targetAmount: values.targetAmount || undefined,
+      targetDate: values.targetDate || null
     };
     onSubmit(transformed as DesignatedFundFormValues);
   };
@@ -69,6 +72,17 @@ export function DesignatedFundForm({ initialValues, isPending, onSubmit, onCance
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Meta (R$)</FieldLabel>
               <Input {...field} aria-invalid={fieldState.invalid} placeholder="1000.00" />
+              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+            </Field>
+          )}
+        />
+        <Controller
+          name="targetDate"
+          control={form.control}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Encerra em (opcional)</FieldLabel>
+              <DateInput {...field} value={field.value || ''} aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

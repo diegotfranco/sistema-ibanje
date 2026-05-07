@@ -12,8 +12,7 @@ import {
 import { useIncomeReport } from './useReports';
 
 interface Props {
-  from: string;
-  to: string;
+  month: string;
 }
 
 const formatDate = (s: string) => {
@@ -24,9 +23,9 @@ const formatDate = (s: string) => {
 const formatMoney = (s: string) =>
   `R$ ${parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export function IncomeReportTab({ from, to }: Props) {
+export function IncomeReportTab({ month }: Props) {
   const [page, setPage] = useState(1);
-  const { data, isLoading } = useIncomeReport(from, to, page);
+  const { data, isLoading } = useIncomeReport(month, page);
 
   const rows = data?.data ?? [];
 

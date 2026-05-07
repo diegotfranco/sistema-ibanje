@@ -14,8 +14,7 @@ import { useFinancialStatement, useDetailedStatement, usePdfDownload } from './u
 import { IncomePivotTable } from './IncomePivotTable';
 
 interface Props {
-  from: string;
-  to: string;
+  month: string;
 }
 
 const formatMoney = (s: string) =>
@@ -26,13 +25,13 @@ const formatDate = (s: string) => {
   return `${d}/${m}/${y}`;
 };
 
-export function StatementTab({ from, to }: Props) {
+export function StatementTab({ month }: Props) {
   const [view, setView] = useState<'simple' | 'detailed'>('simple');
-  const simple = useFinancialStatement(from, to);
-  const detailed = useDetailedStatement(from, to);
+  const simple = useFinancialStatement(month);
+  const detailed = useDetailedStatement(month);
   const pdfDownload = usePdfDownload();
 
-  const params = new URLSearchParams({ from, to }).toString();
+  const params = new URLSearchParams({ month }).toString();
 
   return (
     <div className="mt-4 space-y-4">

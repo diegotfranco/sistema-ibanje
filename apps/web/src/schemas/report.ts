@@ -125,6 +125,7 @@ export type FundSummary = {
   fundId: number;
   fundName: string;
   targetAmount: string | null;
+  targetDate: string | null;
   totalRaised: string;
   totalExpenses: string;
   balance: string;

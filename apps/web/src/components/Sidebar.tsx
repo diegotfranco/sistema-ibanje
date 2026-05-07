@@ -1,11 +1,13 @@
+import { useState, type ReactElement } from 'react';
 import { NavLink, useLocation } from 'react-router';
-import { LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
-import { appRoutes } from '@/routes';
+import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
+import { appRoutes, type AppRoute } from '@/routes';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { hasPermission, Action } from '@/lib/permissions';
+import { hasPermission, Action, type PermissionMap } from '@/lib/permissions';
 import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 // Make sure to import these Dropdown components
 import {
@@ -28,23 +30,234 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   useSidebar
 } from '@/components/ui/sidebar';
+
+// Hook to manage sub-group collapse state in localStorage
+function useSubgroupState() {
+  const [state, setState] = useState<Record<string, boolean>>(() => {
+    if (typeof window === 'undefined') return {};
+    const stored = localStorage.getItem('sidebar-subgroups');
+    if (stored) {
+      try {
+        return JSON.parse(stored) as Record<string, boolean>;
+      } catch {
+        // Ignore parse errors
+        return {};
+      }
+    }
+    return {};
+  });
+
+  const setOpenState = (key: string, isOpen: boolean) => {
+    setState((prev) => {
+      const newState = { ...prev, [key]: isOpen };
+      localStorage.setItem('sidebar-subgroups', JSON.stringify(newState));
+      return newState;
+    });
+  };
+
+  return { state, setOpenState };
+}
+
+// Recursive helper to filter routes by permission
+function filterRoutesByPermission(
+  routes: AppRoute[],
+  user:
+    | {
+        permissions?: PermissionMap;
+      }
+    | null
+    | undefined
+): AppRoute[] {
+  return routes
+    .map((route) => {
+      const isVisible =
+        route.layout === 'app' &&
+        route.label &&
+        (!route.module ||
+          hasPermission(user?.permissions, route.module, route.action ?? Action.View));
+
+      if (!isVisible) return null;
+
+      if (route.children && route.children.length > 0) {
+        const filteredChildren = filterRoutesByPermission(route.children, user);
+        if (filteredChildren.length === 0) return null;
+        return { ...route, children: filteredChildren };
+      }
+
+      return route;
+    })
+    .filter((r) => r !== null) as AppRoute[];
+}
+
+// Helper to check if a route is active
+function isRouteActive(route: AppRoute, pathname: string, searchParams: URLSearchParams): boolean {
+  if (!route.path) return false;
+
+  // Handle deep-linked query parameters (e.g., /reports?tab=income)
+  if (route.path.includes('?')) {
+    const [pathPart, queryPart] = route.path.split('?');
+    const queryParams = new URLSearchParams(queryPart);
+
+    // Check if pathname matches
+    if (pathname !== pathPart) return false;
+
+    // Check all query params in the route path
+    for (const [key, value] of queryParams) {
+      if (searchParams.get(key) !== value) return false;
+    }
+
+    return true;
+  }
+
+  // Standard pathname matching
+  return pathname === route.path || (route.path !== '/' && pathname.startsWith(`${route.path}/`));
+}
+
+// Recursive component to render menu items
+function MenuItemRenderer({
+  route,
+  depth,
+  location,
+  user,
+  subgroupState,
+  setOpenState
+}: {
+  route: AppRoute;
+  depth: number;
+  location: ReturnType<typeof useLocation>;
+  user:
+    | {
+        permissions?: PermissionMap;
+      }
+    | null
+    | undefined;
+  subgroupState: Record<string, boolean>;
+  setOpenState: (key: string, isOpen: boolean) => void;
+}): ReactElement | null {
+  const searchParams = new URLSearchParams(location.search);
+
+  // Depth 0: top-level section with children
+  if (depth === 0 && route.children && route.children.length > 0) {
+    return (
+      <SidebarGroup key={route.label} className="py-2">
+        <SidebarGroupLabel className="truncate">{route.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {route.children.map((child) => (
+              <MenuItemRenderer
+                key={child.path ?? child.label}
+                route={child}
+                depth={1}
+                location={location}
+                user={user}
+                subgroupState={subgroupState}
+                setOpenState={setOpenState}
+              />
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+
+  // Depth 1 with children: collapsible sub-group
+  if (depth === 1 && route.children && route.children.length > 0) {
+    const subgroupKey = route.label || '';
+    const isOpen = subgroupState[subgroupKey] ?? true; // Default open
+
+    return (
+      <SidebarMenuItem key={subgroupKey}>
+        <Collapsible open={isOpen} onOpenChange={(open) => setOpenState(subgroupKey, open)}>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton className="gap-2">
+              {route.icon && <route.icon size={16} />}
+              <span className="truncate">{route.label}</span>
+              <ChevronRight className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-90" />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <SidebarMenuSub>
+              {route.children.map((child) => (
+                <MenuItemRenderer
+                  key={child.path ?? child.label}
+                  route={child}
+                  depth={2}
+                  location={location}
+                  user={user}
+                  subgroupState={subgroupState}
+                  setOpenState={setOpenState}
+                />
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
+    );
+  }
+
+  // Depth 1 or 2, leaf item
+  if (route.path && route.label) {
+    const isActive = isRouteActive(route, location.pathname, searchParams);
+
+    const navElement = route.element ? (
+      <NavLink to={route.path}>
+        {route.icon && <route.icon size={16} />}
+        <span className="truncate">{route.label}</span>
+      </NavLink>
+    ) : (
+      // Sidebar-only entry (no route element) - still navigable
+      <NavLink to={route.path}>
+        {route.icon && <route.icon size={16} />}
+        <span className="truncate">{route.label}</span>
+      </NavLink>
+    );
+
+    if (depth === 1) {
+      return (
+        <SidebarMenuItem key={route.path}>
+          <SidebarMenuButton
+            asChild
+            isActive={isActive}
+            tooltip={route.label}
+            className="text-muted-foreground hover:text-foreground">
+            {navElement}
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      );
+    }
+
+    // depth === 2
+    return (
+      <SidebarMenuSubItem key={route.path}>
+        <SidebarMenuSubButton
+          asChild
+          isActive={isActive}
+          className="text-muted-foreground hover:text-foreground">
+          {navElement}
+        </SidebarMenuSubButton>
+      </SidebarMenuSubItem>
+    );
+  }
+
+  return null;
+}
 
 export function Sidebar() {
   const { data: user } = useCurrentUser();
   const { logout, isPending } = useLogout();
   const location = useLocation();
-
   const { toggleSidebar, state } = useSidebar();
+  const { state: subgroupState, setOpenState } = useSubgroupState();
+
   const isCollapsed = state === 'collapsed';
 
-  const visibleRoutes = appRoutes.filter(
-    (route) =>
-      route.layout === 'app' &&
-      route.label &&
-      (!route.module || hasPermission(user?.permissions, route.module, route.action ?? Action.View))
-  );
+  // Filter routes recursively by permissions
+  const visibleRoutes = filterRoutesByPermission(appRoutes, user);
 
   return (
     <ShadcnSidebar collapsible="icon">
@@ -73,76 +286,17 @@ export function Sidebar() {
 
       {/* Main Navigation */}
       <SidebarContent>
-        {visibleRoutes.map((route, index) => {
-          if (!route.children || route.children.length === 0) {
-            const isActive = route.path
-              ? location.pathname === route.path ||
-                (route.path !== '/' && location.pathname.startsWith(`${route.path}/`))
-              : false;
-
-            return (
-              <SidebarGroup key={route.path || index} className="py-2">
-                <SidebarMenu>
-                  <SidebarMenuItem>
-                    {/* Added the custom text classes here */}
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      tooltip={route.label}
-                      className="text-muted-foreground hover:text-foreground">
-                      <NavLink to={route.path!}>
-                        {route.icon && <route.icon />}
-                        <span>{route.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                </SidebarMenu>
-              </SidebarGroup>
-            );
-          }
-
-          const visibleChildren = route.children.filter(
-            (child) =>
-              child.layout === 'app' &&
-              child.label &&
-              (!child.module ||
-                hasPermission(user?.permissions, child.module, child.action ?? Action.View))
-          );
-
-          if (visibleChildren.length === 0) return null;
-
-          return (
-            <SidebarGroup key={route.path ?? route.label}>
-              <SidebarGroupLabel className="truncate">{route.label}</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {visibleChildren.map((child) => {
-                    const isActive = child.path
-                      ? location.pathname === child.path ||
-                        (child.path !== '/' && location.pathname.startsWith(`${child.path}/`))
-                      : false;
-
-                    return (
-                      <SidebarMenuItem key={child.path}>
-                        {/* Added the custom text classes here */}
-                        <SidebarMenuButton
-                          asChild
-                          isActive={isActive}
-                          tooltip={child.label}
-                          className="text-muted-foreground hover:text-foreground">
-                          <NavLink to={child.path!}>
-                            {child.icon && <child.icon />}
-                            <span>{child.label}</span>
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    );
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          );
-        })}
+        {visibleRoutes.map((route) => (
+          <MenuItemRenderer
+            key={route.path ?? route.label}
+            route={route}
+            depth={0}
+            location={location}
+            user={user}
+            subgroupState={subgroupState}
+            setOpenState={setOpenState}
+          />
+        ))}
       </SidebarContent>
 
       {/* Bottom Actions - User Menu Dropdown */}

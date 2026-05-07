@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -66,15 +66,18 @@ export default function UserPermissionsDialog({
   const save = useSaveUserPermissions(user?.id ?? 0);
 
   const [localValue, setLocalValue] = useState<Set<string>>(new Set());
+  const [syncedUserId, setSyncedUserId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (open && userPerms.data && ref.modules.length > 0 && ref.permissionTypes.length > 0) {
-      setLocalValue(userPermsToMatrixValue(userPerms.data, ref.modules, ref.permissionTypes));
-    }
-    if (open && !userPerms.isLoading && !userPerms.data) {
-      setLocalValue(new Set());
-    }
-  }, [open, userPerms.data, userPerms.isLoading, ref.modules, ref.permissionTypes]);
+  const currentUserId = open ? (user?.id ?? null) : null;
+  const refReady = ref.modules.length > 0 && ref.permissionTypes.length > 0;
+  if (currentUserId !== syncedUserId && !userPerms.isLoading && !ref.isLoading && refReady) {
+    setSyncedUserId(currentUserId);
+    setLocalValue(
+      userPerms.data
+        ? userPermsToMatrixValue(userPerms.data, ref.modules, ref.permissionTypes)
+        : new Set()
+    );
+  }
 
   function handleSave() {
     save.mutate(matrixValueToUserPerms(localValue, ref.modules, ref.permissionTypes), {

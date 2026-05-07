@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const MonthQuerySchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
+});
+
 export const DateRangeQuerySchema = z.object({
   from: z.string().date(),
   to: z.string().date()
@@ -8,6 +12,18 @@ export const DateRangeQuerySchema = z.object({
 export const PaginatedDateRangeQuerySchema = DateRangeQuerySchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
+});
+
+export const PaginatedMonthQuerySchema = MonthQuerySchema.extend({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(20)
+});
+
+export const OptionalMonthQuerySchema = z.object({
+  month: z
+    .string()
+    .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
+    .optional()
 });
 
 export type DateRangeQuery = z.infer<typeof DateRangeQuerySchema>;
@@ -153,6 +169,7 @@ export type FundSummary = {
 };
 
 export type FundListResponse = {
+  period: { from: string; to: string } | null;
   funds: FundSummary[];
 };
 
@@ -175,6 +192,7 @@ export type FundExpenseEntry = {
 };
 
 export type FundDetailResponse = FundSummary & {
+  period: { from: string; to: string } | null;
   incomeEntries: FundIncomeEntry[];
   expenseEntries: FundExpenseEntry[];
 };

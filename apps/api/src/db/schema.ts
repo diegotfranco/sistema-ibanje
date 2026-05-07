@@ -158,6 +158,7 @@ export const designatedFunds = pgTable('designated_funds', {
   name: varchar('name', { length: 96 }).notNull(),
   description: text('description'),
   targetAmount: numeric('target_amount', { precision: 12, scale: 2 }),
+  targetDate: date('target_date'),
   status: activeStatus('status').default('ativo').notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()

@@ -14,7 +14,8 @@ export const CreateDesignatedFundRequestSchema = z.object({
       /^\d+(\.\d{1,2})?$/,
       'targetAmount must be a positive decimal with up to 2 decimal places'
     )
-    .optional()
+    .optional(),
+  targetDate: z.string().date().nullable().optional()
 });
 
 export const UpdateDesignatedFundRequestSchema = CreateDesignatedFundRequestSchema.partial();
@@ -27,6 +28,7 @@ export type DesignatedFundResponse = {
   name: string;
   description: string | null;
   targetAmount: string | null;
+  targetDate: string | null;
   status: string;
   createdAt: Date;
 };

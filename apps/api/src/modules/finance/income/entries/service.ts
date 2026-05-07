@@ -34,6 +34,7 @@ async function validateEntry(data: {
   memberId?: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  referenceDate?: string;
 }) {
   const category = await findIncomeCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Income category not found');
@@ -56,6 +57,11 @@ async function validateEntry(data: {
   if (data.designatedFundId) {
     const fund = await findDesignatedFundById(data.designatedFundId);
     if (!fund) throw httpError(404, 'Designated fund not found');
+
+    if (fund.targetDate && data.referenceDate && data.referenceDate > fund.targetDate) {
+      const formattedDate = new Date(fund.targetDate).toLocaleDateString('pt-BR');
+      throw httpError(400, `O fundo "${fund.name}" encerrou em ${formattedDate}`);
+    }
   }
 }
 
@@ -82,7 +88,8 @@ export async function createIncomeEntry(
     categoryId: body.categoryId,
     memberId: body.memberId,
     paymentMethodId: body.paymentMethodId,
-    designatedFundId: body.designatedFundId
+    designatedFundId: body.designatedFundId,
+    referenceDate: body.referenceDate
   });
   const created = await repo.insertIncomeEntry({
     ...body,
@@ -101,13 +108,15 @@ export async function updateIncomeEntry(
   const entry = await repo.findIncomeEntryById(targetId);
   if (!entry) return null;
 
-  await assertPeriodEditable(body.referenceDate ?? entry.referenceDate);
+  const referenceDate = body.referenceDate ?? entry.referenceDate;
+  await assertPeriodEditable(referenceDate);
 
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
     memberId: body.memberId ?? entry.memberId ?? undefined,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
-    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined
+    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
+    referenceDate
   };
   await validateEntry(mergedValues);
 

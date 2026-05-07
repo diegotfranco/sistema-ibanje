@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,15 +39,13 @@ export default function RolePermissionsDialog({
   const save = useSaveRolePermissions(role?.id ?? 0);
 
   const [localValue, setLocalValue] = useState<Set<string>>(new Set());
+  const [syncedRoleId, setSyncedRoleId] = useState<number | null>(null);
 
-  useEffect(() => {
-    if (open && rolePerms.data) {
-      setLocalValue(toMatrixValue(rolePerms.data));
-    }
-    if (open && !rolePerms.isLoading && !rolePerms.data) {
-      setLocalValue(new Set());
-    }
-  }, [open, rolePerms.data, rolePerms.isLoading]);
+  const currentRoleId = open ? (role?.id ?? null) : null;
+  if (currentRoleId !== syncedRoleId && !rolePerms.isLoading) {
+    setSyncedRoleId(currentRoleId);
+    setLocalValue(rolePerms.data ? toMatrixValue(rolePerms.data) : new Set());
+  }
 
   function handleSave() {
     save.mutate(fromMatrixValue(localValue), {

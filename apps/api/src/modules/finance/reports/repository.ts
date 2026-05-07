@@ -478,6 +478,54 @@ export async function sumAllTimeExpensesForFund(fundId: number): Promise<string>
   return result[0]?.total ?? '0.00';
 }
 
+export async function sumIncomePerFundForRange(
+  from: string,
+  to: string
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ fundId: incomeEntries.designatedFundId, total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(
+      and(
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga'),
+        isNotNull(incomeEntries.designatedFundId)
+      )
+    )
+    .groupBy(incomeEntries.designatedFundId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+  }
+  return map;
+}
+
+export async function sumExpensesPerFundForRange(
+  from: string,
+  to: string
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ fundId: expenseEntries.designatedFundId, total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(
+      and(
+        gte(expenseEntries.referenceDate, from),
+        lte(expenseEntries.referenceDate, to),
+        eq(expenseEntries.status, 'paga'),
+        isNotNull(expenseEntries.designatedFundId)
+      )
+    )
+    .groupBy(expenseEntries.designatedFundId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+  }
+  return map;
+}
+
 export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEntry[]> {
   const rows = await db
     .select({
@@ -527,4 +575,115 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
     categoryName: r.categoryName,
     notes: r.notes ?? null
   }));
+}
+
+export async function getFundIncomeEntriesForRange(
+  fundId: number,
+  from: string,
+  to: string
+): Promise<FundIncomeEntry[]> {
+  const rows = await db
+    .select({
+      id: incomeEntries.id,
+      referenceDate: incomeEntries.referenceDate,
+      amount: incomeEntries.amount,
+      categoryName: incomeCategories.name,
+      memberName: members.name,
+      notes: incomeEntries.notes
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(members, eq(incomeEntries.memberId, members.id))
+    .where(
+      and(
+        eq(incomeEntries.designatedFundId, fundId),
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga')
+      )
+    )
+    .orderBy(asc(incomeEntries.referenceDate));
+
+  return rows.map((r) => ({
+    id: r.id,
+    referenceDate: r.referenceDate,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    memberName: r.memberName ?? null,
+    notes: r.notes ?? null
+  }));
+}
+
+export async function getFundExpenseEntriesForRange(
+  fundId: number,
+  from: string,
+  to: string
+): Promise<FundExpenseEntry[]> {
+  const rows = await db
+    .select({
+      id: expenseEntries.id,
+      referenceDate: expenseEntries.referenceDate,
+      description: expenseEntries.description,
+      amount: expenseEntries.amount,
+      categoryName: expenseCategories.name,
+      notes: expenseEntries.notes
+    })
+    .from(expenseEntries)
+    .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
+    .where(
+      and(
+        eq(expenseEntries.designatedFundId, fundId),
+        gte(expenseEntries.referenceDate, from),
+        lte(expenseEntries.referenceDate, to),
+        eq(expenseEntries.status, 'paga')
+      )
+    )
+    .orderBy(asc(expenseEntries.referenceDate));
+
+  return rows.map((r) => ({
+    id: r.id,
+    referenceDate: r.referenceDate,
+    description: r.description,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    notes: r.notes ?? null
+  }));
+}
+
+export async function sumIncomeForFundRange(
+  fundId: number,
+  from: string,
+  to: string
+): Promise<string> {
+  const result = await db
+    .select({ total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(
+      and(
+        eq(incomeEntries.designatedFundId, fundId),
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga')
+      )
+    );
+  return result[0]?.total ?? '0.00';
+}
+
+export async function sumExpensesForFundRange(
+  fundId: number,
+  from: string,
+  to: string
+): Promise<string> {
+  const result = await db
+    .select({ total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(
+      and(
+        eq(expenseEntries.designatedFundId, fundId),
+        gte(expenseEntries.referenceDate, from),
+        lte(expenseEntries.referenceDate, to),
+        eq(expenseEntries.status, 'paga')
+      )
+    );
+  return result[0]?.total ?? '0.00';
 }

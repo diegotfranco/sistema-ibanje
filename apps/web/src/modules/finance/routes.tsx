@@ -1,4 +1,11 @@
-import { BarChart2, CalendarCheck, CreditCard, FolderTree, PiggyBank, TrendingDown, TrendingUp, Wallet } from 'lucide-react';
+import {
+  CalendarCheck,
+  CreditCard,
+  FileBarChart,
+  PiggyBank,
+  TrendingDown,
+  TrendingUp
+} from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module, Action } from '@/lib/permissions';
@@ -19,28 +26,78 @@ export const financeRoutes: AppRoute[] = [
     label: 'Financeiro',
     children: [
       {
-        path: paths.incomeEntries,
-        element: (
-          <RequirePermission module={Module.IncomeEntries}>
-            <IncomeEntriesPage />
-          </RequirePermission>
-        ),
         layout: 'app',
-        label: 'Lançamentos de Entradas',
+        label: 'Entradas',
         icon: TrendingUp,
-        module: Module.IncomeEntries
+        children: [
+          {
+            path: paths.incomeEntries,
+            element: (
+              <RequirePermission module={Module.IncomeEntries}>
+                <IncomeEntriesPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Lançamentos',
+            module: Module.IncomeEntries
+          },
+          {
+            path: paths.incomeCategories,
+            element: (
+              <RequirePermission module={Module.IncomeCategories}>
+                <IncomeCategoriesPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Categorias',
+            module: Module.IncomeCategories
+          },
+          {
+            path: `${paths.reports}?tab=income`,
+            layout: 'app',
+            label: 'Relatório',
+            icon: FileBarChart,
+            module: Module.Reports,
+            action: Action.Report
+          }
+        ]
       },
       {
-        path: paths.expenseEntries,
-        element: (
-          <RequirePermission module={Module.ExpenseEntries}>
-            <ExpenseEntriesPage />
-          </RequirePermission>
-        ),
         layout: 'app',
-        label: 'Lançamentos de Saídas',
+        label: 'Saídas',
         icon: TrendingDown,
-        module: Module.ExpenseEntries
+        children: [
+          {
+            path: paths.expenseEntries,
+            element: (
+              <RequirePermission module={Module.ExpenseEntries}>
+                <ExpenseEntriesPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Lançamentos',
+            module: Module.ExpenseEntries
+          },
+          {
+            path: paths.expenseCategories,
+            element: (
+              <RequirePermission module={Module.ExpenseCategories}>
+                <ExpenseCategoriesPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Categorias',
+            module: Module.ExpenseCategories
+          },
+          {
+            path: `${paths.reports}?tab=expenses`,
+            layout: 'app',
+            label: 'Relatório',
+            icon: FileBarChart,
+            module: Module.Reports,
+            action: Action.Report
+          }
+        ]
       },
       {
         path: paths.monthlyClosings,
@@ -63,30 +120,6 @@ export const financeRoutes: AppRoute[] = [
         ),
         layout: 'app',
         module: Module.MonthlyClosings
-      },
-      {
-        path: paths.incomeCategories,
-        element: (
-          <RequirePermission module={Module.IncomeCategories}>
-            <IncomeCategoriesPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        label: 'Categorias de Entradas',
-        icon: Wallet,
-        module: Module.IncomeCategories
-      },
-      {
-        path: paths.expenseCategories,
-        element: (
-          <RequirePermission module={Module.ExpenseCategories}>
-            <ExpenseCategoriesPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        label: 'Categorias de Saídas',
-        icon: FolderTree,
-        module: Module.ExpenseCategories
       },
       {
         path: paths.paymentMethods,
@@ -119,6 +152,14 @@ export const financeRoutes: AppRoute[] = [
     label: 'Relatórios',
     children: [
       {
+        path: `${paths.reports}?tab=statement`,
+        layout: 'app',
+        label: 'Demonstrativo',
+        icon: FileBarChart,
+        module: Module.Reports,
+        action: Action.Report
+      },
+      {
         path: paths.reports,
         element: (
           <RequirePermission module={Module.Reports} action={Action.Report}>
@@ -126,8 +167,6 @@ export const financeRoutes: AppRoute[] = [
           </RequirePermission>
         ),
         layout: 'app',
-        label: 'Relatórios',
-        icon: BarChart2,
         module: Module.Reports,
         action: Action.Report
       }

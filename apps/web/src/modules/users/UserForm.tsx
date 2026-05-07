@@ -5,8 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import EntityPicker from '@/components/EntityPicker';
-import { useRoles } from '@/modules/roles/useRoles';
-import { useMembers } from '@/modules/members/useMembers';
 import {
   UserCreateFormSchema,
   UserEditFormSchema,
@@ -16,6 +14,8 @@ import {
 } from '@/schemas/user';
 import type { RoleResponse } from '@/schemas/role';
 import type { MemberResponse } from '@/schemas/member';
+import { useRoles } from '@/modules/roles/useRoles';
+import { useMembers } from '@/modules/members/useMembers';
 
 interface UserFormProps {
   initialValues?: UserResponse;
@@ -26,13 +26,12 @@ interface UserFormProps {
 
 export default function UserForm({ initialValues, isPending, onSubmit, onCancel }: UserFormProps) {
   const isEditing = initialValues !== undefined;
-  const rolesList = useRoles();
-  const membersList = useMembers();
 
-  const roles: RoleResponse[] = rolesList.data?.data ?? [];
-  const members: MemberResponse[] = (membersList.data?.data ?? []).filter(
-    (m) => m.userId === null
-  );
+  const rolesList = useRoles();
+  const roles = rolesList.data?.data ?? [];
+
+  const membersList = useMembers();
+  const members = membersList.data?.data ?? [];
 
   const createForm = useForm<UserCreateFormValues>({
     resolver: zodResolver(UserCreateFormSchema),
@@ -54,12 +53,22 @@ export default function UserForm({ initialValues, isPending, onSubmit, onCancel 
         roleId: initialValues.roleId
       });
     } else {
-      createForm.reset({ name: '', email: '', roleId: undefined as unknown as number, memberId: null });
+      createForm.reset({
+        name: '',
+        email: '',
+        roleId: undefined as unknown as number,
+        memberId: null
+      });
     }
-  }, [initialValues, isEditing]);
+  }, [initialValues, isEditing, editForm, createForm]);
 
   if (isEditing) {
-    const { register, handleSubmit, control, formState: { errors } } = editForm;
+    const {
+      register,
+      handleSubmit,
+      control,
+      formState: { errors }
+    } = editForm;
     return (
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
@@ -103,7 +112,12 @@ export default function UserForm({ initialValues, isPending, onSubmit, onCancel 
     );
   }
 
-  const { register, handleSubmit, control, formState: { errors } } = createForm;
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors }
+  } = createForm;
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1">

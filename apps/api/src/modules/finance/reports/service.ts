@@ -26,8 +26,16 @@ import type {
   IncomeAggregateRow
 } from './schema.js';
 
-function validateDateRange(from: string, to: string) {
-  if (from > to) throw httpError(400, "'from' must be on or before 'to'");
+function monthToRange(month: string): { from: string; to: string } {
+  const [y, m] = month.split('-').map(Number);
+  const from = `${month}-01`;
+  const lastDay = new Date(y, m, 0).getDate(); // m is 1-based; this gives last day of month m
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === y && today.getMonth() + 1 === m;
+  const to = isCurrentMonth
+    ? today.toISOString().slice(0, 10)
+    : `${month}-${String(lastDay).padStart(2, '0')}`;
+  return { from, to };
 }
 
 function buildFundSummary(
@@ -124,13 +132,12 @@ async function computeOpeningBalance(from: string): Promise<string> {
 
 export async function getIncomeReport(
   callerId: number,
-  from: string,
-  to: string,
+  month: string,
   page: number,
   limit: number
 ): Promise<IncomeReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
-  validateDateRange(from, to);
+  const { from, to } = monthToRange(month);
 
   const offset = (page - 1) * limit;
   const [rows, rowCount, totalIncome] = await Promise.all([
@@ -153,13 +160,12 @@ export async function getIncomeReport(
 
 export async function getExpenseReport(
   callerId: number,
-  from: string,
-  to: string,
+  month: string,
   page: number,
   limit: number
 ): Promise<ExpenseReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
-  validateDateRange(from, to);
+  const { from, to } = monthToRange(month);
 
   const offset = (page - 1) * limit;
   const [rows, rowCount, totalExpenses] = await Promise.all([
@@ -182,11 +188,10 @@ export async function getExpenseReport(
 
 export async function getFinancialStatement(
   callerId: number,
-  from: string,
-  to: string
+  month: string
 ): Promise<FinancialStatementResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
-  validateDateRange(from, to);
+  const { from, to } = monthToRange(month);
 
   const [
     incomeByCategory,
@@ -222,15 +227,12 @@ export async function getFinancialStatement(
   };
 }
 
-export async function getMembersReport(callerId: number): Promise<MembersReportResponse> {
+export async function getMembersReport(
+  callerId: number,
+  month: string
+): Promise<MembersReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
-
-  const today = new Date();
-  const sixMonthsAgo = new Date(today);
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-  const toDate = today.toISOString().slice(0, 10);
-  const fromDate = sixMonthsAgo.toISOString().slice(0, 10);
+  const { from: fromDate, to: toDate } = monthToRange(month);
 
   const [titheIds, offeringIds] = await Promise.all([
     repo.findIncomeCategoryIdsByNames(['Dízimo']),
@@ -263,54 +265,94 @@ export async function getMembersReport(callerId: number): Promise<MembersReportR
   };
 }
 
-export async function getFundList(callerId: number): Promise<FundListResponse> {
+export async function getFundList(callerId: number, month?: string): Promise<FundListResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
 
-  const [funds, incomeMap, expensesMap] = await Promise.all([
-    repo.findAllActiveFunds(),
-    repo.sumAllTimeIncomePerFund(),
-    repo.sumAllTimeExpensesPerFund()
-  ]);
-
-  return {
-    funds: funds.map((f) => {
-      const raised = incomeMap.get(f.id) ?? '0.00';
-      const expenses = expensesMap.get(f.id) ?? '0.00';
-      return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expenses);
-    })
-  };
+  if (month) {
+    const period = monthToRange(month);
+    const [funds, income, expenses] = await Promise.all([
+      repo.findAllActiveFunds(),
+      repo.sumIncomePerFundForRange(period.from, period.to),
+      repo.sumExpensesPerFundForRange(period.from, period.to)
+    ]);
+    return {
+      period,
+      funds: funds.map((f) => {
+        const raised = income.get(f.id) ?? '0.00';
+        const expensesVal = expenses.get(f.id) ?? '0.00';
+        return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
+      })
+    };
+  } else {
+    const [funds, income, expenses] = await Promise.all([
+      repo.findAllActiveFunds(),
+      repo.sumAllTimeIncomePerFund(),
+      repo.sumAllTimeExpensesPerFund()
+    ]);
+    return {
+      period: null,
+      funds: funds.map((f) => {
+        const raised = income.get(f.id) ?? '0.00';
+        const expensesVal = expenses.get(f.id) ?? '0.00';
+        return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
+      })
+    };
+  }
 }
 
-export async function getFundDetail(callerId: number, id: number): Promise<FundDetailResponse> {
+export async function getFundDetail(
+  callerId: number,
+  id: number,
+  month?: string
+): Promise<FundDetailResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
 
   const fund = await repo.findFundById(id);
   if (!fund) throw httpError(404, 'Fund not found');
 
-  const [incomeEntries, expenseEntries, totalRaised, totalExpenses] = await Promise.all([
-    repo.getFundIncomeEntries(id),
-    repo.getFundExpenseEntries(id),
-    repo.sumAllTimeIncomeForFund(id),
-    repo.sumAllTimeExpensesForFund(id)
-  ]);
+  if (month) {
+    const period = monthToRange(month);
+    const [incomeEntries, expenseEntries, totalRaised, totalExpenses] = await Promise.all([
+      repo.getFundIncomeEntriesForRange(id, period.from, period.to),
+      repo.getFundExpenseEntriesForRange(id, period.from, period.to),
+      repo.sumIncomeForFundRange(id, period.from, period.to),
+      repo.sumExpensesForFundRange(id, period.from, period.to)
+    ]);
 
-  const summary = buildFundSummary(
-    fund.id,
-    fund.name,
-    fund.targetAmount ?? null,
-    totalRaised,
-    totalExpenses
-  );
+    const summary = buildFundSummary(
+      fund.id,
+      fund.name,
+      fund.targetAmount ?? null,
+      totalRaised,
+      totalExpenses
+    );
 
-  return { ...summary, incomeEntries, expenseEntries };
+    return { ...summary, period, incomeEntries, expenseEntries };
+  } else {
+    const [incomeEntries, expenseEntries, totalRaised, totalExpenses] = await Promise.all([
+      repo.getFundIncomeEntries(id),
+      repo.getFundExpenseEntries(id),
+      repo.sumAllTimeIncomeForFund(id),
+      repo.sumAllTimeExpensesForFund(id)
+    ]);
+
+    const summary = buildFundSummary(
+      fund.id,
+      fund.name,
+      fund.targetAmount ?? null,
+      totalRaised,
+      totalExpenses
+    );
+
+    return { ...summary, period: null, incomeEntries, expenseEntries };
+  }
 }
 
 export async function renderFinancialStatementPdf(
   callerId: number,
-  from: string,
-  to: string
+  month: string
 ): Promise<Buffer> {
-  const data = await getFinancialStatement(callerId, from, to);
+  const data = await getFinancialStatement(callerId, month);
   return renderToBuffer(
     React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
   );
@@ -318,11 +360,10 @@ export async function renderFinancialStatementPdf(
 
 export async function getDetailedFinancialStatement(
   callerId: number,
-  from: string,
-  to: string
+  month: string
 ): Promise<DetailedFinancialStatementResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
-  validateDateRange(from, to);
+  const { from, to } = monthToRange(month);
 
   const [incomeAggregates, expenseEntries, totalIncome, totalExpenses, openingBalance] =
     await Promise.all([
@@ -354,10 +395,9 @@ export async function getDetailedFinancialStatement(
 
 export async function renderDetailedFinancialStatementPdf(
   callerId: number,
-  from: string,
-  to: string
+  month: string
 ): Promise<Buffer> {
-  const data = await getDetailedFinancialStatement(callerId, from, to);
+  const data = await getDetailedFinancialStatement(callerId, month);
   return renderToBuffer(
     React.createElement(DetailedFinancialStatementPdf, {
       data

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import * as repo from './repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
-import { findMemberById } from '../../../members/repository';
+import { findMemberById } from '../../../members/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
 import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository.js';
@@ -14,7 +14,7 @@ import {
   deleteFile,
   getPresignedUrl,
   ALLOWED_MIME_TYPES
-} from '../../../../lib/storage';
+} from '../../../../lib/storage.js';
 import type {
   CreateExpenseEntryRequest,
   UpdateExpenseEntryRequest,

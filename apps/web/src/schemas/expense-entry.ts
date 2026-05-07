@@ -13,11 +13,8 @@ export const ExpenseEntryFormSchema = z.object({
     .regex(/^\d+(\.\d{0,2})?$/, 'Use formato decimal (ex.: 100.00).'),
   installment: z.coerce.number().int().positive('Número da parcela inválido.'),
   totalInstallments: z.coerce.number().int().positive('Total de parcelas inválido.'),
-  categoryId: z.number({ required_error: 'Categoria é obrigatória.' }).int().positive(),
-  paymentMethodId: z
-    .number({ required_error: 'Forma de pagamento é obrigatória.' })
-    .int()
-    .positive(),
+  categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
+  paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
   designatedFundId: z.number().int().positive().optional(),
   memberId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional().or(z.literal('')),

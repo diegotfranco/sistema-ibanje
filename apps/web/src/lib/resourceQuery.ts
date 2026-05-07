@@ -6,7 +6,7 @@ type Paginated<T> = { data: T[]; total: number; page: number; limit: number; tot
 
 export function useResourceList<T>(basePath: string, queryKey: readonly unknown[]) {
   return useQuery({
-    queryKey,
+    queryKey: [basePath, ...queryKey],
     queryFn: () => api.get<Paginated<T>>(`${basePath}?limit=100`)
   });
 }
@@ -22,7 +22,8 @@ export function useResourceMutations<T, C, U>(
   labels: { created: string; updated: string; removed: string }
 ) {
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey });
+  const fullKey = [basePath, ...queryKey];
+  const invalidate = () => qc.invalidateQueries({ queryKey: fullKey });
 
   const create = useMutation({
     mutationFn: (body: C) => api.post<T>(basePath, body),
