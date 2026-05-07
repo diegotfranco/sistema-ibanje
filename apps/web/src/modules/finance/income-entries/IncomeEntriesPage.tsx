@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
+import { EntryStatus } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeEntries, useIncomeEntryMutations } from './useIncomeEntries';
@@ -12,9 +13,9 @@ import type { IncomeEntryResponse, IncomeEntryFormValues } from '@/schemas/incom
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Todos' },
-  { value: 'pendente', label: 'Pendente' },
-  { value: 'paga', label: 'Paga' },
-  { value: 'cancelada', label: 'Cancelada' }
+  { value: EntryStatus.Pending, label: 'Pendente' },
+  { value: EntryStatus.Paid, label: 'Paga' },
+  { value: EntryStatus.Cancelled, label: 'Cancelada' }
 ] as const;
 
 const formatDate = (s: string) => {

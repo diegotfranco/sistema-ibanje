@@ -12,6 +12,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { MinuteStatus } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMinutes, useCreateMinute, useDeleteMinute } from './useMinutes';
@@ -19,9 +20,9 @@ import MinuteForm from './MinuteForm';
 import type { MinuteResponse, MinuteFormValues } from '@/schemas/minute';
 
 function statusVariant(status: string) {
-  if (status === 'aprovada')
+  if (status === MinuteStatus.Approved)
     return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === 'substituída')
+  if (status === MinuteStatus.Replaced)
     return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
   return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
 }
@@ -46,7 +47,7 @@ export default function MinutesPage() {
   }
 
   function canDeleteRow(row: MinuteResponse) {
-    return !row.currentVersion || row.currentVersion.status !== 'aprovada';
+    return !row.currentVersion || row.currentVersion.status !== MinuteStatus.Approved;
   }
 
   return (

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { type MinuteStatusValue } from '@/lib/status';
 
 export const MinuteFormSchema = z.object({
   boardMeetingId: z.number({ error: 'Reunião é obrigatória' }).int().positive(),
@@ -25,7 +26,7 @@ export type MinuteVersionResponse = {
   id: number;
   version: number;
   content: string;
-  status: 'aguardando aprovação' | 'aprovada' | 'substituída';
+  status: MinuteStatusValue;
   reasonForChange: string | null;
   createdByUserId: number;
   approvedAtMeetingId: number | null;

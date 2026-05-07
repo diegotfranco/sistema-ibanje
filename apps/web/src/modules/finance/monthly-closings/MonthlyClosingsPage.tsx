@@ -14,6 +14,7 @@ import {
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ClosingStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosings, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { NewClosingDialog } from './NewClosingDialog';
@@ -117,7 +118,7 @@ export default function MonthlyClosingsPage() {
                           onClick={() => navigate(`/monthly-closings/${row.id}`)}>
                           Abrir
                         </Button>
-                        {canDelete && row.status === 'aberto' && (
+                        {canDelete && row.status === ClosingStatus.Open && (
                           <Button
                             size="sm"
                             variant="ghost"

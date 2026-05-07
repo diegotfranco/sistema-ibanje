@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { EntryStatus } from '@/lib/status';
 
 export const ExpenseEntryFormSchema = z.object({
   referenceDate: z.string().min(1, 'Data de referência é obrigatória.'),
@@ -18,7 +19,7 @@ export const ExpenseEntryFormSchema = z.object({
   designatedFundId: z.number().int().positive().optional(),
   memberId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional().or(z.literal('')),
-  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  status: z.enum([EntryStatus.Pending, EntryStatus.Paid, EntryStatus.Cancelled] as const).optional()
 });
 
 export type ExpenseEntryFormValues = z.infer<typeof ExpenseEntryFormSchema>;
@@ -38,7 +39,7 @@ export type ExpenseEntryCreateBody = {
 };
 
 export type ExpenseEntryUpdateBody = Partial<ExpenseEntryCreateBody> & {
-  status?: 'pendente' | 'paga' | 'cancelada';
+  status?: (typeof EntryStatus)[keyof typeof EntryStatus];
 };
 
 export type ExpenseEntryResponse = {

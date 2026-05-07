@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import StatusBadge from '@/components/StatusBadge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ClosingStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosingById, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { ClosingTransitionDialog } from './ClosingTransitionDialog';
@@ -178,12 +179,12 @@ export default function MonthlyClosingDetailPage() {
         )}
 
         {/* Action buttons */}
-        {closing.status !== 'fechado' && (
+        {closing.status !== ClosingStatus.Closed && (
           <div className="flex flex-wrap gap-2">
-            {closing.status === 'aberto' && canCreate && (
+            {closing.status === ClosingStatus.Open && canCreate && (
               <Button onClick={() => setTransitionAction('submit')}>Submeter para Revisão</Button>
             )}
-            {closing.status === 'em revisão' && canReview && (
+            {closing.status === ClosingStatus.InReview && canReview && (
               <>
                 <Button onClick={() => setTransitionAction('approve')}>Aprovar</Button>
                 <Button variant="outline" onClick={() => setTransitionAction('reject')}>
@@ -191,10 +192,10 @@ export default function MonthlyClosingDetailPage() {
                 </Button>
               </>
             )}
-            {closing.status === 'aprovado' && canEdit && (
+            {closing.status === ClosingStatus.Approved && canEdit && (
               <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
             )}
-            {closing.status === 'aberto' && canDelete && (
+            {closing.status === ClosingStatus.Open && canDelete && (
               <Button
                 variant="outline"
                 className="text-red-600 hover:text-red-700 border-red-200"

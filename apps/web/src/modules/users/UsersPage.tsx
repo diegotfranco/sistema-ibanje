@@ -17,6 +17,7 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ActiveStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useUsers, useUserMutations } from './useUsers';
 import UserForm from './UserForm';
@@ -126,7 +127,7 @@ export default function UsersPage() {
                         <TableCell className="text-right">
                           {!self && (
                             <div className="flex items-center justify-end gap-1">
-                              {canEdit && row.status === 'pendente' && (
+                              {canEdit && row.status === ActiveStatus.Pending && (
                                 <Button
                                   size="icon"
                                   variant="ghost"

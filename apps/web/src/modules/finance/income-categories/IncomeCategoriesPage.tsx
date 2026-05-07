@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ActiveStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeCategories, useIncomeCategoryMutations } from './useIncomeCategories';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
@@ -21,7 +22,7 @@ export default function IncomeCategoriesPage() {
   const [editing, setEditing] = useState<IncomeCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<IncomeCategoryResponse | null>(null);
 
-  const items = list.data?.data.filter((r) => r.status === 'ativo');
+  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
   const allCategories = list.data?.data ?? [];
 
   const getCategoryName = (id: number | null) => {

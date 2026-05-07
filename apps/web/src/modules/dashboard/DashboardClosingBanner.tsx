@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, AlertCircle } from 'lucide-react';
+import { ClosingStatus } from '@/lib/status';
 import { useMonthlyClosings } from '@/modules/finance/monthly-closings/useMonthlyClosings';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentMonth, formatMonthForBanner, isPastClosing } from './dashboard-utils';
@@ -28,7 +29,7 @@ export function DashboardClosingBanner() {
   const pendingPast = closings
     .filter((c: MonthlyClosingResponse) => {
       const isPast = isPastClosing(c.periodYear, c.periodMonth, currentMonth);
-      const notClosed = c.status !== 'fechado';
+      const notClosed = c.status !== ClosingStatus.Closed;
       return isPast && notClosed;
     })
     .sort((a: MonthlyClosingResponse, b: MonthlyClosingResponse) => {

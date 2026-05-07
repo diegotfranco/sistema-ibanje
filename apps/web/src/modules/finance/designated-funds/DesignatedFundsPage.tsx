@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ActiveStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
 import { DesignatedFundForm } from './DesignatedFundForm';
@@ -27,7 +28,7 @@ export default function DesignatedFundsPage() {
   const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
 
-  const items = list.data?.data.filter((r) => r.status === 'ativo');
+  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
 
   return (
     <>

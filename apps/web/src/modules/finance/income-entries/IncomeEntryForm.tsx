@@ -14,6 +14,7 @@ import DateInput from '@/components/DateInput';
 import MoneyInput from '@/components/MoneyInput';
 import EntityPicker from '@/components/EntityPicker';
 import { zodResolver } from '@/lib/zodResolver';
+import { ActiveStatus, EntryStatus } from '@/lib/status';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
@@ -41,13 +42,17 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
 
   const allCats = incomeCategories.data?.data ?? [];
   const parentIds = new Set(allCats.filter((c) => c.parentId !== null).map((c) => c.parentId!));
-  const leafCategories = allCats.filter((c) => c.status === 'ativo' && !parentIds.has(c.id));
+  const leafCategories = allCats.filter(
+    (c) => c.status === ActiveStatus.Active && !parentIds.has(c.id)
+  );
 
   const inflowMethods = (paymentMethods.data?.data ?? []).filter(
-    (m) => m.status === 'ativo' && m.allowsInflow
+    (m) => m.status === ActiveStatus.Active && m.allowsInflow
   );
-  const activeFunds = (designatedFunds.data?.data ?? []).filter((f) => f.status === 'ativo');
-  const activeMembers = (members.data?.data ?? []).filter((m) => m.status === 'ativo');
+  const activeFunds = (designatedFunds.data?.data ?? []).filter(
+    (f) => f.status === ActiveStatus.Active
+  );
+  const activeMembers = (members.data?.data ?? []).filter((m) => m.status === ActiveStatus.Active);
 
   const getCategoryLabel = (cat: { id: number; name: string; parentId: number | null }) => {
     const parent = allCats.find((c) => c.id === cat.parentId);
@@ -233,14 +238,14 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Status</FieldLabel>
                 <Select
-                  value={field.value ?? 'pendente'}
+                  value={field.value ?? EntryStatus.Pending}
                   onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="paga">Paga</SelectItem>
+                    <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                    <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
                   </SelectContent>
                 </Select>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

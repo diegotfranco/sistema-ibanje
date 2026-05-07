@@ -23,6 +23,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor, RichTextDisplay } from '@/components/ui/rich-text-editor';
+import { MinuteStatus } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import {
@@ -34,9 +35,9 @@ import {
 import { EditApprovedMinuteSchema, type EditApprovedMinuteValues } from '@/schemas/minute';
 
 function statusClass(status: string) {
-  if (status === 'aprovada')
+  if (status === MinuteStatus.Approved)
     return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === 'substituída')
+  if (status === MinuteStatus.Replaced)
     return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
   return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
 }
@@ -110,17 +111,17 @@ export default function MinuteDetailPage() {
 
           {current && (
             <div className="flex gap-2 mt-4">
-              {current.status === 'aguardando aprovação' && canEdit && (
+              {current.status === MinuteStatus.AwaitingApproval && canEdit && (
                 <Button size="sm" variant="outline" onClick={() => setEditPendingOpen(true)}>
                   Editar Rascunho
                 </Button>
               )}
-              {current.status === 'aguardando aprovação' && canReview && (
+              {current.status === MinuteStatus.AwaitingApproval && canReview && (
                 <Button size="sm" onClick={() => setApproveOpen(true)}>
                   Aprovar
                 </Button>
               )}
-              {current.status === 'aprovada' && canEdit && (
+              {current.status === MinuteStatus.Approved && canEdit && (
                 <Button
                   size="sm"
                   variant="outline"

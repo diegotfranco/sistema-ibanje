@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { ActiveStatus } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { usePaymentMethods, usePaymentMethodMutations } from './usePaymentMethods';
 import { PaymentMethodForm } from './PaymentMethodForm';
@@ -21,7 +22,7 @@ export default function PaymentMethodsPage() {
   const [editing, setEditing] = useState<PaymentMethodResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<PaymentMethodResponse | null>(null);
 
-  const items = list.data?.data.filter((r) => r.status === 'ativo');
+  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
 
   return (
     <>

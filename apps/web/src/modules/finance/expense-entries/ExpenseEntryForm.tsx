@@ -14,6 +14,7 @@ import {
 import DateInput from '@/components/DateInput';
 import MoneyInput from '@/components/MoneyInput';
 import EntityPicker from '@/components/EntityPicker';
+import { ActiveStatus, EntryStatus } from '@/lib/status';
 import { zodResolver } from '@/lib/zodResolver';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
@@ -65,7 +66,9 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
 
   const allCats = expenseCategories.data?.data ?? [];
   const parentIds = new Set(allCats.filter((c) => c.parentId !== null).map((c) => c.parentId!));
-  const leafCategories = allCats.filter((c) => c.status === 'ativo' && !parentIds.has(c.id));
+  const leafCategories = allCats.filter(
+    (c) => c.status === ActiveStatus.Active && !parentIds.has(c.id)
+  );
 
   const getCategoryLabel = (cat: { id: number; name: string; parentId: number | null }) => {
     const parent = allCats.find((c) => c.id === cat.parentId);
@@ -76,7 +79,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
 
   const designatedFundsList = designatedFunds.data?.data ?? [];
 
-  const membersList = (members.data?.data ?? []).filter((m) => m.status === 'ativo');
+  const membersList = (members.data?.data ?? []).filter((m) => m.status === ActiveStatus.Active);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -311,8 +314,8 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
                       <SelectValue placeholder="Selecione um status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pendente">Pendente</SelectItem>
-                      <SelectItem value="paga">Paga</SelectItem>
+                      <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                      <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
                     </SelectContent>
                   </Select>
                   {errors.status && <FieldError>{errors.status.message}</FieldError>}
