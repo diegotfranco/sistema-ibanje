@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
 export const ListExpenseCategoriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -13,14 +14,17 @@ export const CreateExpenseCategoryRequestSchema = z.object({
 
 export const UpdateExpenseCategoryRequestSchema = CreateExpenseCategoryRequestSchema.partial();
 
+export const ExpenseCategoryResponseSchema = z.object({
+  id: z.number().int().positive(),
+  parentId: z.number().int().positive().nullable(),
+  name: z.string(),
+  description: z.string().nullable(),
+  status: z.string(),
+  createdAt: z.date()
+});
+
+export const ExpenseCategoryListResponseSchema = paginatedSchema(ExpenseCategoryResponseSchema);
+
 export type CreateExpenseCategoryRequest = z.infer<typeof CreateExpenseCategoryRequestSchema>;
 export type UpdateExpenseCategoryRequest = z.infer<typeof UpdateExpenseCategoryRequestSchema>;
-
-export type ExpenseCategoryResponse = {
-  id: number;
-  parentId: number | null;
-  name: string;
-  description: string | null;
-  status: string;
-  createdAt: Date;
-};
+export type ExpenseCategoryResponse = z.infer<typeof ExpenseCategoryResponseSchema>;

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../../lib/http-schemas.js';
 
 export const ListDesignatedFundsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -20,15 +21,18 @@ export const CreateDesignatedFundRequestSchema = z.object({
 
 export const UpdateDesignatedFundRequestSchema = CreateDesignatedFundRequestSchema.partial();
 
+export const DesignatedFundResponseSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  description: z.string().nullable(),
+  targetAmount: z.string().nullable(),
+  targetDate: z.string().nullable(),
+  status: z.string(),
+  createdAt: z.date()
+});
+
+export const DesignatedFundListResponseSchema = paginatedSchema(DesignatedFundResponseSchema);
+
 export type CreateDesignatedFundRequest = z.infer<typeof CreateDesignatedFundRequestSchema>;
 export type UpdateDesignatedFundRequest = z.infer<typeof UpdateDesignatedFundRequestSchema>;
-
-export type DesignatedFundResponse = {
-  id: number;
-  name: string;
-  description: string | null;
-  targetAmount: string | null;
-  targetDate: string | null;
-  status: string;
-  createdAt: Date;
-};
+export type DesignatedFundResponse = z.infer<typeof DesignatedFundResponseSchema>;

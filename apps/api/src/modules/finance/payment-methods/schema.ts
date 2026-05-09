@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../../lib/http-schemas.js';
 
 export const ListPaymentMethodsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -21,14 +22,17 @@ export const UpdatePaymentMethodRequestSchema = z.object({
   allowsOutflow: z.boolean().optional()
 });
 
+export const PaymentMethodResponseSchema = z.object({
+  id: z.number().int().positive(),
+  name: z.string(),
+  allowsInflow: z.boolean(),
+  allowsOutflow: z.boolean(),
+  status: z.string(),
+  createdAt: z.date()
+});
+
+export const PaymentMethodListResponseSchema = paginatedSchema(PaymentMethodResponseSchema);
+
 export type CreatePaymentMethodRequest = z.infer<typeof CreatePaymentMethodRequestSchema>;
 export type UpdatePaymentMethodRequest = z.infer<typeof UpdatePaymentMethodRequestSchema>;
-
-export type PaymentMethodResponse = {
-  id: number;
-  name: string;
-  allowsInflow: boolean;
-  allowsOutflow: boolean;
-  status: string;
-  createdAt: Date;
-};
+export type PaymentMethodResponse = z.infer<typeof PaymentMethodResponseSchema>;
