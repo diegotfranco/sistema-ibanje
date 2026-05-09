@@ -28,9 +28,9 @@ const adminSection: AppRoute = {
   children: [...rolesRouteChildren, ...usersRouteChildren]
 };
 
-const assembleiaSection: AppRoute = {
+const secretariaSection: AppRoute = {
   layout: 'app',
-  label: 'Assembleia',
+  label: 'Secretaria',
   children: [...pautasRouteChildren, ...atasRouteChildren]
 };
 
@@ -40,5 +40,5 @@ export const appRoutes: AppRoute[] = [
   adminSection,
   ...membersRoutes,
   ...financeRoutes,
-  assembleiaSection
+  secretariaSection
 ];

@@ -1,18 +1,10 @@
-import {
-  CalendarCheck,
-  CreditCard,
-  FileBarChart,
-  PiggyBank,
-  TrendingDown,
-  TrendingUp
-} from 'lucide-react';
+import { CreditCard, FileBarChart, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module, Action } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPage';
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
-import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosingsPage';
 import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
 import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
@@ -56,7 +48,6 @@ export const financeRoutes: AppRoute[] = [
             path: `${paths.reports}?tab=income`,
             layout: 'app',
             label: 'Relatório',
-            icon: FileBarChart,
             module: Module.Reports,
             action: Action.Report
           }
@@ -93,45 +84,35 @@ export const financeRoutes: AppRoute[] = [
             path: `${paths.reports}?tab=expenses`,
             layout: 'app',
             label: 'Relatório',
-            icon: FileBarChart,
             module: Module.Reports,
             action: Action.Report
           }
         ]
       },
       {
-        path: paths.monthlyClosings,
-        element: (
-          <RequirePermission module={Module.MonthlyClosings}>
-            <MonthlyClosingsPage />
-          </RequirePermission>
-        ),
         layout: 'app',
-        label: 'Fechamentos Mensais',
-        icon: CalendarCheck,
-        module: Module.MonthlyClosings
-      },
-      {
-        path: paths.monthlyClosingDetail,
-        element: (
-          <RequirePermission module={Module.MonthlyClosings}>
-            <MonthlyClosingDetailPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        module: Module.MonthlyClosings
-      },
-      {
-        path: paths.paymentMethods,
-        element: (
-          <RequirePermission module={Module.PaymentMethods}>
-            <PaymentMethodsPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        label: 'Formas de Pagamento',
-        icon: CreditCard,
-        module: Module.PaymentMethods
+        label: 'Relatórios',
+        icon: FileBarChart,
+        children: [
+          {
+            path: `${paths.reports}?tab=statement`,
+            layout: 'app',
+            label: 'Demonstrativo',
+            module: Module.Reports,
+            action: Action.Report
+          },
+          {
+            path: paths.monthlyClosingDetail,
+            element: (
+              <RequirePermission module={Module.MonthlyClosings}>
+                <MonthlyClosingDetailPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Fechamentos Mensais',
+            module: Module.MonthlyClosings
+          }
+        ]
       },
       {
         path: paths.designatedFunds,
@@ -144,32 +125,30 @@ export const financeRoutes: AppRoute[] = [
         label: 'Fundos Designados',
         icon: PiggyBank,
         module: Module.DesignatedFunds
+      },
+      {
+        path: paths.paymentMethods,
+        element: (
+          <RequirePermission module={Module.PaymentMethods}>
+            <PaymentMethodsPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        label: 'Formas de Pagamento',
+        icon: CreditCard,
+        module: Module.PaymentMethods
       }
     ]
   },
   {
+    path: paths.reports,
+    element: (
+      <RequirePermission module={Module.Reports} action={Action.Report}>
+        <ReportsPage />
+      </RequirePermission>
+    ),
     layout: 'app',
-    label: 'Relatórios',
-    children: [
-      {
-        path: `${paths.reports}?tab=statement`,
-        layout: 'app',
-        label: 'Demonstrativo',
-        icon: FileBarChart,
-        module: Module.Reports,
-        action: Action.Report
-      },
-      {
-        path: paths.reports,
-        element: (
-          <RequirePermission module={Module.Reports} action={Action.Report}>
-            <ReportsPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        module: Module.Reports,
-        action: Action.Report
-      }
-    ]
+    module: Module.Reports,
+    action: Action.Report
   }
 ];
