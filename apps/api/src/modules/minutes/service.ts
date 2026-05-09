@@ -49,12 +49,11 @@ export async function listMinutes(callerId: number, page: number, limit: number)
   await assertPermission(callerId, Module.Minutes, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listMinutes(offset, limit);
-  const responses = await Promise.all(
-    rows.map(async (row) => {
-      const latest = await repo.findLatestVersion(row.id);
-      return buildMinuteResponse(row, latest ? [latest] : []);
-    })
-  );
+  const latestByMinute = await repo.findLatestVersionsForMinutes(rows.map((r) => r.id));
+  const responses = rows.map((row) => {
+    const latest = latestByMinute.get(row.id);
+    return buildMinuteResponse(row, latest ? [latest] : []);
+  });
   return paginate(responses, total, page, limit);
 }
 

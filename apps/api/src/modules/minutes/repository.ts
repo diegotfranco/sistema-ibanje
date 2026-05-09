@@ -1,4 +1,4 @@
-import { eq, asc, desc, count } from 'drizzle-orm';
+import { eq, asc, desc, count, inArray } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { minutes, minuteVersions, boardMeetings } from '../../db/schema.js';
 import type { Minute, MinuteVersion } from '../../db/schema.js';
@@ -71,6 +71,18 @@ export async function findLatestVersion(minuteId: number): Promise<MinuteVersion
     .orderBy(desc(minuteVersions.version))
     .limit(1);
   return result[0] ?? null;
+}
+
+export async function findLatestVersionsForMinutes(
+  minuteIds: number[]
+): Promise<Map<number, MinuteVersion>> {
+  if (minuteIds.length === 0) return new Map();
+  const rows = await db
+    .selectDistinctOn([minuteVersions.minuteId])
+    .from(minuteVersions)
+    .where(inArray(minuteVersions.minuteId, minuteIds))
+    .orderBy(minuteVersions.minuteId, desc(minuteVersions.version));
+  return new Map(rows.map((r) => [r.minuteId, r]));
 }
 
 export async function insertMinuteVersion(
