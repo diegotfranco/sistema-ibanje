@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../lib/http-schemas.js';
 
 export const ListBoardMeetingsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -21,20 +22,23 @@ export const SetAgendaRequestSchema = z.object({
   items: z.array(z.string().min(1)).min(1)
 });
 
+export const BoardMeetingResponseSchema = z.object({
+  id: z.number().int().positive(),
+  meetingDate: z.string(),
+  type: z.enum(['ordinária', 'extraordinária']),
+  agendaItems: z.array(z.string()).nullable(),
+  agendaAuthorId: z.number().int().positive().nullable(),
+  agendaCreatedAt: z.string().nullable(),
+  isPublic: z.boolean(),
+  status: z.string(),
+  hasMinutes: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string()
+});
+
+export const BoardMeetingListResponseSchema = paginatedSchema(BoardMeetingResponseSchema);
+
 export type CreateBoardMeetingRequest = z.infer<typeof CreateBoardMeetingRequestSchema>;
 export type UpdateBoardMeetingRequest = z.infer<typeof UpdateBoardMeetingRequestSchema>;
 export type SetAgendaRequest = z.infer<typeof SetAgendaRequestSchema>;
-
-export type BoardMeetingResponse = {
-  id: number;
-  meetingDate: string;
-  type: 'ordinária' | 'extraordinária';
-  agendaItems: string[] | null;
-  agendaAuthorId: number | null;
-  agendaCreatedAt: string | null;
-  isPublic: boolean;
-  status: string;
-  hasMinutes: boolean;
-  createdAt: string;
-  updatedAt: string;
-};
+export type BoardMeetingResponse = z.infer<typeof BoardMeetingResponseSchema>;

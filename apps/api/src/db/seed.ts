@@ -943,76 +943,40 @@ async function seed() {
           type: 'ordinária' as const,
           agendaAuthorId: adminId,
           agendaCreatedAt: new Date('2023-03-01T10:00:00Z'),
-          agendaContent: {
-            ops: [
-              { insert: 'Pauta da Assembleia Ordinária\n', attributes: { header: 1 } },
-              { insert: '1. Oração inicial\n', attributes: { list: 'ordered' } },
-              {
-                insert: '2. Leitura e aprovação da Ata anterior (Nº 718)\n',
-                attributes: { list: 'ordered' }
-              },
-              {
-                insert: '3. Apresentação do Relatório Financeiro (Janeiro e Fevereiro 2023)\n',
-                attributes: { list: 'ordered' }
-              },
-              {
-                insert: '4. Deliberação sobre o apoio a seminaristas\n',
-                attributes: { list: 'ordered' }
-              },
-              { insert: '5. Oração de encerramento\n', attributes: { list: 'ordered' } }
-            ]
-          }
+          agendaContent: [
+            'Oração inicial',
+            'Leitura e aprovação da Ata anterior (Nº 718)',
+            'Apresentação do Relatório Financeiro (Janeiro e Fevereiro 2023)',
+            'Deliberação sobre o apoio a seminaristas',
+            'Oração de encerramento'
+          ]
         },
         {
           meetingDate: '2023-11-12',
           type: 'extraordinária' as const,
           agendaAuthorId: adminId,
           agendaCreatedAt: new Date('2023-11-01T14:00:00Z'),
-          agendaContent: {
-            ops: [
-              { insert: 'Pauta da Assembleia Extraordinária\n', attributes: { header: 1 } },
-              {
-                insert: '1. Eleição e posse da diretoria para o exercício de 2024.\n',
-                attributes: { list: 'ordered' }
-              }
-            ]
-          }
+          agendaContent: ['Eleição e posse da diretoria para o exercício de 2024.']
         },
         {
           meetingDate: '2025-02-15',
           type: 'ordinária' as const,
           agendaAuthorId: adminId,
           agendaCreatedAt: new Date('2025-02-05T09:00:00Z'),
-          agendaContent: {
-            ops: [
-              { insert: 'Assembleia Ordinária 15/02/2025\n', attributes: { header: 1 } },
-              { insert: 'Ordem do Dia\n', attributes: { header: 2 } },
-              { insert: 'Leitura e aprovação das atas anteriores\n' },
-              { insert: 'Leitura e aprovação do Relatório Financeiro\n' },
-              { insert: 'Movimento de Membros\n', attributes: { bold: true } },
-              {
-                insert:
-                  'Saída: Promovido para a Nova Jerusalém Celestial irmão Paulo Rodrigues de Oliveira, dia 30/01/2025\n'
-              },
-              {
-                insert: 'Metas Ministeriais e Estruturais para 2025\n',
-                attributes: { bold: true }
-              },
-              { insert: 'Apresentação do Orçamento Anual 2025\n', attributes: { bold: true } }
-            ]
-          }
+          agendaContent: [
+            'Leitura e aprovação das atas anteriores',
+            'Leitura e aprovação do Relatório Financeiro',
+            'Movimento de Membros: Saída — Promovido para a Nova Jerusalém Celestial irmão Paulo Rodrigues de Oliveira, dia 30/01/2025',
+            'Metas Ministeriais e Estruturais para 2025',
+            'Apresentação do Orçamento Anual 2025'
+          ]
         },
         {
           meetingDate: '2025-04-26',
           type: 'ordinária' as const,
           agendaAuthorId: adminId,
           agendaCreatedAt: new Date('2025-04-15T11:00:00Z'),
-          agendaContent: {
-            ops: [
-              { insert: 'Pauta da Assembleia de Abril\n', attributes: { header: 1 } },
-              { insert: 'Assuntos gerais e planejamento do retiro de Páscoa.\n' }
-            ]
-          }
+          agendaContent: ['Assuntos gerais e planejamento do retiro de Páscoa.']
         }
       ])
       .returning();
