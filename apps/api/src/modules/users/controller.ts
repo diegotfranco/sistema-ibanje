@@ -7,6 +7,7 @@ import type {
   CreateUserRequest
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
+import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
@@ -26,6 +27,7 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as UpdateUserRequest;
   const user = await service.updateUser(req.session.userId!, id, body);
   if (!user) return reply.code(404).send({ message: 'User not found' });
+  logAudit(req.session.userId!, 'update', 'user', id, { ipAddress: req.ip });
   return reply.send(user);
 }
 
@@ -33,6 +35,7 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const result = await service.deactivateUser(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'User not found' });
+  logAudit(req.session.userId!, 'delete', 'user', id, { ipAddress: req.ip });
   return reply.code(204).send();
 }
 
@@ -52,6 +55,7 @@ export async function setPermissions(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const { permissions } = req.body as UpdatePermissionsRequest;
   await service.setUserPermissions(req.session.userId!, id, permissions);
+  logAudit(req.session.userId!, 'update', 'user', id, { notes: 'permissions', ipAddress: req.ip });
   return reply.code(204).send();
 }
 
@@ -60,6 +64,7 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
   const user = await service.createUser(body, (token) => {
     req.log.info({ inviteToken: token, email: body.email }, 'TODO: send invite email');
   });
+  logAudit(req.session.userId!, 'create', 'user', user.id, { ipAddress: req.ip });
   return reply.code(201).send(user);
 }
 
@@ -69,5 +74,9 @@ export async function approve(req: FastifyRequest, reply: FastifyReply) {
     req.log.info({ inviteToken: token, email }, 'TODO: send invite email');
   });
   if (!user) return reply.code(404).send({ message: 'User not found' });
+  logAudit(req.session.userId!, 'state_change', 'user', id, {
+    notes: 'approved',
+    ipAddress: req.ip
+  });
   return reply.send(user);
 }

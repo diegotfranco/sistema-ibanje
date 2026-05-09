@@ -14,7 +14,8 @@ import {
   check,
   primaryKey,
   AnyPgColumn,
-  unique
+  unique,
+  index
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
@@ -68,18 +69,25 @@ export const permissions = pgTable('permissions', {
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
 
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 96 }).notNull(),
-  email: varchar('email', { length: 96 }).unique().notNull(),
-  passwordHash: text('password_hash'),
-  roleId: integer('role_id')
-    .references(() => roles.id)
-    .notNull(),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const users = pgTable(
+  'users',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 96 }).notNull(),
+    email: varchar('email', { length: 96 }).unique().notNull(),
+    passwordHash: text('password_hash'),
+    roleId: integer('role_id')
+      .references(() => roles.id)
+      .notNull(),
+    status: activeStatus('status').default('ativo').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index('users_role_id_idx').on(table.roleId),
+    index('users_status_idx').on(table.status)
+  ]
+);
 
 export const roleModulePermissions = pgTable(
   'role_module_permissions',
@@ -113,26 +121,30 @@ export const userModulePermissions = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.moduleId, table.permissionId] })]
 );
 
-export const members = pgTable('members', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id')
-    .unique()
-    .references(() => users.id, { onDelete: 'set null' }),
-  name: varchar('name', { length: 96 }).notNull(),
-  birthDate: date('birth_date'),
-  addressStreet: varchar('address_street', { length: 96 }),
-  addressNumber: integer('address_number'),
-  addressComplement: varchar('address_complement', { length: 64 }),
-  addressDistrict: varchar('address_district', { length: 64 }),
-  state: char('state', { length: 2 }),
-  city: varchar('city', { length: 96 }),
-  postalCode: char('postal_code', { length: 8 }),
-  email: varchar('email', { length: 96 }),
-  phone: varchar('phone', { length: 16 }),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const members = pgTable(
+  'members',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id')
+      .unique()
+      .references(() => users.id, { onDelete: 'set null' }),
+    name: varchar('name', { length: 96 }).notNull(),
+    birthDate: date('birth_date'),
+    addressStreet: varchar('address_street', { length: 96 }),
+    addressNumber: integer('address_number'),
+    addressComplement: varchar('address_complement', { length: 64 }),
+    addressDistrict: varchar('address_district', { length: 64 }),
+    state: char('state', { length: 2 }),
+    city: varchar('city', { length: 96 }),
+    postalCode: char('postal_code', { length: 8 }),
+    email: varchar('email', { length: 96 }),
+    phone: varchar('phone', { length: 16 }),
+    status: activeStatus('status').default('ativo').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index('members_status_idx').on(table.status)]
+);
 
 export const paymentMethods = pgTable(
   'payment_methods',
@@ -198,7 +210,15 @@ export const incomeEntries = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [check('chk_income_amount_positive', sql`${table.amount} > 0`)]
+  (table) => [
+    check('chk_income_amount_positive', sql`${table.amount} > 0`),
+    index('income_entries_reference_date_idx').on(table.referenceDate),
+    index('income_entries_status_idx').on(table.status),
+    index('income_entries_category_id_idx').on(table.categoryId),
+    index('income_entries_member_id_idx').on(table.memberId),
+    index('income_entries_payment_method_id_idx').on(table.paymentMethodId),
+    index('income_entries_designated_fund_id_idx').on(table.designatedFundId)
+  ]
 );
 
 export const expenseCategories = pgTable('expense_categories', {
@@ -245,7 +265,14 @@ export const expenseEntries = pgTable(
     check(
       'chk_expense_installments_valid',
       sql`${table.installment} > 0 AND ${table.totalInstallments} > 0 AND ${table.installment} <= ${table.totalInstallments}`
-    )
+    ),
+    index('expense_entries_reference_date_idx').on(table.referenceDate),
+    index('expense_entries_status_idx').on(table.status),
+    index('expense_entries_category_id_idx').on(table.categoryId),
+    index('expense_entries_member_id_idx').on(table.memberId),
+    index('expense_entries_payment_method_id_idx').on(table.paymentMethodId),
+    index('expense_entries_designated_fund_id_idx').on(table.designatedFundId),
+    index('expense_entries_parent_id_idx').on(table.parentId)
   ]
 );
 
@@ -280,7 +307,8 @@ export const monthlyClosings = pgTable(
   },
   (table) => [
     check('chk_period_month_valid', sql`${table.periodMonth} BETWEEN 1 AND 12`),
-    unique('uq_monthly_closing_period').on(table.periodYear, table.periodMonth)
+    unique('uq_monthly_closing_period').on(table.periodYear, table.periodMonth),
+    index('monthly_closings_status_idx').on(table.status)
   ]
 );
 
@@ -304,30 +332,44 @@ export const events = pgTable(
   (table) => [check('chk_event_end_after_start', sql`${table.endTime} > ${table.startTime}`)]
 );
 
-export const passwordResetTokens = pgTable('password_reset_tokens', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
-  email: varchar('email', { length: 320 }).notNull(),
-  tokenHash: text('token_hash').unique().notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
-  usedAt: timestamp('used_at', { withTimezone: true }),
-  ipAddress: varchar('ip_address', { length: 45 }),
-  userAgent: text('user_agent')
-});
+export const passwordResetTokens = pgTable(
+  'password_reset_tokens',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'cascade' }),
+    email: varchar('email', { length: 320 }).notNull(),
+    tokenHash: text('token_hash').unique().notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    ipAddress: varchar('ip_address', { length: 45 }),
+    userAgent: text('user_agent')
+  },
+  (table) => [
+    index('password_reset_tokens_user_id_idx').on(table.userId),
+    index('password_reset_tokens_expires_at_idx').on(table.expiresAt)
+  ]
+);
 
-export const boardMeetings = pgTable('board_meetings', {
-  id: serial('id').primaryKey(),
-  meetingDate: date('meeting_date').notNull(),
-  type: meetingType('type').notNull(),
-  agendaContent: jsonb('agenda_content'),
-  agendaAuthorId: integer('agenda_author_id').references(() => users.id),
-  agendaCreatedAt: timestamp('agenda_created_at', { withTimezone: true }),
-  isPublic: boolean('is_public').default(false).notNull(),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const boardMeetings = pgTable(
+  'board_meetings',
+  {
+    id: serial('id').primaryKey(),
+    meetingDate: date('meeting_date').notNull(),
+    type: meetingType('type').notNull(),
+    agendaContent: jsonb('agenda_content'),
+    agendaAuthorId: integer('agenda_author_id').references(() => users.id),
+    agendaCreatedAt: timestamp('agenda_created_at', { withTimezone: true }),
+    isPublic: boolean('is_public').default(false).notNull(),
+    status: activeStatus('status').default('ativo').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index('board_meetings_meeting_date_idx').on(table.meetingDate),
+    index('board_meetings_status_idx').on(table.status)
+  ]
+);
 
 export const minutes = pgTable('minutes', {
   id: serial('id').primaryKey(),
@@ -360,7 +402,29 @@ export const minuteVersions = pgTable(
     approvedAtMeetingId: integer('approved_at_meeting_id').references(() => boardMeetings.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [unique('uq_minute_version').on(table.minuteId, table.version)]
+  (table) => [
+    unique('uq_minute_version').on(table.minuteId, table.version),
+    index('minute_versions_minute_id_idx').on(table.minuteId)
+  ]
+);
+
+export const auditLog = pgTable(
+  'audit_log',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
+    action: text('action').notNull(),
+    entityType: text('entity_type').notNull(),
+    entityId: integer('entity_id'),
+    notes: text('notes'),
+    ipAddress: text('ip_address'),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index('audit_log_user_id_idx').on(table.userId),
+    index('audit_log_entity_idx').on(table.entityType, table.entityId),
+    index('audit_log_created_at_idx').on(table.createdAt)
+  ]
 );
 
 export type Role = typeof roles.$inferSelect;
@@ -397,3 +461,5 @@ export type Minute = typeof minutes.$inferSelect;
 export type NewMinute = typeof minutes.$inferInsert;
 export type MinuteVersion = typeof minuteVersions.$inferSelect;
 export type NewMinuteVersion = typeof minuteVersions.$inferInsert;
+export type AuditLog = typeof auditLog.$inferSelect;
+export type NewAuditLog = typeof auditLog.$inferInsert;
