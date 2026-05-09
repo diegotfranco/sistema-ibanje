@@ -39,10 +39,11 @@ export default async function setup() {
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL }
   });
 
-  // Seed the test DB (seed.ts truncates first, idempotent)
-  execSync('pnpm exec tsx src/db/seed.ts', {
+  // Seed the test DB (seed.ts truncates first, idempotent).
+  // NOTE: uses `node --import tsx` (loader) instead of the tsx CLI to avoid
+  // dotenvx override:true wiping CI env vars when ../../.env doesn't exist.
+  execSync('node --import tsx src/db/seed.ts', {
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL, NODE_ENV: 'development' }
-    // NOTE: seed.ts throws if NODE_ENV=production; we override to 'development' just for the seed run.
   });
 }
