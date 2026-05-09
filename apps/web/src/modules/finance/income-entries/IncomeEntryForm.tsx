@@ -1,4 +1,4 @@
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -74,7 +74,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
     }
   });
 
-  const watchedCategoryId = form.watch('categoryId');
+  const watchedCategoryId = useWatch({ control: form.control, name: 'categoryId' });
   const selectedCategory = leafCategories.find((c) => c.id === watchedCategoryId);
   const requiresMember = selectedCategory?.requiresMember ?? false;
 
