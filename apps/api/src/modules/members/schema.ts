@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../lib/http-schemas.js';
 
 export const ListMembersRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -25,23 +26,26 @@ export const CreateMemberRequestSchema = z.object({
 
 export const UpdateMemberRequestSchema = CreateMemberRequestSchema.partial();
 
+export const MemberResponseSchema = z.object({
+  id: z.number().int().positive(),
+  userId: z.number().int().positive().nullable(),
+  name: z.string(),
+  birthDate: z.string().nullable(),
+  addressStreet: z.string().nullable(),
+  addressNumber: z.number().int().nullable(),
+  addressComplement: z.string().nullable(),
+  addressDistrict: z.string().nullable(),
+  state: z.string().nullable(),
+  city: z.string().nullable(),
+  postalCode: z.string().nullable(),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  status: z.string(),
+  createdAt: z.date()
+});
+
+export const MemberListResponseSchema = paginatedSchema(MemberResponseSchema);
+
 export type CreateMemberRequest = z.infer<typeof CreateMemberRequestSchema>;
 export type UpdateMemberRequest = z.infer<typeof UpdateMemberRequestSchema>;
-
-export type MemberResponse = {
-  id: number;
-  userId: number | null;
-  name: string;
-  birthDate: string | null;
-  addressStreet: string | null;
-  addressNumber: number | null;
-  addressComplement: string | null;
-  addressDistrict: string | null;
-  state: string | null;
-  city: string | null;
-  postalCode: string | null;
-  email: string | null;
-  phone: string | null;
-  status: string;
-  createdAt: Date;
-};
+export type MemberResponse = z.infer<typeof MemberResponseSchema>;
