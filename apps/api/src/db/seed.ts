@@ -1003,13 +1003,7 @@ async function seed() {
       createdByUserId: secResp.id,
       approvedAtMeetingId: meetingByDate['2023-03-12'].id,
       content: {
-        ops: [
-          { insert: 'Ata de número 719\n', attributes: { header: 1 } },
-          {
-            insert:
-              'No dia 12 de março de 2023, às 17:10hs, o Pastor Deucir Araújo de Almeida, declarou aberta a assembleia. Foi lida e aprovada a Ata de nº 718. Foi lido o Relatório Financeiro referente aos meses de janeiro e fevereiro de 2023. Foram aprovados os apoios financeiros aos seminaristas Dárcio Batista Campos e Andrew Cavalheiro Costa Leite, e a continuidade do auxílio a Cristiano Roberto Valente. A assembleia foi encerrada com uma oração.\n'
-          }
-        ]
+        text: '<h2>Ata de número 719</h2><p>No dia 12 de março de 2023, às 17:10hs, o Pastor Deucir Araújo de Almeida, declarou aberta a assembleia. Foi lida e aprovada a Ata de nº 718. Foi lido o Relatório Financeiro referente aos meses de janeiro e fevereiro de 2023. Foram aprovados os apoios financeiros aos seminaristas Dárcio Batista Campos e Andrew Cavalheiro Costa Leite, e a continuidade do auxílio a Cristiano Roberto Valente. A assembleia foi encerrada com uma oração.</p>'
       }
     });
 
@@ -1030,13 +1024,7 @@ async function seed() {
       createdByUserId: secResp.id,
       approvedAtMeetingId: meetingByDate['2023-11-12'].id,
       content: {
-        ops: [
-          { insert: 'Ata de número 723 - Assembleia Extraordinária\n', attributes: { header: 1 } },
-          {
-            insert:
-              'Realizada no dia 12 de novembro de 2023, com o propósito de eleger e empossar a diretoria para o exercício administrativo de 2024. A proposta da comissão foi aceita e aprovada por unanimidade. A diretoria eleita tomou posse nesta data. A assembleia foi encerrada às 19:30hs.\n'
-          }
-        ]
+        text: '<h2>Ata de número 723 — Assembleia Extraordinária</h2><p>Realizada no dia 12 de novembro de 2023, com o propósito de eleger e empossar a diretoria para o exercício administrativo de 2024. A proposta da comissão foi aceita e aprovada por unanimidade. A diretoria eleita tomou posse nesta data. A assembleia foi encerrada às 19:30hs.</p>'
       }
     });
 
@@ -1058,13 +1046,7 @@ async function seed() {
         createdByUserId: secResp.id,
         approvedAtMeetingId: meetingByDate['2025-04-26'].id,
         content: {
-          ops: [
-            { insert: 'Ata de número 725 - Versão Original\n', attributes: { header: 1 } },
-            {
-              insert:
-                'Discussão sobre os preparativos para o Retiro de Páscoa. Foi aprovado o orçamento de R$ 5.000,00 para o evento.\n'
-            }
-          ]
+          text: '<h2>Ata de número 725 — Versão Original</h2><p>Discussão sobre os preparativos para o Retiro de Páscoa. Foi aprovado o orçamento de R$ 5.000,00 para o evento.</p>'
         }
       },
       {
@@ -1074,13 +1056,7 @@ async function seed() {
         reasonForChange: 'Correção do valor do orçamento e adição da equipe de louvor.',
         createdByUserId: secResp.id,
         content: {
-          ops: [
-            { insert: 'Ata de número 725 - Versão Corrigida\n', attributes: { header: 1 } },
-            {
-              insert:
-                'Discussão sobre os preparativos para o Retiro de Páscoa. Foi aprovado o orçamento de R$ 5.500,00 para o evento. Foi incluída também a organização de uma equipe de louvor específica para o retiro.\n'
-            }
-          ]
+          text: '<h2>Ata de número 725 — Versão Corrigida</h2><p>Discussão sobre os preparativos para o Retiro de Páscoa. Foi aprovado o orçamento de R$ 5.500,00 para o evento. Foi incluída também a organização de uma equipe de louvor específica para o retiro.</p>'
         }
       }
     ]);

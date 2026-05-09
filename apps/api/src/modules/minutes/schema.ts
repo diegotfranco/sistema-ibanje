@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../lib/http-schemas.js';
 
 export const ListMinutesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -24,31 +25,35 @@ export const ApproveMinuteRequestSchema = z.object({
   approvedAtMeetingId: z.number().int().positive().optional()
 });
 
+export const MinuteVersionResponseSchema = z.object({
+  id: z.number().int().positive(),
+  version: z.number().int().positive(),
+  content: z.string(),
+  status: z.enum(['aguardando aprovação', 'aprovada', 'substituída']),
+  reasonForChange: z.string().nullable(),
+  createdByUserId: z.number().int().positive(),
+  approvedAtMeetingId: z.number().int().positive().nullable(),
+  createdAt: z.string()
+});
+
+export const MinuteResponseSchema = z.object({
+  id: z.number().int().positive(),
+  boardMeetingId: z.number().int().positive(),
+  minuteNumber: z.string(),
+  isNotarized: z.boolean(),
+  notarizedAt: z.string().nullable(),
+  correctsMinuteId: z.number().int().positive().nullable(),
+  currentVersion: MinuteVersionResponseSchema.nullable(),
+  versions: z.array(MinuteVersionResponseSchema),
+  createdAt: z.string(),
+  updatedAt: z.string()
+});
+
+export const MinuteListResponseSchema = paginatedSchema(MinuteResponseSchema);
+
 export type CreateMinuteRequest = z.infer<typeof CreateMinuteRequestSchema>;
 export type UpdateMinuteVersionRequest = z.infer<typeof UpdateMinuteVersionRequestSchema>;
 export type EditApprovedMinuteRequest = z.infer<typeof EditApprovedMinuteRequestSchema>;
 export type ApproveMinuteRequest = z.infer<typeof ApproveMinuteRequestSchema>;
-
-export type MinuteVersionResponse = {
-  id: number;
-  version: number;
-  content: string;
-  status: 'aguardando aprovação' | 'aprovada' | 'substituída';
-  reasonForChange: string | null;
-  createdByUserId: number;
-  approvedAtMeetingId: number | null;
-  createdAt: string;
-};
-
-export type MinuteResponse = {
-  id: number;
-  boardMeetingId: number;
-  minuteNumber: string;
-  isNotarized: boolean;
-  notarizedAt: string | null;
-  correctsMinuteId: number | null;
-  currentVersion: MinuteVersionResponse | null;
-  versions: MinuteVersionResponse[];
-  createdAt: string;
-  updatedAt: string;
-};
+export type MinuteVersionResponse = z.infer<typeof MinuteVersionResponseSchema>;
+export type MinuteResponse = z.infer<typeof MinuteResponseSchema>;

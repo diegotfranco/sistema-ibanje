@@ -3,12 +3,15 @@ import { requireAuth } from '../../hooks/requireAuth.js';
 import { checkPermission } from '../../hooks/checkPermission.js';
 import { Module, Action } from '../../lib/constants.js';
 import { IdParamSchema } from '../../lib/validation.js';
+import { ErrorResponseSchema } from '../../lib/http-schemas.js';
 import {
   ListMinutesRequestSchema,
   CreateMinuteRequestSchema,
   UpdateMinuteVersionRequestSchema,
   EditApprovedMinuteRequestSchema,
-  ApproveMinuteRequestSchema
+  ApproveMinuteRequestSchema,
+  MinuteResponseSchema,
+  MinuteListResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -16,7 +19,15 @@ export async function minutesRoutes(app: FastifyInstance) {
   app.get(
     '/minutes',
     {
-      schema: { tags: ['Minutes'], querystring: ListMinutesRequestSchema },
+      schema: {
+        tags: ['Minutes'],
+        querystring: ListMinutesRequestSchema,
+        response: {
+          200: MinuteListResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.View)]
     },
     controller.list
@@ -24,14 +35,36 @@ export async function minutesRoutes(app: FastifyInstance) {
 
   app.get(
     '/minutes/:id',
-    { schema: { tags: ['Minutes'], params: IdParamSchema }, preHandler: [requireAuth] },
+    {
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        response: {
+          200: MinuteResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth]
+    },
     controller.getById
   );
 
   app.post(
     '/minutes',
     {
-      schema: { tags: ['Minutes'], body: CreateMinuteRequestSchema },
+      schema: {
+        tags: ['Minutes'],
+        body: CreateMinuteRequestSchema,
+        response: {
+          201: MinuteResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Create)]
     },
     controller.create
@@ -40,7 +73,19 @@ export async function minutesRoutes(app: FastifyInstance) {
   app.patch(
     '/minutes/:id/pending',
     {
-      schema: { tags: ['Minutes'], params: IdParamSchema, body: UpdateMinuteVersionRequestSchema },
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        body: UpdateMinuteVersionRequestSchema,
+        response: {
+          200: MinuteResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
     },
     controller.updatePending
@@ -49,7 +94,19 @@ export async function minutesRoutes(app: FastifyInstance) {
   app.post(
     '/minutes/:id/edit-approved',
     {
-      schema: { tags: ['Minutes'], params: IdParamSchema, body: EditApprovedMinuteRequestSchema },
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        body: EditApprovedMinuteRequestSchema,
+        response: {
+          200: MinuteResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
     },
     controller.editApproved
@@ -58,7 +115,19 @@ export async function minutesRoutes(app: FastifyInstance) {
   app.post(
     '/minutes/:id/approve',
     {
-      schema: { tags: ['Minutes'], params: IdParamSchema, body: ApproveMinuteRequestSchema },
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        body: ApproveMinuteRequestSchema,
+        response: {
+          200: MinuteResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Review)]
     },
     controller.approve
@@ -67,7 +136,17 @@ export async function minutesRoutes(app: FastifyInstance) {
   app.delete(
     '/minutes/:id',
     {
-      schema: { tags: ['Minutes'], params: IdParamSchema },
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        response: {
+          204: { type: 'null', description: 'Deleted' },
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Delete)]
     },
     controller.remove
