@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { fileTypeFromBuffer } from 'file-type';
 import * as repo from './repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
 import { findMemberById } from '../../../members/repository.js';
@@ -152,6 +153,11 @@ export async function uploadExpenseReceipt(
 
   const ext = ALLOWED_MIME_TYPES[mimetype];
   if (!ext) throw httpError(400, 'Unsupported file type. Allowed: JPEG, PNG, PDF');
+
+  const sniffed = await fileTypeFromBuffer(buffer);
+  if (!sniffed || sniffed.mime !== mimetype) {
+    throw httpError(400, 'File contents do not match the declared type');
+  }
 
   if (entry.receipt) await deleteFile(entry.receipt);
 
