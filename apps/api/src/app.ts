@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
@@ -17,7 +18,17 @@ export async function buildApp() {
     logger: {
       level: env.LOG_LEVEL,
       transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
+    },
+    genReqId: (req) => {
+      const inbound = req.headers['x-request-id'];
+      if (typeof inbound === 'string' && inbound.length > 0 && inbound.length <= 128)
+        return inbound;
+      return randomUUID();
     }
+  });
+
+  app.addHook('onSend', async (req, reply) => {
+    reply.header('x-request-id', req.id);
   });
 
   app.setValidatorCompiler(validatorCompiler);
