@@ -8,6 +8,7 @@ import type {
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import { logAudit } from '../../lib/audit.js';
+import { sendInviteEmail } from '../../lib/email.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
@@ -61,19 +62,25 @@ export async function setPermissions(req: FastifyRequest, reply: FastifyReply) {
 
 export async function create(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as CreateUserRequest;
+  let inviteToken = '';
   const user = await service.createUser(body, (token) => {
-    req.log.info({ inviteToken: token, email: body.email }, 'TODO: send invite email');
+    inviteToken = token;
   });
+  await sendInviteEmail(body.email, inviteToken);
   logAudit(req.session.userId!, 'create', 'user', user.id, { ipAddress: req.ip });
   return reply.code(201).send(user);
 }
 
 export async function approve(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
+  let inviteToken = '';
+  let inviteEmail = '';
   const user = await service.approveUser(id, (token, email) => {
-    req.log.info({ inviteToken: token, email }, 'TODO: send invite email');
+    inviteToken = token;
+    inviteEmail = email;
   });
   if (!user) return reply.code(404).send({ message: 'User not found' });
+  await sendInviteEmail(inviteEmail, inviteToken);
   logAudit(req.session.userId!, 'state_change', 'user', id, {
     notes: 'approved',
     ipAddress: req.ip

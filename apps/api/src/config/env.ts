@@ -16,7 +16,10 @@ const envSchema = z.object({
   MINIO_ACCESS_KEY: z.string().min(1),
   MINIO_SECRET_KEY: z.string().min(1),
   MINIO_BUCKET: z.string().min(1),
-  CORS_ORIGIN: z.url().default('http://localhost:5173')
+  CORS_ORIGIN: z.url().default('http://localhost:5173'),
+  RESEND_API_KEY: z.string().min(1),
+  EMAIL_FROM_NOREPLY: z.string().min(1),
+  FRONTEND_URL: z.url().default('http://localhost:5173')
 });
 
 export const env = envSchema.parse(process.env);

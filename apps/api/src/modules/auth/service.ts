@@ -3,6 +3,7 @@ import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env.js';
 import * as repo from './repository.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
+import { sendPasswordResetEmail } from '../../lib/email.js';
 import type { MeResponse } from './schema.js';
 
 export async function login(email: string, password: string) {
@@ -55,7 +56,7 @@ export async function requestPasswordReset(email: string, ipAddress?: string, us
     userAgent
   });
 
-  // TODO: send email with rawToken as the reset link parameter
+  await sendPasswordResetEmail(email, rawToken);
 }
 
 export async function confirmPasswordReset(token: string, newPassword: string) {
