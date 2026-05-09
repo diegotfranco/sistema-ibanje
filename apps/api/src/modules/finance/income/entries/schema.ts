@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
 export const ListIncomeEntriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -20,25 +21,28 @@ export const UpdateIncomeEntryRequestSchema = CreateIncomeEntryRequestSchema.par
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
+export const IncomeEntryResponseSchema = z.object({
+  id: z.number().int().positive(),
+  referenceDate: z.string(),
+  depositDate: z.string().nullable(),
+  amount: z.string(),
+  categoryId: z.number().int().positive(),
+  categoryName: z.string(),
+  memberId: z.number().int().positive().nullable(),
+  memberName: z.string().nullable(),
+  paymentMethodId: z.number().int().positive(),
+  paymentMethodName: z.string(),
+  designatedFundId: z.number().int().positive().nullable(),
+  designatedFundName: z.string().nullable(),
+  notes: z.string().nullable(),
+  userId: z.number().int().positive(),
+  status: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+
+export const IncomeEntryListResponseSchema = paginatedSchema(IncomeEntryResponseSchema);
+
 export type CreateIncomeEntryRequest = z.infer<typeof CreateIncomeEntryRequestSchema>;
 export type UpdateIncomeEntryRequest = z.infer<typeof UpdateIncomeEntryRequestSchema>;
-
-export type IncomeEntryResponse = {
-  id: number;
-  referenceDate: string;
-  depositDate: string | null;
-  amount: string;
-  categoryId: number;
-  categoryName: string;
-  memberId: number | null;
-  memberName: string | null;
-  paymentMethodId: number;
-  paymentMethodName: string;
-  designatedFundId: number | null;
-  designatedFundName: string | null;
-  notes: string | null;
-  userId: number;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type IncomeEntryResponse = z.infer<typeof IncomeEntryResponseSchema>;

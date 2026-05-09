@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
 export const ListExpenseEntriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -36,30 +37,33 @@ export const UpdateExpenseEntryRequestSchema = z.object({
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
+export const ExpenseEntryResponseSchema = z.object({
+  id: z.number().int().positive(),
+  parentId: z.number().int().positive().nullable(),
+  referenceDate: z.string(),
+  description: z.string(),
+  total: z.string(),
+  amount: z.string(),
+  installment: z.number().int(),
+  totalInstallments: z.number().int(),
+  categoryId: z.number().int().positive(),
+  categoryName: z.string(),
+  paymentMethodId: z.number().int().positive(),
+  paymentMethodName: z.string(),
+  designatedFundId: z.number().int().positive().nullable(),
+  designatedFundName: z.string().nullable(),
+  memberId: z.number().int().positive().nullable(),
+  memberName: z.string().nullable(),
+  receipt: z.string().nullable(),
+  notes: z.string().nullable(),
+  userId: z.number().int().positive(),
+  status: z.string(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+
+export const ExpenseEntryListResponseSchema = paginatedSchema(ExpenseEntryResponseSchema);
+
 export type CreateExpenseEntryRequest = z.infer<typeof CreateExpenseEntryRequestSchema>;
 export type UpdateExpenseEntryRequest = z.infer<typeof UpdateExpenseEntryRequestSchema>;
-
-export type ExpenseEntryResponse = {
-  id: number;
-  parentId: number | null;
-  referenceDate: string;
-  description: string;
-  total: string;
-  amount: string;
-  installment: number;
-  totalInstallments: number;
-  categoryId: number;
-  categoryName: string;
-  paymentMethodId: number;
-  paymentMethodName: string;
-  designatedFundId: number | null;
-  designatedFundName: string | null;
-  memberId: number | null;
-  memberName: string | null;
-  receipt: string | null; // presigned GET URL when set, null otherwise
-  notes: string | null;
-  userId: number;
-  status: string;
-  createdAt: Date;
-  updatedAt: Date;
-};
+export type ExpenseEntryResponse = z.infer<typeof ExpenseEntryResponseSchema>;
