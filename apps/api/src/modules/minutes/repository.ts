@@ -3,6 +3,8 @@ import { db } from '../../db/index.js';
 import { minutes, minuteVersions, boardMeetings } from '../../db/schema.js';
 import type { Minute, MinuteVersion } from '../../db/schema.js';
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export async function listMinutes(offset: number, limit: number) {
   const rows = await db
     .select()
@@ -37,11 +39,15 @@ export async function findMinuteByNumber(minuteNumber: string): Promise<Minute |
   return result[0] ?? null;
 }
 
-export async function insertMinute(data: {
-  boardMeetingId: number;
-  minuteNumber: string;
-}): Promise<Minute> {
-  const result = await db.insert(minutes).values(data).returning();
+export async function insertMinute(
+  data: {
+    boardMeetingId: number;
+    minuteNumber: string;
+  },
+  tx?: Tx
+): Promise<Minute> {
+  const executor = tx ?? db;
+  const result = await executor.insert(minutes).values(data).returning();
   return result[0]!;
 }
 
@@ -67,16 +73,20 @@ export async function findLatestVersion(minuteId: number): Promise<MinuteVersion
   return result[0] ?? null;
 }
 
-export async function insertMinuteVersion(data: {
-  minuteId: number;
-  content: { text: string };
-  version: number;
-  status?: 'aguardando aprovação' | 'aprovada' | 'substituída';
-  reasonForChange?: string;
-  createdByUserId: number;
-  approvedAtMeetingId?: number;
-}): Promise<MinuteVersion> {
-  const result = await db.insert(minuteVersions).values(data).returning();
+export async function insertMinuteVersion(
+  data: {
+    minuteId: number;
+    content: { text: string };
+    version: number;
+    status?: 'aguardando aprovação' | 'aprovada' | 'substituída';
+    reasonForChange?: string;
+    createdByUserId: number;
+    approvedAtMeetingId?: number;
+  },
+  tx?: Tx
+): Promise<MinuteVersion> {
+  const executor = tx ?? db;
+  const result = await executor.insert(minuteVersions).values(data).returning();
   return result[0]!;
 }
 
@@ -86,9 +96,11 @@ export async function updateMinuteVersion(
     content: { text: string };
     status: 'aguardando aprovação' | 'aprovada' | 'substituída';
     approvedAtMeetingId: number | null;
-  }>
+  }>,
+  tx?: Tx
 ): Promise<MinuteVersion | null> {
-  const result = await db
+  const executor = tx ?? db;
+  const result = await executor
     .update(minuteVersions)
     .set(data)
     .where(eq(minuteVersions.id, id))

@@ -3,6 +3,7 @@ import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
+import { db } from '../../db/index.js';
 import type {
   CreateRoleRequest,
   UpdateRoleRequest,
@@ -80,7 +81,9 @@ export async function setRolePermissions(
   const role = await repo.findRoleById(targetId);
   if (!role) return null;
 
-  await repo.setRolePermissions(targetId, body.permissions);
+  return await db.transaction(async (tx) => {
+    await repo.setRolePermissions(targetId, body.permissions, tx);
+  });
 }
 
 export async function listModules() {

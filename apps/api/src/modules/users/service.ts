@@ -153,7 +153,9 @@ export async function setUserPermissions(
     throw httpError(400, `Unknown module or permission: ${unknown.join(', ')}`);
   }
 
-  await repo.setUserPermissions(targetId, rows);
+  return await db.transaction(async (tx) => {
+    await repo.setUserPermissions(targetId, rows, tx);
+  });
 }
 
 async function generateInviteToken(tx: Tx, userId: number, email: string) {

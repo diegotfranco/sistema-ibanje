@@ -115,21 +115,21 @@ export async function getUserPermissions(userId: number) {
 
 export async function setUserPermissions(
   userId: number,
-  rows: Array<{ moduleId: number; permissionId: number }>
+  rows: Array<{ moduleId: number; permissionId: number }>,
+  tx?: Tx
 ) {
-  await db.transaction(async (tx) => {
-    await tx.delete(userModulePermissions).where(eq(userModulePermissions.userId, userId));
+  const executor = tx ?? db;
+  await executor.delete(userModulePermissions).where(eq(userModulePermissions.userId, userId));
 
-    if (rows.length > 0) {
-      await tx.insert(userModulePermissions).values(
-        rows.map((row) => ({
-          userId,
-          moduleId: row.moduleId,
-          permissionId: row.permissionId
-        }))
-      );
-    }
-  });
+  if (rows.length > 0) {
+    await executor.insert(userModulePermissions).values(
+      rows.map((row) => ({
+        userId,
+        moduleId: row.moduleId,
+        permissionId: row.permissionId
+      }))
+    );
+  }
 }
 
 export async function resolvePermissionRows(permissionsMap: Record<string, string[]>) {

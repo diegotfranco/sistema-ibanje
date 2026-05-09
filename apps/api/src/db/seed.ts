@@ -28,6 +28,10 @@ async function hashPassword(password: string) {
 }
 
 async function seed() {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('seed must not run in production');
+  }
+
   console.log('Seeding database...');
 
   await db.transaction(async (tx) => {

@@ -3,6 +3,7 @@ import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
+import { db } from '../../db/index.js';
 import type {
   CreateMinuteRequest,
   UpdateMinuteVersionRequest,
@@ -79,19 +80,27 @@ export async function createMinute(
   if (await repo.findMinuteByBoardMeetingId(body.boardMeetingId))
     throw httpError(409, 'This meeting already has minutes');
 
-  const minute = await repo.insertMinute({
-    boardMeetingId: body.boardMeetingId,
-    minuteNumber: body.minuteNumber
-  });
-  const version = await repo.insertMinuteVersion({
-    minuteId: minute.id,
-    content: { text: body.content },
-    version: 1,
-    status: 'aguardando aprovação',
-    createdByUserId: callerId
-  });
+  return await db.transaction(async (tx) => {
+    const minute = await repo.insertMinute(
+      {
+        boardMeetingId: body.boardMeetingId,
+        minuteNumber: body.minuteNumber
+      },
+      tx
+    );
+    const version = await repo.insertMinuteVersion(
+      {
+        minuteId: minute.id,
+        content: { text: body.content },
+        version: 1,
+        status: 'aguardando aprovação',
+        createdByUserId: callerId
+      },
+      tx
+    );
 
-  return buildMinuteResponse(minute, [version]);
+    return buildMinuteResponse(minute, [version]);
+  });
 }
 
 export async function updatePendingVersion(
@@ -125,18 +134,23 @@ export async function editApprovedMinute(
   if (!latest || latest.status !== 'aprovada')
     throw httpError(409, 'Latest version must be approved to create a new one');
 
-  await repo.updateMinuteVersion(latest.id, { status: 'substituída' });
-  await repo.insertMinuteVersion({
-    minuteId,
-    content: { text: body.content },
-    version: latest.version + 1,
-    status: 'aguardando aprovação',
-    reasonForChange: body.reasonForChange,
-    createdByUserId: callerId
-  });
+  return await db.transaction(async (tx) => {
+    await repo.updateMinuteVersion(latest.id, { status: 'substituída' }, tx);
+    await repo.insertMinuteVersion(
+      {
+        minuteId,
+        content: { text: body.content },
+        version: latest.version + 1,
+        status: 'aguardando aprovação',
+        reasonForChange: body.reasonForChange,
+        createdByUserId: callerId
+      },
+      tx
+    );
 
-  const versions = await repo.getVersionsForMinute(minuteId);
-  return buildMinuteResponse(minute, versions);
+    const versions = await repo.getVersionsForMinute(minuteId);
+    return buildMinuteResponse(minute, versions);
+  });
 }
 
 export async function approveMinute(

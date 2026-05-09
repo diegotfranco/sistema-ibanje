@@ -2,6 +2,8 @@ import { eq, count } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema.js';
 
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export async function listRoles(offset: number, limit: number) {
   const rows = await db
     .select({
@@ -100,19 +102,17 @@ export async function getRolePermissions(roleId: number) {
 
 export async function setRolePermissions(
   roleId: number,
-  entries: { moduleId: number; permissionId: number }[]
+  entries: { moduleId: number; permissionId: number }[],
+  tx?: Tx
 ) {
-  await db.transaction(async (tx) => {
-    await tx.delete(roleModulePermissions).where(eq(roleModulePermissions.roleId, roleId));
+  const executor = tx ?? db;
+  await executor.delete(roleModulePermissions).where(eq(roleModulePermissions.roleId, roleId));
 
-    if (entries.length > 0) {
-      await tx
-        .insert(roleModulePermissions)
-        .values(
-          entries.map((e) => ({ roleId, moduleId: e.moduleId, permissionId: e.permissionId }))
-        );
-    }
-  });
+  if (entries.length > 0) {
+    await executor
+      .insert(roleModulePermissions)
+      .values(entries.map((e) => ({ roleId, moduleId: e.moduleId, permissionId: e.permissionId })));
+  }
 }
 
 export async function listModules() {
