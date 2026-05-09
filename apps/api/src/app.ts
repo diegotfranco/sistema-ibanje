@@ -29,7 +29,9 @@ export async function buildApp() {
   await registerSessionPlugin(app);
   await registerRateLimitPlugin(app);
   await registerCsrfPlugin(app);
-  await initStorage();
+  if (env.NODE_ENV !== 'test') {
+    await initStorage();
+  }
 
   registerErrorHandler(app);
 
@@ -64,4 +66,6 @@ async function start() {
   }
 }
 
-start();
+if (env.NODE_ENV !== 'test') {
+  start();
+}

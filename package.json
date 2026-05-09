@@ -3,10 +3,15 @@
   "version": "0.0.0",
   "private": true,
   "packageManager": "pnpm@10.33.3+sha512.a19744364a7e248b92657a4ca5973f9354d21caf982579674b1c539f32c7420c47138ad8b1254df07aba9bc782d9b3029e3db34d5dbff974326eb74dac8ff489",
+  "engines": {
+    "node": ">=22 <25"
+  },
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,md,json,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,md,json,yaml,yml}\""
   },
