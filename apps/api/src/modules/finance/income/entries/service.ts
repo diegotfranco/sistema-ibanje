@@ -2,8 +2,8 @@ import * as repo from './repository.js';
 import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
-import { findMonthlyClosingByPeriod } from '../../monthly-closings/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
+import { assertPeriodEditable } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
@@ -17,16 +17,6 @@ type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
 
 function toResponse(row: Row): IncomeEntryResponse {
   return row as unknown as IncomeEntryResponse;
-}
-
-async function assertPeriodEditable(referenceDate: string): Promise<void> {
-  const year = parseInt(referenceDate.substring(0, 4));
-  const month = parseInt(referenceDate.substring(5, 7));
-
-  const closing = await findMonthlyClosingByPeriod(year, month);
-  if (closing && closing.status !== 'aberto') {
-    throw httpError(409, 'This period is locked for editing');
-  }
 }
 
 async function validateEntry(data: {
