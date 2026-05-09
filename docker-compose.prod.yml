@@ -1,0 +1,131 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    image: sistema-ibanje/web:latest
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - '80:80'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost/ >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: sistema-ibanje/api:latest
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
+      SESSION_SECRET: ${SESSION_SECRET}
+      ARGON2_PEPPER: ${ARGON2_PEPPER}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET:-receipts}
+      CORS_ORIGIN: ${PUBLIC_URL}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      EMAIL_FROM_NOREPLY: ${EMAIL_FROM_NOREPLY}
+      FRONTEND_URL: ${PUBLIC_URL}
+    expose:
+      - '3000'
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:3000/docs >/dev/null || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  postgres:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /opt/sistema-ibanje/postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:8-alpine
+    restart: always
+    volumes:
+      - /opt/sistema-ibanje/redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: quay.io/minio/minio:RELEASE.2024-04-18T19-09-19Z
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    ports:
+      - '127.0.0.1:9001:9001'
+    volumes:
+      - /opt/sistema-ibanje/minio-data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'curl -f http://localhost:9000/minio/health/live || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    volumes:
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      BACKUP_BUCKET: ${BACKUP_BUCKET:-backups}
+      BACKUP_RETAIN_DAYS: ${BACKUP_RETAIN_DAYS:-30}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        set -eu
+        apk add --no-cache curl ca-certificates tzdata >/dev/null
+        curl -sSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc
+        chmod +x /usr/local/bin/mc
+        echo "0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1" > /etc/crontabs/root
+        touch /var/log/backup.log
+        crond -b -L /var/log/crond.log
+        tail -F /var/log/backup.log /var/log/crond.log
