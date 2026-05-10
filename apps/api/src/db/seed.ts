@@ -27,7 +27,7 @@ async function hashPassword(password: string) {
   return argon2.hash(password + env.ARGON2_PEPPER, { type: argon2.argon2id });
 }
 
-async function seed() {
+export async function seed() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('seed must not run in production');
   }
@@ -1096,11 +1096,15 @@ async function seed() {
     ]);
   });
 
-  await sql.end();
   console.log('Seeding complete.');
 }
 
-seed().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run automatically when executed directly (not when imported as a module).
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seed()
+    .then(() => sql.end())
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
+}

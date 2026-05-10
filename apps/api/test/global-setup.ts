@@ -39,11 +39,11 @@ export default async function setup() {
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL }
   });
 
-  // Seed the test DB (seed.ts truncates first, idempotent).
-  // NOTE: uses `node --import tsx` (loader) instead of the tsx CLI to avoid
-  // dotenvx override:true wiping CI env vars when ../../.env doesn't exist.
-  execSync('node --import tsx src/db/seed.ts', {
-    stdio: 'inherit',
-    env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL, NODE_ENV: 'development' }
-  });
+  // Seed the test DB by importing the function directly — no subprocess, no
+  // tsx/dotenvx override:true that would wipe CI env vars when .env is absent.
+  // NODE_ENV must be 'development' so seed.ts doesn't throw its production guard.
+  process.env.NODE_ENV = 'development';
+  const { seed } = await import('../src/db/seed.js');
+  await seed();
+  process.env.NODE_ENV = 'test';
 }
