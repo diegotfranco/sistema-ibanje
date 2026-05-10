@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, rateLimitMessage } from '@/lib/api';
 
 type Paginated<T> = { data: T[]; total: number; page: number; limit: number; totalPages: number };
 
@@ -12,7 +12,10 @@ export function useResourceList<T>(basePath: string, queryKey: readonly unknown[
 }
 
 function describeError(err: unknown, fallback: string) {
-  if (err instanceof ApiError) return err.message || fallback;
+  if (err instanceof ApiError) {
+    if (err.status === 429) return rateLimitMessage(err);
+    return err.message || fallback;
+  }
   return fallback;
 }
 

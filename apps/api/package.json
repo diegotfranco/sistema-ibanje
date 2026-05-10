@@ -6,7 +6,7 @@
   "main": "./dist/app.js",
   "scripts": {
     "build": "tsc",
-    "predev": "pkill -f 'import tsx src/app.ts' || true",
+    "predev": "pkill -f 'node.*--import t[s]x src/app\\.ts' || true",
     "dev": "node --watch --import tsx src/app.ts",
     "start": "node dist/app.js",
     "lint": "eslint .",

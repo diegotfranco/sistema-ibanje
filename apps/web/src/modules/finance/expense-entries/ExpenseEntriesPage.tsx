@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
+import { Receipt } from 'lucide-react';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -103,18 +104,28 @@ export default function ExpenseEntriesPage() {
           },
           {
             header: 'Comprovante',
-            cell: (row) =>
-              row.receipt ? (
-                <a
-                  href={row.receipt}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-teal-600 underline text-sm">
-                  Ver
-                </a>
-              ) : (
-                '—'
-              )
+            cell: (row) => (
+              <div className="flex justify-center">
+                {row.receipt ? (
+                  <a
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    href={row.receipt}
+                    title="Ver comprovante"
+                    aria-label="Ver comprovante"
+                    className="text-muted-foreground hover:text-teal-600 inline-flex">
+                    <Receipt size={16} />
+                  </a>
+                ) : (
+                  <span
+                    title="Sem comprovante"
+                    aria-label="Sem comprovante"
+                    className="text-red-600 inline-flex">
+                    <Receipt size={16} />
+                  </span>
+                )}
+              </div>
+            )
           },
           {
             header: 'Status',

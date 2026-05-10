@@ -5,7 +5,8 @@ export type { MeResponse } from '@sistema-ibanje/shared';
 
 export const LoginRequestSchema = z.object({
   email: z.email(),
-  password: z.string().min(1)
+  password: z.string().min(1),
+  rememberMe: z.boolean().optional().default(false)
 });
 
 export const PasswordResetRequestSchema = z.object({

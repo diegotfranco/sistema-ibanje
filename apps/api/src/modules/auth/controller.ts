@@ -13,7 +13,7 @@ export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function login(req: FastifyRequest, reply: FastifyReply) {
-  const { email, password } = req.body as LoginRequest;
+  const { email, password, rememberMe } = req.body as LoginRequest;
 
   const result = await service.login(email, password);
   if (!result) {
@@ -23,6 +23,16 @@ export async function login(req: FastifyRequest, reply: FastifyReply) {
 
   await req.session.regenerate();
   req.session.userId = result.userId;
+
+  if (rememberMe) {
+    req.session.cookie.maxAge = 14 * 24 * 60 * 60 * 1000; // 14 days
+  } else {
+    // Browser-session cookie: clear expires directly (bypass maxAge setter,
+    // which would compute Invalid Date) and null out originalMaxAge so
+    // touch() does not recompute it.
+    req.session.cookie.expires = null;
+    req.session.cookie.originalMaxAge = null;
+  }
 
   return reply.send({
     name: result.name,

@@ -1,15 +1,56 @@
 const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const RETRY_DELAYS_MS = [250, 750];
+const jitter = (ms: number) => ms * (0.5 + Math.random());
+
+async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.status < 500) return res;
+      if (attempt === RETRY_DELAYS_MS.length) return res;
+      await sleep(jitter(RETRY_DELAYS_MS[attempt]));
+    } catch (err) {
+      lastError = err;
+      if (attempt === RETRY_DELAYS_MS.length) throw err;
+      await sleep(jitter(RETRY_DELAYS_MS[attempt]));
+    }
+  }
+  throw lastError;
+}
+
 export class ApiError extends Error {
   readonly status: number;
   readonly fieldErrors?: Record<string, string>;
+  readonly retryAfterSeconds?: number;
 
-  constructor(status: number, message: string, fieldErrors?: Record<string, string>) {
+  constructor(
+    status: number,
+    message: string,
+    fieldErrors?: Record<string, string>,
+    retryAfterSeconds?: number
+  ) {
     super(message);
     this.status = status;
     this.fieldErrors = fieldErrors;
+    this.retryAfterSeconds = retryAfterSeconds;
     this.name = 'ApiError';
   }
+}
+
+export function rateLimitMessage(
+  err: ApiError,
+  fallback = 'Muitas requisições. Aguarde alguns instantes e tente novamente.'
+): string {
+  const s = err.retryAfterSeconds;
+  if (s == null) return fallback;
+  if (s < 60) return `Muitas tentativas. Tente novamente em ${s} segundo${s === 1 ? '' : 's'}.`;
+  const m = Math.ceil(s / 60);
+  if (m < 60) return `Muitas tentativas. Tente novamente em ${m} minuto${m === 1 ? '' : 's'}.`;
+  const h = Math.ceil(m / 60);
+  return `Muitas tentativas. Tente novamente em ${h} hora${h === 1 ? '' : 's'}.`;
 }
 
 type AuthErrorHandler = () => void;
@@ -40,7 +81,15 @@ async function parseError(res: Response): Promise<ApiError> {
     message?: string;
     fieldErrors?: Record<string, string>;
   };
-  return new ApiError(res.status, body.message ?? res.statusText, body.fieldErrors);
+  const retryAfterRaw = res.headers.get('retry-after');
+  const retryAfterSeconds =
+    retryAfterRaw && /^\d+$/.test(retryAfterRaw) ? Number(retryAfterRaw) : undefined;
+  return new ApiError(
+    res.status,
+    body.message ?? res.statusText,
+    body.fieldErrors,
+    retryAfterSeconds
+  );
 }
 
 async function throwApiError(path: string, res: Response): Promise<never> {
@@ -55,7 +104,10 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
   const headers: Record<string, string> = {};
 
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  if (isMutation) headers['x-csrf-token'] = await ensureCsrfToken();
+  if (isMutation) {
+    headers['x-csrf-token'] = await ensureCsrfToken();
+    headers['Idempotency-Key'] = crypto.randomUUID();
+  }
 
   const init: RequestInit = {
     method,
@@ -64,7 +116,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     body: body !== undefined ? JSON.stringify(body) : undefined
   };
 
-  const res = await fetch(`${BASE_URL}${path}`, init);
+  const res = await fetchWithRetry(`${BASE_URL}${path}`, init);
 
   if (!res.ok) {
     // On 403, the CSRF token may have expired (e.g. after session regeneration on login).
@@ -72,7 +124,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     if (isMutation && res.status === 403) {
       csrfToken = null;
       headers['x-csrf-token'] = await ensureCsrfToken();
-      const retry = await fetch(`${BASE_URL}${path}`, init);
+      const retry = await fetchWithRetry(`${BASE_URL}${path}`, init);
       if (!retry.ok) await throwApiError(path, retry);
       if (retry.status === 204) return undefined as T;
       return retry.json() as Promise<T>;
@@ -86,15 +138,21 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
 
 async function requestForm<T>(method: string, path: string, body: FormData): Promise<T> {
   const csrf = await ensureCsrfToken();
-  const headers: Record<string, string> = { 'x-csrf-token': csrf };
+  const headers: Record<string, string> = {
+    'x-csrf-token': csrf,
+    'Idempotency-Key': crypto.randomUUID()
+  };
   const init: RequestInit = { method, credentials: 'include', headers, body };
 
-  const res = await fetch(`${BASE_URL}${path}`, init);
+  const res = await fetchWithRetry(`${BASE_URL}${path}`, init);
   if (!res.ok) {
     if (res.status === 403) {
       csrfToken = null;
-      const retryHeaders = { 'x-csrf-token': await ensureCsrfToken() };
-      const retry = await fetch(`${BASE_URL}${path}`, { ...init, headers: retryHeaders });
+      const retryHeaders = {
+        'x-csrf-token': await ensureCsrfToken(),
+        'Idempotency-Key': headers['Idempotency-Key']
+      };
+      const retry = await fetchWithRetry(`${BASE_URL}${path}`, { ...init, headers: retryHeaders });
       if (!retry.ok) await throwApiError(path, retry);
       if (retry.status === 204) return undefined as T;
       return retry.json() as Promise<T>;

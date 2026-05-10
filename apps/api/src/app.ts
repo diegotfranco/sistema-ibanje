@@ -9,9 +9,11 @@ import { registerSwaggerPlugin } from './plugins/swagger.js';
 import { registerSessionPlugin } from './plugins/session.js';
 import { registerRateLimitPlugin } from './plugins/rateLimit.js';
 import { registerCsrfPlugin } from './plugins/csrf.js';
+import { registerIdempotencyPlugin } from './plugins/idempotency.js';
 import { registerErrorHandler } from './plugins/errorHandler.js';
 import { registerRoutes } from './modules/index.js';
 import { initStorage } from './lib/storage.js';
+import { closeRedis } from './lib/redis.js';
 
 export async function buildApp() {
   const app = Fastify({
@@ -40,6 +42,7 @@ export async function buildApp() {
   await registerSessionPlugin(app);
   await registerRateLimitPlugin(app);
   await registerCsrfPlugin(app);
+  await registerIdempotencyPlugin(app);
   if (env.NODE_ENV !== 'test') {
     await initStorage();
   }
@@ -61,6 +64,7 @@ async function start() {
     try {
       await app.close();
       await sql.end();
+      await closeRedis();
     } finally {
       process.exit(0);
     }

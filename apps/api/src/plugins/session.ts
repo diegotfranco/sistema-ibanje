@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
 import { RedisStore } from 'connect-redis';
-import { createClient } from 'redis';
 import { env } from '../config/env.js';
+import { getRedis, closeRedis } from '../lib/redis.js';
 
 declare module '@fastify/session' {
   interface FastifySessionObject {
@@ -12,11 +12,10 @@ declare module '@fastify/session' {
 }
 
 export async function registerSessionPlugin(app: FastifyInstance) {
-  const redisClient = createClient({ url: env.REDIS_URL });
-  await redisClient.connect();
+  const redisClient = await getRedis();
 
   app.addHook('onClose', async () => {
-    await redisClient.quit();
+    await closeRedis();
   });
 
   const store = new RedisStore({ client: redisClient });

@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { zodResolver } from '@/lib/zodResolver';
 import { LoginSchema, type LoginFormValues } from '@/modules/auth/schema';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, rateLimitMessage } from '@/lib/api';
 import { queryClient } from '@/lib/queryClient';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 
@@ -19,7 +19,11 @@ export function useLoginForm() {
 
   const { mutate: login, isPending } = useMutation({
     mutationFn: (data: LoginFormValues) =>
-      api.post('/auth/login', { email: data.email, password: data.password }),
+      api.post('/auth/login', {
+        email: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['currentUser'] });
       toast.success('Seja bem-vindo!');
@@ -28,10 +32,10 @@ export function useLoginForm() {
     onError: (err) => {
       if (err instanceof ApiError && err.status === 401) {
         toast.error('E-mail ou senha inválidos');
-        // form.setError('root', { message: 'E-mail ou senha inválidos.' });
+      } else if (err instanceof ApiError && err.status === 429) {
+        toast.error(rateLimitMessage(err));
       } else {
         toast.error('Ocorreu um erro. Tente novamente');
-        // form.setError('root', { message: 'Ocorreu um erro. Tente novamente.' });
       }
     }
   });
