@@ -1,3 +1,5 @@
+console.log('DEBUG: SESSION_SECRET is', process.env.SESSION_SECRET ? 'DEFINED' : 'UNDEFINED');
+
 import { config } from 'dotenv';
 import { resolve } from 'node:path';
 import postgres from 'postgres';
