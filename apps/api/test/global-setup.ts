@@ -29,7 +29,7 @@ export default async function setup() {
     await adminSql.end();
   }
 
-  // Set env so child processes (drizzle-kit, seed) and the test workers use the test DB.
+  // Set env so drizzle-kit and test workers use the test DB.
   process.env.DATABASE_URL = TEST_DATABASE_URL;
   process.env.NODE_ENV = 'test';
 
@@ -39,11 +39,6 @@ export default async function setup() {
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL }
   });
 
-  // Seed the test DB by importing the function directly — no subprocess, no
-  // tsx/dotenvx override:true that would wipe CI env vars when .env is absent.
-  // NODE_ENV must be 'development' so seed.ts doesn't throw its production guard.
-  process.env.NODE_ENV = 'development';
   const { seed } = await import('../src/db/seed.js');
   await seed();
-  process.env.NODE_ENV = 'test';
 }

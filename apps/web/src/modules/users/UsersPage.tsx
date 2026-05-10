@@ -17,7 +17,7 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ActiveStatus } from '@/lib/status';
+import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useUsers, useUserMutations } from './useUsers';
 import UserForm from './UserForm';

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ActiveStatus } from '@/lib/status';
+import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { usePaymentMethods, usePaymentMethodMutations } from './usePaymentMethods';
 import { PaymentMethodForm } from './PaymentMethodForm';

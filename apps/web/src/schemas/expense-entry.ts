@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { EntryStatus } from '@/lib/status';
+import { EntryStatus } from '@sistema-ibanje/shared';
 
 export const ExpenseEntryFormSchema = z.object({
   referenceDate: z.string().min(1, 'Data de referência é obrigatória.'),

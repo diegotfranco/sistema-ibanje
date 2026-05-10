@@ -23,7 +23,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor, RichTextDisplay } from '@/components/ui/rich-text-editor';
-import { MinuteStatus } from '@/lib/status';
+import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import {

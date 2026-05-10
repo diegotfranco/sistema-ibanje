@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
-import { EntryStatus } from '@/lib/status';
+import { EntryStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseEntries, useExpenseEntryMutations } from './useExpenseEntries';

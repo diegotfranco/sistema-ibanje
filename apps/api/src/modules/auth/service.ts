@@ -4,12 +4,14 @@ import { env } from '../../config/env.js';
 import * as repo from './repository.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
 import { sendPasswordResetEmail } from '../../lib/email.js';
+import { ActiveStatus } from '@sistema-ibanje/shared';
+import { DEFAULT_ROLE_NAME } from '../../lib/constants.js';
 import type { MeResponse } from './schema.js';
 
 export async function login(email: string, password: string) {
   const user = await repo.findUserByEmail(email);
 
-  if (!user || !user.passwordHash || user.status !== 'ativo') return null;
+  if (!user || !user.passwordHash || user.status !== ActiveStatus.Active) return null;
 
   const valid = await argon2.verify(user.passwordHash, password + env.ARGON2_PEPPER);
   if (!valid) return null;
@@ -76,8 +78,8 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
 }
 
 export async function register(name: string, email: string) {
-  const membroRole = await repo.findRoleByName('Membro');
-  if (!membroRole) throw new Error('Membro role not found');
+  const membroRole = await repo.findRoleByName(DEFAULT_ROLE_NAME);
+  if (!membroRole) throw new Error(`${DEFAULT_ROLE_NAME} role not found`);
   try {
     await repo.createPendingUser({ name, email, roleId: membroRole.id });
   } catch (err) {

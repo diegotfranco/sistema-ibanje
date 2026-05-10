@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { type MinuteStatusValue } from '@/lib/status';
+import { type MinuteStatusValue } from '@sistema-ibanje/shared';
 
 export const MinuteFormSchema = z.object({
   boardMeetingId: z.number({ error: 'Reunião é obrigatória' }).int().positive(),

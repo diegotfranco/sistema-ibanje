@@ -7,6 +7,7 @@ import { eq } from 'drizzle-orm';
 import * as repo from './repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
+import { ActiveStatus } from '@sistema-ibanje/shared';
 import { paginate } from '../../lib/pagination.js';
 import type {
   UpdateUserRequest,
@@ -191,7 +192,7 @@ export async function createUser(
           name: body.name,
           email: body.email,
           roleId: body.roleId,
-          status: 'ativo'
+          status: ActiveStatus.Active
         })
         .returning({
           id: users.id,
@@ -252,13 +253,13 @@ export async function approveUser(
     const user = userRecord[0];
     if (!user) return null;
 
-    if (user.status !== 'pendente') {
+    if (user.status !== ActiveStatus.Pending) {
       throw httpError(400, 'User is not pending approval');
     }
 
     await tx
       .update(users)
-      .set({ status: 'ativo', updatedAt: new Date() })
+      .set({ status: ActiveStatus.Active, updatedAt: new Date() })
       .where(eq(users.id, targetId));
 
     await repo.copyRolePermissionsToUser(user.roleId, targetId, tx);
@@ -280,7 +281,7 @@ export async function approveUser(
       email: user.email,
       role: roleName,
       roleId: user.roleId,
-      status: 'ativo',
+      status: ActiveStatus.Active,
       createdAt: user.createdAt
     };
   });

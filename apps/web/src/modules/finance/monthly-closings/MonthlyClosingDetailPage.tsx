@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import StatusBadge from '@/components/StatusBadge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ClosingStatus } from '@/lib/status';
+import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosingById, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { ClosingTransitionDialog } from './ClosingTransitionDialog';

@@ -12,7 +12,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { MinuteStatus } from '@/lib/status';
+import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMinutes, useCreateMinute, useDeleteMinute } from './useMinutes';

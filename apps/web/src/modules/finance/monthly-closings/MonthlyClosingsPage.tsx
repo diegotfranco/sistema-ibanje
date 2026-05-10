@@ -14,7 +14,7 @@ import {
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ClosingStatus } from '@/lib/status';
+import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosings, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { NewClosingDialog } from './NewClosingDialog';

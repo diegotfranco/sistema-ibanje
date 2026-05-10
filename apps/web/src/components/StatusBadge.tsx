@@ -9,7 +9,7 @@ import {
   type ClosingStatusValue,
   MinuteStatus,
   type MinuteStatusValue
-} from '@/lib/status';
+} from '@sistema-ibanje/shared';
 
 type Props = {
   status: string;

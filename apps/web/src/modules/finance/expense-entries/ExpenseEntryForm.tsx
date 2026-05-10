@@ -14,7 +14,7 @@ import {
 import DateInput from '@/components/DateInput';
 import MoneyInput from '@/components/MoneyInput';
 import EntityPicker from '@/components/EntityPicker';
-import { ActiveStatus, EntryStatus } from '@/lib/status';
+import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';

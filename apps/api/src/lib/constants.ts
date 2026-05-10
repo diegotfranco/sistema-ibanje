@@ -1,3 +1,5 @@
+export const DEFAULT_ROLE_NAME = 'Membro';
+
 export const Module = {
   Users: 'Usuários',
   Roles: 'Cargos',

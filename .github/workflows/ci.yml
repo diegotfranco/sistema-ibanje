@@ -43,7 +43,7 @@ jobs:
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: receipts
       RESEND_API_KEY: re_test
-      EMAIL_FROM_NOREPLY: "Test <no-reply@test.local>"
+      EMAIL_FROM_NOREPLY: 'Test <no-reply@test.local>'
       FRONTEND_URL: http://localhost:5173
       CORS_ORIGIN: http://localhost:5173
       NODE_ENV: test

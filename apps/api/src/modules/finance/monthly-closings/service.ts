@@ -1,6 +1,7 @@
 import * as repo from './repository.js';
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
+import { ClosingStatus } from '@sistema-ibanje/shared';
 import { httpError } from '../../../lib/errors.js';
 import { paginate } from '../../../lib/pagination.js';
 import type {
@@ -28,7 +29,7 @@ async function buildResponse(
   let openingBalancePending: boolean;
   let closingBalance: string;
 
-  if (closing.status === 'fechado' && closing.closingBalance !== null) {
+  if (closing.status === ClosingStatus.Closed && closing.closingBalance !== null) {
     closingBalance = closing.closingBalance;
     openingBalancePending = false;
     openingBalance = (
@@ -139,10 +140,11 @@ export async function submitMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'aberto') throw httpError(409, 'Only open closings can be submitted');
+  if (closing.status !== ClosingStatus.Open)
+    throw httpError(409, 'Only open closings can be submitted');
 
   const updated = await repo.updateMonthlyClosing(id, {
-    status: 'em revisão',
+    status: ClosingStatus.InReview,
     ...(body.treasurerNotes !== undefined && { treasurerNotes: body.treasurerNotes }),
     submittedByUserId: callerId,
     submittedAt: new Date()
@@ -159,11 +161,11 @@ export async function approveMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'em revisão')
+  if (closing.status !== ClosingStatus.InReview)
     throw httpError(409, 'Only pending review closings can be approved');
 
   const updated = await repo.updateMonthlyClosing(id, {
-    status: 'aprovado',
+    status: ClosingStatus.Approved,
     ...(body.accountantNotes !== undefined && { accountantNotes: body.accountantNotes }),
     reviewedAt: new Date()
   });
@@ -179,11 +181,11 @@ export async function rejectMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'em revisão')
+  if (closing.status !== ClosingStatus.InReview)
     throw httpError(409, 'Only pending review closings can be rejected');
 
   const updated = await repo.updateMonthlyClosing(id, {
-    status: 'aberto',
+    status: ClosingStatus.Open,
     ...(body.accountantNotes !== undefined && { accountantNotes: body.accountantNotes }),
     reviewedAt: new Date()
   });
@@ -198,12 +200,13 @@ export async function closeMonthlyClosing(
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== 'aprovado') throw httpError(409, 'Only approved closings can be closed');
+  if (closing.status !== ClosingStatus.Approved)
+    throw httpError(409, 'Only approved closings can be closed');
 
   const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
   const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
   const prevMonthClosing = await repo.findMonthlyClosingByPeriod(prevYear, prevMonth);
-  if (prevMonthClosing && prevMonthClosing.status !== 'fechado') {
+  if (prevMonthClosing && prevMonthClosing.status !== ClosingStatus.Closed) {
     throw httpError(409, 'Previous period must be closed before closing this period');
   }
 
@@ -230,7 +233,7 @@ export async function closeMonthlyClosing(
   ).toFixed(2);
 
   const updated = await repo.updateMonthlyClosing(id, {
-    status: 'fechado',
+    status: ClosingStatus.Closed,
     closingBalance: computedBalance,
     closedByUserId: callerId,
     closedAt: new Date()
@@ -243,7 +246,8 @@ export async function deleteMonthlyClosing(callerId: number, id: number): Promis
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) return null;
-  if (closing.status !== 'aberto') throw httpError(409, 'Only open closings can be deleted');
+  if (closing.status !== ClosingStatus.Open)
+    throw httpError(409, 'Only open closings can be deleted');
 
   await repo.deleteMonthlyClosing(id);
 }
