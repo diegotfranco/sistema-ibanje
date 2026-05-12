@@ -11,6 +11,10 @@ on:
         description: 'Git ref to deploy (branch, tag, or commit SHA)'
         type: string
         default: main
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
 
 concurrency:
   group: deploy-eeny
@@ -18,20 +22,23 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: [self-hosted, eeny-ibanje-app]
     timeout-minutes: 20
     steps:
       - name: Pre-deploy backup
-        if: ${{ !inputs.skip_backup }}
+        if: ${{ github.event_name == 'workflow_run' || !inputs.skip_backup }}
         working-directory: /opt/sistema-ibanje/app
         run: docker compose -f docker-compose.prod.yml --env-file .env.production exec -T backup sh /usr/local/bin/backup.sh
 
       - name: Pull latest code
         working-directory: /opt/sistema-ibanje/app
+        env:
+          DEPLOY_REF: ${{ inputs.ref || 'main' }}
         run: |
           git fetch --prune --tags
-          git checkout ${{ inputs.ref }}
-          git reset --hard origin/${{ inputs.ref }} || git reset --hard ${{ inputs.ref }}
+          git checkout "$DEPLOY_REF"
+          git reset --hard origin/"$DEPLOY_REF" || git reset --hard "$DEPLOY_REF"
 
       - name: Build and start
         working-directory: /opt/sistema-ibanje/app
