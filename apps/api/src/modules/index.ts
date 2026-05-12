@@ -6,8 +6,10 @@ import { rolesRoutes } from './roles/routes.js';
 import { financeRoutes } from './finance/index.js';
 import { boardMeetingsRoutes } from './board-meetings/routes.js';
 import { minutesRoutes } from './minutes/routes.js';
+import { healthRoutes } from './health/routes.js';
 
 export async function registerRoutes(app: FastifyInstance) {
+  await app.register(healthRoutes);
   await app.register(authRoutes);
   await app.register(usersRoutes);
   await app.register(membersRoutes);

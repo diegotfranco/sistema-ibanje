@@ -1,0 +1,56 @@
+name: Deploy to eeny
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_backup:
+        description: 'Skip pre-deploy backup (emergency only)'
+        type: boolean
+        default: false
+      ref:
+        description: 'Git ref to deploy (branch, tag, or commit SHA)'
+        type: string
+        default: main
+
+concurrency:
+  group: deploy-eeny
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, eeny-ibanje-app]
+    timeout-minutes: 20
+    steps:
+      - name: Pre-deploy backup
+        if: ${{ !inputs.skip_backup }}
+        working-directory: /opt/sistema-ibanje/app
+        run: docker compose -f docker-compose.prod.yml --env-file .env.production exec -T backup /backup.sh
+
+      - name: Pull latest code
+        working-directory: /opt/sistema-ibanje/app
+        run: |
+          git fetch --prune --tags
+          git checkout ${{ inputs.ref }}
+          git reset --hard origin/${{ inputs.ref }} || git reset --hard ${{ inputs.ref }}
+
+      - name: Build and start
+        working-directory: /opt/sistema-ibanje/app
+        run: docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build --remove-orphans
+
+      - name: Run migrations
+        working-directory: /opt/sistema-ibanje/app
+        run: docker compose -f docker-compose.prod.yml --env-file .env.production exec -T api pnpm --filter @sistema-ibanje/api db:migrate
+
+      - name: Smoke test
+        run: |
+          for i in {1..30}; do
+            if curl -fsS https://ibanje.com.br/api/health >/dev/null; then
+              echo "OK"; exit 0
+            fi
+            sleep 2
+          done
+          echo "Smoke test failed"; exit 1
+
+      - name: Prune old images
+        if: success()
+        run: docker image prune -af --filter "until=168h"

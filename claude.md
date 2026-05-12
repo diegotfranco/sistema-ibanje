@@ -14,6 +14,7 @@
 ## Tech stack
 
 **Backend (`apps/api`)**
+
 - Runtime: Node.js 22, TypeScript — `"module": "NodeNext"` with ESM (`"type": "module"`). Use `import.meta.url` and `fileURLToPath` instead of `__dirname`.
 - Framework: Fastify 5 + `fastify-type-provider-zod` (Zod ↔ Fastify validation + OpenAPI)
 - ORM: Drizzle ORM with postgres.js driver — always use shaped `.select({...})`, never leak `passwordHash`
@@ -25,6 +26,7 @@
 - OpenAPI: `@fastify/swagger` + `@scalar/fastify-api-reference` at `GET /docs`
 
 **Frontend (`apps/web`)**
+
 - Vite 8, React 19, TypeScript (`"moduleResolution": "bundler"`, ESM)
 - Tailwind CSS v4 — `@import "tailwindcss"` in CSS, no config file
 - React Router v7 — `react-router` package (not `react-router-dom`)
@@ -33,6 +35,7 @@
 - React Compiler via `babel-plugin-react-compiler` + `@rolldown/plugin-babel`
 
 **Monorepo**
+
 - pnpm workspaces + Turborepo; `eslint` and `prettier` live at the root, hoisted via `.npmrc public-hoist-pattern`
 - `packages/shared` — only add when two real consumers exist; don't anticipate needs
 
@@ -45,6 +48,7 @@ Every module follows: `routes.ts → controller.ts → service.ts → repository
 All module routes go through `src/modules/index.ts` → `registerRoutes(app)`. Adding a module means touching only that file, not `app.ts`.
 
 **Controller HTTP conventions:**
+
 - `list` → 200, `getById` → 200/404, `create` → 201, `update` → 200/404
 - `remove` → 204/404, state-transition actions (submit/approve/close) → 200 with full resource
 - `setPermissions` → 204, `getPermissions` → 200
@@ -52,6 +56,7 @@ All module routes go through `src/modules/index.ts` → `registerRoutes(app)`. A
 **DTO naming:** include direction — `CreateMemberRequestSchema`/`CreateMemberRequest`, `MemberResponse` — not just `CreateMemberSchema`.
 
 **Repository conventions:**
+
 - No named row types (`UserRow`, `MemberRow`) — dead exports; service infers types from return types
 - Use `$inferInsert` for write-side params: `Omit<typeof table.$inferInsert, 'id' | 'status' | 'createdAt' | 'updatedAt'>`
 - `$inferSelect` is wrong for joins — leave short inline types as-is
@@ -83,23 +88,27 @@ All module routes go through `src/modules/index.ts` → `registerRoutes(app)`. A
 ## Auth, sessions, and CSRF
 
 **CSRF flow:**
+
 1. `GET /auth/csrf-token` → saves token in session + returns it.
 2. Every state-changing request sends `x-csrf-token: <token>`.
 3. After login, session is regenerated — old token is invalid. Frontend re-fetches automatically on 403 (CSRF retry in `api.ts`).
 
 **Remember-me:**
+
 - Login controller reads `rememberMe` from body.
 - Checked → `req.session.cookie.maxAge = 14 * 24 * 60 * 60 * 1000`
 - Unchecked → `req.session.cookie.expires = null; req.session.cookie.originalMaxAge = null`
 - **Do NOT** set `maxAge = undefined` — the setter calls `new Date(Date.now() + undefined)` and produces Invalid Date, crashing the response.
 
 **User creation flows:**
+
 - **Admin creates**: `POST /users` — status `ativo`, permissions copied from role, optional `memberId` links member atomically.
 - **Self-registration**: `POST /auth/register` — status `pendente`, role `Membro`, no permissions yet.
 - **Approval**: `PATCH /users/:id/approve` — status → `ativo`, copies role permissions, sends invite email.
 - **Invite token**: sha256-hashed in `password_reset_tokens` with 24h expiry; email sent via Resend after tx commits.
 
 **Self-service rules:**
+
 - `PATCH /users/:id`: self can change name/email only — not `roleId`.
 - `PATCH /users/:id/password`: self must supply `currentPassword`; admin with `Editar` does not.
 - `DELETE /users/:id`: cannot deactivate own account (400).
@@ -126,11 +135,13 @@ Registered after session + CSRF so `req.session.userId` is populated.
 **Wire format:** `{ message: string, fieldErrors?: Record<string, string> }`. Field keys use dotted paths.
 
 **Backend:**
+
 - `httpError(status, message, { fieldErrors })` — third arg optional.
 - `isUniqueViolation(err, constraintName?)` — matches Postgres code `23505`. Use inside try/catch around insert/update; rethrow as `httpError(409, msg, { fieldErrors })`.
 - ZodError auto-maps `issue.path.join('.')` → `issue.message` via `plugins/errorHandler.ts`.
 
 **Frontend:**
+
 - `applyFieldErrors(err, form)` in `src/lib/forms.ts` — returns true if errors were placed under fields; caller falls back to toast if false.
 - **formRef pattern**: when `useForm` lives in a child component but mutation in the parent, the form populates `formRef.current` so the parent's `onError` can call `applyFieldErrors`.
 
@@ -155,6 +166,7 @@ Email sends must happen **after** the transaction commits. Capture tokens via ca
 **Route metadata:** single source of truth (`AppRoute` type) drives both React Router tree and sidebar menu.
 
 **API client (`src/lib/api.ts`):**
+
 - `fetchWithRetry` — retries up to 2x on `res.status >= 500` or network `TypeError`; 250ms/750ms backoff with ±50% jitter.
 - All mutations send `Idempotency-Key: crypto.randomUUID()` (reused across retries).
 - `ApiError` has `retryAfterSeconds?: number` — parsed from `Retry-After` header.
@@ -162,16 +174,19 @@ Email sends must happen **after** the transaction commits. Capture tokens via ca
 - `setAuthErrorHandler` — wired in `App.tsx` via `<AuthErrorListener>`; clears query cache and redirects to `/login` on any 401 (skipped for `/auth/login`).
 
 **Resource abstractions:**
+
 - `src/lib/resourceQuery.ts` — `useResourceList` + `useResourceMutations`: prepends `basePath` to queryKey internally. `describeError` calls `rateLimitMessage` on 429.
 - `src/components/ResourceListPage.tsx` — generic CRUD list page used by all reference data pages.
 
 **Lint patterns (no `eslint-disable` comments):**
+
 - Generic `forwardRef`: extract render fn as named generic + `as unknown as TypeAlias` cast.
 - `no-explicit-any` on library types: `as unknown as SpecificType` double-cast.
 - `set-state-in-effect`: use "setState during render with a guard" instead of `useEffect`.
 - `exhaustive-deps` for query hooks: prepend `basePath` to queryKey inside the hook.
 
 **Misc tooling gotchas:**
+
 - `shadcn CLI` reads root `tsconfig.json` for path aliases — path `@/*` must be in both `tsconfig.json` and `tsconfig.app.json`.
 - `apps/api/tsconfig.eslint.json` must include every top-level dir (e.g. `test/`) or type-aware lint fails.
 - Turborepo strips undeclared env vars — new vars must be added to `turbo.json` `globalEnv` or task `env` array.
