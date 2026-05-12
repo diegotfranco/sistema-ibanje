@@ -49,9 +49,42 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 Database rollback: see "Restore from backup" below.
 
+## Offsite mirror — Cloudflare R2
+
+If the R2 env vars are set in `.env.production` (`R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`), the backup container mirrors each daily dump to the R2 bucket after the local MinIO write. Failure to mirror is logged but does not fail the backup. Retention on R2 is managed by a bucket lifecycle rule (recommended: delete objects older than 90 days); local MinIO retention is independent (`BACKUP_RETAIN_DAYS`, default 30).
+
+### Quarterly restore drill
+
+A backup never restored is not a backup. Run this every ~3 months on a laptop (NOT the prod server):
+
+```bash
+mkdir -p /tmp/restore-drill && cd /tmp/restore-drill
+
+# Pull yesterday's dump from R2 (use the S3 API endpoint, not the public bucket URL)
+docker run --rm -v "$PWD:/data" minio/mc sh -c "
+  mc alias set r2 $R2_ENDPOINT $R2_ACCESS_KEY $R2_SECRET_KEY &&
+  mc cp r2/$R2_BUCKET/$(date -u -d yesterday +%Y-%m-%d).sql.gz /data/
+"
+
+# Throwaway Postgres
+docker run -d --rm --name restore-test -e POSTGRES_PASSWORD=test -p 55432:5432 postgres:18-alpine
+sleep 5
+docker exec -e PGPASSWORD=test restore-test psql -U postgres -c "CREATE DATABASE restore_test;"
+
+# Restore + sanity check
+gunzip -c *.sql.gz | docker exec -i -e PGPASSWORD=test restore-test \
+  psql -U postgres -d restore_test
+docker exec -e PGPASSWORD=test restore-test psql -U postgres -d restore_test \
+  -c "SELECT count(*) FROM members; SELECT count(*) FROM income_entries;"
+
+docker stop restore-test
+```
+
+Counts must match production. Record the drill date in your notes.
+
 ## Restore from backup
 
-Backups land in MinIO bucket `backups` daily at 02:00 UTC as `YYYY-MM-DD.sql.gz`.
+Backups land in MinIO bucket `backups` daily at 02:00 UTC as `YYYY-MM-DD.sql.gz`. When R2 is configured, the same object is also in the R2 bucket.
 
 ```bash
 # List available backups
