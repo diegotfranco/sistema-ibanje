@@ -1,4 +1,28 @@
+/**
+ * Dev seed — wipes everything and reseeds from synthetic structural data
+ * plus REAL historical financial data migrated from the legacy SQLite DB.
+ *
+ * Income rows: each legacy row may have up to 5 positive amount columns
+ * (dízimo, doação terenos, doação missões, doação PAM, doação campanha);
+ * each positive value becomes its own income entry with the appropriate
+ * category and (where relevant) designated fund.
+ *
+ * Expense rows: legacy `destino` is free text — mapped to seeded
+ * categories via an ordered list of substring patterns. Unmapped entries
+ * fall through to a catch-all "Outras Despesas" category and are flagged
+ * in the notes field for later review.
+ *
+ * Member linking on income entries: legacy names are matched to the
+ * `members` table by exact normalized form first, then by a conservative
+ * fuzzy fallback (token-subset or Levenshtein distance ≤ 2 on the
+ * deaccented/lowercased form). Fuzzy-linked entries get a note recording
+ * the legacy spelling so they can be reviewed. Unlinked names that look
+ * like a person also get a note for review.
+ */
 import * as argon2 from 'argon2';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { sql as drizzleSql } from 'drizzle-orm';
 import { env } from '../config/env.js';
 import { db, sql } from './index.js';
@@ -19,12 +43,296 @@ import {
   boardMeetings,
   minutes,
   minuteVersions,
-  monthlyClosings,
   financeSettings
 } from './schema.js';
 
+const LEGACY_SQLITE_PATH =
+  process.env.LEGACY_SQLITE_PATH ?? path.resolve(process.cwd(), 'ibanje.db');
+
+// --- helpers ---
+function clean(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  const s = String(v).trim();
+  return s === '' ? null : s;
+}
+function cleanCep(v: unknown): string | null {
+  const s = clean(v);
+  if (!s) return null;
+  const digits = s.replace(/\D/g, '');
+  return digits.length === 8 ? digits : null;
+}
+function cleanUf(v: unknown): string | null {
+  const s = clean(v);
+  if (!s) return null;
+  const up = s.toUpperCase();
+  return up.length === 2 ? up : null;
+}
+function cleanPhone(v: unknown): string | null {
+  const s = clean(v);
+  if (!s) return null;
+  return s.length > 16 ? s.slice(0, 16) : s;
+}
+function normalizeName(v: unknown): string {
+  if (v === null || v === undefined) return '';
+  return String(v)
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+function parseAmount(v: unknown): number {
+  if (v === null || v === undefined || v === '') return 0;
+  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+function fmtMoney(n: number): string {
+  return n.toFixed(2);
+}
+function isValidDate(s: string | null): boolean {
+  if (!s) return false;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  if (y < 2020 || y > 2026) return false;
+  if (m < 1 || m > 12) return false;
+  if (d < 1 || d > 31) return false;
+  return true;
+}
+// Repair dates where month > 12 — almost always a day/month transposition in the legacy data.
+function repairDate(s: string | null): string | null {
+  if (!s) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  if (m > 12 && d >= 1 && d <= 12) {
+    return `${String(y).padStart(4, '0')}-${String(d).padStart(2, '0')}-${String(m).padStart(2, '0')}`;
+  }
+  return s;
+}
+function cleanBirthDate(s: string | null): string | null {
+  if (!s) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const year = Number(s.slice(0, 4));
+  if (year < 1900 || year > 2026) return null;
+  return s;
+}
+function levenshtein(a: string, b: string): number {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const prev = new Array<number>(b.length + 1);
+  const curr = new Array<number>(b.length + 1);
+  for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      curr[j] = Math.min(curr[j - 1] + 1, prev[j] + 1, prev[j - 1] + cost);
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
 async function hashPassword(password: string) {
   return argon2.hash(password + env.ARGON2_PEPPER, { type: argon2.argon2id });
+}
+
+// --- legacy types ---
+type LegacyMember = {
+  nome: string | null;
+  data_nascimento: string | null;
+  endereco: string | null;
+  numero: number | null;
+  complemento: string | null;
+  bairro: string | null;
+  uf: string | null;
+  cidade: string | null;
+  cep: string | null;
+  email: string | null;
+  celular: string | null;
+};
+type LegacyEntrada = {
+  nome: string | null;
+  data_referencia: string;
+  data_deposito: string;
+  dizimo: number | string | null;
+  doacao_terenos: number | string | null;
+  doacao_missoes: number | string | null;
+  doacao_pam: number | string | null;
+  campanha_nome: string | null;
+  doacao_campanha: number | string | null;
+  forma_pagamento: string;
+};
+type LegacySaida = { destino: string; valor: number; data: string };
+
+function readLegacy() {
+  if (!existsSync(LEGACY_SQLITE_PATH)) {
+    return { membros: [] as LegacyMember[], entradas: [] as LegacyEntrada[], saidas: [] as LegacySaida[] };
+  }
+  const legacy = new DatabaseSync(LEGACY_SQLITE_PATH, { readOnly: true });
+  try {
+    return {
+      membros: legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyMember[],
+      entradas: legacy.prepare('SELECT * FROM entradas').all() as unknown as LegacyEntrada[],
+      saidas: legacy.prepare('SELECT * FROM saidas').all() as unknown as LegacySaida[]
+    };
+  } finally {
+    legacy.close();
+  }
+}
+
+// --- expense destino → category mapping ---
+// Substring patterns checked in order; first match wins. Matched against the
+// normalized (deaccented/lowercased) destino.
+type DestinoRule = { match: RegExp; category: string };
+const DESTINO_RULES: DestinoRule[] = [
+  // Pastoral
+  {
+    match: /honorari[oa] pastoral|honorario pr|honor pr|honorario do pastor/,
+    category: 'Honorários Pastorais'
+  },
+  {
+    match: /ferias.*pastor|um terco de ferias|13.*pastor|13.*salario/,
+    category: 'Honorários Pastorais'
+  },
+  { match: /fgtm/, category: 'FGTM' },
+  // Encargos / impostos
+  { match: /darf|inss|imposto/, category: 'Encargos' },
+  // Bancário
+  {
+    match: /tarifa banc|cesta de relacion|tarifa sicredi|tarifa.*banco/,
+    category: 'Tarifa Bancária'
+  },
+  // Utilidades
+  { match: /agua|guariroba/, category: 'Água' },
+  { match: /energisa|energia|^luz| luz/, category: 'Energia' },
+  { match: /internet|claro|telefone/, category: 'Internet / Telefone' },
+  { match: /digital seguranca|seguranca|vigilancia/, category: 'Vigilância Patrimonial' },
+  // Operacional — serviços recorrentes
+  { match: /contador|contabil/, category: 'Contador' },
+  {
+    match: /material de expediente|expediente|papelaria|escritorio|impressos|copia/,
+    category: 'Material de Expediente'
+  },
+  { match: /limpe[sz]a|material de limpeza|higiene/, category: 'Material de Limpeza' },
+  { match: /jardin/, category: 'Manutenção Predial' },
+  { match: /encanamento|hidraulic|reparo hidr/, category: 'Reparo Hidráulico' },
+  { match: /eletric|reparo elet/, category: 'Reparo Elétrico' },
+  { match: /chave|chaveiro|fechadura/, category: 'Manutenção Predial' },
+  { match: /material construcao|construcao|tinta|pintura|fachada/, category: 'Manutenção Predial' },
+  { match: /manuten/, category: 'Manutenção Predial' },
+  // Auxílios
+  { match: /combustivel/, category: 'Auxílio Combustível' },
+  // Missões (PAM first — more specific than generic "missões")
+  {
+    match: /pam|plano de auxilio missionario|plano auxilio.*seminarista|auxilio.*missionario/,
+    category: 'PAM'
+  },
+  { match: /missoes nacionais|missao nacional/, category: 'Missões Nacionais' },
+  { match: /miss[oõ]+es mundiais|missao mundial|missoes mund/, category: 'Missões Mundiais' },
+  { match: /uniao feminina|gideoes/, category: 'Missões Nacionais' },
+  {
+    match: /auxilio a seminarista|mensalidade seminarista|seminarista/,
+    category: 'Auxílio a Seminarista'
+  },
+  {
+    match: /auxilio a pr em formacao|pastor em formacao|pos graduacao|aux pos|aux pr formacao/,
+    category: 'Auxílio a Pastor em Formação'
+  },
+  { match: /abono|pecunia/, category: 'Honorários Pastorais' },
+  // Contribuições eclesiásticas
+  { match: /plano cooperativo/, category: 'Plano Cooperativo' },
+  { match: /acibams/, category: 'Acibams' },
+  // Equipamentos
+  { match: /compra de equip|aquisicao de equip|equipamento/, category: 'Compra de Equipamentos' },
+  // Eventos / programas
+  {
+    match: /retiro|acampamento|encontro|confraterniz|pascoa|natal|aniversari|evento/,
+    category: 'Despesas com Eventos'
+  },
+  { match: /didatic|literatura|livros|ebd/, category: 'Material Didático' },
+  { match: /gratific|obreiro convidado|pregador/, category: 'Gratificações' },
+  { match: /generos alimenticios|alimentacao|alimento/, category: 'Despesas com Eventos' },
+  { match: /registro de ata|cartorio/, category: 'Cartório / Registros' }
+];
+
+const FALLBACK_EXPENSE_CATEGORY = 'Outras Despesas';
+
+function mapDestinoToCategory(destino: string): string {
+  const norm = normalizeName(destino);
+  for (const rule of DESTINO_RULES) {
+    if (rule.match.test(norm)) return rule.category;
+  }
+  return FALLBACK_EXPENSE_CATEGORY;
+}
+
+function mapForma(forma: string): string {
+  const norm = normalizeName(forma);
+  if (norm.includes('transf')) return 'Transferência Bancária';
+  return 'Dinheiro';
+}
+
+// --- member matching ---
+type MemberMatch =
+  | { kind: 'exact'; memberId: number; matchedName: string }
+  | { kind: 'fuzzy'; memberId: number; matchedName: string; reason: string }
+  | { kind: 'none' };
+
+function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
+  const byNorm = new Map<string, { id: number; name: string }>();
+  for (const m of memberRows) {
+    const n = normalizeName(m.name);
+    if (n) byNorm.set(n, m);
+  }
+  const allNormed = [...byNorm.entries()].map(([n, m]) => ({ norm: n, member: m }));
+
+  return function match(legacyName: string | null | undefined): MemberMatch {
+    if (!legacyName) return { kind: 'none' };
+    const norm = normalizeName(legacyName);
+    if (!norm) return { kind: 'none' };
+
+    const exact = byNorm.get(norm);
+    if (exact) return { kind: 'exact', memberId: exact.id, matchedName: exact.name };
+
+    // Skip strings that obviously aren't a person's name.
+    if (
+      /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
+        norm
+      )
+    ) {
+      return { kind: 'none' };
+    }
+
+    // Token-subset: all 2+ tokens of legacy name must appear as tokens in a member's name; needs to be unambiguous.
+    const legacyTokens = norm.split(' ').filter((t) => t.length >= 2);
+    if (legacyTokens.length >= 2) {
+      const subsetMatches = allNormed.filter(({ norm: memberNorm }) => {
+        const memberTokens = new Set(memberNorm.split(' '));
+        return legacyTokens.every((t) => memberTokens.has(t));
+      });
+      if (subsetMatches.length === 1) {
+        const m = subsetMatches[0].member;
+        return { kind: 'fuzzy', memberId: m.id, matchedName: m.name, reason: 'token-subset' };
+      }
+    }
+
+    // Levenshtein fallback — ≤ 2 (≤ 1 for short strings), unambiguous winner only.
+    const maxDist = norm.length <= 8 ? 1 : 2;
+    const close = allNormed
+      .map((e) => ({ ...e, dist: levenshtein(norm, e.norm) }))
+      .filter((e) => e.dist <= maxDist)
+      .sort((a, b) => a.dist - b.dist);
+    if (close.length === 1 || (close.length > 1 && close[0].dist < close[1].dist)) {
+      return {
+        kind: 'fuzzy',
+        memberId: close[0].member.id,
+        matchedName: close[0].member.name,
+        reason: `levenshtein=${close[0].dist}`
+      };
+    }
+    return { kind: 'none' };
+  };
 }
 
 export async function seed() {
@@ -32,10 +340,18 @@ export async function seed() {
     throw new Error('seed must not run in production');
   }
 
-  console.log('Seeding database...');
+  console.log('Seeding database (with real legacy financial data)...');
+  const legacy = readLegacy();
+  if (legacy.membros.length || legacy.entradas.length || legacy.saidas.length) {
+    console.log(`Reading legacy SQLite from: ${LEGACY_SQLITE_PATH}`);
+    console.log(
+      `Legacy: ${legacy.membros.length} members, ${legacy.entradas.length} income, ${legacy.saidas.length} expense rows.`
+    );
+  } else {
+    console.log(`Legacy SQLite not found at ${LEGACY_SQLITE_PATH} — seeding structural data only.`);
+  }
 
   await db.transaction(async (tx) => {
-    // Wipe all tables in dependency order so the seed is idempotent on a live DB
     await tx.execute(
       drizzleSql`TRUNCATE roles, permissions, modules, users, role_module_permissions,
           user_module_permissions, payment_methods, designated_funds,
@@ -90,9 +406,7 @@ export async function seed() {
       .returning();
     const roleByName = Object.fromEntries(insertedRoles.map((r) => [r.name, r]));
 
-    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
-    // constants by packages/shared/src/index.ts (Action enum). APPEND ONLY.
-    // --- Permissions ---
+    // ORDER MATTERS — IDs referenced by packages/shared (Action enum). APPEND ONLY.
     const insertedPerms = await tx
       .insert(permissions)
       .values([
@@ -105,7 +419,6 @@ export async function seed() {
       ])
       .returning();
     const permByName = Object.fromEntries(insertedPerms.map((p) => [p.name, p]));
-
     if (
       insertedPerms[0].name !== 'Acessar' ||
       insertedPerms[1].name !== 'Cadastrar' ||
@@ -119,9 +432,7 @@ export async function seed() {
       );
     }
 
-    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
-    // constants by packages/shared/src/index.ts (Module enum). APPEND ONLY.
-    // --- Modules ---
+    // ORDER MATTERS — IDs referenced by packages/shared (Module enum). APPEND ONLY.
     const insertedMods = await tx
       .insert(modules)
       .values([
@@ -157,7 +468,6 @@ export async function seed() {
       ])
       .returning();
     const modByName = Object.fromEntries(insertedMods.map((m) => [m.name, m]));
-
     const expectedModuleOrder = [
       'Usuários',
       'Cargos',
@@ -185,7 +495,7 @@ export async function seed() {
       }
     }
 
-    // --- Users ---
+    // --- Users (dev demo accounts) ---
     const insertedUsers = await tx
       .insert(users)
       .values([
@@ -247,7 +557,6 @@ export async function seed() {
         permIds.map((permId) => ({ roleId, moduleId: modByName[mod].id, permissionId: permId }))
       );
     }
-
     const allPermIds = insertedPerms.map((p) => p.id);
     const fullPermIds = ['Acessar', 'Cadastrar', 'Editar', 'Remover', 'Relatórios'].map(
       (n) => permByName[n].id
@@ -256,174 +565,74 @@ export async function seed() {
       (n) => permByName[n].id
     );
     const readPermIds = ['Acessar', 'Relatórios'].map((n) => permByName[n].id);
+    const financialMods = [
+      'Categorias de Entradas',
+      'Lançamentos de Entradas',
+      'Categorias de Saídas',
+      'Lançamentos de Saídas',
+      'Formas de Pagamento',
+      'Fundos Designados'
+    ];
+    const adminMods = ['Painel', 'Membros', 'Atas'];
 
     const rmpRows = [
-      // Administrador: all modules × all permissions
       ...cross(
         roleByName['Administrador'].id,
         insertedMods.map((m) => m.name),
         allPermIds
       ),
-
-      // Tesoureiro: financial (panel included) write, admin (no panel) read
-      ...cross(
-        roleByName['Tesoureiro'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        writePermIds
-      ),
+      ...cross(roleByName['Tesoureiro'].id, ['Painel', ...financialMods], writePermIds),
       ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
-
-      // Comissão de Exame de Contas: financial — read
       ...cross(
         roleByName['Comissão de Exame de Contas'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
+        ['Painel', ...financialMods],
         readPermIds
       ),
-
-      // Tesoureiro Responsável: financial (panel included) full, admin (no panel) read
-      ...cross(
-        roleByName['Tesoureiro Responsável'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
+      ...cross(roleByName['Tesoureiro Responsável'].id, ['Painel', ...financialMods], fullPermIds),
       ...cross(roleByName['Tesoureiro Responsável'].id, ['Membros', 'Atas'], readPermIds),
-
-      // Secretário: admin (panel included) write, financial (no panel) read
-      ...cross(roleByName['Secretário'].id, ['Painel', 'Membros', 'Atas'], writePermIds),
-      ...cross(
-        roleByName['Secretário'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        readPermIds
-      ),
-
-      // Secretário Responsável: admin (panel included) full, financial (no panel) read
-      ...cross(roleByName['Secretário Responsável'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-      ...cross(
-        roleByName['Secretário Responsável'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        readPermIds
-      ),
-
-      // Presidente: financial (no panel) full, admin (panel included) full, Pautas full
-      ...cross(
-        roleByName['Presidente'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
-      ...cross(roleByName['Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
+      ...cross(roleByName['Secretário'].id, adminMods, writePermIds),
+      ...cross(roleByName['Secretário'].id, financialMods, readPermIds),
+      ...cross(roleByName['Secretário Responsável'].id, adminMods, fullPermIds),
+      ...cross(roleByName['Secretário Responsável'].id, financialMods, readPermIds),
+      ...cross(roleByName['Presidente'].id, financialMods, fullPermIds),
+      ...cross(roleByName['Presidente'].id, adminMods, fullPermIds),
       ...cross(roleByName['Presidente'].id, ['Pautas'], allPermIds),
-
-      // Vice-Presidente: same as Presidente
-      ...cross(
-        roleByName['Vice-Presidente'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
-      ...cross(roleByName['Vice-Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
+      ...cross(roleByName['Vice-Presidente'].id, financialMods, fullPermIds),
+      ...cross(roleByName['Vice-Presidente'].id, adminMods, fullPermIds),
       ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
-
-      // Tesoureiro: closings — create + submit only
       ...cross(
         roleByName['Tesoureiro'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Cadastrar'].map((n) => permByName[n].id)
       ),
-
-      // Tesoureiro Responsável: closings — full (including review + close)
       ...cross(
         roleByName['Tesoureiro Responsável'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
       ),
-
-      // Presidente: closings — full
       ...cross(
         roleByName['Presidente'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
       ),
-
-      // Vice-Presidente: closings — full
       ...cross(
         roleByName['Vice-Presidente'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
       ),
-
-      // Comissão de Exame de Contas: closings — review
       ...cross(
         roleByName['Comissão de Exame de Contas'].id,
         ['Fechamentos Mensais'],
         ['Acessar', 'Revisar'].map((n) => permByName[n].id)
       ),
-
-      // Membro: view only
       ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id])
     ];
-
     await tx.insert(roleModulePermissions).values(rmpRows);
 
-    // --- User-Module-Permissions (copy each user's role permissions) ---
     const umpRows = insertedUsers.flatMap((user) =>
       rmpRows
         .filter((rmp) => rmp.roleId === user.roleId)
-        .map((rmp) => ({
-          userId: user.id,
-          moduleId: rmp.moduleId,
-          permissionId: rmp.permissionId
-        }))
+        .map((rmp) => ({ userId: user.id, moduleId: rmp.moduleId, permissionId: rmp.permissionId }))
     );
     await tx.insert(userModulePermissions).values(umpRows);
 
@@ -457,17 +666,22 @@ export async function seed() {
           name: 'Dia das Crianças',
           description: 'Campanha anual para o evento infantil',
           targetAmount: '2000.00'
+        },
+        { name: 'Terenos', description: 'Apoio à congregação irmã em Terenos/MS' },
+        { name: 'PAM', description: 'Plano de Auxílio Missionário' },
+        {
+          name: 'Campanhas',
+          description: 'Catch-all para ofertas de campanhas históricas migradas do sistema legado'
         }
       ])
       .returning();
     const dfByName = Object.fromEntries(insertedFunds.map((f) => [f.name, f]));
 
-    // --- Income Categories (2-level chart of accounts) ---
+    // --- Income Categories ---
     const [icContribuicoes, icOutrasReceitas] = await tx
       .insert(incomeCategories)
       .values([{ name: 'Contribuições' }, { name: 'Outras Receitas' }])
       .returning();
-
     const insertedICs = await tx
       .insert(incomeCategories)
       .values([
@@ -479,19 +693,31 @@ export async function seed() {
         { name: 'Eventos / Campanhas', parentId: icOutrasReceitas.id }
       ])
       .returning();
-    const icByName: Record<string, (typeof insertedICs)[0]> = Object.fromEntries(
-      insertedICs.map((c) => [c.name, c])
-    );
+    const icByName = Object.fromEntries(insertedICs.map((c) => [c.name, c]));
 
-    // --- Expense Categories (2-level chart of accounts) ---
-    const [ecPessoal, ecOperacional, ecManutencao, ecEquipamentos, ecEventos] = await tx
+    // --- Expense Categories (extended to cover real-data destinos) ---
+    const [
+      ecPessoal,
+      ecOperacional,
+      ecManutencao,
+      ecEquipamentos,
+      ecEventos,
+      ecMissoes,
+      ecContribuicoes,
+      ecAuxilios,
+      ecDiversos
+    ] = await tx
       .insert(expenseCategories)
       .values([
         { name: 'Pessoal' },
         { name: 'Operacional' },
         { name: 'Manutenção' },
         { name: 'Equipamentos' },
-        { name: 'Eventos / Programas' }
+        { name: 'Eventos / Programas' },
+        { name: 'Missões' },
+        { name: 'Contribuições Eclesiásticas' },
+        { name: 'Auxílios' },
+        { name: 'Diversos' }
       ])
       .returning();
 
@@ -507,20 +733,61 @@ export async function seed() {
         { name: 'Vigilância Patrimonial', parentId: ecOperacional.id },
         { name: 'Tarifa Bancária', parentId: ecOperacional.id },
         { name: 'Material de Limpeza', parentId: ecOperacional.id },
+        { name: 'Material de Expediente', parentId: ecOperacional.id },
+        { name: 'Contador', parentId: ecOperacional.id },
         { name: 'Manutenção Predial', parentId: ecManutencao.id },
         { name: 'Reparo Hidráulico', parentId: ecManutencao.id },
         { name: 'Reparo Elétrico', parentId: ecManutencao.id },
         { name: 'Compra de Equipamentos', parentId: ecEquipamentos.id },
-        { name: 'Despesas com Eventos', parentId: ecEventos.id }
+        { name: 'Despesas com Eventos', parentId: ecEventos.id },
+        { name: 'Material Didático', parentId: ecEventos.id },
+        { name: 'Gratificações', parentId: ecEventos.id },
+        { name: 'Cartório / Registros', parentId: ecEventos.id },
+        { name: 'Missões Nacionais', parentId: ecMissoes.id },
+        { name: 'Missões Mundiais', parentId: ecMissoes.id },
+        { name: 'PAM', parentId: ecMissoes.id },
+        { name: 'Auxílio a Seminarista', parentId: ecMissoes.id },
+        { name: 'Auxílio a Pastor em Formação', parentId: ecMissoes.id },
+        { name: 'Plano Cooperativo', parentId: ecContribuicoes.id },
+        { name: 'Acibams', parentId: ecContribuicoes.id },
+        { name: 'Auxílio Combustível', parentId: ecAuxilios.id },
+        { name: FALLBACK_EXPENSE_CATEGORY, parentId: ecDiversos.id }
       ])
       .returning();
-    const ecByName: Record<string, (typeof insertedECs)[0]> = Object.fromEntries(
-      insertedECs.map((c) => [c.name, c])
-    );
+    const ecByName = Object.fromEntries(insertedECs.map((c) => [c.name, c]));
 
-    // --- Members ---
-    // João da Silva is linked to the membro user to demonstrate the member-user relationship
-    const insertedMembers = await tx
+    // --- Finance Settings ---
+    await tx.insert(financeSettings).values({ openingBalance: '0.00' });
+
+    // --- Members (legacy + demo) ---
+    const legacyMemberRows = legacy.membros
+      .map((m) => {
+        const name = clean(m.nome);
+        if (!name) return null;
+        return {
+          name,
+          birthDate: cleanBirthDate(clean(m.data_nascimento)),
+          addressStreet: clean(m.endereco),
+          addressNumber:
+            typeof m.numero === 'number' && Number.isFinite(m.numero) ? m.numero : null,
+          addressComplement: clean(m.complemento),
+          addressDistrict: clean(m.bairro),
+          state: cleanUf(m.uf),
+          city: clean(m.cidade),
+          postalCode: cleanCep(m.cep),
+          email: clean(m.email),
+          phone: cleanPhone(m.celular)
+        };
+      })
+      .filter((m): m is NonNullable<typeof m> => m !== null);
+
+    const insertedLegacyMembers = legacyMemberRows.length
+      ? await tx.insert(members).values(legacyMemberRows).returning()
+      : [];
+    console.log(`Inserted ${insertedLegacyMembers.length} members from legacy DB.`);
+
+    // Demo member linked to the membro@email.com user for the link-flow demo.
+    const insertedDemoMembers = await tx
       .insert(members)
       .values([
         {
@@ -536,404 +803,193 @@ export async function seed() {
           postalCode: '01001000',
           email: 'joao.silva@email.com',
           phone: '11987654321'
-        },
-        {
-          name: 'Maria Oliveira',
-          birthDate: '1992-09-23',
-          addressStreet: 'Avenida Principal',
-          addressNumber: 456,
-          addressDistrict: 'Jardins',
-          state: 'RJ',
-          city: 'Rio de Janeiro',
-          postalCode: '20040030',
-          email: 'maria.oliveira@email.com',
-          phone: '21965432100'
-        },
-        {
-          name: 'Carlos Pereira',
-          birthDate: '1978-11-02',
-          addressStreet: 'Travessa dos Sonhos',
-          addressNumber: 78,
-          addressDistrict: 'Vila Madalena',
-          state: 'SP',
-          city: 'São Paulo',
-          postalCode: '05448000',
-          email: 'carlos.pereira@email.com',
-          phone: '11998765432',
-          status: 'inativo' as const
-        },
-        {
-          name: 'Ana Souza',
-          birthDate: '1995-02-20',
-          addressStreet: 'Rua da Paz',
-          addressNumber: 99,
-          addressComplement: 'Casa 2',
-          addressDistrict: 'Lapa',
-          state: 'SP',
-          city: 'São Paulo',
-          postalCode: '05069000',
-          email: 'ana.souza@email.com',
-          phone: '11912345678'
         }
       ])
       .returning();
-    const memberByName = Object.fromEntries(insertedMembers.map((m) => [m.name, m]));
 
+    const allMembers = [...insertedLegacyMembers, ...insertedDemoMembers];
+    const matchMember = buildMemberMatcher(allMembers);
+
+    // --- Income Entries (from legacy entradas) ---
     const tesoureiroId = userByEmail['tesoureiro@email.com'].id;
-    const tesRespId = userByEmail['tesoureiro.resp@email.com'].id;
-    const presidenteId = userByEmail['presidente@email.com'].id;
 
-    // --- Income Entries ---
-    await tx.insert(incomeEntries).values([
-      // August 2025
-      {
-        referenceDate: '2025-08-10',
-        depositDate: '2025-08-10',
-        amount: '550.00',
-        categoryId: icByName['Dízimo'].id,
-        memberId: memberByName['João da Silva'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-08-10',
-        depositDate: '2025-08-10',
-        amount: '250.00',
-        categoryId: icByName['Oferta de Culto'].id,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      // September 2025
-      {
-        referenceDate: '2025-09-07',
-        depositDate: '2025-09-07',
-        amount: '1200.00',
-        categoryId: icByName['Dízimo'].id,
-        memberId: memberByName['Maria Oliveira'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-09-07',
-        depositDate: '2025-09-07',
-        amount: '320.00',
-        categoryId: icByName['Oferta de Culto'].id,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-09-30',
-        depositDate: '2025-09-30',
-        amount: '200.00',
-        categoryId: icByName['Doação'].id,
-        memberId: memberByName['João da Silva'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      // October 2025
-      {
-        referenceDate: '2025-10-05',
-        depositDate: '2025-10-05',
-        amount: '500.00',
-        categoryId: icByName['Dízimo'].id,
-        memberId: memberByName['Ana Souza'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-10-12',
-        depositDate: '2025-10-12',
-        amount: '150.00',
-        categoryId: icByName['Oferta de Culto'].id,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-10-19',
-        depositDate: '2025-10-19',
-        amount: '350.00',
-        categoryId: icByName['Oferta Missionária'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId,
-        designatedFundId: dfByName['Fundo Missionário'].id
-      },
-      {
-        referenceDate: '2025-10-26',
-        depositDate: '2025-10-26',
-        amount: '120.00',
-        categoryId: icByName['Oferta Missionária'].id,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        userId: tesoureiroId
-      },
-      {
-        referenceDate: '2025-10-20',
-        depositDate: '2025-10-21',
-        amount: '1000.00',
-        categoryId: icByName['Doação'].id,
-        memberId: memberByName['Maria Oliveira'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'pendente',
-        userId: tesoureiroId
-      },
-      // Dia das Crianças campaign — income side
-      {
-        referenceDate: '2025-10-05',
-        depositDate: '2025-10-05',
-        amount: '800.00',
-        categoryId: icByName['Eventos / Campanhas'].id,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        userId: tesoureiroId,
-        designatedFundId: dfByName['Dia das Crianças'].id
-      },
-      // Maria sponsors the freezer — donation income paired with sponsored expense
-      {
-        referenceDate: '2025-11-10',
-        depositDate: '2025-11-10',
-        amount: '500.00',
-        categoryId: icByName['Doação'].id,
-        memberId: memberByName['Maria Oliveira'].id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId
+    const matchCache = new Map<string, MemberMatch>();
+    function lookupMatch(name: string | null | undefined): MemberMatch {
+      const key = name ?? '';
+      const cached = matchCache.get(key);
+      if (cached) return cached;
+      const result = matchMember(name);
+      matchCache.set(key, result);
+      return result;
+    }
+
+    function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
+      if (match.kind === 'fuzzy') {
+        return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
       }
-    ]);
-
-    // --- Expense Entries ---
-    await tx.insert(expenseEntries).values([
-      // August 2025
-      {
-        referenceDate: '2025-08-15',
-        description: 'Conta de água – agosto',
-        total: '260.00',
-        amount: '260.00',
-        categoryId: ecByName['Água'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-08-20',
-        description: 'Honorário pastoral – agosto',
-        total: '400.00',
-        amount: '400.00',
-        categoryId: ecByName['Honorários Pastorais'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-08-25',
-        description: 'Conta de energia – agosto',
-        total: '360.00',
-        amount: '360.00',
-        categoryId: ecByName['Energia'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'paga'
-      },
-      // September 2025
-      {
-        referenceDate: '2025-09-05',
-        description: 'Serviço de jardinagem',
-        total: '180.00',
-        amount: '180.00',
-        categoryId: ecByName['Manutenção Predial'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'cancelada' as const
-      },
-      {
-        referenceDate: '2025-09-12',
-        description: 'Reparo no encanamento',
-        total: '450.00',
-        amount: '450.00',
-        categoryId: ecByName['Reparo Hidráulico'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-09-15',
-        description: 'Conta de água – setembro',
-        total: '255.00',
-        amount: '255.00',
-        categoryId: ecByName['Água'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-09-20',
-        description: 'Honorário pastoral – setembro',
-        total: '400.00',
-        amount: '400.00',
-        categoryId: ecByName['Honorários Pastorais'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-09-25',
-        description: 'Conta de energia – setembro',
-        total: '355.00',
-        amount: '355.00',
-        categoryId: ecByName['Energia'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'paga'
-      },
-      // October 2025
-      {
-        referenceDate: '2025-10-10',
-        description: 'Conta de água – outubro',
-        total: '250.00',
-        amount: '250.00',
-        categoryId: ecByName['Água'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-10-15',
-        description: 'Honorário pastoral – outubro',
-        total: '400.00',
-        amount: '400.00',
-        categoryId: ecByName['Honorários Pastorais'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga'
-      },
-      {
-        referenceDate: '2025-10-25',
-        description: 'Conta de energia – outubro',
-        total: '350.00',
-        amount: '350.00',
-        categoryId: ecByName['Energia'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Boleto Bancário'].id,
-        status: 'pendente'
-      },
-      // Dia das Crianças campaign — expense side
-      {
-        referenceDate: '2025-10-05',
-        description: 'Despesas com Dia das Crianças',
-        total: '650.00',
-        amount: '650.00',
-        categoryId: ecByName['Despesas com Eventos'].id,
-        userId: tesoureiroId,
-        paymentMethodId: pmByName['Dinheiro'].id,
-        status: 'paga',
-        designatedFundId: dfByName['Dia das Crianças'].id
+      if (match.kind === 'none' && legacyName) {
+        const norm = normalizeName(legacyName);
+        if (norm.length < 3) return null;
+        // Don't flag obvious non-person tokens — those are intentional unlinked.
+        if (
+          /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
+            norm
+          )
+        ) {
+          return null;
+        }
+        return `[REVISAR] Nome legado não vinculado: "${legacyName}"`;
       }
-    ]);
+      return null;
+    }
 
-    // Multi-installment expense: projector purchase over 3 months
-    const [projInst1] = await tx
-      .insert(expenseEntries)
-      .values({
-        referenceDate: '2025-10-01',
-        description: 'Projetor Multimídia – Parcela 1/3',
-        total: '1500.00',
-        amount: '500.00',
-        installment: 1,
-        totalInstallments: 3,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Cartão de Crédito'].id,
-        status: 'paga'
-      })
-      .returning();
+    type IncomeRow = typeof incomeEntries.$inferInsert;
+    const incomeRows: IncomeRow[] = [];
+    let skippedBadDate = 0;
 
-    await tx.insert(expenseEntries).values([
-      {
-        parentId: projInst1.id,
-        referenceDate: '2025-11-01',
-        description: 'Projetor Multimídia – Parcela 2/3',
-        total: '1500.00',
-        amount: '500.00',
-        installment: 2,
-        totalInstallments: 3,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Cartão de Crédito'].id,
-        status: 'pendente'
-      },
-      {
-        parentId: projInst1.id,
-        referenceDate: '2025-12-01',
-        description: 'Projetor Multimídia – Parcela 3/3',
-        total: '1500.00',
-        amount: '500.00',
-        installment: 3,
-        totalInstallments: 3,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Cartão de Crédito'].id,
-        status: 'pendente'
+    for (const e of legacy.entradas) {
+      const refDate = repairDate(clean(e.data_referencia));
+      const depDate = repairDate(clean(e.data_deposito)) ?? refDate;
+      if (!isValidDate(refDate)) {
+        skippedBadDate++;
+        continue;
       }
-    ]);
+      const paymentMethodId = pmByName[mapForma(e.forma_pagamento)].id;
+      const match = lookupMatch(e.nome);
+      const memberId = match.kind === 'none' ? null : match.memberId;
+      const baseNote = noteForMatch(e.nome, match);
 
-    // Multi-installment expense sponsored by Maria — freezer, 10 installments
-    const [freezerInst1] = await tx
-      .insert(expenseEntries)
-      .values({
-        referenceDate: '2025-09-10',
-        description: 'Freezer – Parcela 1/10',
-        total: '5000.00',
-        amount: '500.00',
-        installment: 1,
-        totalInstallments: 10,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        memberId: memberByName['Maria Oliveira'].id
-      })
-      .returning();
+      const dizimo = parseAmount(e.dizimo);
+      const terenos = parseAmount(e.doacao_terenos);
+      const missoes = parseAmount(e.doacao_missoes);
+      const pam = parseAmount(e.doacao_pam);
+      const campanha = parseAmount(e.doacao_campanha);
+      const campanhaName = clean(e.campanha_nome);
 
-    await tx.insert(expenseEntries).values([
-      {
-        parentId: freezerInst1.id,
-        referenceDate: '2025-10-10',
-        description: 'Freezer – Parcela 2/10',
-        total: '5000.00',
-        amount: '500.00',
-        installment: 2,
-        totalInstallments: 10,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        memberId: memberByName['Maria Oliveira'].id
-      },
-      {
-        parentId: freezerInst1.id,
-        referenceDate: '2025-11-10',
-        description: 'Freezer – Parcela 3/10',
-        total: '5000.00',
-        amount: '500.00',
-        installment: 3,
-        totalInstallments: 10,
-        categoryId: ecByName['Compra de Equipamentos'].id,
-        userId: tesRespId,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        memberId: memberByName['Maria Oliveira'].id
+      const common = {
+        referenceDate: refDate!,
+        depositDate: isValidDate(depDate) ? depDate! : refDate!,
+        memberId,
+        paymentMethodId,
+        status: 'paga' as const,
+        userId: tesoureiroId
+      };
+
+      if (dizimo > 0) {
+        incomeRows.push({
+          ...common,
+          amount: fmtMoney(dizimo),
+          categoryId: icByName['Dízimo'].id,
+          notes: baseNote
+        });
       }
-    ]);
+      if (terenos > 0) {
+        incomeRows.push({
+          ...common,
+          amount: fmtMoney(terenos),
+          categoryId: icByName['Doação'].id,
+          designatedFundId: dfByName['Terenos'].id,
+          notes: baseNote
+        });
+      }
+      if (missoes > 0) {
+        incomeRows.push({
+          ...common,
+          amount: fmtMoney(missoes),
+          categoryId: icByName['Oferta Missionária'].id,
+          designatedFundId: dfByName['Fundo Missionário'].id,
+          notes: baseNote
+        });
+      }
+      if (pam > 0) {
+        incomeRows.push({
+          ...common,
+          amount: fmtMoney(pam),
+          categoryId: icByName['Oferta Missionária'].id,
+          designatedFundId: dfByName['PAM'].id,
+          notes: baseNote
+        });
+      }
+      if (campanha > 0) {
+        const campNote = [baseNote, campanhaName ? `Campanha: "${campanhaName}"` : null]
+          .filter(Boolean)
+          .join(' | ');
+        incomeRows.push({
+          ...common,
+          amount: fmtMoney(campanha),
+          categoryId: icByName['Eventos / Campanhas'].id,
+          designatedFundId: dfByName['Campanhas'].id,
+          notes: campNote || null
+        });
+      }
+    }
 
-    // --- Board Meetings ---
+    const BATCH = 500;
+    for (let i = 0; i < incomeRows.length; i += BATCH) {
+      await tx.insert(incomeEntries).values(incomeRows.slice(i, i + BATCH));
+    }
+    console.log(
+      `Inserted ${incomeRows.length} income entries.${skippedBadDate ? ` Skipped ${skippedBadDate} rows with bad dates.` : ''}`
+    );
+
+    // --- Expense Entries (from legacy saidas) ---
+    type ExpenseRow = typeof expenseEntries.$inferInsert;
+    const expenseRows: ExpenseRow[] = [];
+    const unmappedDestinoCounts = new Map<string, number>();
+    let skippedExpBadDate = 0;
+
+    for (const s of legacy.saidas) {
+      const refDate = repairDate(clean(s.data));
+      const destino = clean(s.destino);
+      if (!isValidDate(refDate)) {
+        skippedExpBadDate++;
+        continue;
+      }
+      if (!destino || !(s.valor > 0)) continue;
+      const categoryName = mapDestinoToCategory(destino);
+      if (categoryName === FALLBACK_EXPENSE_CATEGORY) {
+        unmappedDestinoCounts.set(destino, (unmappedDestinoCounts.get(destino) ?? 0) + 1);
+      }
+      const category = ecByName[categoryName];
+      const amount = fmtMoney(s.valor);
+      const description = destino.length > 256 ? destino.slice(0, 256) : destino;
+      const notes =
+        categoryName === FALLBACK_EXPENSE_CATEGORY
+          ? `[REVISAR] Destino legado não mapeado: "${destino}"`
+          : null;
+      expenseRows.push({
+        referenceDate: refDate!,
+        description,
+        total: amount,
+        amount,
+        categoryId: category.id,
+        paymentMethodId: pmByName['Transferência Bancária'].id,
+        status: 'paga',
+        userId: tesoureiroId,
+        notes
+      });
+    }
+
+    for (let i = 0; i < expenseRows.length; i += BATCH) {
+      await tx.insert(expenseEntries).values(expenseRows.slice(i, i + BATCH));
+    }
+    console.log(
+      `Inserted ${expenseRows.length} expense entries.${skippedExpBadDate ? ` Skipped ${skippedExpBadDate} rows with bad dates.` : ''}`
+    );
+    if (unmappedDestinoCounts.size > 0) {
+      const top = [...unmappedDestinoCounts.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([d, c]) => `  ${c}× "${d}"`)
+        .join('\n');
+      console.log(
+        `${unmappedDestinoCounts.size} distinct destinos fell through to "${FALLBACK_EXPENSE_CATEGORY}". Top 10:\n${top}`
+      );
+    }
+
+    // --- Board Meetings + Minutes (demo data) ---
     const adminId = userByEmail['admin@email.com'].id;
+    const secResp = userByEmail['secretario.resp@email.com'];
 
     const insertedMeetings = await tx
       .insert(boardMeetings)
@@ -980,21 +1036,12 @@ export async function seed() {
         }
       ])
       .returning();
-
     const meetingByDate = Object.fromEntries(insertedMeetings.map((m) => [m.meetingDate, m]));
-    const secResp = userByEmail['secretario.resp@email.com'];
 
-    // --- Minutes & Versions ---
-
-    // Ata 719
     const [minute719] = await tx
       .insert(minutes)
-      .values({
-        boardMeetingId: meetingByDate['2023-03-12'].id,
-        minuteNumber: '719'
-      })
+      .values({ boardMeetingId: meetingByDate['2023-03-12'].id, minuteNumber: '719' })
       .returning();
-
     await tx.insert(minuteVersions).values({
       minuteId: minute719.id,
       version: 1,
@@ -1007,15 +1054,10 @@ export async function seed() {
       }
     });
 
-    // Ata 723
     const [minute723] = await tx
       .insert(minutes)
-      .values({
-        boardMeetingId: meetingByDate['2023-11-12'].id,
-        minuteNumber: '723'
-      })
+      .values({ boardMeetingId: meetingByDate['2023-11-12'].id, minuteNumber: '723' })
       .returning();
-
     await tx.insert(minuteVersions).values({
       minuteId: minute723.id,
       version: 1,
@@ -1028,15 +1070,10 @@ export async function seed() {
       }
     });
 
-    // Ata 725 — two versions to demonstrate versioning
     const [minute725] = await tx
       .insert(minutes)
-      .values({
-        boardMeetingId: meetingByDate['2025-04-26'].id,
-        minuteNumber: '725'
-      })
+      .values({ boardMeetingId: meetingByDate['2025-04-26'].id, minuteNumber: '725' })
       .returning();
-
     await tx.insert(minuteVersions).values([
       {
         minuteId: minute725.id,
@@ -1060,46 +1097,11 @@ export async function seed() {
         }
       }
     ]);
-
-    // --- Finance Settings (singleton — stores initial opening balance) ---
-    await tx.insert(financeSettings).values({ openingBalance: '0.00' });
-
-    // --- Monthly Closings ---
-    await tx.insert(monthlyClosings).values([
-      {
-        periodYear: 2025,
-        periodMonth: 8,
-        closingBalance: '-220.00',
-        treasurerNotes: 'Mês com déficit devido a gastos extraordinários.',
-        status: 'fechado' as const,
-        submittedByUserId: tesoureiroId,
-        submittedAt: new Date('2025-09-03T10:00:00Z'),
-        reviewedAt: new Date('2025-09-05T14:00:00Z'),
-        closedByUserId: presidenteId,
-        closedAt: new Date('2025-09-05T15:00:00Z')
-      },
-      {
-        periodYear: 2025,
-        periodMonth: 9,
-        closingBalance: '710.00',
-        treasurerNotes: 'Mês regular, sem intercorrências.',
-        status: 'aprovado' as const,
-        submittedByUserId: tesoureiroId,
-        submittedAt: new Date('2025-10-03T10:00:00Z'),
-        reviewedAt: new Date('2025-10-07T14:00:00Z')
-      },
-      {
-        periodYear: 2025,
-        periodMonth: 10,
-        status: 'aberto' as const
-      }
-    ]);
   });
 
   console.log('Seeding complete.');
 }
 
-// Only run automatically when executed directly (not when imported as a module).
 if (import.meta.url === `file://${process.argv[1]}`) {
   seed()
     .then(() => sql.end())
