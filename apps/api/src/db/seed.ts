@@ -168,7 +168,11 @@ type LegacySaida = { destino: string; valor: number; data: string };
 
 function readLegacy() {
   if (!existsSync(LEGACY_SQLITE_PATH)) {
-    return { membros: [] as LegacyMember[], entradas: [] as LegacyEntrada[], saidas: [] as LegacySaida[] };
+    return {
+      membros: [] as LegacyMember[],
+      entradas: [] as LegacyEntrada[],
+      saidas: [] as LegacySaida[]
+    };
   }
   const legacy = new DatabaseSync(LEGACY_SQLITE_PATH, { readOnly: true });
   try {
