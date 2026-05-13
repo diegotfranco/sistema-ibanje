@@ -25,6 +25,9 @@ jobs:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: [self-hosted, eeny-ibanje-app]
     timeout-minutes: 20
+    environment:
+      name: eeny
+      url: https://ibanje.com.br
     steps:
       - name: Pre-deploy backup
         if: ${{ github.event_name == 'workflow_run' || !inputs.skip_backup }}
