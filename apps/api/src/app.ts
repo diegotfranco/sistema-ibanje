@@ -21,6 +21,7 @@ export async function buildApp() {
       level: env.LOG_LEVEL,
       transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
     },
+    trustProxy: true,
     genReqId: (req) => {
       const inbound = req.headers['x-request-id'];
       if (typeof inbound === 'string' && inbound.length > 0 && inbound.length <= 128)
