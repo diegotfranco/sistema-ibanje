@@ -32,7 +32,7 @@ jobs:
       - name: Pre-deploy backup
         if: ${{ github.event_name == 'workflow_run' || !inputs.skip_backup }}
         working-directory: /opt/sistema-ibanje/app
-        run: docker compose -f docker-compose.prod.yml --env-file .env.production exec -T backup sh /usr/local/bin/backup.sh
+        run: docker compose -f docker-compose.prod.yml --env-file .env.production exec -T backup /usr/local/bin/backup.sh
 
       - name: Pull latest code
         working-directory: /opt/sistema-ibanje/app
