@@ -1,0 +1,17 @@
+# Global default reviewer
+* @diegotfranco
+
+# API-specific
+apps/api/ @diegotfranco
+
+# Web-specific
+apps/web/ @diegotfranco
+
+# Shared code
+packages/shared/ @diegotfranco
+
+# Workflows and CI
+.github/ @diegotfranco
+
+# Database schema and migrations
+apps/api/src/db/ @diegotfranco
