@@ -45,6 +45,9 @@ services:
       RESEND_API_KEY: ${RESEND_API_KEY}
       EMAIL_FROM_NOREPLY: ${EMAIL_FROM_NOREPLY}
       FRONTEND_URL: ${PUBLIC_URL}
+      LEGACY_SQLITE_PATH: /repo/apps/api/legacy/ibanje.db
+    volumes:
+      - /opt/sistema-ibanje/legacy:/repo/apps/api/legacy:ro
     expose:
       - '3000'
     healthcheck:
