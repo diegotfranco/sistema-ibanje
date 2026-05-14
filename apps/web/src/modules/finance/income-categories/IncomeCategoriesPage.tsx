@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeCategories, useIncomeCategoryMutations } from './useIncomeCategories';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
+import { useCategoryPageData } from '../categories-utils';
 import type { IncomeCategoryResponse } from '@/schemas/income-category';
 
 export default function IncomeCategoriesPage() {
@@ -22,14 +22,9 @@ export default function IncomeCategoriesPage() {
   const [editing, setEditing] = useState<IncomeCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<IncomeCategoryResponse | null>(null);
 
-  const allCategories = useMemo(() => list.data?.data ?? [], [list.data]);
-  const items = allCategories.filter((r) => r.status === ActiveStatus.Active);
+  const { allCategories, items, getCategoryName } = useCategoryPageData(list.data?.data);
 
   const columns = useMemo(() => {
-    const getCategoryName = (id: number | null) => {
-      if (!id) return '—';
-      return allCategories.find((c) => c.id === id)?.name ?? '—';
-    };
     return [
       {
         header: 'Nome',
@@ -46,7 +41,7 @@ export default function IncomeCategoriesPage() {
         cell: (row: IncomeCategoryResponse) => (row.requiresMember ? 'Sim' : 'Não')
       }
     ];
-  }, [allCategories]);
+  }, [getCategoryName]);
 
   return (
     <>

@@ -3,10 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseCategories, useExpenseCategoryMutations } from './useExpenseCategories';
 import { ExpenseCategoryForm } from './ExpenseCategoryForm';
+import { useCategoryPageData } from '../categories-utils';
 import type { ExpenseCategoryResponse } from '@/schemas/expense-category';
 
 export default function ExpenseCategoriesPage() {
@@ -22,14 +22,9 @@ export default function ExpenseCategoriesPage() {
   const [editing, setEditing] = useState<ExpenseCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<ExpenseCategoryResponse | null>(null);
 
-  const allCategories = useMemo(() => list.data?.data ?? [], [list.data]);
-  const items = allCategories.filter((r) => r.status === ActiveStatus.Active);
+  const { allCategories, items, getCategoryName } = useCategoryPageData(list.data?.data);
 
   const columns = useMemo(() => {
-    const getCategoryName = (id: number | null) => {
-      if (!id) return '—';
-      return allCategories.find((c) => c.id === id)?.name ?? '—';
-    };
     return [
       {
         header: 'Nome',
@@ -46,7 +41,7 @@ export default function ExpenseCategoriesPage() {
         cell: (row: ExpenseCategoryResponse) => row.description || '—'
       }
     ];
-  }, [allCategories]);
+  }, [getCategoryName]);
 
   return (
     <>
