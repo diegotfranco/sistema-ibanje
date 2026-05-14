@@ -5,9 +5,8 @@
     "composite": false,
     "declaration": false,
     "declarationMap": false,
-    "jsx": "react-jsx",
     "types": ["node"]
   },
-  "include": ["src/**/*", "test/**/*", "*.ts"],
+  "include": ["test/**/*", "vitest.config.ts"],
   "exclude": ["node_modules", "dist"]
 }
