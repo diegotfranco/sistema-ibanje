@@ -34,7 +34,8 @@ export default async function setup() {
   process.env.NODE_ENV = 'test';
 
   // Run migrations against the test DB
-  execSync('pnpm exec drizzle-kit migrate', {
+  const pnpm = process.env.npm_execpath ?? 'pnpm';
+  execSync(`${pnpm} exec drizzle-kit migrate`, {
     stdio: 'inherit',
     env: { ...process.env, DATABASE_URL: TEST_DATABASE_URL }
   });
