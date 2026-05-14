@@ -22,16 +22,15 @@ export default function IncomeCategoriesPage() {
   const [editing, setEditing] = useState<IncomeCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<IncomeCategoryResponse | null>(null);
 
-  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
-  const allCategories = list.data?.data ?? [];
+  const allCategories = useMemo(() => list.data?.data ?? [], [list.data]);
+  const items = allCategories.filter((r) => r.status === ActiveStatus.Active);
 
-  const getCategoryName = (id: number | null) => {
-    if (!id) return '—';
-    return allCategories.find((c) => c.id === id)?.name ?? '—';
-  };
-
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    const getCategoryName = (id: number | null) => {
+      if (!id) return '—';
+      return allCategories.find((c) => c.id === id)?.name ?? '—';
+    };
+    return [
       {
         header: 'Nome',
         cell: (row: IncomeCategoryResponse) => (
@@ -46,9 +45,8 @@ export default function IncomeCategoriesPage() {
         header: 'Exige Membro',
         cell: (row: IncomeCategoryResponse) => (row.requiresMember ? 'Sim' : 'Não')
       }
-    ],
-    [allCategories]
-  );
+    ];
+  }, [allCategories]);
 
   return (
     <>

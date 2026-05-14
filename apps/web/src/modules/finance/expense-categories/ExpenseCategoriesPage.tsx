@@ -22,16 +22,15 @@ export default function ExpenseCategoriesPage() {
   const [editing, setEditing] = useState<ExpenseCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<ExpenseCategoryResponse | null>(null);
 
-  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
-  const allCategories = list.data?.data ?? [];
+  const allCategories = useMemo(() => list.data?.data ?? [], [list.data]);
+  const items = allCategories.filter((r) => r.status === ActiveStatus.Active);
 
-  const getCategoryName = (id: number | null) => {
-    if (!id) return '—';
-    return allCategories.find((c) => c.id === id)?.name ?? '—';
-  };
-
-  const columns = useMemo(
-    () => [
+  const columns = useMemo(() => {
+    const getCategoryName = (id: number | null) => {
+      if (!id) return '—';
+      return allCategories.find((c) => c.id === id)?.name ?? '—';
+    };
+    return [
       {
         header: 'Nome',
         cell: (row: ExpenseCategoryResponse) => (
@@ -46,9 +45,8 @@ export default function ExpenseCategoriesPage() {
         header: 'Descrição',
         cell: (row: ExpenseCategoryResponse) => row.description || '—'
       }
-    ],
-    [allCategories]
-  );
+    ];
+  }, [allCategories]);
 
   return (
     <>
