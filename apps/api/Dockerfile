@@ -17,7 +17,7 @@ COPY packages/shared/package.json packages/shared/
 RUN pnpm fetch
 
 # Now copy source and install (offline from the fetched store).
-COPY . .
+COPY apps/ packages/ ./
 RUN pnpm install --frozen-lockfile --prefer-offline
 
 # Build shared first (api depends on it), then api.
@@ -34,7 +34,7 @@ RUN apk add --no-cache libstdc++ tini
 # Copy the whole built workspace. Image size is acceptable for this project,
 # and keeping drizzle-kit + tsx in-image lets `pnpm db:migrate` / `db:seed`
 # run via `docker compose run --rm api ...` for ops.
-COPY --from=builder --chown=node:node /repo /repo
+COPY --from=builder --chown=root:root --chmod=755 /repo /repo
 
 WORKDIR /repo/apps/api
 USER node

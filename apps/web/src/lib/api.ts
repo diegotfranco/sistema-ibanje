@@ -2,7 +2,11 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '/api';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const RETRY_DELAYS_MS = [250, 750];
-const jitter = (ms: number) => ms * (0.5 + Math.random());
+const jitter = (ms: number) => {
+  const array = new Uint32Array(1);
+  crypto.getRandomValues(array);
+  return ms * (0.5 + (array[0] % 100) / 200);
+};
 
 async function fetchWithRetry(url: string, init: RequestInit): Promise<Response> {
   let lastError: unknown;

@@ -12,7 +12,7 @@ COPY packages/shared/package.json packages/shared/
 RUN pnpm fetch
 
 # Now copy source and install (offline from the fetched store).
-COPY . .
+COPY apps/ packages/ ./
 RUN pnpm install --frozen-lockfile --prefer-offline
 
 # Build shared first (web depends on its types via workspace link), then web.
@@ -21,8 +21,13 @@ RUN pnpm --filter @sistema-ibanje/web build
 
 # ---------- runtime: nginx serves the SPA + proxies /api/* to api:3000 ----------
 FROM nginx:alpine AS runtime
-RUN rm -rf /usr/share/nginx/html/*
+RUN apk add --no-cache su-exec && \
+    addgroup -S appuser && \
+    adduser -S appuser -G appuser && \
+    rm -rf /usr/share/nginx/html/* && \
+    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /var/log/nginx /var/run
 COPY --from=builder /repo/apps/web/dist/ /usr/share/nginx/html/
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
+USER appuser
 CMD ["nginx", "-g", "daemon off;"]
