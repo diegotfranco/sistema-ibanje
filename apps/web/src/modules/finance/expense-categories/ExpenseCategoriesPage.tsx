@@ -7,6 +7,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseCategories, useExpenseCategoryMutations } from './useExpenseCategories';
 import { ExpenseCategoryForm } from './ExpenseCategoryForm';
 import { useCategoryPageData } from '../categories-utils';
+import { makeSubmitHandler } from '../entries-utils';
 import type { ExpenseCategoryResponse } from '@/schemas/expense-category';
 
 export default function ExpenseCategoriesPage() {
@@ -23,6 +24,7 @@ export default function ExpenseCategoriesPage() {
   const [deleting, setDeleting] = useState<ExpenseCategoryResponse | null>(null);
 
   const { allCategories, items, getCategoryName } = useCategoryPageData(list.data?.data);
+  const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
   const columns = useMemo(() => {
     return [
@@ -69,16 +71,7 @@ export default function ExpenseCategoriesPage() {
               initialValues={editing === 'new' ? undefined : editing}
               categories={allCategories}
               isPending={create.isPending || update.isPending}
-              onSubmit={(values) => {
-                if (editing === 'new') {
-                  create.mutate(values, { onSuccess: () => setEditing(null) });
-                } else {
-                  update.mutate(
-                    { id: editing.id, body: values },
-                    { onSuccess: () => setEditing(null) }
-                  );
-                }
-              }}
+              onSubmit={handleSubmit}
               onCancel={() => setEditing(null)}
             />
           )}

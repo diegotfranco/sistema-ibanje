@@ -7,6 +7,7 @@ import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { usePaymentMethods, usePaymentMethodMutations } from './usePaymentMethods';
 import { PaymentMethodForm } from './PaymentMethodForm';
+import { makeSubmitHandler } from '../entries-utils';
 import type { PaymentMethodResponse } from '@/schemas/payment-method';
 
 export default function PaymentMethodsPage() {
@@ -21,6 +22,7 @@ export default function PaymentMethodsPage() {
 
   const [editing, setEditing] = useState<PaymentMethodResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<PaymentMethodResponse | null>(null);
+  const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
   const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
 
@@ -64,16 +66,7 @@ export default function PaymentMethodsPage() {
             <PaymentMethodForm
               initialValues={editing === 'new' ? undefined : editing}
               isPending={create.isPending || update.isPending}
-              onSubmit={(values) => {
-                if (editing === 'new') {
-                  create.mutate(values, { onSuccess: () => setEditing(null) });
-                } else {
-                  update.mutate(
-                    { id: editing.id, body: values },
-                    { onSuccess: () => setEditing(null) }
-                  );
-                }
-              }}
+              onSubmit={handleSubmit}
               onCancel={() => setEditing(null)}
             />
           )}

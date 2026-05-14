@@ -7,13 +7,8 @@ import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
 import { DesignatedFundForm } from './DesignatedFundForm';
+import { formatDate, makeSubmitHandler } from '../entries-utils';
 import type { DesignatedFundResponse } from '@/schemas/designated-fund';
-
-const formatDate = (s: string | null) => {
-  if (!s) return '—';
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
 
 export default function DesignatedFundsPage() {
   const { data: user } = useCurrentUser();
@@ -27,6 +22,7 @@ export default function DesignatedFundsPage() {
 
   const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
+  const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
   const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
 
@@ -72,16 +68,7 @@ export default function DesignatedFundsPage() {
             <DesignatedFundForm
               initialValues={editing === 'new' ? undefined : editing}
               isPending={create.isPending || update.isPending}
-              onSubmit={(values) => {
-                if (editing === 'new') {
-                  create.mutate(values, { onSuccess: () => setEditing(null) });
-                } else {
-                  update.mutate(
-                    { id: editing.id, body: values },
-                    { onSuccess: () => setEditing(null) }
-                  );
-                }
-              }}
+              onSubmit={handleSubmit}
               onCancel={() => setEditing(null)}
             />
           )}
