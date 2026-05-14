@@ -14,8 +14,9 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-800">Painel</h1>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-slate-600">Mês:</label>
+          <label htmlFor="month-input" className="text-sm font-medium text-slate-600">Mês:</label>
           <MonthInput
+            id="month-input"
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.currentTarget.value)}
             className="w-40"

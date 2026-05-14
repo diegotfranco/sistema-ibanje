@@ -204,13 +204,7 @@ function MenuItemRenderer({
   if (route.path && route.label) {
     const isActive = isRouteActive(route, location.pathname, searchParams);
 
-    const navElement = route.element ? (
-      <NavLink to={route.path}>
-        {route.icon && <route.icon size={16} />}
-        <span className="truncate">{route.label}</span>
-      </NavLink>
-    ) : (
-      // Sidebar-only entry (no route element) - still navigable
+    const navElement = (
       <NavLink to={route.path}>
         {route.icon && <route.icon size={16} />}
         <span className="truncate">{route.label}</span>
