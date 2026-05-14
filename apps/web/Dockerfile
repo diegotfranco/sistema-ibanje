@@ -27,7 +27,7 @@ RUN apk add --no-cache su-exec && \
     addgroup -S appuser && \
     adduser -S appuser -G appuser && \
     rm -rf /usr/share/nginx/html/* && \
-    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /var/log/nginx /var/run
+    chown -R appuser:appuser /usr/share/nginx/html /var/cache/nginx /var/log/nginx /var/run /run
 COPY --from=builder /repo/apps/web/dist/ /usr/share/nginx/html/
 COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
