@@ -25,6 +25,17 @@ import {
   members,
   financeSettings
 } from './schema.js';
+import {
+  SEED_ROLES,
+  SEED_PERMISSIONS,
+  EXPECTED_PERMISSION_ORDER,
+  SEED_MODULES,
+  EXPECTED_MODULE_ORDER,
+  SEED_PAYMENT_METHODS,
+  SEED_INCOME_CATEGORY_PARENTS,
+  buildIncomeCategoryChildren,
+  buildRoleModulePermissions
+} from './seed-data.js';
 
 const LEGACY_SQLITE_PATH =
   process.env.LEGACY_SQLITE_PATH ?? path.resolve(process.cwd(), 'ibanje.db');
@@ -86,195 +97,6 @@ function readLegacyMembers(): LegacyMember[] {
   }
 }
 
-function buildRoleModulePermissions(
-  roleByName: Record<string, { id: number }>,
-  modByName: Record<string, { id: number }>,
-  insertedPerms: Array<{ id: number; name: string }>,
-  insertedMods: Array<{ id: number; name: string }>
-) {
-  const cross = (roleId: number, moduleNames: string[], permIds: number[]) =>
-    moduleNames.flatMap((mod) =>
-      permIds.map((permId) => ({ roleId, moduleId: modByName[mod].id, permissionId: permId }))
-    );
-
-  const allPermIds = insertedPerms.map((p) => p.id);
-  const fullPermIds = ['Acessar', 'Cadastrar', 'Editar', 'Remover', 'Relatórios'].map(
-    (n) => insertedPerms.find((p) => p.name === n)!.id
-  );
-  const writePermIds = ['Acessar', 'Cadastrar', 'Editar', 'Relatórios'].map(
-    (n) => insertedPerms.find((p) => p.name === n)!.id
-  );
-  const readPermIds = ['Acessar', 'Relatórios'].map(
-    (n) => insertedPerms.find((p) => p.name === n)!.id
-  );
-
-  return [
-    // Administrador: all modules × all permissions
-    ...cross(
-      roleByName['Administrador'].id,
-      insertedMods.map((m) => m.name),
-      allPermIds
-    ),
-
-    // Tesoureiro: financial (panel included) write, admin (no panel) read
-    ...cross(
-      roleByName['Tesoureiro'].id,
-      [
-        'Painel',
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      writePermIds
-    ),
-    ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
-
-    // Comissão de Exame de Contas: financial — read
-    ...cross(
-      roleByName['Comissão de Exame de Contas'].id,
-      [
-        'Painel',
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      readPermIds
-    ),
-
-    // Tesoureiro Responsável: financial (panel included) full, admin (no panel) read
-    ...cross(
-      roleByName['Tesoureiro Responsável'].id,
-      [
-        'Painel',
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      fullPermIds
-    ),
-    ...cross(roleByName['Tesoureiro Responsável'].id, ['Membros', 'Atas'], readPermIds),
-
-    // Secretário: admin (panel included) write, financial (no panel) read
-    ...cross(roleByName['Secretário'].id, ['Painel', 'Membros', 'Atas'], writePermIds),
-    ...cross(
-      roleByName['Secretário'].id,
-      [
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      readPermIds
-    ),
-
-    // Secretário Responsável: admin (panel included) full, financial (no panel) read
-    ...cross(roleByName['Secretário Responsável'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-    ...cross(
-      roleByName['Secretário Responsável'].id,
-      [
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      readPermIds
-    ),
-
-    // Presidente: financial (no panel) full, admin (panel included) full, Pautas full
-    ...cross(
-      roleByName['Presidente'].id,
-      [
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      fullPermIds
-    ),
-    ...cross(roleByName['Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-    ...cross(roleByName['Presidente'].id, ['Pautas'], allPermIds),
-
-    // Vice-Presidente: same as Presidente
-    ...cross(
-      roleByName['Vice-Presidente'].id,
-      [
-        'Categorias de Entradas',
-        'Lançamentos de Entradas',
-        'Categorias de Saídas',
-        'Lançamentos de Saídas',
-        'Formas de Pagamento',
-        'Fundos Designados'
-      ],
-      fullPermIds
-    ),
-    ...cross(roleByName['Vice-Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-    ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
-
-    // Tesoureiro: closings — create + submit only
-    ...cross(
-      roleByName['Tesoureiro'].id,
-      ['Fechamentos Mensais'],
-      ['Acessar', 'Cadastrar'].map((n) => insertedPerms.find((p) => p.name === n)!.id)
-    ),
-
-    // Tesoureiro Responsável: closings — full (including review + close)
-    ...cross(
-      roleByName['Tesoureiro Responsável'].id,
-      ['Fechamentos Mensais'],
-      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
-        (n) => insertedPerms.find((p) => p.name === n)!.id
-      )
-    ),
-
-    // Presidente: closings — full
-    ...cross(
-      roleByName['Presidente'].id,
-      ['Fechamentos Mensais'],
-      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
-        (n) => insertedPerms.find((p) => p.name === n)!.id
-      )
-    ),
-
-    // Vice-Presidente: closings — full
-    ...cross(
-      roleByName['Vice-Presidente'].id,
-      ['Fechamentos Mensais'],
-      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
-        (n) => insertedPerms.find((p) => p.name === n)!.id
-      )
-    ),
-
-    // Comissão de Exame de Contas: closings — review
-    ...cross(
-      roleByName['Comissão de Exame de Contas'].id,
-      ['Fechamentos Mensais'],
-      ['Acessar', 'Revisar'].map((n) => insertedPerms.find((p) => p.name === n)!.id)
-    ),
-
-    // Membro: view only
-    ...cross(
-      roleByName['Membro'].id,
-      ['Atas', 'Membros'],
-      [insertedPerms.find((p) => p.name === 'Acessar')!.id]
-    )
-  ];
-}
-
 export async function seedProd() {
   console.log('Production seed starting...');
   console.log(`Reading legacy SQLite from: ${LEGACY_SQLITE_PATH}`);
@@ -304,138 +126,25 @@ export async function seedProd() {
     }
 
     // --- Roles ---
-    const insertedRoles = await tx
-      .insert(roles)
-      .values([
-        {
-          name: 'Administrador',
-          description: 'Acesso irrestrito a todas as funcionalidades do sistema para manutenção.'
-        },
-        {
-          name: 'Presidente',
-          description: 'Acesso total para gestão administrativa, financeira e de pautas.'
-        },
-        {
-          name: 'Vice-Presidente',
-          description: 'Acesso total para gestão, atuando como substituto legal do presidente.'
-        },
-        {
-          name: 'Secretário Responsável',
-          description: 'Gestão completa de atas e membros, incluindo remoção de registros.'
-        },
-        {
-          name: 'Secretário',
-          description: 'Gestão de atas e membros, sem permissão para remover registros.'
-        },
-        {
-          name: 'Tesoureiro Responsável',
-          description: 'Gestão financeira completa, incluindo remoção de lançamentos.'
-        },
-        {
-          name: 'Tesoureiro',
-          description: 'Gestão financeira do dia-a-dia, sem permissão para remover lançamentos.'
-        },
-        {
-          name: 'Comissão de Exame de Contas',
-          description:
-            'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
-        },
-        {
-          name: 'Membro',
-          description: 'Acesso de visualização para transparência de atas e dados pessoais.'
-        }
-      ])
-      .returning();
+    const insertedRoles = await tx.insert(roles).values(SEED_ROLES).returning();
     const roleByName = Object.fromEntries(insertedRoles.map((r) => [r.name, r]));
 
-    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
-    // constants by packages/shared/src/index.ts (Action enum). APPEND ONLY.
-    // --- Permissions ---
-    const insertedPerms = await tx
-      .insert(permissions)
-      .values([
-        { name: 'Acessar', description: 'Permite acesso à área do sistema' },
-        { name: 'Cadastrar', description: 'Permite adicionar um registro' },
-        { name: 'Editar', description: 'Permite editar um registro' },
-        { name: 'Remover', description: 'Permite remover um registro' },
-        { name: 'Revisar', description: 'Permite revisar e aprovar um registro' },
-        { name: 'Relatórios', description: 'Permite gerar relatórios' }
-      ])
-      .returning();
-
-    if (
-      insertedPerms[0].name !== 'Acessar' ||
-      insertedPerms[1].name !== 'Cadastrar' ||
-      insertedPerms[2].name !== 'Editar' ||
-      insertedPerms[3].name !== 'Remover' ||
-      insertedPerms[4].name !== 'Revisar' ||
-      insertedPerms[5].name !== 'Relatórios'
-    ) {
-      throw new Error(
-        'Seed permission order changed — update packages/shared/src/index.ts Action enum to match.'
-      );
+    // ORDER MATTERS — IDs referenced by packages/shared/src/index.ts (Action enum). APPEND ONLY.
+    const insertedPerms = await tx.insert(permissions).values(SEED_PERMISSIONS).returning();
+    const permByName = Object.fromEntries(insertedPerms.map((p) => [p.name, p]));
+    for (let i = 0; i < EXPECTED_PERMISSION_ORDER.length; i++) {
+      if (insertedPerms[i]?.name !== EXPECTED_PERMISSION_ORDER[i]) {
+        throw new Error(
+          'Seed permission order changed — update packages/shared/src/index.ts Action enum to match.'
+        );
+      }
     }
 
-    // ORDER MATTERS — this insert order assigns IDs that are referenced as numeric
-    // constants by packages/shared/src/index.ts (Module enum). APPEND ONLY.
-    // --- Modules ---
-    const insertedMods = await tx
-      .insert(modules)
-      .values([
-        { name: 'Usuários', description: 'Gerencia os usuários do sistema' },
-        { name: 'Cargos', description: 'Gerencia os cargos e funções do sistema' },
-        { name: 'Permissões', description: 'Gerencia os tipos de permissões disponíveis' },
-        { name: 'Áreas', description: 'Gerencia as seções funcionais do sistema' },
-        { name: 'Status', description: 'Gerencia os status dos registros do sistema' },
-        { name: 'Membros', description: 'Gerencia os membros da igreja' },
-        {
-          name: 'Categorias de Entradas',
-          description: 'Gerencia os tipos de entradas financeiras'
-        },
-        {
-          name: 'Lançamentos de Entradas',
-          description: 'Gerencia o registro de entradas financeiras'
-        },
-        { name: 'Categorias de Saídas', description: 'Gerencia os tipos de saídas financeiras' },
-        { name: 'Lançamentos de Saídas', description: 'Gerencia o registro de saídas financeiras' },
-        { name: 'Formas de Pagamento', description: 'Gerencia as formas de pagamento disponíveis' },
-        { name: 'Fundos Designados', description: 'Gerencia os fundos designados da igreja' },
-        { name: 'Painel', description: 'Painel com informações e estatísticas do sistema' },
-        {
-          name: 'Relatórios',
-          description: 'Área destinada à geração de relatórios financeiros e administrativos'
-        },
-        {
-          name: 'Fechamentos Mensais',
-          description: 'Gerencia os fechamentos mensais de tesouraria'
-        },
-        { name: 'Pautas', description: 'Gerencia as pautas das reuniões da diretoria' },
-        { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' }
-      ])
-      .returning();
+    // ORDER MATTERS — IDs referenced by packages/shared/src/index.ts (Module enum). APPEND ONLY.
+    const insertedMods = await tx.insert(modules).values(SEED_MODULES).returning();
     const modByName = Object.fromEntries(insertedMods.map((m) => [m.name, m]));
-
-    const expectedModuleOrder = [
-      'Usuários',
-      'Cargos',
-      'Permissões',
-      'Áreas',
-      'Status',
-      'Membros',
-      'Categorias de Entradas',
-      'Lançamentos de Entradas',
-      'Categorias de Saídas',
-      'Lançamentos de Saídas',
-      'Formas de Pagamento',
-      'Fundos Designados',
-      'Painel',
-      'Relatórios',
-      'Fechamentos Mensais',
-      'Pautas',
-      'Atas'
-    ];
-    for (let i = 0; i < expectedModuleOrder.length; i++) {
-      if (insertedMods[i]?.name !== expectedModuleOrder[i]) {
+    for (let i = 0; i < EXPECTED_MODULE_ORDER.length; i++) {
+      if (insertedMods[i]?.name !== EXPECTED_MODULE_ORDER[i]) {
         throw new Error(
           `Seed module order changed at index ${i} — update packages/shared/src/index.ts Module enum to match.`
         );
@@ -443,32 +152,24 @@ export async function seedProd() {
     }
 
     // --- Role-Module-Permissions ---
-    const rmpRows = buildRoleModulePermissions(roleByName, modByName, insertedPerms, insertedMods);
+    const rmpRows = buildRoleModulePermissions(
+      roleByName,
+      modByName,
+      permByName,
+      insertedMods.map((m) => m.name)
+    );
     await tx.insert(roleModulePermissions).values(rmpRows);
 
     // --- Payment Methods ---
-    await tx.insert(paymentMethods).values([
-      { name: 'Dinheiro', allowsInflow: true, allowsOutflow: true },
-      { name: 'Transferência Bancária', allowsInflow: true, allowsOutflow: true },
-      { name: 'Cartão de Débito', allowsInflow: true, allowsOutflow: true },
-      { name: 'Cartão de Crédito', allowsInflow: false, allowsOutflow: true },
-      { name: 'Boleto Bancário', allowsInflow: false, allowsOutflow: true }
-    ]);
+    await tx.insert(paymentMethods).values(SEED_PAYMENT_METHODS);
 
     // --- Income Categories (2-level chart of accounts) ---
-    const [icContribuicoes, icOutrasReceitas] = await tx
+    const insertedICParents = await tx
       .insert(incomeCategories)
-      .values([{ name: 'Contribuições' }, { name: 'Outras Receitas' }])
+      .values(SEED_INCOME_CATEGORY_PARENTS.map((name) => ({ name })))
       .returning();
-
-    await tx.insert(incomeCategories).values([
-      { name: 'Dízimo', parentId: icContribuicoes.id, requiresMember: true },
-      { name: 'Oferta de Culto', parentId: icContribuicoes.id },
-      { name: 'Oferta Missionária', parentId: icContribuicoes.id },
-      { name: 'Doação', parentId: icContribuicoes.id },
-      { name: 'Rendimentos Financeiros', parentId: icOutrasReceitas.id },
-      { name: 'Eventos / Campanhas', parentId: icOutrasReceitas.id }
-    ]);
+    const icParentByName = Object.fromEntries(insertedICParents.map((c) => [c.name, c]));
+    await tx.insert(incomeCategories).values(buildIncomeCategoryChildren(icParentByName));
 
     // --- Expense Categories (2-level chart of accounts) ---
     const [ecPessoal, ecOperacional, ecManutencao, ecEquipamentos, ecEventos] = await tx

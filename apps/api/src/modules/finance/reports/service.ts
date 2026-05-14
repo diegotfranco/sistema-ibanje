@@ -61,7 +61,7 @@ function buildFundSummary(
   };
 }
 
-function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
+export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
   const columnMap = new Map<string, IncomePivotColumn>();
 
   for (const agg of aggregates) {
@@ -103,7 +103,7 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
   return { columns, rows, grandTotal };
 }
 
-async function computeOpeningBalance(from: string): Promise<string> {
+export async function computeOpeningBalance(from: string): Promise<string> {
   const [fromYear, fromMonth] = from.split('-').map(Number);
   const lastFechado = await findPreviousFechadoClosing(fromYear, fromMonth);
 

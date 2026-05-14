@@ -4,30 +4,12 @@ import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
-import { EntryStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeEntries, useIncomeEntryMutations } from './useIncomeEntries';
 import { IncomeEntryForm } from './IncomeEntryForm';
+import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
 import type { IncomeEntryResponse, IncomeEntryFormValues } from '@/schemas/income-entry';
-
-const STATUS_FILTERS = [
-  { value: 'all', label: 'Todos' },
-  { value: EntryStatus.Pending, label: 'Pendente' },
-  { value: EntryStatus.Paid, label: 'Paga' },
-  { value: EntryStatus.Cancelled, label: 'Cancelada' }
-] as const;
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
-
-const formatMoney = (s: string) =>
-  Number.parseFloat(s).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 
 export default function IncomeEntriesPage() {
   const { data: user } = useCurrentUser();

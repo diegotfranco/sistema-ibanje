@@ -5,30 +5,12 @@ import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Receipt } from 'lucide-react';
-import { EntryStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseEntries, useExpenseEntryMutations } from './useExpenseEntries';
 import { ExpenseEntryForm } from './ExpenseEntryForm';
+import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
 import type { ExpenseEntryResponse, ExpenseEntryFormValues } from '@/schemas/expense-entry';
-
-const STATUS_FILTERS = [
-  { value: 'all', label: 'Todos' },
-  { value: EntryStatus.Pending, label: 'Pendente' },
-  { value: EntryStatus.Paid, label: 'Paga' },
-  { value: EntryStatus.Cancelled, label: 'Cancelada' }
-] as const;
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
-
-const formatMoney = (s: string) =>
-  Number.parseFloat(s).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
 
 export default function ExpenseEntriesPage() {
   const { data: user } = useCurrentUser();
