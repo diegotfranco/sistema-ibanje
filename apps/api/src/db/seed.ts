@@ -84,7 +84,7 @@ function normalizeName(v: unknown): string {
 }
 function parseAmount(v: unknown): number {
   if (v === null || v === undefined || v === '') return 0;
-  const n = typeof v === 'number' ? v : parseFloat(String(v));
+  const n = typeof v === 'number' ? v : Number.parseFloat(String(v));
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 function fmtMoney(n: number): string {

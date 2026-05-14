@@ -25,7 +25,7 @@ const formatDate = (s: string) => {
 };
 
 const formatMoney = (s: string) =>
-  parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function ExpenseEntriesPage() {
   const { data: user } = useCurrentUser();
@@ -48,8 +48,8 @@ export default function ExpenseEntriesPage() {
   const toCreateBody = (values: ExpenseEntryFormValues) => ({
     referenceDate: values.referenceDate,
     description: values.description,
-    amount: parseFloat(values.amount),
-    total: parseFloat(values.total),
+    amount: Number.parseFloat(values.amount),
+    total: Number.parseFloat(values.total),
     installment: values.installment,
     totalInstallments: values.totalInstallments,
     categoryId: values.categoryId!,

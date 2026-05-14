@@ -14,8 +14,8 @@ export function DashboardClosingBanner() {
   const closings = response?.data || [];
   const currentMonth = getCurrentMonth();
   const [currentYear, currentMonthStr] = currentMonth.split('-');
-  const currentMonthNum = parseInt(currentMonthStr, 10);
-  const currentYearNum = parseInt(currentYear, 10);
+  const currentMonthNum = Number.parseInt(currentMonthStr, 10);
+  const currentYearNum = Number.parseInt(currentYear, 10);
 
   if (isLoading) {
     return <Skeleton className="h-20 w-full" />;

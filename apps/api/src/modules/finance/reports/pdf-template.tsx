@@ -90,11 +90,11 @@ function fmtDate(iso: string): string {
 }
 
 function fmtCurrency(v: string): string {
-  return parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return Number.parseFloat(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 function getBalanceStyle(amount: string) {
-  const value = parseFloat(amount);
+  const value = Number.parseFloat(amount);
   return value >= 0
     ? tw('text-sm font-roboto font-medium text-green-800')
     : tw('text-sm font-roboto font-medium text-red-800');
@@ -164,7 +164,7 @@ function PageFooter() {
 }
 
 function CategoryTable({ rows, totalLabel, type }: CategoryTableProps) {
-  const total = rows.reduce((sum, r) => sum + parseFloat(r.total), 0).toFixed(2);
+  const total = rows.reduce((sum, r) => sum + Number.parseFloat(r.total), 0).toFixed(2);
   return (
     <View>
       <View style={tw('flex-row bg-gray-100 border-b border-gray-200')}>
@@ -385,7 +385,7 @@ function IncomeDetailTable({ pivot }: { pivot: IncomePivot }) {
 }
 
 function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
-  const total = rows.reduce((s, r) => s + parseFloat(r.amount), 0).toFixed(2);
+  const total = rows.reduce((s, r) => s + Number.parseFloat(r.amount), 0).toFixed(2);
   return (
     <View>
       <View style={tw('flex-row bg-gray-100 border-b border-gray-200')}>

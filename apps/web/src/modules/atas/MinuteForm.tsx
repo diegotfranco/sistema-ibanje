@@ -70,7 +70,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               render={({ field }) => (
                 <Select
                   value={field.value ? String(field.value) : ''}
-                  onValueChange={(v) => field.onChange(parseInt(v, 10))}>
+                  onValueChange={(v) => field.onChange(Number.parseInt(v, 10))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a reunião" />
                   </SelectTrigger>

@@ -33,9 +33,9 @@ async function buildResponse(
     closingBalance = closing.closingBalance;
     openingBalancePending = false;
     openingBalance = (
-      parseFloat(closingBalance) -
-      parseFloat(totalIncome) +
-      parseFloat(totalExpenses)
+      Number.parseFloat(closingBalance) -
+      Number.parseFloat(totalIncome) +
+      Number.parseFloat(totalExpenses)
     ).toFixed(2);
   } else {
     const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
@@ -63,7 +63,7 @@ async function buildResponse(
 
     if (!lastFechadoIsPrevMonth) {
       const intermediateNet = await repo.sumNetForDateRange(rangeStart, rangeEnd);
-      openingBalance = (parseFloat(baseBal) + parseFloat(intermediateNet)).toFixed(2);
+      openingBalance = (Number.parseFloat(baseBal) + Number.parseFloat(intermediateNet)).toFixed(2);
       openingBalancePending = true;
     } else {
       openingBalance = baseBal;
@@ -71,9 +71,9 @@ async function buildResponse(
     }
 
     closingBalance = (
-      parseFloat(openingBalance) +
-      parseFloat(totalIncome) -
-      parseFloat(totalExpenses)
+      Number.parseFloat(openingBalance) +
+      Number.parseFloat(totalIncome) -
+      Number.parseFloat(totalExpenses)
     ).toFixed(2);
   }
 
@@ -227,9 +227,9 @@ export async function closeMonthlyClosing(
     openingBal = settings?.openingBalance ?? '0';
   }
   const computedBalance = (
-    parseFloat(openingBal) +
-    parseFloat(totalIncome) -
-    parseFloat(totalExpenses)
+    Number.parseFloat(openingBal) +
+    Number.parseFloat(totalIncome) -
+    Number.parseFloat(totalExpenses)
   ).toFixed(2);
 
   const updated = await repo.updateMonthlyClosing(id, {

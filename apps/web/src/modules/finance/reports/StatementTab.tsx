@@ -18,7 +18,7 @@ interface Props {
 }
 
 const formatMoney = (s: string) =>
-  `R$ ${parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 const formatDate = (s: string) => {
   const [y, m, d] = s.split('-');

@@ -165,8 +165,8 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
       )
   ]);
 
-  const totalIncome = parseFloat(incomeResult[0]?.total ?? '0');
-  const totalExpenses = parseFloat(expensesResult[0]?.total ?? '0');
+  const totalIncome = Number.parseFloat(incomeResult[0]?.total ?? '0');
+  const totalExpenses = Number.parseFloat(expensesResult[0]?.total ?? '0');
   return (totalIncome - totalExpenses).toFixed(2);
 }
 
@@ -194,8 +194,8 @@ export async function sumNetForDateRange(startDate: string, endDate: string): Pr
       )
   ]);
 
-  const totalIncome = parseFloat(incomeResult[0]?.total ?? '0');
-  const totalExpenses = parseFloat(expensesResult[0]?.total ?? '0');
+  const totalIncome = Number.parseFloat(incomeResult[0]?.total ?? '0');
+  const totalExpenses = Number.parseFloat(expensesResult[0]?.total ?? '0');
   return (totalIncome - totalExpenses).toFixed(2);
 }
 

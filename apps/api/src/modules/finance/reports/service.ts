@@ -45,10 +45,10 @@ function buildFundSummary(
   raised: string,
   expenses: string
 ): FundSummary {
-  const balance = (parseFloat(raised) - parseFloat(expenses)).toFixed(2);
+  const balance = (Number.parseFloat(raised) - Number.parseFloat(expenses)).toFixed(2);
   const progressPercentage =
-    targetAmount !== null && parseFloat(targetAmount) > 0
-      ? ((parseFloat(balance) / parseFloat(targetAmount)) * 100).toFixed(2)
+    targetAmount !== null && Number.parseFloat(targetAmount) > 0
+      ? ((Number.parseFloat(balance) / Number.parseFloat(targetAmount)) * 100).toFixed(2)
       : null;
   return {
     fundId,
@@ -76,7 +76,7 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
       });
     }
     const col = columnMap.get(key)!;
-    col.total = (parseFloat(col.total) + parseFloat(agg.total)).toFixed(2);
+    col.total = (Number.parseFloat(col.total) + Number.parseFloat(agg.total)).toFixed(2);
   }
 
   const columns = [...columnMap.values()].sort((a, b) => {
@@ -91,12 +91,12 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
       rowMap.set(agg.referenceDate, { referenceDate: agg.referenceDate, cells: {}, total: '0.00' });
     }
     const row = rowMap.get(agg.referenceDate)!;
-    row.cells[key] = (parseFloat(row.cells[key] ?? '0') + parseFloat(agg.total)).toFixed(2);
-    row.total = (parseFloat(row.total) + parseFloat(agg.total)).toFixed(2);
+    row.cells[key] = (Number.parseFloat(row.cells[key] ?? '0') + Number.parseFloat(agg.total)).toFixed(2);
+    row.total = (Number.parseFloat(row.total) + Number.parseFloat(agg.total)).toFixed(2);
   }
 
   const rows = [...rowMap.values()].sort((a, b) => a.referenceDate.localeCompare(b.referenceDate));
-  const grandTotal = rows.reduce((s, r) => s + parseFloat(r.total), 0).toFixed(2);
+  const grandTotal = rows.reduce((s, r) => s + Number.parseFloat(r.total), 0).toFixed(2);
 
   return { columns, rows, grandTotal };
 }
@@ -124,7 +124,7 @@ async function computeOpeningBalance(from: string): Promise<string> {
 
   if (!lastFechadoIsPrevMonth) {
     const intermediateNet = await sumNetForDateRange(rangeStart, from);
-    return (parseFloat(baseBal) + parseFloat(intermediateNet)).toFixed(2);
+    return (Number.parseFloat(baseBal) + Number.parseFloat(intermediateNet)).toFixed(2);
   }
 
   return baseBal;
@@ -210,9 +210,9 @@ export async function getFinancialStatement(
   ]);
 
   const currentBalance = (
-    parseFloat(openingBalance) +
-    parseFloat(totalIncome) -
-    parseFloat(totalExpenses)
+    Number.parseFloat(openingBalance) +
+    Number.parseFloat(totalIncome) -
+    Number.parseFloat(totalExpenses)
   ).toFixed(2);
 
   return {
@@ -375,9 +375,9 @@ export async function getDetailedFinancialStatement(
     ]);
 
   const currentBalance = (
-    parseFloat(openingBalance) +
-    parseFloat(totalIncome) -
-    parseFloat(totalExpenses)
+    Number.parseFloat(openingBalance) +
+    Number.parseFloat(totalIncome) -
+    Number.parseFloat(totalExpenses)
   ).toFixed(2);
 
   const incomePivot = buildIncomePivot(incomeAggregates);

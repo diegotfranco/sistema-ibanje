@@ -38,7 +38,7 @@ const MONTHS = [
 const formatPeriod = (year: number, month: number) => `${MONTHS[month - 1]} ${year}`;
 
 const formatMoney = (s: string) =>
-  `R$ ${parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function MonthlyClosingsPage() {
   const { data: user } = useCurrentUser();

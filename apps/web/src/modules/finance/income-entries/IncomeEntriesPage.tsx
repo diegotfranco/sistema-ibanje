@@ -24,7 +24,7 @@ const formatDate = (s: string) => {
 };
 
 const formatMoney = (s: string) =>
-  parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default function IncomeEntriesPage() {
   const { data: user } = useCurrentUser();
@@ -47,7 +47,7 @@ export default function IncomeEntriesPage() {
   const toCreateBody = (values: IncomeEntryFormValues) => ({
     referenceDate: values.referenceDate,
     ...(values.depositDate ? { depositDate: values.depositDate } : {}),
-    amount: parseFloat(values.amount),
+    amount: Number.parseFloat(values.amount),
     categoryId: values.categoryId!,
     ...(values.memberId !== undefined ? { memberId: values.memberId } : {}),
     paymentMethodId: values.paymentMethodId!,

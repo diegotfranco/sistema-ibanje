@@ -24,8 +24,8 @@ export default React.forwardRef<HTMLInputElement, Props>(
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
       if (value && value !== '') {
-        const num = parseFloat(value);
-        if (!isNaN(num)) {
+        const num = Number.parseFloat(value);
+        if (!Number.isNaN(num)) {
           onChange(num.toFixed(2));
         }
       }

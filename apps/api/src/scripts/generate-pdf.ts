@@ -52,7 +52,7 @@ async function computeOpeningBalance(from: string): Promise<string> {
 
   if (!lastFechadoIsPrevMonth) {
     const intermediateNet = await sumNetForDateRange(rangeStart, from);
-    return (parseFloat(baseBal) + parseFloat(intermediateNet)).toFixed(2);
+    return (Number.parseFloat(baseBal) + Number.parseFloat(intermediateNet)).toFixed(2);
   }
 
   return baseBal;
@@ -72,7 +72,7 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
       });
     }
     const col = columnMap.get(key)!;
-    col.total = (parseFloat(col.total) + parseFloat(agg.total)).toFixed(2);
+    col.total = (Number.parseFloat(col.total) + Number.parseFloat(agg.total)).toFixed(2);
   }
   const columns = [...columnMap.values()].sort((a, b) => {
     if (a.kind !== b.kind) return a.kind === 'category' ? -1 : 1;
@@ -85,11 +85,11 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
       rowMap.set(agg.referenceDate, { referenceDate: agg.referenceDate, cells: {}, total: '0.00' });
     }
     const row = rowMap.get(agg.referenceDate)!;
-    row.cells[key] = (parseFloat(row.cells[key] ?? '0') + parseFloat(agg.total)).toFixed(2);
-    row.total = (parseFloat(row.total) + parseFloat(agg.total)).toFixed(2);
+    row.cells[key] = (Number.parseFloat(row.cells[key] ?? '0') + Number.parseFloat(agg.total)).toFixed(2);
+    row.total = (Number.parseFloat(row.total) + Number.parseFloat(agg.total)).toFixed(2);
   }
   const rows = [...rowMap.values()].sort((a, b) => a.referenceDate.localeCompare(b.referenceDate));
-  const grandTotal = rows.reduce((s, r) => s + parseFloat(r.total), 0).toFixed(2);
+  const grandTotal = rows.reduce((s, r) => s + Number.parseFloat(r.total), 0).toFixed(2);
   return { columns, rows, grandTotal };
 }
 
@@ -104,9 +104,9 @@ async function generateDetailed() {
     ]);
 
   const currentBalance = (
-    parseFloat(openingBalance) +
-    parseFloat(totalIncome) -
-    parseFloat(totalExpenses)
+    Number.parseFloat(openingBalance) +
+    Number.parseFloat(totalIncome) -
+    Number.parseFloat(totalExpenses)
   ).toFixed(2);
 
   const data: DetailedFinancialStatementResponse = {
@@ -147,9 +147,9 @@ async function generateSimplified() {
   ]);
 
   const currentBalance = (
-    parseFloat(openingBalance) +
-    parseFloat(totalIncome) -
-    parseFloat(totalExpenses)
+    Number.parseFloat(openingBalance) +
+    Number.parseFloat(totalIncome) -
+    Number.parseFloat(totalExpenses)
   ).toFixed(2);
 
   const data: FinancialStatementResponse = {

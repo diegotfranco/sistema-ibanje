@@ -10,7 +10,7 @@ export const formatDate = (dateString: string): string => {
  * Format money string to Brazilian format
  */
 export const formatMoney = (value: string | number): string => {
-  const num = typeof value === 'string' ? parseFloat(value) : value;
+  const num = typeof value === 'string' ? Number.parseFloat(value) : value;
   return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 };
 
@@ -62,7 +62,7 @@ const monthNamesAbbrv = {
  */
 export const formatMonthYear = (monthStr: string): string => {
   const [year, month] = monthStr.split('-');
-  const monthNum = parseInt(month, 10);
+  const monthNum = Number.parseInt(month, 10);
   const monthName = monthNames[monthNum as keyof typeof monthNames] || month;
   return `${monthName}/${year}`;
 };
@@ -72,7 +72,7 @@ export const formatMonthYear = (monthStr: string): string => {
  */
 export const formatMonthYearShort = (monthStr: string): string => {
   const [year, month] = monthStr.split('-');
-  const monthNum = parseInt(month, 10);
+  const monthNum = Number.parseInt(month, 10);
   const monthAbbr = monthNamesAbbrv[monthNum as keyof typeof monthNamesAbbrv] || month;
   return `${monthAbbr}/${year}`;
 };
@@ -82,7 +82,7 @@ export const formatMonthYearShort = (monthStr: string): string => {
  */
 export const getMonthNumber = (monthStr: string): number => {
   const [, month] = monthStr.split('-');
-  return parseInt(month, 10);
+  return Number.parseInt(month, 10);
 };
 
 /**
@@ -90,7 +90,7 @@ export const getMonthNumber = (monthStr: string): number => {
  */
 export const getYear = (monthStr: string): number => {
   const [year] = monthStr.split('-');
-  return parseInt(year, 10);
+  return Number.parseInt(year, 10);
 };
 
 /**
@@ -98,8 +98,8 @@ export const getYear = (monthStr: string): number => {
  */
 export const isPastClosing = (year: number, month: number, currentMonth: string): boolean => {
   const [currentYear, currentMonthStr] = currentMonth.split('-');
-  const currentMonthNum = parseInt(currentMonthStr, 10);
-  const currentYearNum = parseInt(currentYear, 10);
+  const currentMonthNum = Number.parseInt(currentMonthStr, 10);
+  const currentYearNum = Number.parseInt(currentYear, 10);
 
   if (year < currentYearNum) return true;
   if (year === currentYearNum && month < currentMonthNum) return true;
