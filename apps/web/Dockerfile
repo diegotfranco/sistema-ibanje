@@ -13,7 +13,8 @@ RUN pnpm fetch
 
 # Now copy source and install (offline from the fetched store).
 COPY tsconfig.base.json ./
-COPY apps/ packages/ ./
+COPY apps/ ./apps/
+COPY packages/ ./packages/
 RUN pnpm install --frozen-lockfile --prefer-offline
 
 # Build shared first (web depends on its types via workspace link), then web.
