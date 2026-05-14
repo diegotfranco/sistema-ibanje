@@ -2,26 +2,28 @@ import { eq, count } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { members } from '../../db/schema.js';
 
+const MEMBER_COLUMNS = {
+  id: members.id,
+  userId: members.userId,
+  name: members.name,
+  birthDate: members.birthDate,
+  addressStreet: members.addressStreet,
+  addressNumber: members.addressNumber,
+  addressComplement: members.addressComplement,
+  addressDistrict: members.addressDistrict,
+  state: members.state,
+  city: members.city,
+  postalCode: members.postalCode,
+  email: members.email,
+  phone: members.phone,
+  status: members.status,
+  createdAt: members.createdAt,
+  updatedAt: members.updatedAt
+};
+
 export async function listMembers(offset: number, limit: number) {
   const rows = await db
-    .select({
-      id: members.id,
-      userId: members.userId,
-      name: members.name,
-      birthDate: members.birthDate,
-      addressStreet: members.addressStreet,
-      addressNumber: members.addressNumber,
-      addressComplement: members.addressComplement,
-      addressDistrict: members.addressDistrict,
-      state: members.state,
-      city: members.city,
-      postalCode: members.postalCode,
-      email: members.email,
-      phone: members.phone,
-      status: members.status,
-      createdAt: members.createdAt,
-      updatedAt: members.updatedAt
-    })
+    .select(MEMBER_COLUMNS)
     .from(members)
     .orderBy(members.id)
     .offset(offset)
@@ -35,28 +37,7 @@ export async function listMembers(offset: number, limit: number) {
 }
 
 export async function findMemberById(id: number) {
-  const result = await db
-    .select({
-      id: members.id,
-      userId: members.userId,
-      name: members.name,
-      birthDate: members.birthDate,
-      addressStreet: members.addressStreet,
-      addressNumber: members.addressNumber,
-      addressComplement: members.addressComplement,
-      addressDistrict: members.addressDistrict,
-      state: members.state,
-      city: members.city,
-      postalCode: members.postalCode,
-      email: members.email,
-      phone: members.phone,
-      status: members.status,
-      createdAt: members.createdAt,
-      updatedAt: members.updatedAt
-    })
-    .from(members)
-    .where(eq(members.id, id))
-    .limit(1);
+  const result = await db.select(MEMBER_COLUMNS).from(members).where(eq(members.id, id)).limit(1);
 
   return result[0] ?? null;
 }
@@ -66,28 +47,8 @@ export async function insertMember(
 ) {
   const result = await db
     .insert(members)
-    .values({
-      ...data,
-      status: 'ativo'
-    })
-    .returning({
-      id: members.id,
-      userId: members.userId,
-      name: members.name,
-      birthDate: members.birthDate,
-      addressStreet: members.addressStreet,
-      addressNumber: members.addressNumber,
-      addressComplement: members.addressComplement,
-      addressDistrict: members.addressDistrict,
-      state: members.state,
-      city: members.city,
-      postalCode: members.postalCode,
-      email: members.email,
-      phone: members.phone,
-      status: members.status,
-      createdAt: members.createdAt,
-      updatedAt: members.updatedAt
-    });
+    .values({ ...data, status: 'ativo' })
+    .returning(MEMBER_COLUMNS);
 
   return result[0] ?? null;
 }
@@ -98,29 +59,9 @@ export async function updateMember(
 ) {
   const result = await db
     .update(members)
-    .set({
-      ...data,
-      updatedAt: new Date()
-    })
+    .set({ ...data, updatedAt: new Date() })
     .where(eq(members.id, id))
-    .returning({
-      id: members.id,
-      userId: members.userId,
-      name: members.name,
-      birthDate: members.birthDate,
-      addressStreet: members.addressStreet,
-      addressNumber: members.addressNumber,
-      addressComplement: members.addressComplement,
-      addressDistrict: members.addressDistrict,
-      state: members.state,
-      city: members.city,
-      postalCode: members.postalCode,
-      email: members.email,
-      phone: members.phone,
-      status: members.status,
-      createdAt: members.createdAt,
-      updatedAt: members.updatedAt
-    });
+    .returning(MEMBER_COLUMNS);
 
   return result[0] ?? null;
 }
