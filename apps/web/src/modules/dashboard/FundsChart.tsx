@@ -60,7 +60,8 @@ export function FundsChart() {
                   }`}
                   style={{
                     width: `${Math.min(
-                      (Number.parseFloat(fund.totalRaised) / Number.parseFloat(fund.targetAmount)) * 100,
+                      (Number.parseFloat(fund.totalRaised) / Number.parseFloat(fund.targetAmount)) *
+                        100,
                       100
                     )}%`
                   }}

@@ -85,7 +85,9 @@ function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
       rowMap.set(agg.referenceDate, { referenceDate: agg.referenceDate, cells: {}, total: '0.00' });
     }
     const row = rowMap.get(agg.referenceDate)!;
-    row.cells[key] = (Number.parseFloat(row.cells[key] ?? '0') + Number.parseFloat(agg.total)).toFixed(2);
+    row.cells[key] = (
+      Number.parseFloat(row.cells[key] ?? '0') + Number.parseFloat(agg.total)
+    ).toFixed(2);
     row.total = (Number.parseFloat(row.total) + Number.parseFloat(agg.total)).toFixed(2);
   }
   const rows = [...rowMap.values()].sort((a, b) => a.referenceDate.localeCompare(b.referenceDate));

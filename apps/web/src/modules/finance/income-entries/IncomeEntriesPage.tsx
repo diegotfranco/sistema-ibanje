@@ -24,7 +24,10 @@ const formatDate = (s: string) => {
 };
 
 const formatMoney = (s: string) =>
-  Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number.parseFloat(s).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 
 export default function IncomeEntriesPage() {
   const { data: user } = useCurrentUser();
@@ -54,6 +57,16 @@ export default function IncomeEntriesPage() {
     ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
     ...(values.notes ? { notes: values.notes } : {})
   });
+
+  const handleSubmit = (values: IncomeEntryFormValues) => {
+    const body = toCreateBody(values);
+    if (editing === 'new') {
+      create.mutate(body, { onSuccess: () => setEditing(null) });
+    } else if (editing !== null) {
+      const updateBody = { ...body, ...(values.status ? { status: values.status } : {}) };
+      update.mutate({ id: editing.id, body: updateBody }, { onSuccess: () => setEditing(null) });
+    }
+  };
 
   return (
     <>
@@ -124,21 +137,7 @@ export default function IncomeEntriesPage() {
             <IncomeEntryForm
               initialValues={editing === 'new' ? undefined : editing}
               isPending={create.isPending || update.isPending}
-              onSubmit={(values) => {
-                const body = toCreateBody(values);
-                if (editing === 'new') {
-                  create.mutate(body, { onSuccess: () => setEditing(null) });
-                } else {
-                  const updateBody = {
-                    ...body,
-                    ...(values.status ? { status: values.status } : {})
-                  };
-                  update.mutate(
-                    { id: editing.id, body: updateBody },
-                    { onSuccess: () => setEditing(null) }
-                  );
-                }
-              }}
+              onSubmit={handleSubmit}
               onCancel={() => setEditing(null)}
             />
           )}

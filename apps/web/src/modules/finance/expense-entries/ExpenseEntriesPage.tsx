@@ -25,7 +25,10 @@ const formatDate = (s: string) => {
 };
 
 const formatMoney = (s: string) =>
-  Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  Number.parseFloat(s).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
 
 export default function ExpenseEntriesPage() {
   const { data: user } = useCurrentUser();
