@@ -339,6 +339,174 @@ function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
   };
 }
 
+type IncomeRow = typeof incomeEntries.$inferInsert;
+type ExpenseRow = typeof expenseEntries.$inferInsert;
+
+function buildIncomeRows(
+  entradas: LegacyEntrada[],
+  pmByName: Record<string, { id: number }>,
+  matchMember: (name: string | null | undefined) => MemberMatch,
+  icByName: Record<string, { id: number }>,
+  dfByName: Record<string, { id: number }>,
+  tesoureiroId: number
+): { rows: IncomeRow[]; skippedBadDate: number } {
+  const matchCache = new Map<string, MemberMatch>();
+  function lookupMatch(name: string | null | undefined): MemberMatch {
+    const key = name ?? '';
+    const cached = matchCache.get(key);
+    if (cached) return cached;
+    const result = matchMember(name);
+    matchCache.set(key, result);
+    return result;
+  }
+
+  function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
+    if (match.kind === 'fuzzy') {
+      return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
+    }
+    if (match.kind === 'none' && legacyName) {
+      const norm = normalizeName(legacyName);
+      if (norm.length < 3) return null;
+      if (
+        /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
+          norm
+        )
+      ) {
+        return null;
+      }
+      return `[REVISAR] Nome legado não vinculado: "${legacyName}"`;
+    }
+    return null;
+  }
+
+  const rows: IncomeRow[] = [];
+  let skippedBadDate = 0;
+
+  for (const e of entradas) {
+    const refDate = repairDate(clean(e.data_referencia));
+    const depDate = repairDate(clean(e.data_deposito)) ?? refDate;
+    if (!isValidDate(refDate)) {
+      skippedBadDate++;
+      continue;
+    }
+    const paymentMethodId = pmByName[mapForma(e.forma_pagamento)].id;
+    const match = lookupMatch(e.nome);
+    const memberId = match.kind === 'none' ? null : match.memberId;
+    const baseNote = noteForMatch(e.nome, match);
+
+    const dizimo = parseAmount(e.dizimo);
+    const terenos = parseAmount(e.doacao_terenos);
+    const missoes = parseAmount(e.doacao_missoes);
+    const pam = parseAmount(e.doacao_pam);
+    const campanha = parseAmount(e.doacao_campanha);
+    const campanhaName = clean(e.campanha_nome);
+
+    const common = {
+      referenceDate: refDate!,
+      depositDate: isValidDate(depDate) ? depDate! : refDate!,
+      memberId,
+      paymentMethodId,
+      status: 'paga' as const,
+      userId: tesoureiroId
+    };
+
+    if (dizimo > 0) {
+      rows.push({
+        ...common,
+        amount: fmtMoney(dizimo),
+        categoryId: icByName['Dízimo'].id,
+        notes: baseNote
+      });
+    }
+    if (terenos > 0) {
+      rows.push({
+        ...common,
+        amount: fmtMoney(terenos),
+        categoryId: icByName['Doação'].id,
+        designatedFundId: dfByName['Terenos'].id,
+        notes: baseNote
+      });
+    }
+    if (missoes > 0) {
+      rows.push({
+        ...common,
+        amount: fmtMoney(missoes),
+        categoryId: icByName['Oferta Missionária'].id,
+        designatedFundId: dfByName['Fundo Missionário'].id,
+        notes: baseNote
+      });
+    }
+    if (pam > 0) {
+      rows.push({
+        ...common,
+        amount: fmtMoney(pam),
+        categoryId: icByName['Oferta Missionária'].id,
+        designatedFundId: dfByName['PAM'].id,
+        notes: baseNote
+      });
+    }
+    if (campanha > 0) {
+      const campNote = [baseNote, campanhaName ? `Campanha: "${campanhaName}"` : null]
+        .filter(Boolean)
+        .join(' | ');
+      rows.push({
+        ...common,
+        amount: fmtMoney(campanha),
+        categoryId: icByName['Eventos / Campanhas'].id,
+        designatedFundId: dfByName['Campanhas'].id,
+        notes: campNote || null
+      });
+    }
+  }
+
+  return { rows, skippedBadDate };
+}
+
+function buildExpenseRows(
+  saidas: LegacySaida[],
+  ecByName: Record<string, { id: number }>,
+  pmByName: Record<string, { id: number }>,
+  tesoureiroId: number
+): { rows: ExpenseRow[]; unmappedDestinoCounts: Map<string, number>; skippedBadDate: number } {
+  const rows: ExpenseRow[] = [];
+  const unmappedDestinoCounts = new Map<string, number>();
+  let skippedBadDate = 0;
+
+  for (const s of saidas) {
+    const refDate = repairDate(clean(s.data));
+    const destino = clean(s.destino);
+    if (!isValidDate(refDate)) {
+      skippedBadDate++;
+      continue;
+    }
+    if (!destino || !(s.valor > 0)) continue;
+    const categoryName = mapDestinoToCategory(destino);
+    if (categoryName === FALLBACK_EXPENSE_CATEGORY) {
+      unmappedDestinoCounts.set(destino, (unmappedDestinoCounts.get(destino) ?? 0) + 1);
+    }
+    const category = ecByName[categoryName];
+    const amount = fmtMoney(s.valor);
+    const description = destino.length > 256 ? destino.slice(0, 256) : destino;
+    const notes =
+      categoryName === FALLBACK_EXPENSE_CATEGORY
+        ? `[REVISAR] Destino legado não mapeado: "${destino}"`
+        : null;
+    rows.push({
+      referenceDate: refDate!,
+      description,
+      total: amount,
+      amount,
+      categoryId: category.id,
+      paymentMethodId: pmByName['Transferência Bancária'].id,
+      status: 'paga',
+      userId: tesoureiroId,
+      notes
+    });
+  }
+
+  return { rows, unmappedDestinoCounts, skippedBadDate };
+}
+
 export async function seed() {
   if (process.env.NODE_ENV === 'production') {
     throw new Error('seed must not run in production');
@@ -817,116 +985,14 @@ export async function seed() {
     // --- Income Entries (from legacy entradas) ---
     const tesoureiroId = userByEmail['tesoureiro@email.com'].id;
 
-    const matchCache = new Map<string, MemberMatch>();
-    function lookupMatch(name: string | null | undefined): MemberMatch {
-      const key = name ?? '';
-      const cached = matchCache.get(key);
-      if (cached) return cached;
-      const result = matchMember(name);
-      matchCache.set(key, result);
-      return result;
-    }
-
-    function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
-      if (match.kind === 'fuzzy') {
-        return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
-      }
-      if (match.kind === 'none' && legacyName) {
-        const norm = normalizeName(legacyName);
-        if (norm.length < 3) return null;
-        // Don't flag obvious non-person tokens — those are intentional unlinked.
-        if (
-          /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
-            norm
-          )
-        ) {
-          return null;
-        }
-        return `[REVISAR] Nome legado não vinculado: "${legacyName}"`;
-      }
-      return null;
-    }
-
-    type IncomeRow = typeof incomeEntries.$inferInsert;
-    const incomeRows: IncomeRow[] = [];
-    let skippedBadDate = 0;
-
-    for (const e of legacy.entradas) {
-      const refDate = repairDate(clean(e.data_referencia));
-      const depDate = repairDate(clean(e.data_deposito)) ?? refDate;
-      if (!isValidDate(refDate)) {
-        skippedBadDate++;
-        continue;
-      }
-      const paymentMethodId = pmByName[mapForma(e.forma_pagamento)].id;
-      const match = lookupMatch(e.nome);
-      const memberId = match.kind === 'none' ? null : match.memberId;
-      const baseNote = noteForMatch(e.nome, match);
-
-      const dizimo = parseAmount(e.dizimo);
-      const terenos = parseAmount(e.doacao_terenos);
-      const missoes = parseAmount(e.doacao_missoes);
-      const pam = parseAmount(e.doacao_pam);
-      const campanha = parseAmount(e.doacao_campanha);
-      const campanhaName = clean(e.campanha_nome);
-
-      const common = {
-        referenceDate: refDate!,
-        depositDate: isValidDate(depDate) ? depDate! : refDate!,
-        memberId,
-        paymentMethodId,
-        status: 'paga' as const,
-        userId: tesoureiroId
-      };
-
-      if (dizimo > 0) {
-        incomeRows.push({
-          ...common,
-          amount: fmtMoney(dizimo),
-          categoryId: icByName['Dízimo'].id,
-          notes: baseNote
-        });
-      }
-      if (terenos > 0) {
-        incomeRows.push({
-          ...common,
-          amount: fmtMoney(terenos),
-          categoryId: icByName['Doação'].id,
-          designatedFundId: dfByName['Terenos'].id,
-          notes: baseNote
-        });
-      }
-      if (missoes > 0) {
-        incomeRows.push({
-          ...common,
-          amount: fmtMoney(missoes),
-          categoryId: icByName['Oferta Missionária'].id,
-          designatedFundId: dfByName['Fundo Missionário'].id,
-          notes: baseNote
-        });
-      }
-      if (pam > 0) {
-        incomeRows.push({
-          ...common,
-          amount: fmtMoney(pam),
-          categoryId: icByName['Oferta Missionária'].id,
-          designatedFundId: dfByName['PAM'].id,
-          notes: baseNote
-        });
-      }
-      if (campanha > 0) {
-        const campNote = [baseNote, campanhaName ? `Campanha: "${campanhaName}"` : null]
-          .filter(Boolean)
-          .join(' | ');
-        incomeRows.push({
-          ...common,
-          amount: fmtMoney(campanha),
-          categoryId: icByName['Eventos / Campanhas'].id,
-          designatedFundId: dfByName['Campanhas'].id,
-          notes: campNote || null
-        });
-      }
-    }
+    const { rows: incomeRows, skippedBadDate } = buildIncomeRows(
+      legacy.entradas,
+      pmByName,
+      matchMember,
+      icByName,
+      dfByName,
+      tesoureiroId
+    );
 
     const BATCH = 500;
     for (let i = 0; i < incomeRows.length; i += BATCH) {
@@ -937,42 +1003,8 @@ export async function seed() {
     );
 
     // --- Expense Entries (from legacy saidas) ---
-    type ExpenseRow = typeof expenseEntries.$inferInsert;
-    const expenseRows: ExpenseRow[] = [];
-    const unmappedDestinoCounts = new Map<string, number>();
-    let skippedExpBadDate = 0;
-
-    for (const s of legacy.saidas) {
-      const refDate = repairDate(clean(s.data));
-      const destino = clean(s.destino);
-      if (!isValidDate(refDate)) {
-        skippedExpBadDate++;
-        continue;
-      }
-      if (!destino || !(s.valor > 0)) continue;
-      const categoryName = mapDestinoToCategory(destino);
-      if (categoryName === FALLBACK_EXPENSE_CATEGORY) {
-        unmappedDestinoCounts.set(destino, (unmappedDestinoCounts.get(destino) ?? 0) + 1);
-      }
-      const category = ecByName[categoryName];
-      const amount = fmtMoney(s.valor);
-      const description = destino.length > 256 ? destino.slice(0, 256) : destino;
-      const notes =
-        categoryName === FALLBACK_EXPENSE_CATEGORY
-          ? `[REVISAR] Destino legado não mapeado: "${destino}"`
-          : null;
-      expenseRows.push({
-        referenceDate: refDate!,
-        description,
-        total: amount,
-        amount,
-        categoryId: category.id,
-        paymentMethodId: pmByName['Transferência Bancária'].id,
-        status: 'paga',
-        userId: tesoureiroId,
-        notes
-      });
-    }
+    const { rows: expenseRows, unmappedDestinoCounts, skippedBadDate: skippedExpBadDate } =
+      buildExpenseRows(legacy.saidas, ecByName, pmByName, tesoureiroId);
 
     for (let i = 0; i < expenseRows.length; i += BATCH) {
       await tx.insert(expenseEntries).values(expenseRows.slice(i, i + BATCH));
