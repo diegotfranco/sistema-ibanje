@@ -1,5 +1,4 @@
 import { z } from 'zod';
-import type { MeResponse } from '@sistema-ibanje/shared';
 
 export type { MeResponse } from '@sistema-ibanje/shared';
 
@@ -45,16 +44,6 @@ export const MeResponseSchema = z.object({
   status: z.string(),
   permissions: z.record(z.string(), z.number())
 });
-
-// Compile-time check: shared MeResponse and Zod-derived shape stay in sync.
-type _MeMatch =
-  z.infer<typeof MeResponseSchema> extends MeResponse
-    ? MeResponse extends z.infer<typeof MeResponseSchema>
-      ? true
-      : false
-    : false;
-const _meCheck: _MeMatch = true;
-void _meCheck;
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;

@@ -11,7 +11,7 @@ export function logAudit(
   opts?: { notes?: string; ipAddress?: string }
 ): void {
   // Fire-and-forget — never blocks the response, never throws
-  void db
+  db
     .insert(auditLog)
     .values({
       userId,
