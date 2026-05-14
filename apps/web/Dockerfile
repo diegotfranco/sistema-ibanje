@@ -12,6 +12,7 @@ COPY packages/shared/package.json packages/shared/
 RUN pnpm fetch
 
 # Now copy source and install (offline from the fetched store).
+COPY tsconfig.base.json ./
 COPY apps/ packages/ ./
 RUN pnpm install --frozen-lockfile --prefer-offline
 
