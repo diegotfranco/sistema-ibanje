@@ -86,6 +86,195 @@ function readLegacyMembers(): LegacyMember[] {
   }
 }
 
+function buildRoleModulePermissions(
+  roleByName: Record<string, { id: number }>,
+  modByName: Record<string, { id: number }>,
+  insertedPerms: Array<{ id: number; name: string }>,
+  insertedMods: Array<{ id: number; name: string }>
+) {
+  const cross = (roleId: number, moduleNames: string[], permIds: number[]) =>
+    moduleNames.flatMap((mod) =>
+      permIds.map((permId) => ({ roleId, moduleId: modByName[mod].id, permissionId: permId }))
+    );
+
+  const allPermIds = insertedPerms.map((p) => p.id);
+  const fullPermIds = ['Acessar', 'Cadastrar', 'Editar', 'Remover', 'Relatórios'].map(
+    (n) => insertedPerms.find((p) => p.name === n)!.id
+  );
+  const writePermIds = ['Acessar', 'Cadastrar', 'Editar', 'Relatórios'].map(
+    (n) => insertedPerms.find((p) => p.name === n)!.id
+  );
+  const readPermIds = ['Acessar', 'Relatórios'].map(
+    (n) => insertedPerms.find((p) => p.name === n)!.id
+  );
+
+  return [
+    // Administrador: all modules × all permissions
+    ...cross(
+      roleByName['Administrador'].id,
+      insertedMods.map((m) => m.name),
+      allPermIds
+    ),
+
+    // Tesoureiro: financial (panel included) write, admin (no panel) read
+    ...cross(
+      roleByName['Tesoureiro'].id,
+      [
+        'Painel',
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      writePermIds
+    ),
+    ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
+
+    // Comissão de Exame de Contas: financial — read
+    ...cross(
+      roleByName['Comissão de Exame de Contas'].id,
+      [
+        'Painel',
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      readPermIds
+    ),
+
+    // Tesoureiro Responsável: financial (panel included) full, admin (no panel) read
+    ...cross(
+      roleByName['Tesoureiro Responsável'].id,
+      [
+        'Painel',
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      fullPermIds
+    ),
+    ...cross(roleByName['Tesoureiro Responsável'].id, ['Membros', 'Atas'], readPermIds),
+
+    // Secretário: admin (panel included) write, financial (no panel) read
+    ...cross(roleByName['Secretário'].id, ['Painel', 'Membros', 'Atas'], writePermIds),
+    ...cross(
+      roleByName['Secretário'].id,
+      [
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      readPermIds
+    ),
+
+    // Secretário Responsável: admin (panel included) full, financial (no panel) read
+    ...cross(roleByName['Secretário Responsável'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
+    ...cross(
+      roleByName['Secretário Responsável'].id,
+      [
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      readPermIds
+    ),
+
+    // Presidente: financial (no panel) full, admin (panel included) full, Pautas full
+    ...cross(
+      roleByName['Presidente'].id,
+      [
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      fullPermIds
+    ),
+    ...cross(roleByName['Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
+    ...cross(roleByName['Presidente'].id, ['Pautas'], allPermIds),
+
+    // Vice-Presidente: same as Presidente
+    ...cross(
+      roleByName['Vice-Presidente'].id,
+      [
+        'Categorias de Entradas',
+        'Lançamentos de Entradas',
+        'Categorias de Saídas',
+        'Lançamentos de Saídas',
+        'Formas de Pagamento',
+        'Fundos Designados'
+      ],
+      fullPermIds
+    ),
+    ...cross(roleByName['Vice-Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
+
+    // Tesoureiro: closings — create + submit only
+    ...cross(
+      roleByName['Tesoureiro'].id,
+      ['Fechamentos Mensais'],
+      ['Acessar', 'Cadastrar'].map((n) => insertedPerms.find((p) => p.name === n)!.id)
+    ),
+
+    // Tesoureiro Responsável: closings — full (including review + close)
+    ...cross(
+      roleByName['Tesoureiro Responsável'].id,
+      ['Fechamentos Mensais'],
+      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
+        (n) => insertedPerms.find((p) => p.name === n)!.id
+      )
+    ),
+
+    // Presidente: closings — full
+    ...cross(
+      roleByName['Presidente'].id,
+      ['Fechamentos Mensais'],
+      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
+        (n) => insertedPerms.find((p) => p.name === n)!.id
+      )
+    ),
+
+    // Vice-Presidente: closings — full
+    ...cross(
+      roleByName['Vice-Presidente'].id,
+      ['Fechamentos Mensais'],
+      ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
+        (n) => insertedPerms.find((p) => p.name === n)!.id
+      )
+    ),
+
+    // Comissão de Exame de Contas: closings — review
+    ...cross(
+      roleByName['Comissão de Exame de Contas'].id,
+      ['Fechamentos Mensais'],
+      ['Acessar', 'Revisar'].map((n) => insertedPerms.find((p) => p.name === n)!.id)
+    ),
+
+    // Membro: view only
+    ...cross(
+      roleByName['Membro'].id,
+      ['Atas', 'Membros'],
+      [insertedPerms.find((p) => p.name === 'Acessar')!.id]
+    )
+  ];
+}
+
 export async function seedProd() {
   console.log('Production seed starting...');
   console.log(`Reading legacy SQLite from: ${LEGACY_SQLITE_PATH}`);
@@ -173,7 +362,6 @@ export async function seedProd() {
         { name: 'Relatórios', description: 'Permite gerar relatórios' }
       ])
       .returning();
-    const permByName = Object.fromEntries(insertedPerms.map((p) => [p.name, p]));
 
     if (
       insertedPerms[0].name !== 'Acessar' ||
@@ -255,177 +443,7 @@ export async function seedProd() {
     }
 
     // --- Role-Module-Permissions ---
-    function cross(roleId: number, moduleNames: string[], permIds: number[]) {
-      return moduleNames.flatMap((mod) =>
-        permIds.map((permId) => ({ roleId, moduleId: modByName[mod].id, permissionId: permId }))
-      );
-    }
-
-    const allPermIds = insertedPerms.map((p) => p.id);
-    const fullPermIds = ['Acessar', 'Cadastrar', 'Editar', 'Remover', 'Relatórios'].map(
-      (n) => permByName[n].id
-    );
-    const writePermIds = ['Acessar', 'Cadastrar', 'Editar', 'Relatórios'].map(
-      (n) => permByName[n].id
-    );
-    const readPermIds = ['Acessar', 'Relatórios'].map((n) => permByName[n].id);
-
-    const rmpRows = [
-      // Administrador: all modules × all permissions
-      ...cross(
-        roleByName['Administrador'].id,
-        insertedMods.map((m) => m.name),
-        allPermIds
-      ),
-
-      // Tesoureiro: financial (panel included) write, admin (no panel) read
-      ...cross(
-        roleByName['Tesoureiro'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        writePermIds
-      ),
-      ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
-
-      // Comissão de Exame de Contas: financial — read
-      ...cross(
-        roleByName['Comissão de Exame de Contas'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        readPermIds
-      ),
-
-      // Tesoureiro Responsável: financial (panel included) full, admin (no panel) read
-      ...cross(
-        roleByName['Tesoureiro Responsável'].id,
-        [
-          'Painel',
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
-      ...cross(roleByName['Tesoureiro Responsável'].id, ['Membros', 'Atas'], readPermIds),
-
-      // Secretário: admin (panel included) write, financial (no panel) read
-      ...cross(roleByName['Secretário'].id, ['Painel', 'Membros', 'Atas'], writePermIds),
-      ...cross(
-        roleByName['Secretário'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        readPermIds
-      ),
-
-      // Secretário Responsável: admin (panel included) full, financial (no panel) read
-      ...cross(roleByName['Secretário Responsável'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-      ...cross(
-        roleByName['Secretário Responsável'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        readPermIds
-      ),
-
-      // Presidente: financial (no panel) full, admin (panel included) full, Pautas full
-      ...cross(
-        roleByName['Presidente'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
-      ...cross(roleByName['Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-      ...cross(roleByName['Presidente'].id, ['Pautas'], allPermIds),
-
-      // Vice-Presidente: same as Presidente
-      ...cross(
-        roleByName['Vice-Presidente'].id,
-        [
-          'Categorias de Entradas',
-          'Lançamentos de Entradas',
-          'Categorias de Saídas',
-          'Lançamentos de Saídas',
-          'Formas de Pagamento',
-          'Fundos Designados'
-        ],
-        fullPermIds
-      ),
-      ...cross(roleByName['Vice-Presidente'].id, ['Painel', 'Membros', 'Atas'], fullPermIds),
-      ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
-
-      // Tesoureiro: closings — create + submit only
-      ...cross(
-        roleByName['Tesoureiro'].id,
-        ['Fechamentos Mensais'],
-        ['Acessar', 'Cadastrar'].map((n) => permByName[n].id)
-      ),
-
-      // Tesoureiro Responsável: closings — full (including review + close)
-      ...cross(
-        roleByName['Tesoureiro Responsável'].id,
-        ['Fechamentos Mensais'],
-        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
-      ),
-
-      // Presidente: closings — full
-      ...cross(
-        roleByName['Presidente'].id,
-        ['Fechamentos Mensais'],
-        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
-      ),
-
-      // Vice-Presidente: closings — full
-      ...cross(
-        roleByName['Vice-Presidente'].id,
-        ['Fechamentos Mensais'],
-        ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map((n) => permByName[n].id)
-      ),
-
-      // Comissão de Exame de Contas: closings — review
-      ...cross(
-        roleByName['Comissão de Exame de Contas'].id,
-        ['Fechamentos Mensais'],
-        ['Acessar', 'Revisar'].map((n) => permByName[n].id)
-      ),
-
-      // Membro: view only
-      ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id])
-    ];
-
+    const rmpRows = buildRoleModulePermissions(roleByName, modByName, insertedPerms, insertedMods);
     await tx.insert(roleModulePermissions).values(rmpRows);
 
     // --- Payment Methods ---
