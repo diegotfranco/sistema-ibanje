@@ -44,8 +44,7 @@ function matrixValueToUserPerms(
     const [modId, permId] = key.split(':').map(Number);
     const mod = modules.find((m) => m.id === modId);
     const perm = permTypes.find((p) => p.id === permId);
-    if (!mod || !perm) continue;
-    (result[mod.name] ??= []).push(perm.name);
+    if (mod && perm) (result[mod.name] ??= []).push(perm.name);
   }
   return result;
 }
