@@ -13,6 +13,11 @@ import type { MemberResponse, MemberFormValues } from '@/schemas/member';
 
 type MemberFormInstance = ReturnType<typeof useForm<MemberFormValues>>;
 
+function formatCityState(city: string | null, state: string | null): string {
+  if (!city) return '—';
+  return state ? `${city} / ${state}` : city;
+}
+
 export default function MembersPage() {
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
@@ -97,7 +102,7 @@ export default function MembersPage() {
           },
           {
             header: 'Cidade',
-            cell: (row) => (row.city ? `${row.city}${row.state ? ` / ${row.state}` : ''}` : '—')
+            cell: (row) => formatCityState(row.city, row.state)
           },
           {
             header: 'Status',

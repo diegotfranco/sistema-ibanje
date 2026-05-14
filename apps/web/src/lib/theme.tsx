@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
 type Resolved = 'light' | 'dark';
@@ -64,8 +64,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   }, [resolved]);
 
+  const contextValue = useMemo(() => ({ theme, setTheme, resolved }), [theme, resolved]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolved }}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>
   );
 }
 

@@ -55,7 +55,7 @@ export async function buildApp() {
   return app;
 }
 
-async function start() {
+if (env.NODE_ENV !== 'test') {
   const app = await buildApp();
 
   const shutdown = async (signal: string) => {
@@ -80,8 +80,4 @@ async function start() {
     app.log.error(err);
     process.exit(1);
   }
-}
-
-if (env.NODE_ENV !== 'test') {
-  start();
 }

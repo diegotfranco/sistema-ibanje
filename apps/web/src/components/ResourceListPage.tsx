@@ -81,7 +81,7 @@ export function ResourceListPage<T>({
                   </TableCell>
                 </TableRow>
               )}
-              {!isLoading && data && data.length === 0 && (
+              {!isLoading && data?.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length + (showActions ? 1 : 0)}

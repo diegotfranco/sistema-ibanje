@@ -534,10 +534,11 @@ export async function seedProd() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seedProd()
-    .then(() => sql.end())
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
+  try {
+    await seedProd();
+    await sql.end();
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
 }

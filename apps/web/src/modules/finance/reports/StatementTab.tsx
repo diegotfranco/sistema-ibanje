@@ -119,8 +119,8 @@ export function StatementTab({ month }: Props) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {simple.data.incomeByCategory.map((row, i) => (
-                        <TableRow key={i}>
+                      {simple.data.incomeByCategory.map((row) => (
+                        <TableRow key={`category-${row.categoryName}`}>
                           <TableCell>{row.parentCategoryName ?? '—'}</TableCell>
                           <TableCell>{row.categoryName}</TableCell>
                           <TableCell className="text-right font-mono">
@@ -177,8 +177,8 @@ export function StatementTab({ month }: Props) {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {simple.data.expensesByCategory.map((row, i) => (
-                        <TableRow key={i}>
+                      {simple.data.expensesByCategory.map((row) => (
+                        <TableRow key={`expense-${row.categoryName}`}>
                           <TableCell>{row.parentCategoryName ?? '—'}</TableCell>
                           <TableCell>{row.categoryName}</TableCell>
                           <TableCell className="text-right font-mono">

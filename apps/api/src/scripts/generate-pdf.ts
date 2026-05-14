@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import * as repo from '../modules/finance/reports/repository.js';
@@ -173,16 +173,14 @@ async function generateSimplified() {
   console.log('PDF written to demonstrativo-simples.pdf');
 }
 
-async function main() {
+try {
   if (mode === 'simplified') {
     await generateSimplified();
   } else {
     await generateDetailed();
   }
   process.exit(0);
-}
-
-main().catch((e) => {
+} catch (e) {
   console.error(e);
   process.exit(1);
-});
+}

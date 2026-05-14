@@ -66,8 +66,8 @@ export function IncomeReportTab({ month }: Props) {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((row, i) => (
-              <TableRow key={i}>
+            {rows.map((row) => (
+              <TableRow key={`${row.referenceDate}-${row.categoryName}-${row.fundName}`}>
                 <TableCell>{formatDate(row.referenceDate)}</TableCell>
                 <TableCell>{row.categoryName}</TableCell>
                 <TableCell>{row.parentCategoryName ?? '—'}</TableCell>

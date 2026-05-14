@@ -53,12 +53,14 @@ export async function registerIdempotencyPlugin(app: FastifyInstance) {
 
     const status = reply.statusCode;
     if (status >= 200 && status < 300) {
-      const bodyStr =
-        typeof payload === 'string'
-          ? payload
-          : payload instanceof Buffer
-            ? payload.toString('utf8')
-            : '';
+      let bodyStr: string;
+      if (typeof payload === 'string') {
+        bodyStr = payload;
+      } else if (payload instanceof Buffer) {
+        bodyStr = payload.toString('utf8');
+      } else {
+        bodyStr = '';
+      }
       const contentType = reply.getHeader('content-type')?.toString() ?? 'application/json';
       const cached: CachedResponse = { status, body: bodyStr, contentType };
       await redis.set(cacheKey, JSON.stringify(cached), { EX: CACHE_TTL_SECONDS });

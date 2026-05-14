@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 import { Document, Page, View, Text, Font } from '@react-pdf/renderer';
 import { createTw } from 'react-pdf-tailwind';
 import type {

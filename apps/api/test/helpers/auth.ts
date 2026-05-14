@@ -12,7 +12,7 @@ export async function loginAs(
   if (csrfRes.statusCode !== 200) throw new Error(`csrf-token failed: ${csrfRes.statusCode}`);
   const csrfToken = csrfRes.json<{ csrfToken: string }>().csrfToken;
   const setCookie = csrfRes.headers['set-cookie'];
-  const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  const cookies = Array.isArray(setCookie) ? setCookie : (setCookie ? [setCookie] : []);
   const sessionCookie = cookies.map((c) => c.split(';')[0]).join('; ');
 
   // 2. POST /auth/login with the cookie + token
@@ -26,7 +26,7 @@ export async function loginAs(
     throw new Error(`login failed for ${email}: ${loginRes.statusCode} ${loginRes.body}`);
   }
   const newSet = loginRes.headers['set-cookie'];
-  const newCookies = Array.isArray(newSet) ? newSet : newSet ? [newSet] : [];
+  const newCookies = Array.isArray(newSet) ? newSet : (newSet ? [newSet] : []);
   const finalCookie =
     newCookies.length > 0 ? newCookies.map((c) => c.split(';')[0]).join('; ') : sessionCookie;
 

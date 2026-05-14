@@ -155,7 +155,7 @@ export async function uploadExpenseReceipt(
   if (!ext) throw httpError(400, 'Unsupported file type. Allowed: JPEG, PNG, PDF');
 
   const sniffed = await fileTypeFromBuffer(buffer);
-  if (!sniffed || sniffed.mime !== mimetype) {
+  if (sniffed?.mime !== mimetype) {
     throw httpError(400, 'File contents do not match the declared type');
   }
 

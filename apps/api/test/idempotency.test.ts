@@ -7,6 +7,14 @@ import { loginAs, type AuthCookies } from './helpers/auth.js';
 import { db } from '../src/db/index.js';
 import { incomeEntries, incomeCategories, paymentMethods } from '../src/db/schema.js';
 
+async function countRows(referenceDate: string, amount = '100.00') {
+  const rows = await db
+    .select()
+    .from(incomeEntries)
+    .where(and(eq(incomeEntries.referenceDate, referenceDate), eq(incomeEntries.amount, amount)));
+  return rows.length;
+}
+
 describe('idempotency plugin', () => {
   let app: FastifyInstance;
   let tesAuth: AuthCookies;
@@ -33,14 +41,6 @@ describe('idempotency plugin', () => {
 
   function payload(referenceDate: string, amount = 100) {
     return { categoryId, paymentMethodId, amount, referenceDate };
-  }
-
-  async function countRows(referenceDate: string, amount = '100.00') {
-    const rows = await db
-      .select()
-      .from(incomeEntries)
-      .where(and(eq(incomeEntries.referenceDate, referenceDate), eq(incomeEntries.amount, amount)));
-    return rows.length;
   }
 
   it('replays cached response and inserts only one row', async () => {

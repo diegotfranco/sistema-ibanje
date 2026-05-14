@@ -8,6 +8,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getCurrentMonth, formatMonthForBanner, isPastClosing } from './dashboard-utils';
 import type { MonthlyClosingResponse } from '@/schemas/monthly-closing';
 
+function buildHintText(count: number): string {
+  if (count <= 1) return '';
+  const itemsCount = count - 1;
+  const itemPlural = itemsCount > 1 ? 's' : '';
+  const statusPlural = count > 2 ? 's' : '';
+  return ` +${itemsCount} outro${itemPlural} pendente${statusPlural}`;
+}
+
 export function DashboardClosingBanner() {
   const navigate = useNavigate();
   const { data: response, isLoading } = useMonthlyClosings();
@@ -48,10 +56,7 @@ export function DashboardClosingBanner() {
   if (pendingPast.length > 0) {
     const oldest = pendingPast[0];
     const monthStr = `${oldest.periodYear}-${String(oldest.periodMonth).padStart(2, '0')}`;
-    const hintText =
-      pendingPast.length > 1
-        ? ` +${pendingPast.length - 1} outro${pendingPast.length > 2 ? 's' : ''} pendente${pendingPast.length > 2 ? 's' : ''}`
-        : '';
+    const hintText = buildHintText(pendingPast.length);
 
     return (
       <Alert variant="destructive" className="mb-6 bg-destructive/10">

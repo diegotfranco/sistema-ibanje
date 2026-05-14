@@ -998,9 +998,10 @@ export async function seed() {
     for (let i = 0; i < incomeRows.length; i += BATCH) {
       await tx.insert(incomeEntries).values(incomeRows.slice(i, i + BATCH));
     }
-    console.log(
-      `Inserted ${incomeRows.length} income entries.${skippedBadDate ? ` Skipped ${skippedBadDate} rows with bad dates.` : ''}`
-    );
+    const incomeLogMsg = skippedBadDate
+      ? ` Skipped ${skippedBadDate} rows with bad dates.`
+      : '';
+    console.log(`Inserted ${incomeRows.length} income entries.${incomeLogMsg}`);
 
     // --- Expense Entries (from legacy saidas) ---
     const { rows: expenseRows, unmappedDestinoCounts, skippedBadDate: skippedExpBadDate } =
@@ -1009,18 +1010,18 @@ export async function seed() {
     for (let i = 0; i < expenseRows.length; i += BATCH) {
       await tx.insert(expenseEntries).values(expenseRows.slice(i, i + BATCH));
     }
-    console.log(
-      `Inserted ${expenseRows.length} expense entries.${skippedExpBadDate ? ` Skipped ${skippedExpBadDate} rows with bad dates.` : ''}`
-    );
+    const expenseLogMsg = skippedExpBadDate
+      ? ` Skipped ${skippedExpBadDate} rows with bad dates.`
+      : '';
+    console.log(`Inserted ${expenseRows.length} expense entries.${expenseLogMsg}`);
     if (unmappedDestinoCounts.size > 0) {
       const top = [...unmappedDestinoCounts.entries()]
         .sort((a, b) => b[1] - a[1])
         .slice(0, 10)
         .map(([d, c]) => `  ${c}× "${d}"`)
         .join('\n');
-      console.log(
-        `${unmappedDestinoCounts.size} distinct destinos fell through to "${FALLBACK_EXPENSE_CATEGORY}". Top 10:\n${top}`
-      );
+      const unmappedMsg = `${unmappedDestinoCounts.size} distinct destinos fell through to "${FALLBACK_EXPENSE_CATEGORY}". Top 10:\n${top}`;
+      console.log(unmappedMsg);
     }
 
     // --- Board Meetings + Minutes (demo data) ---
@@ -1139,10 +1140,11 @@ export async function seed() {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  seed()
-    .then(() => sql.end())
-    .catch((err) => {
-      console.error(err);
-      process.exit(1);
-    });
+  try {
+    await seed();
+    await sql.end();
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
 }
