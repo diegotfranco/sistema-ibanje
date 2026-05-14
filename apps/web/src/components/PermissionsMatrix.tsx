@@ -2,6 +2,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ModuleRef, PermissionTypeRef } from '@/hooks/usePermissionsReference';
 
+const SKELETON_KEYS = Array.from({ length: 5 }, () => crypto.randomUUID());
+
 interface PermissionsMatrixProps {
   modules: ModuleRef[];
   permissionTypes: PermissionTypeRef[];
@@ -22,8 +24,8 @@ export default function PermissionsMatrix({
   if (isLoadingReference) {
     return (
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={`skeleton-${i}`} className="h-8 w-full" />
+        {SKELETON_KEYS.map((key) => (
+          <Skeleton key={key} className="h-8 w-full" />
         ))}
       </div>
     );
