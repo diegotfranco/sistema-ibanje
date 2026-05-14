@@ -26,6 +26,14 @@ import type {
   IncomeAggregateRow
 } from './schema.js';
 
+export function computeCurrentBalance(opening: string, income: string, expenses: string): string {
+  return (
+    Number.parseFloat(opening) +
+    Number.parseFloat(income) -
+    Number.parseFloat(expenses)
+  ).toFixed(2);
+}
+
 function monthToRange(month: string): { from: string; to: string } {
   const [y, m] = month.split('-').map(Number);
   const from = `${month}-01`;
@@ -211,11 +219,7 @@ export async function getFinancialStatement(
     computeOpeningBalance(from)
   ]);
 
-  const currentBalance = (
-    Number.parseFloat(openingBalance) +
-    Number.parseFloat(totalIncome) -
-    Number.parseFloat(totalExpenses)
-  ).toFixed(2);
+  const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
 
   return {
     period: { from, to },
@@ -376,11 +380,7 @@ export async function getDetailedFinancialStatement(
       computeOpeningBalance(from)
     ]);
 
-  const currentBalance = (
-    Number.parseFloat(openingBalance) +
-    Number.parseFloat(totalIncome) -
-    Number.parseFloat(totalExpenses)
-  ).toFixed(2);
+  const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
 
   const incomePivot = buildIncomePivot(incomeAggregates);
 

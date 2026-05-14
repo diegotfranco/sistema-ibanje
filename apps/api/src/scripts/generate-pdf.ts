@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import * as repo from '../modules/finance/reports/repository.js';
-import { buildIncomePivot, computeOpeningBalance } from '../modules/finance/reports/service.js';
+import {
+  buildIncomePivot,
+  computeOpeningBalance,
+  computeCurrentBalance
+} from '../modules/finance/reports/service.js';
 import {
   DetailedFinancialStatementPdf,
   FinancialStatementPdf
@@ -30,11 +34,7 @@ async function generateDetailed() {
       computeOpeningBalance(from)
     ]);
 
-  const currentBalance = (
-    Number.parseFloat(openingBalance) +
-    Number.parseFloat(totalIncome) -
-    Number.parseFloat(totalExpenses)
-  ).toFixed(2);
+  const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
 
   const data: DetailedFinancialStatementResponse = {
     period: { from, to },
@@ -73,11 +73,7 @@ async function generateSimplified() {
     computeOpeningBalance(from)
   ]);
 
-  const currentBalance = (
-    Number.parseFloat(openingBalance) +
-    Number.parseFloat(totalIncome) -
-    Number.parseFloat(totalExpenses)
-  ).toFixed(2);
+  const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
 
   const data: FinancialStatementResponse = {
     period: { from, to },

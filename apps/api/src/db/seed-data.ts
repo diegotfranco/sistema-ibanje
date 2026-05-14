@@ -109,6 +109,33 @@ export function buildIncomeCategoryChildren(parentByName: Record<string, { id: n
   ];
 }
 
+export const SEED_EXPENSE_CATEGORY_PARENTS = [
+  { name: 'Pessoal' },
+  { name: 'Operacional' },
+  { name: 'Manutenção' },
+  { name: 'Equipamentos' },
+  { name: 'Eventos / Programas' }
+];
+
+export function buildExpenseCategoryChildren(parentByName: Record<string, { id: number }>) {
+  return [
+    { name: 'Honorários Pastorais', parentId: parentByName['Pessoal'].id },
+    { name: 'FGTM', parentId: parentByName['Pessoal'].id },
+    { name: 'Encargos', parentId: parentByName['Pessoal'].id },
+    { name: 'Água', parentId: parentByName['Operacional'].id },
+    { name: 'Energia', parentId: parentByName['Operacional'].id },
+    { name: 'Internet / Telefone', parentId: parentByName['Operacional'].id },
+    { name: 'Vigilância Patrimonial', parentId: parentByName['Operacional'].id },
+    { name: 'Tarifa Bancária', parentId: parentByName['Operacional'].id },
+    { name: 'Material de Limpeza', parentId: parentByName['Operacional'].id },
+    { name: 'Manutenção Predial', parentId: parentByName['Manutenção'].id },
+    { name: 'Reparo Hidráulico', parentId: parentByName['Manutenção'].id },
+    { name: 'Reparo Elétrico', parentId: parentByName['Manutenção'].id },
+    { name: 'Compra de Equipamentos', parentId: parentByName['Equipamentos'].id },
+    { name: 'Despesas com Eventos', parentId: parentByName['Eventos / Programas'].id }
+  ];
+}
+
 export function buildRoleModulePermissions(
   roleByName: Record<string, { id: number }>,
   modByName: Record<string, { id: number }>,

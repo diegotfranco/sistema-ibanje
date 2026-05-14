@@ -34,6 +34,8 @@ import {
   SEED_PAYMENT_METHODS,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
+  SEED_EXPENSE_CATEGORY_PARENTS,
+  buildExpenseCategoryChildren,
   buildRoleModulePermissions
 } from './seed-data.js';
 
@@ -172,33 +174,12 @@ export async function seedProd() {
     await tx.insert(incomeCategories).values(buildIncomeCategoryChildren(icParentByName));
 
     // --- Expense Categories (2-level chart of accounts) ---
-    const [ecPessoal, ecOperacional, ecManutencao, ecEquipamentos, ecEventos] = await tx
+    const insertedECParents = await tx
       .insert(expenseCategories)
-      .values([
-        { name: 'Pessoal' },
-        { name: 'Operacional' },
-        { name: 'Manutenção' },
-        { name: 'Equipamentos' },
-        { name: 'Eventos / Programas' }
-      ])
+      .values(SEED_EXPENSE_CATEGORY_PARENTS)
       .returning();
-
-    await tx.insert(expenseCategories).values([
-      { name: 'Honorários Pastorais', parentId: ecPessoal.id },
-      { name: 'FGTM', parentId: ecPessoal.id },
-      { name: 'Encargos', parentId: ecPessoal.id },
-      { name: 'Água', parentId: ecOperacional.id },
-      { name: 'Energia', parentId: ecOperacional.id },
-      { name: 'Internet / Telefone', parentId: ecOperacional.id },
-      { name: 'Vigilância Patrimonial', parentId: ecOperacional.id },
-      { name: 'Tarifa Bancária', parentId: ecOperacional.id },
-      { name: 'Material de Limpeza', parentId: ecOperacional.id },
-      { name: 'Manutenção Predial', parentId: ecManutencao.id },
-      { name: 'Reparo Hidráulico', parentId: ecManutencao.id },
-      { name: 'Reparo Elétrico', parentId: ecManutencao.id },
-      { name: 'Compra de Equipamentos', parentId: ecEquipamentos.id },
-      { name: 'Despesas com Eventos', parentId: ecEventos.id }
-    ]);
+    const ecParentByName = Object.fromEntries(insertedECParents.map((c) => [c.name, c]));
+    await tx.insert(expenseCategories).values(buildExpenseCategoryChildren(ecParentByName));
 
     // --- Finance Settings (singleton) ---
     await tx.insert(financeSettings).values({ openingBalance: '0.00' });

@@ -35,6 +35,8 @@ import {
   SEED_PAYMENT_METHODS,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
+  SEED_EXPENSE_CATEGORY_PARENTS,
+  buildExpenseCategoryChildren,
   buildRoleModulePermissions
 } from './seed-data.js';
 import {
@@ -687,62 +689,36 @@ export async function seed() {
     const icByName = Object.fromEntries(insertedICs.map((c) => [c.name, c]));
 
     // --- Expense Categories (extended to cover real-data destinos) ---
-    const [
-      ecPessoal,
-      ecOperacional,
-      ecManutencao,
-      ecEquipamentos,
-      ecEventos,
-      ecMissoes,
-      ecContribuicoes,
-      ecAuxilios,
-      ecDiversos
-    ] = await tx
+    const insertedECParents = await tx
       .insert(expenseCategories)
       .values([
-        { name: 'Pessoal' },
-        { name: 'Operacional' },
-        { name: 'Manutenção' },
-        { name: 'Equipamentos' },
-        { name: 'Eventos / Programas' },
+        ...SEED_EXPENSE_CATEGORY_PARENTS,
         { name: 'Missões' },
         { name: 'Contribuições Eclesiásticas' },
         { name: 'Auxílios' },
         { name: 'Diversos' }
       ])
       .returning();
+    const ecParentByName = Object.fromEntries(insertedECParents.map((c) => [c.name, c]));
 
     const insertedECs = await tx
       .insert(expenseCategories)
       .values([
-        { name: 'Honorários Pastorais', parentId: ecPessoal.id },
-        { name: 'FGTM', parentId: ecPessoal.id },
-        { name: 'Encargos', parentId: ecPessoal.id },
-        { name: 'Água', parentId: ecOperacional.id },
-        { name: 'Energia', parentId: ecOperacional.id },
-        { name: 'Internet / Telefone', parentId: ecOperacional.id },
-        { name: 'Vigilância Patrimonial', parentId: ecOperacional.id },
-        { name: 'Tarifa Bancária', parentId: ecOperacional.id },
-        { name: 'Material de Limpeza', parentId: ecOperacional.id },
-        { name: 'Material de Expediente', parentId: ecOperacional.id },
-        { name: 'Contador', parentId: ecOperacional.id },
-        { name: 'Manutenção Predial', parentId: ecManutencao.id },
-        { name: 'Reparo Hidráulico', parentId: ecManutencao.id },
-        { name: 'Reparo Elétrico', parentId: ecManutencao.id },
-        { name: 'Compra de Equipamentos', parentId: ecEquipamentos.id },
-        { name: 'Despesas com Eventos', parentId: ecEventos.id },
-        { name: 'Material Didático', parentId: ecEventos.id },
-        { name: 'Gratificações', parentId: ecEventos.id },
-        { name: 'Cartório / Registros', parentId: ecEventos.id },
-        { name: 'Missões Nacionais', parentId: ecMissoes.id },
-        { name: 'Missões Mundiais', parentId: ecMissoes.id },
-        { name: 'PAM', parentId: ecMissoes.id },
-        { name: 'Auxílio a Seminarista', parentId: ecMissoes.id },
-        { name: 'Auxílio a Pastor em Formação', parentId: ecMissoes.id },
-        { name: 'Plano Cooperativo', parentId: ecContribuicoes.id },
-        { name: 'Acibams', parentId: ecContribuicoes.id },
-        { name: 'Auxílio Combustível', parentId: ecAuxilios.id },
-        { name: FALLBACK_EXPENSE_CATEGORY, parentId: ecDiversos.id }
+        ...buildExpenseCategoryChildren(ecParentByName),
+        { name: 'Material de Expediente', parentId: ecParentByName['Operacional'].id },
+        { name: 'Contador', parentId: ecParentByName['Operacional'].id },
+        { name: 'Material Didático', parentId: ecParentByName['Eventos / Programas'].id },
+        { name: 'Gratificações', parentId: ecParentByName['Eventos / Programas'].id },
+        { name: 'Cartório / Registros', parentId: ecParentByName['Eventos / Programas'].id },
+        { name: 'Missões Nacionais', parentId: ecParentByName['Missões'].id },
+        { name: 'Missões Mundiais', parentId: ecParentByName['Missões'].id },
+        { name: 'PAM', parentId: ecParentByName['Missões'].id },
+        { name: 'Auxílio a Seminarista', parentId: ecParentByName['Missões'].id },
+        { name: 'Auxílio a Pastor em Formação', parentId: ecParentByName['Missões'].id },
+        { name: 'Plano Cooperativo', parentId: ecParentByName['Contribuições Eclesiásticas'].id },
+        { name: 'Acibams', parentId: ecParentByName['Contribuições Eclesiásticas'].id },
+        { name: 'Auxílio Combustível', parentId: ecParentByName['Auxílios'].id },
+        { name: FALLBACK_EXPENSE_CATEGORY, parentId: ecParentByName['Diversos'].id }
       ])
       .returning();
     const ecByName = Object.fromEntries(insertedECs.map((c) => [c.name, c]));
