@@ -11,7 +11,7 @@ import type { MeResponse } from './schema.js';
 export async function login(email: string, password: string) {
   const user = await repo.findUserByEmail(email);
 
-  if (!user || !user?.passwordHash || user?.status !== ActiveStatus.Active) return null;
+  if (!user?.passwordHash || user?.status !== ActiveStatus.Active) return null;
 
   const valid = await argon2.verify(user.passwordHash, password + env.ARGON2_PEPPER);
   if (!valid) return null;

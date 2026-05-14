@@ -2,6 +2,11 @@ import type { FastifyInstance } from 'fastify';
 
 export type AuthCookies = { cookie: string; csrfToken: string };
 
+function normalizeHeader(value: string | string[] | undefined): string[] {
+  if (Array.isArray(value)) return value;
+  return value ? [value] : [];
+}
+
 export async function loginAs(
   app: FastifyInstance,
   email: string,
@@ -12,7 +17,7 @@ export async function loginAs(
   if (csrfRes.statusCode !== 200) throw new Error(`csrf-token failed: ${csrfRes.statusCode}`);
   const csrfToken = csrfRes.json<{ csrfToken: string }>().csrfToken;
   const setCookie = csrfRes.headers['set-cookie'];
-  const cookies = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+  const cookies = normalizeHeader(setCookie);
   const sessionCookie = cookies.map((c) => c.split(';')[0]).join('; ');
 
   // 2. POST /auth/login with the cookie + token
@@ -26,7 +31,7 @@ export async function loginAs(
     throw new Error(`login failed for ${email}: ${loginRes.statusCode} ${loginRes.body}`);
   }
   const newSet = loginRes.headers['set-cookie'];
-  const newCookies = Array.isArray(newSet) ? newSet : newSet ? [newSet] : [];
+  const newCookies = normalizeHeader(newSet);
   const finalCookie =
     newCookies.length > 0 ? newCookies.map((c) => c.split(';')[0]).join('; ') : sessionCookie;
 

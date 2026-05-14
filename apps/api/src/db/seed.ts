@@ -352,6 +352,38 @@ function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
   };
 }
 
+function lookupMatch(
+  name: string | null | undefined,
+  cache: Map<string, MemberMatch>,
+  matcher: (name: string | null | undefined) => MemberMatch
+): MemberMatch {
+  const key = name ?? '';
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const result = matcher(name);
+  cache.set(key, result);
+  return result;
+}
+
+function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
+  if (match.kind === 'fuzzy') {
+    return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
+  }
+  if (match.kind === 'none' && legacyName) {
+    const norm = normalizeName(legacyName);
+    if (norm.length < 3) return null;
+    if (
+      /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
+        norm
+      )
+    ) {
+      return null;
+    }
+    return `[REVISAR] Nome legado não vinculado: "${legacyName}"`;
+  }
+  return null;
+}
+
 type IncomeRow = typeof incomeEntries.$inferInsert;
 type ExpenseRow = typeof expenseEntries.$inferInsert;
 
@@ -364,34 +396,6 @@ function buildIncomeRows(
   tesoureiroId: number
 ): { rows: IncomeRow[]; skippedBadDate: number } {
   const matchCache = new Map<string, MemberMatch>();
-  function lookupMatch(name: string | null | undefined): MemberMatch {
-    const key = name ?? '';
-    const cached = matchCache.get(key);
-    if (cached) return cached;
-    const result = matchMember(name);
-    matchCache.set(key, result);
-    return result;
-  }
-
-  function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
-    if (match.kind === 'fuzzy') {
-      return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
-    }
-    if (match.kind === 'none' && legacyName) {
-      const norm = normalizeName(legacyName);
-      if (norm.length < 3) return null;
-      if (
-        /anonim|rendimento|cofre|poupanca|abertura|venda|familia|partilhamento|igreja|terenos|pulpito/.test(
-          norm
-        )
-      ) {
-        return null;
-      }
-      return `[REVISAR] Nome legado não vinculado: "${legacyName}"`;
-    }
-    return null;
-  }
-
   const rows: IncomeRow[] = [];
   let skippedBadDate = 0;
 
@@ -403,7 +407,7 @@ function buildIncomeRows(
       continue;
     }
     const paymentMethodId = pmByName[mapForma(e.forma_pagamento)].id;
-    const match = lookupMatch(e.nome);
+    const match = lookupMatch(e.nome, matchCache, matchMember);
     const memberId = match.kind === 'none' ? null : match.memberId;
     const baseNote = noteForMatch(e.nome, match);
 
