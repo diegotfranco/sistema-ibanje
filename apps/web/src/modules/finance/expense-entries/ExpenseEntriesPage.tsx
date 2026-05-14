@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
@@ -62,6 +62,69 @@ export default function ExpenseEntriesPage() {
     ...(values.notes ? { notes: values.notes } : {})
   });
 
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Data',
+        cell: (row: ExpenseEntryResponse) => formatDate(row.referenceDate)
+      },
+      {
+        header: 'Descrição',
+        cell: (row: ExpenseEntryResponse) => row.description,
+        className: 'max-w-48 truncate'
+      },
+      {
+        header: 'Categoria',
+        cell: (row: ExpenseEntryResponse) => row.categoryName
+      },
+      {
+        header: 'Valor',
+        cell: (row: ExpenseEntryResponse) => (
+          <span className="font-mono">R$ {formatMoney(row.amount)}</span>
+        )
+      },
+      {
+        header: 'Parcela',
+        cell: (row: ExpenseEntryResponse) =>
+          row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—'
+      },
+      {
+        header: 'Forma de Pag.',
+        cell: (row: ExpenseEntryResponse) => row.paymentMethodName
+      },
+      {
+        header: 'Comprovante',
+        cell: (row: ExpenseEntryResponse) => (
+          <div className="flex justify-center">
+            {row.receipt ? (
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={row.receipt}
+                title="Ver comprovante"
+                aria-label="Ver comprovante"
+                className="text-muted-foreground hover:text-teal-600 inline-flex">
+                <Receipt size={16} />
+              </a>
+            ) : (
+              <span
+                title="Sem comprovante"
+                aria-label="Sem comprovante"
+                className="text-red-600 inline-flex">
+                <Receipt size={16} />
+              </span>
+            )}
+          </div>
+        )
+      },
+      {
+        header: 'Status',
+        cell: (row: ExpenseEntryResponse) => <StatusBadge status={row.status} />
+      }
+    ],
+    []
+  );
+
   return (
     <>
       <div className="px-8 pt-6 pb-0 flex gap-2">
@@ -78,63 +141,7 @@ export default function ExpenseEntriesPage() {
 
       <ResourceListPage<ExpenseEntryResponse>
         title="Lançamentos de Saídas"
-        columns={[
-          {
-            header: 'Data',
-            cell: (row) => formatDate(row.referenceDate)
-          },
-          {
-            header: 'Descrição',
-            cell: (row) => row.description,
-            className: 'max-w-48 truncate'
-          },
-          {
-            header: 'Categoria',
-            cell: (row) => row.categoryName
-          },
-          {
-            header: 'Valor',
-            cell: (row) => <span className="font-mono">R$ {formatMoney(row.amount)}</span>
-          },
-          {
-            header: 'Parcela',
-            cell: (row) =>
-              row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—'
-          },
-          {
-            header: 'Forma de Pag.',
-            cell: (row) => row.paymentMethodName
-          },
-          {
-            header: 'Comprovante',
-            cell: (row) => (
-              <div className="flex justify-center">
-                {row.receipt ? (
-                  <a
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    href={row.receipt}
-                    title="Ver comprovante"
-                    aria-label="Ver comprovante"
-                    className="text-muted-foreground hover:text-teal-600 inline-flex">
-                    <Receipt size={16} />
-                  </a>
-                ) : (
-                  <span
-                    title="Sem comprovante"
-                    aria-label="Sem comprovante"
-                    className="text-red-600 inline-flex">
-                    <Receipt size={16} />
-                  </span>
-                )}
-              </div>
-            )
-          },
-          {
-            header: 'Status',
-            cell: (row) => <StatusBadge status={row.status} />
-          }
-        ]}
+        columns={columns}
         data={filtered}
         isLoading={list.isLoading}
         onCreate={canCreate ? () => setEditing('new') : undefined}

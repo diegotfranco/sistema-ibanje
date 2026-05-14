@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { ResourceListPage } from '@/components/ResourceListPage';
@@ -68,6 +68,42 @@ export default function IncomeEntriesPage() {
     }
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Data',
+        cell: (row: IncomeEntryResponse) => formatDate(row.referenceDate)
+      },
+      {
+        header: 'Categoria',
+        cell: (row: IncomeEntryResponse) => row.categoryName
+      },
+      {
+        header: 'Valor',
+        cell: (row: IncomeEntryResponse) => (
+          <span className="font-mono">R$ {formatMoney(row.amount)}</span>
+        )
+      },
+      {
+        header: 'Membro',
+        cell: (row: IncomeEntryResponse) => row.memberName ?? '—'
+      },
+      {
+        header: 'Forma de Pag.',
+        cell: (row: IncomeEntryResponse) => row.paymentMethodName
+      },
+      {
+        header: 'Fundo',
+        cell: (row: IncomeEntryResponse) => row.designatedFundName ?? '—'
+      },
+      {
+        header: 'Status',
+        cell: (row: IncomeEntryResponse) => <StatusBadge status={row.status} />
+      }
+    ],
+    []
+  );
+
   return (
     <>
       <div className="px-8 pt-6 pb-0 flex gap-2">
@@ -84,36 +120,7 @@ export default function IncomeEntriesPage() {
 
       <ResourceListPage<IncomeEntryResponse>
         title="Lançamentos de Entradas"
-        columns={[
-          {
-            header: 'Data',
-            cell: (row) => formatDate(row.referenceDate)
-          },
-          {
-            header: 'Categoria',
-            cell: (row) => row.categoryName
-          },
-          {
-            header: 'Valor',
-            cell: (row) => <span className="font-mono">R$ {formatMoney(row.amount)}</span>
-          },
-          {
-            header: 'Membro',
-            cell: (row) => row.memberName ?? '—'
-          },
-          {
-            header: 'Forma de Pag.',
-            cell: (row) => row.paymentMethodName
-          },
-          {
-            header: 'Fundo',
-            cell: (row) => row.designatedFundName ?? '—'
-          },
-          {
-            header: 'Status',
-            cell: (row) => <StatusBadge status={row.status} />
-          }
-        ]}
+        columns={columns}
         data={filtered}
         isLoading={list.isLoading}
         onCreate={canCreate ? () => setEditing('new') : undefined}

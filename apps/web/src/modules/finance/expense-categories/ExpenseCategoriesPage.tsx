@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -30,24 +30,31 @@ export default function ExpenseCategoriesPage() {
     return allCategories.find((c) => c.id === id)?.name ?? '—';
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Nome',
+        cell: (row: ExpenseCategoryResponse) => (
+          <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
+        )
+      },
+      {
+        header: 'Pai',
+        cell: (row: ExpenseCategoryResponse) => getCategoryName(row.parentId)
+      },
+      {
+        header: 'Descrição',
+        cell: (row: ExpenseCategoryResponse) => row.description || '—'
+      }
+    ],
+    [allCategories]
+  );
+
   return (
     <>
       <ResourceListPage<ExpenseCategoryResponse>
         title="Categorias de Saídas"
-        columns={[
-          {
-            header: 'Nome',
-            cell: (row) => <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
-          },
-          {
-            header: 'Pai',
-            cell: (row) => getCategoryName(row.parentId)
-          },
-          {
-            header: 'Descrição',
-            cell: (row) => row.description || '—'
-          }
-        ]}
+        columns={columns}
         data={items}
         isLoading={list.isLoading}
         onCreate={canCreate ? () => setEditing('new') : undefined}

@@ -998,14 +998,15 @@ export async function seed() {
     for (let i = 0; i < incomeRows.length; i += BATCH) {
       await tx.insert(incomeEntries).values(incomeRows.slice(i, i + BATCH));
     }
-    const incomeLogMsg = skippedBadDate
-      ? ` Skipped ${skippedBadDate} rows with bad dates.`
-      : '';
+    const incomeLogMsg = skippedBadDate ? ` Skipped ${skippedBadDate} rows with bad dates.` : '';
     console.log(`Inserted ${incomeRows.length} income entries.${incomeLogMsg}`);
 
     // --- Expense Entries (from legacy saidas) ---
-    const { rows: expenseRows, unmappedDestinoCounts, skippedBadDate: skippedExpBadDate } =
-      buildExpenseRows(legacy.saidas, ecByName, pmByName, tesoureiroId);
+    const {
+      rows: expenseRows,
+      unmappedDestinoCounts,
+      skippedBadDate: skippedExpBadDate
+    } = buildExpenseRows(legacy.saidas, ecByName, pmByName, tesoureiroId);
 
     for (let i = 0; i < expenseRows.length; i += BATCH) {
       await tx.insert(expenseEntries).values(expenseRows.slice(i, i + BATCH));

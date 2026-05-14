@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -30,24 +30,31 @@ export default function IncomeCategoriesPage() {
     return allCategories.find((c) => c.id === id)?.name ?? '—';
   };
 
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Nome',
+        cell: (row: IncomeCategoryResponse) => (
+          <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
+        )
+      },
+      {
+        header: 'Pai',
+        cell: (row: IncomeCategoryResponse) => getCategoryName(row.parentId)
+      },
+      {
+        header: 'Exige Membro',
+        cell: (row: IncomeCategoryResponse) => (row.requiresMember ? 'Sim' : 'Não')
+      }
+    ],
+    [allCategories]
+  );
+
   return (
     <>
       <ResourceListPage<IncomeCategoryResponse>
         title="Categorias de Entradas"
-        columns={[
-          {
-            header: 'Nome',
-            cell: (row) => <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
-          },
-          {
-            header: 'Pai',
-            cell: (row) => getCategoryName(row.parentId)
-          },
-          {
-            header: 'Exige Membro',
-            cell: (row) => (row.requiresMember ? 'Sim' : 'Não')
-          }
-        ]}
+        columns={columns}
         data={items}
         isLoading={list.isLoading}
         onCreate={canCreate ? () => setEditing('new') : undefined}

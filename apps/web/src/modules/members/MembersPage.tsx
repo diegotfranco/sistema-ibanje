@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { ResourceListPage } from '@/components/ResourceListPage';
@@ -83,32 +83,37 @@ export default function MembersPage() {
     };
   }
 
+  const columns = useMemo(
+    () => [
+      {
+        header: 'Nome',
+        cell: (row: MemberResponse) => row.name
+      },
+      {
+        header: 'Telefone',
+        cell: (row: MemberResponse) => row.phone ?? '—'
+      },
+      {
+        header: 'E-mail',
+        cell: (row: MemberResponse) => row.email ?? '—'
+      },
+      {
+        header: 'Cidade',
+        cell: (row: MemberResponse) => formatCityState(row.city, row.state)
+      },
+      {
+        header: 'Status',
+        cell: (row: MemberResponse) => <StatusBadge status={row.status} />
+      }
+    ],
+    []
+  );
+
   return (
     <>
       <ResourceListPage<MemberResponse>
         title="Membros"
-        columns={[
-          {
-            header: 'Nome',
-            cell: (row) => row.name
-          },
-          {
-            header: 'Telefone',
-            cell: (row) => row.phone ?? '—'
-          },
-          {
-            header: 'E-mail',
-            cell: (row) => row.email ?? '—'
-          },
-          {
-            header: 'Cidade',
-            cell: (row) => formatCityState(row.city, row.state)
-          },
-          {
-            header: 'Status',
-            cell: (row) => <StatusBadge status={row.status} />
-          }
-        ]}
+        columns={columns}
         data={items}
         isLoading={list.isLoading}
         onCreate={
