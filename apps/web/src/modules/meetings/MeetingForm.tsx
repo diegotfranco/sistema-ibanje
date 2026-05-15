@@ -19,33 +19,37 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/DateInput';
-import { BoardMeetingFormSchema, type BoardMeetingFormValues } from '@/schemas/board-meeting';
+import { MeetingType } from '@sistema-ibanje/shared';
+import { MeetingFormSchema, type MeetingFormValues } from '@/schemas/meeting';
 
-const EMPTY: BoardMeetingFormValues = { meetingDate: '', type: 'ordinária', isPublic: false };
+const EMPTY: MeetingFormValues = {
+  meetingDate: '',
+  type: MeetingType.Ordinary,
+  isPublic: false
+};
 
-interface BoardMeetingFormProps {
+interface MeetingFormProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  defaultValues?: BoardMeetingFormValues;
-  onSubmit: (values: BoardMeetingFormValues) => void;
+  defaultValues?: MeetingFormValues;
+  onSubmit: (values: MeetingFormValues) => void;
   isPending: boolean;
 }
 
-export default function BoardMeetingForm({
+export default function MeetingForm({
   open,
   onOpenChange,
   defaultValues,
   onSubmit,
   isPending
-}: BoardMeetingFormProps) {
+}: MeetingFormProps) {
   const {
-    register,
     handleSubmit,
     reset,
     control,
     formState: { errors }
-  } = useForm<BoardMeetingFormValues>({
-    resolver: zodResolver(BoardMeetingFormSchema),
+  } = useForm<MeetingFormValues>({
+    resolver: zodResolver(MeetingFormSchema),
     defaultValues: defaultValues ?? EMPTY
   });
 
@@ -62,7 +66,19 @@ export default function BoardMeetingForm({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="meetingDate">Data *</Label>
-            <DateInput id="meetingDate" {...register('meetingDate')} />
+            <Controller
+              control={control}
+              name="meetingDate"
+              render={({ field }) => (
+                <DateInput
+                  id="meetingDate"
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+              )}
+            />
             {errors.meetingDate && (
               <p className="text-xs text-red-500">{errors.meetingDate.message}</p>
             )}
@@ -79,8 +95,8 @@ export default function BoardMeetingForm({
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="ordinária">Ordinária</SelectItem>
-                    <SelectItem value="extraordinária">Extraordinária</SelectItem>
+                    <SelectItem value={MeetingType.Ordinary}>Ordinária</SelectItem>
+                    <SelectItem value={MeetingType.Extraordinary}>Extraordinária</SelectItem>
                   </SelectContent>
                 </Select>
               )}

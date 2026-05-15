@@ -1,6 +1,6 @@
 {
-  "id": "9faad015-fd29-46bc-b191-03cd150710d9",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "c839bd10-9a06-4569-a9cf-d5b341e72d07",
+  "prevId": "9faad015-fd29-46bc-b191-03cd150710d9",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2177,12 +2177,6 @@
         "closing_time": {
           "name": "closing_time",
           "type": "varchar(8)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "members_present_count": {
-          "name": "members_present_count",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },

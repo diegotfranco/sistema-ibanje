@@ -1,3 +1,5 @@
+import React from 'react';
+import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import * as repo from './repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
@@ -11,6 +13,8 @@ import { randomUUID } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { minuteTemplates } from '../../db/schema.js';
 import * as churchSettingsRepo from '../church-settings/repository.js';
+import { MinutePdf } from './pdf-template.js';
+import { sanitizeMinuteDoc } from './sanitize.js';
 import type {
   CreateMinuteRequest,
   UpdateMinuteVersionRequest,
@@ -28,7 +32,7 @@ function buildVersionResponse(v: MinuteVersion): MinuteVersionResponse {
   return {
     id: v.id,
     version: v.version,
-    content: JSON.stringify(v.content),
+    content: v.content,
     status: v.status as MinuteVersionResponse['status'],
     reasonForChange: v.reasonForChange ?? null,
     createdByUserId: v.createdByUserId,
@@ -40,8 +44,18 @@ function buildVersionResponse(v: MinuteVersion): MinuteVersionResponse {
 function formatDateExtenso(dateStr: string | null): string {
   if (!dateStr) return '';
   const months = [
-    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+    'janeiro',
+    'fevereiro',
+    'março',
+    'abril',
+    'maio',
+    'junho',
+    'julho',
+    'agosto',
+    'setembro',
+    'outubro',
+    'novembro',
+    'dezembro'
   ];
   try {
     const [year, month, day] = dateStr.split('-').map(Number);
@@ -73,7 +87,69 @@ function interpolateTemplate(template: unknown, variables: Record<string, string
   return template;
 }
 
-async function buildMinuteResponseAsync(minute: Minute, versions: MinuteVersion[]): Promise<MinuteResponse> {
+function buildInterpolationVariables(
+  minute: Minute,
+  meeting: { meetingDate: Date | null; type: string },
+  church: {
+    name: string;
+    cnpj: string;
+    addressStreet: string;
+    addressNumber: string;
+    addressDistrict: string;
+    addressCity: string;
+    addressState: string;
+  },
+  previousMinuteNumber: string,
+  attendersPresent: Array<{ id: number; name: string }>
+): Record<string, string> {
+  return {
+    church_name: church.name,
+    church_cnpj: church.cnpj,
+    church_address: `${church.addressStreet}, ${church.addressNumber}, ${church.addressDistrict}, ${church.addressCity}, ${church.addressState}`,
+    meeting_date_extenso: formatDateExtenso(
+      meeting.meetingDate ? meeting.meetingDate.toString() : null
+    ),
+    minute_number: minute.minuteNumber,
+    presiding_pastor_name: minute.presidingPastorName ?? '',
+    secretary_name: minute.secretaryName ?? '',
+    previous_minute_number: previousMinuteNumber ?? '',
+    opening_time: minute.openingTime ?? '',
+    closing_time: minute.closingTime ?? '',
+    members_present_count: String(attendersPresent.length),
+    pautas: ''
+  };
+}
+
+export function interpolateMinutePlaceholders(
+  doc: unknown,
+  minute: Minute,
+  meeting: { meetingDate: Date | null; type: string },
+  church: {
+    name: string;
+    cnpj: string;
+    addressStreet: string;
+    addressNumber: string;
+    addressDistrict: string;
+    addressCity: string;
+    addressState: string;
+  },
+  previousMinuteNumber: string,
+  attendersPresent: Array<{ id: number; name: string }>
+): unknown {
+  const vars = buildInterpolationVariables(
+    minute,
+    meeting,
+    church,
+    previousMinuteNumber,
+    attendersPresent
+  );
+  return interpolateTemplate(doc, vars);
+}
+
+async function buildMinuteResponseAsync(
+  minute: Minute,
+  versions: MinuteVersion[]
+): Promise<MinuteResponse> {
   const sorted = [...versions].sort((a, b) => a.version - b.version);
   const currentVersion =
     sorted.length > 0 ? buildVersionResponse(sorted[sorted.length - 1]!) : null;
@@ -87,28 +163,27 @@ async function buildMinuteResponseAsync(minute: Minute, versions: MinuteVersion[
     }
   }
 
+  const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
+
   return {
     id: minute.id,
-    boardMeetingId: minute.boardMeetingId,
+    meetingId: minute.meetingId,
     minuteNumber: minute.minuteNumber,
     isNotarized: minute.isNotarized,
     notarizedAt: minute.notarizedAt ? minute.notarizedAt.toISOString() : null,
     correctsMinuteId: minute.correctsMinuteId ?? null,
     presidingPastorName: minute.presidingPastorName ?? null,
     secretaryName: minute.secretaryName ?? null,
-    openingHymnReference: minute.openingHymnReference ?? null,
-    openingBibleReference: minute.openingBibleReference ?? null,
     openingTime: minute.openingTime ?? null,
     closingTime: minute.closingTime ?? null,
-    membersPresentCount: minute.membersPresentCount ?? null,
     signedDocumentPath,
+    attendersPresent,
     currentVersion,
     versions: sorted.map(buildVersionResponse),
     createdAt: minute.createdAt.toISOString(),
     updatedAt: minute.updatedAt.toISOString()
   };
 }
-
 
 export async function listMinutes(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.Minutes, Action.View);
@@ -137,52 +212,34 @@ export async function createMinute(
 ): Promise<MinuteResponse> {
   await assertPermission(callerId, Module.Minutes, Action.Create);
 
-  const meeting = await repo.findBoardMeetingById(body.boardMeetingId);
-  if (!meeting) throw httpError(404, 'Board meeting not found');
-  if (meeting.status === ActiveStatus.Inactive) throw httpError(400, 'Board meeting is inactive');
+  const meeting = await repo.findMeetingById(body.meetingId);
+  if (!meeting) throw httpError(404, 'Meeting not found');
+  if (meeting.status === ActiveStatus.Inactive) throw httpError(400, 'Meeting is inactive');
 
   if (await repo.findMinuteByNumber(body.minuteNumber))
     throw httpError(409, 'Minute number already exists');
-  if (await repo.findMinuteByBoardMeetingId(body.boardMeetingId))
+  if (await repo.findMinuteByMeetingId(body.meetingId))
     throw httpError(409, 'This meeting already has minutes');
 
   const churchSettings = await churchSettingsRepo.getChurchSettings();
   if (!churchSettings) throw httpError(409, 'Church settings not initialized');
 
   const template = await repo.findDefaultTemplateForMeetingType(meeting.type);
-  let templateContent = template?.content ?? { type: 'doc', content: [] };
+  const templateContent = template?.content ?? { type: 'doc', content: [] };
 
-  const agendaItems = await repo.listAgendaItemsForMeeting(body.boardMeetingId);
-  const pautasText = agendaItems
-    .map((item, idx) => `${String.fromCharCode(97 + idx)}) ${item.title}${item.description ? ' — ' + item.description : ''}`)
-    .join('\n');
-
-  const variables: Record<string, string> = {
-    church_name: churchSettings.name,
-    church_cnpj: churchSettings.cnpj,
-    church_address: `${churchSettings.addressStreet}, ${churchSettings.addressNumber}, ${churchSettings.addressDistrict}, ${churchSettings.addressCity}, ${churchSettings.addressState}`,
-    meeting_date_extenso: formatDateExtenso(meeting.meetingDate ? meeting.meetingDate.toString() : null),
-    minute_number: body.minuteNumber,
-    presiding_pastor_name: body.presidingPastorName ?? churchSettings.currentPresidentName ?? '',
-    secretary_name: body.secretaryName ?? churchSettings.currentSecretaryName ?? '',
-    previous_minute_number: '',
-    pautas: pautasText
-  };
-
-  const interpolatedContent = interpolateTemplate(templateContent, variables);
+  // Store template content as-is (with placeholders intact)
+  const interpolatedContent = templateContent;
 
   return await db.transaction(async (tx) => {
     const minute = await repo.insertMinute(
       {
-        boardMeetingId: body.boardMeetingId,
+        meetingId: body.meetingId,
         minuteNumber: body.minuteNumber,
-        presidingPastorName: body.presidingPastorName ?? churchSettings.currentPresidentName ?? null,
+        presidingPastorName:
+          body.presidingPastorName ?? churchSettings.currentPresidentName ?? null,
         secretaryName: body.secretaryName ?? churchSettings.currentSecretaryName ?? null,
-        openingHymnReference: body.openingHymnReference ?? null,
-        openingBibleReference: body.openingBibleReference ?? null,
         openingTime: body.openingTime ?? null,
-        closingTime: body.closingTime ?? null,
-        membersPresentCount: body.membersPresentCount ?? null
+        closingTime: body.closingTime ?? null
       },
       tx
     );
@@ -211,17 +268,15 @@ export async function updatePendingVersion(
   if (!minute) return null;
 
   const latest = await repo.findLatestVersion(minuteId);
-  if (!latest || (latest.status !== MinuteStatus.Draft && latest.status !== MinuteStatus.AwaitingApproval))
+  if (
+    !latest ||
+    (latest.status !== MinuteStatus.Draft && latest.status !== MinuteStatus.AwaitingApproval)
+  )
     throw httpError(409, 'No pending version to update');
 
-  let parsedContent: unknown;
-  try {
-    parsedContent = JSON.parse(body.content);
-  } catch {
-    throw httpError(400, 'content must be valid JSON');
-  }
+  const sanitized = sanitizeMinuteDoc(body.content);
 
-  await repo.updateMinuteVersion(latest.id, { content: parsedContent });
+  await repo.updateMinuteVersion(latest.id, { content: sanitized });
   const versions = await repo.getVersionsForMinute(minuteId);
   return buildMinuteResponseAsync(minute, versions);
 }
@@ -239,19 +294,14 @@ export async function editApprovedMinute(
   if (!latest || latest.status !== MinuteStatus.Approved)
     throw httpError(409, 'Latest version must be approved to create a new one');
 
-  let parsedContent: unknown;
-  try {
-    parsedContent = JSON.parse(body.content);
-  } catch {
-    throw httpError(400, 'content must be valid JSON');
-  }
+  const sanitized = sanitizeMinuteDoc(body.content);
 
   return await db.transaction(async (tx) => {
     await repo.updateMinuteVersion(latest.id, { status: MinuteStatus.Replaced }, tx);
     await repo.insertMinuteVersion(
       {
         minuteId,
-        content: parsedContent,
+        content: sanitized,
         version: latest.version + 1,
         status: MinuteStatus.AwaitingApproval,
         reasonForChange: body.reasonForChange,
@@ -299,7 +349,10 @@ export async function deleteMinute(callerId: number, minuteId: number): Promise<
   await repo.deleteMinute(minuteId);
 }
 
-export async function finalizeDraft(callerId: number, minuteId: number): Promise<MinuteResponse | null> {
+export async function finalizeDraft(
+  callerId: number,
+  minuteId: number
+): Promise<MinuteResponse | null> {
   await assertPermission(callerId, Module.Minutes, Action.Update);
   const minute = await repo.findMinuteById(minuteId);
   if (!minute) return null;
@@ -332,7 +385,7 @@ export async function signMinute(
     throw httpError(400, 'Only PDF files are accepted');
   }
 
-  const meeting = await repo.findBoardMeetingById(minute.boardMeetingId);
+  const meeting = await repo.findMeetingById(minute.meetingId);
   if (!meeting) throw httpError(404, 'Board meeting not found');
 
   const dateObj = new Date(meeting.meetingDate);
@@ -371,6 +424,92 @@ export async function updateMinute(
   const updated = await repo.findMinuteById(minuteId);
   const versions = await repo.getVersionsForMinute(minuteId);
   return buildMinuteResponseAsync(updated!, versions);
+}
+
+export async function renderMinutePdf(callerId: number, minuteId: number): Promise<Buffer | null> {
+  await assertPermission(callerId, Module.Minutes, Action.View);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute) return null;
+
+  const meeting = await repo.findMeetingById(minute.meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+
+  const latest = await repo.findLatestVersion(minuteId);
+  const churchSettings = await churchSettingsRepo.getChurchSettings();
+  if (!churchSettings) throw httpError(409, 'Church settings not initialized');
+
+  const previousMinuteNumber = await repo.getPreviousApprovedMinuteNumber();
+  const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
+
+  const interpolatedContent = interpolateMinutePlaceholders(
+    latest?.content ?? null,
+    minute,
+    { meetingDate: meeting.meetingDate ? new Date(meeting.meetingDate) : null, type: meeting.type },
+    churchSettings,
+    previousMinuteNumber,
+    attendersPresent
+  );
+
+  return renderToBuffer(
+    React.createElement(MinutePdf, {
+      minute: {
+        minuteNumber: minute.minuteNumber,
+        presidingPastorName: minute.presidingPastorName ?? null,
+        secretaryName: minute.secretaryName ?? null,
+        openingTime: minute.openingTime ?? null,
+        closingTime: minute.closingTime ?? null,
+        boardMeeting: {
+          meetingDate: meeting.meetingDate ? meeting.meetingDate.toString() : '',
+          type: meeting.type
+        }
+      },
+      versionContent: interpolatedContent,
+      attendersPresent,
+      church: {
+        name: churchSettings.name,
+        cnpj: churchSettings.cnpj,
+        addressStreet: churchSettings.addressStreet,
+        addressNumber: churchSettings.addressNumber,
+        addressDistrict: churchSettings.addressDistrict,
+        addressCity: churchSettings.addressCity,
+        addressState: churchSettings.addressState
+      }
+    }) as React.ReactElement<DocumentProps>
+  );
+}
+
+export async function getSuggestedMinuteNumber(callerId: number): Promise<string> {
+  await assertPermission(callerId, Module.Minutes, Action.Create);
+  const mostRecent = await repo.findMostRecentMinute();
+  if (!mostRecent) return '';
+
+  const match = mostRecent.minuteNumber.match(/(\d+)/);
+  if (match && match[1]) {
+    const num = parseInt(match[1], 10);
+    return String(num + 1);
+  }
+  return '';
+}
+
+export async function getMeetingAttendersPresent(
+  callerId: number,
+  meetingId: number
+): Promise<Array<{ id: number; name: string }>> {
+  await assertPermission(callerId, Module.Minutes, Action.View);
+  const meeting = await repo.findMeetingById(meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+  return repo.getMeetingAttendersPresent(meetingId);
+}
+
+export async function setMeetingAttendersPresent(
+  callerId: number,
+  meetingId: number,
+  attenderIds: number[]
+): Promise<void> {
+  await assertPermission(callerId, Module.Minutes, Action.Update);
+  const meeting = await repo.findMeetingById(meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+  return repo.setMeetingAttendersPresent(meetingId, attenderIds);
 }
 
 export async function listMinuteTemplates(): Promise<MinuteTemplateResponse[]> {

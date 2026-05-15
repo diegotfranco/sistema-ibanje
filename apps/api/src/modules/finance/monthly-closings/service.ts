@@ -10,7 +10,6 @@ import type {
   SubmitMonthlyClosingRequest,
   ApproveMonthlyClosingRequest,
   RejectMonthlyClosingRequest,
-  ReproveClosingRequest,
   MonthlyClosingResponse
 } from './schema.js';
 import type { MonthlyClosing } from '../../../db/schema.js';
@@ -196,8 +195,7 @@ export async function rejectMonthlyClosing(
 
 export async function reproveApprovedClosing(
   callerId: number,
-  id: number,
-  body: ReproveClosingRequest
+  id: number
 ): Promise<MonthlyClosingResponse> {
   await assertPermission(callerId, Module.MonthlyClosings, Action.Review);
 

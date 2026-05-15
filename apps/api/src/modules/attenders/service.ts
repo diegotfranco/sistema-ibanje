@@ -11,7 +11,7 @@ import { eq } from 'drizzle-orm';
 import { users, attenders } from '../../db/schema.js';
 
 export async function listAttenders(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, Module.Members, Action.View);
+  await assertPermission(callerId, Module.Attenders, Action.View);
 
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listAttenders(offset, limit);
@@ -77,7 +77,7 @@ export async function createAttender(
   callerId: number,
   body: CreateAttenderRequest
 ): Promise<AttenderResponse> {
-  await assertPermission(callerId, Module.Members, Action.Create);
+  await assertPermission(callerId, Module.Attenders, Action.Create);
 
   if (body.userId !== undefined) {
     const user = await db
@@ -154,7 +154,7 @@ export async function updateAttender(
   targetId: number,
   body: UpdateAttenderRequest
 ): Promise<AttenderResponse | null> {
-  await assertPermission(callerId, Module.Members, Action.Update);
+  await assertPermission(callerId, Module.Attenders, Action.Update);
 
   const attender = await repo.findAttenderById(targetId);
   if (!attender) return null;
@@ -210,7 +210,7 @@ export async function updateAttender(
 }
 
 export async function deactivateAttender(callerId: number, targetId: number): Promise<void | null> {
-  await assertPermission(callerId, Module.Members, Action.Delete);
+  await assertPermission(callerId, Module.Attenders, Action.Delete);
 
   const attender = await repo.findAttenderById(targetId);
   if (!attender) return null;

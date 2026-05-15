@@ -32,12 +32,14 @@ const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
   [ClosingStatus.Open]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
   [ClosingStatus.InReview]: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+  [ClosingStatus.Rejected]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
   [ClosingStatus.Approved]:
     'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
   [ClosingStatus.Closed]: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
 };
 
 const MINUTE_STATUS_CLASSES: Record<MinuteStatusValue, string> = {
+  [MinuteStatus.Draft]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
   [MinuteStatus.AwaitingApproval]:
     'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
   [MinuteStatus.Approved]:

@@ -25,7 +25,10 @@ export const CreateAttenderRequestSchema = z.object({
   isMember: z.boolean().optional().default(false),
   memberSince: z.string().date().nullable().optional(),
   congregatingSinceYear: z.number().int().min(1900).max(2100).nullable().optional(),
-  admissionMode: z.enum(['aclamação', 'batismo', 'carta de transferência', 'profissão de fé']).nullable().optional()
+  admissionMode: z
+    .enum(['aclamação', 'batismo', 'carta de transferência', 'profissão de fé'])
+    .nullable()
+    .optional()
 });
 
 export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial();

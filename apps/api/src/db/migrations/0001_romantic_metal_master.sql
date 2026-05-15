@@ -1,0 +1,1 @@
+ALTER TABLE "minutes" DROP COLUMN "members_present_count";

@@ -52,7 +52,9 @@ export async function listMembershipLetters(
   );
 }
 
-export async function getMembershipLetterById(id: number): Promise<MembershipLetterResponse | null> {
+export async function getMembershipLetterById(
+  id: number
+): Promise<MembershipLetterResponse | null> {
   const letter = await repo.findMembershipLetterById(id);
   if (!letter) return null;
 
@@ -189,7 +191,10 @@ export async function updateMembershipLetter(
   };
 }
 
-export async function deleteMembershipLetter(callerId: number, targetId: number): Promise<void | null> {
+export async function deleteMembershipLetter(
+  callerId: number,
+  targetId: number
+): Promise<void | null> {
   await assertPermission(callerId, Module.MembershipLetters, Action.Delete);
 
   const letter = await repo.findMembershipLetterById(targetId);
@@ -198,10 +203,7 @@ export async function deleteMembershipLetter(callerId: number, targetId: number)
   await repo.deleteMembershipLetter(targetId);
 }
 
-export async function renderMembershipLetter(
-  callerId: number,
-  letterId: number
-): Promise<string> {
+export async function renderMembershipLetter(callerId: number, letterId: number): Promise<string> {
   await assertPermission(callerId, Module.MembershipLetters, Action.View);
 
   const letter = await repo.findMembershipLetterById(letterId);
@@ -219,7 +221,11 @@ export async function renderMembershipLetter(
     throw httpError(404, 'Attender not found');
   }
 
-  const settingsResult = await db.select().from(churchSettings).where(eq(churchSettings.id, 1)).limit(1);
+  const settingsResult = await db
+    .select()
+    .from(churchSettings)
+    .where(eq(churchSettings.id, 1))
+    .limit(1);
 
   const settings = settingsResult[0];
   if (!settings) {

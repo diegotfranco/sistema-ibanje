@@ -6,37 +6,37 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useMembers, useMemberMutations } from './useMembers';
-import MemberForm from './MemberForm';
+import { useAttenders, useAttenderMutations } from './useAttenders';
+import AttenderForm from './AttenderForm';
 import StatusBadge from '@/components/StatusBadge';
-import type { MemberResponse, MemberFormValues } from '@/schemas/member';
+import type { AttenderResponse, AttenderFormValues } from '@/schemas/attender';
 
-type MemberFormInstance = ReturnType<typeof useForm<MemberFormValues>>;
+type AttenderFormInstance = ReturnType<typeof useForm<AttenderFormValues>>;
 
 function formatCityState(city: string | null, state: string | null): string {
   if (!city) return '—';
   return state ? `${city} / ${state}` : city;
 }
 
-export default function MembersPage() {
+export default function AttendersPage() {
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
-  const canCreate = hasPermission(perms, Module.Members, Action.Create);
-  const canEdit = hasPermission(perms, Module.Members, Action.Update);
-  const canDelete = hasPermission(perms, Module.Members, Action.Delete);
+  const canCreate = hasPermission(perms, Module.Attenders, Action.Create);
+  const canEdit = hasPermission(perms, Module.Attenders, Action.Update);
+  const canDelete = hasPermission(perms, Module.Attenders, Action.Delete);
 
-  const list = useMembers();
-  const mutations = useMemberMutations();
+  const list = useAttenders();
+  const mutations = useAttenderMutations();
 
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editing, setEditing] = useState<MemberResponse | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<MemberResponse | null>(null);
+  const [editing, setEditing] = useState<AttenderResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AttenderResponse | null>(null);
 
-  const formRef = useRef<MemberFormInstance | null>(null);
+  const formRef = useRef<AttenderFormInstance | null>(null);
 
   const items = list.data?.data;
 
-  function handleSubmit(values: MemberFormValues) {
+  function handleSubmit(values: AttenderFormValues) {
     if (editing) {
       mutations.update.mutate(
         { id: editing.id, body: values },
@@ -66,20 +66,24 @@ export default function MembersPage() {
     }
   }
 
-  function convertToFormValues(member: MemberResponse): MemberFormValues {
+  function convertToFormValues(attender: AttenderResponse): AttenderFormValues {
     return {
-      name: member.name,
-      userId: member.userId,
-      birthDate: member.birthDate,
-      phone: member.phone,
-      email: member.email,
-      addressStreet: member.addressStreet,
-      addressNumber: member.addressNumber,
-      addressComplement: member.addressComplement,
-      addressDistrict: member.addressDistrict,
-      state: member.state,
-      city: member.city,
-      postalCode: member.postalCode
+      name: attender.name,
+      userId: attender.userId,
+      birthDate: attender.birthDate,
+      phone: attender.phone,
+      email: attender.email,
+      addressStreet: attender.addressStreet,
+      addressNumber: attender.addressNumber,
+      addressComplement: attender.addressComplement,
+      addressDistrict: attender.addressDistrict,
+      state: attender.state,
+      city: attender.city,
+      postalCode: attender.postalCode,
+      isMember: attender.isMember,
+      memberSince: attender.memberSince,
+      congregatingSinceYear: attender.congregatingSinceYear,
+      admissionMode: attender.admissionMode as AttenderFormValues['admissionMode']
     };
   }
 
@@ -87,23 +91,27 @@ export default function MembersPage() {
     () => [
       {
         header: 'Nome',
-        cell: (row: MemberResponse) => row.name
+        cell: (row: AttenderResponse) => row.name
+      },
+      {
+        header: 'Membro',
+        cell: (row: AttenderResponse) => (row.isMember ? 'Sim' : 'Não')
       },
       {
         header: 'Telefone',
-        cell: (row: MemberResponse) => row.phone ?? '—'
+        cell: (row: AttenderResponse) => row.phone ?? '—'
       },
       {
         header: 'E-mail',
-        cell: (row: MemberResponse) => row.email ?? '—'
+        cell: (row: AttenderResponse) => row.email ?? '—'
       },
       {
         header: 'Cidade',
-        cell: (row: MemberResponse) => formatCityState(row.city, row.state)
+        cell: (row: AttenderResponse) => formatCityState(row.city, row.state)
       },
       {
         header: 'Status',
-        cell: (row: MemberResponse) => <StatusBadge status={row.status} />
+        cell: (row: AttenderResponse) => <StatusBadge status={row.status} />
       }
     ],
     []
@@ -111,8 +119,8 @@ export default function MembersPage() {
 
   return (
     <>
-      <ResourceListPage<MemberResponse>
-        title="Membros"
+      <ResourceListPage<AttenderResponse>
+        title="Congregados"
         columns={columns}
         data={items}
         isLoading={list.isLoading}
@@ -137,10 +145,10 @@ export default function MembersPage() {
         canEdit={canEdit}
         canDelete={canDelete}
         rowKey={(row) => row.id}
-        emptyMessage="Nenhum membro encontrado."
+        emptyMessage="Nenhum congregado encontrado."
       />
 
-      <MemberForm
+      <AttenderForm
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         defaultValues={editing ? convertToFormValues(editing) : undefined}
@@ -154,7 +162,7 @@ export default function MembersPage() {
         onOpenChange={(v) => {
           if (!v) setDeleteTarget(null);
         }}
-        description={`Remover "${deleteTarget?.name}"? Esta ação desativa o membro.`}
+        description={`Remover "${deleteTarget?.name}"? Esta ação desativa o congregado.`}
         onConfirm={() => {
           if (deleteTarget)
             mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });

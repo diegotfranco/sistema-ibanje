@@ -17,7 +17,7 @@ export const ExpenseEntryFormSchema = z.object({
   categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
   paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
   designatedFundId: z.number().int().positive().optional(),
-  memberId: z.number().int().positive().optional(),
+  attenderId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional().or(z.literal('')),
   status: z.enum([EntryStatus.Pending, EntryStatus.Paid, EntryStatus.Cancelled] as const).optional()
 });
@@ -34,7 +34,7 @@ export type ExpenseEntryCreateBody = {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
-  memberId?: number;
+  attenderId?: number;
   notes?: string;
 };
 
@@ -57,8 +57,8 @@ export type ExpenseEntryResponse = {
   paymentMethodName: string;
   designatedFundId: number | null;
   designatedFundName: string | null;
-  memberId: number | null;
-  memberName: string | null;
+  attenderId: number | null;
+  attenderName: string | null;
   receipt: string | null;
   notes: string | null;
   userId: number;

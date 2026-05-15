@@ -3,24 +3,24 @@ import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
-import MembersPage from '@/modules/members/MembersPage';
+import AttendersPage from '@/modules/attenders/AttendersPage';
 
-export const membersRoutes: AppRoute[] = [
+export const attendersRoutes: AppRoute[] = [
   {
     layout: 'app',
-    label: 'Membros',
+    label: 'Congregados',
     children: [
       {
-        path: paths.members,
+        path: paths.attenders,
         element: (
-          <RequirePermission module={Module.Members}>
-            <MembersPage />
+          <RequirePermission module={Module.Attenders}>
+            <AttendersPage />
           </RequirePermission>
         ),
         layout: 'app',
-        label: 'Membros',
+        label: 'Congregados',
         icon: Users,
-        module: Module.Members
+        module: Module.Attenders
       }
     ]
   }

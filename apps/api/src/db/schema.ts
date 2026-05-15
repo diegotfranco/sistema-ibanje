@@ -18,10 +18,11 @@ import {
   index
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
+import { MEETING_TYPE_VALUES } from '@sistema-ibanje/shared';
 
 export const activeStatus = pgEnum('active_status', ['ativo', 'inativo', 'pendente']);
 export const transactionStatus = pgEnum('transaction_status', ['pendente', 'paga', 'cancelada']);
-export const meetingType = pgEnum('meeting_type', ['ordinária', 'extraordinária']);
+export const meetingType = pgEnum('meeting_type', MEETING_TYPE_VALUES);
 export const minuteVersionStatus = pgEnum('minute_version_status', [
   'rascunho',
   'aguardando aprovação',
@@ -427,8 +428,8 @@ export const passwordResetTokens = pgTable(
   ]
 );
 
-export const boardMeetings = pgTable(
-  'board_meetings',
+export const meetings = pgTable(
+  'meetings',
   {
     id: serial('id').primaryKey(),
     meetingDate: date('meeting_date').notNull(),
@@ -439,8 +440,8 @@ export const boardMeetings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
-    index('board_meetings_meeting_date_idx').on(table.meetingDate),
-    index('board_meetings_status_idx').on(table.status)
+    index('meetings_meeting_date_idx').on(table.meetingDate),
+    index('meetings_status_idx').on(table.status)
   ]
 );
 
@@ -450,7 +451,7 @@ export const agendaItems = pgTable(
     id: serial('id').primaryKey(),
     meetingId: integer('meeting_id')
       .notNull()
-      .references(() => boardMeetings.id, { onDelete: 'cascade' }),
+      .references(() => meetings.id, { onDelete: 'cascade' }),
     order: integer('order').notNull(),
     title: varchar('title', { length: 256 }).notNull(),
     description: text('description'),
@@ -464,21 +465,18 @@ export const agendaItems = pgTable(
 
 export const minutes = pgTable('minutes', {
   id: serial('id').primaryKey(),
-  boardMeetingId: integer('board_meeting_id')
+  meetingId: integer('meeting_id')
     .unique()
     .notNull()
-    .references(() => boardMeetings.id),
+    .references(() => meetings.id),
   minuteNumber: varchar('minute_number', { length: 32 }).unique().notNull(),
   isNotarized: boolean('is_notarized').default(false).notNull(),
   notarizedAt: timestamp('notarized_at', { withTimezone: true }),
   correctsMinuteId: integer('corrects_minute_id').references((): AnyPgColumn => minutes.id),
   presidingPastorName: varchar('presiding_pastor_name', { length: 96 }),
   secretaryName: varchar('secretary_name', { length: 96 }),
-  openingHymnReference: varchar('opening_hymn_reference', { length: 128 }),
-  openingBibleReference: varchar('opening_bible_reference', { length: 64 }),
   openingTime: varchar('opening_time', { length: 8 }),
   closingTime: varchar('closing_time', { length: 8 }),
-  membersPresentCount: integer('members_present_count'),
   signedDocumentPath: text('signed_document_path'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
@@ -498,7 +496,7 @@ export const minuteVersions = pgTable(
     createdByUserId: integer('created_by_user_id')
       .notNull()
       .references(() => users.id),
-    approvedAtMeetingId: integer('approved_at_meeting_id').references(() => boardMeetings.id),
+    approvedAtMeetingId: integer('approved_at_meeting_id').references(() => meetings.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
@@ -522,6 +520,23 @@ export const minuteTemplates = pgTable(
   (table) => [
     unique('uq_default_template_per_type').on(table.meetingType, table.isDefault),
     index('minute_templates_meeting_type_idx').on(table.meetingType)
+  ]
+);
+
+export const meetingAttendersPresent = pgTable(
+  'meeting_attenders_present',
+  {
+    meetingId: integer('meeting_id')
+      .notNull()
+      .references(() => meetings.id, { onDelete: 'cascade' }),
+    attenderId: integer('attender_id')
+      .notNull()
+      .references(() => attenders.id, { onDelete: 'cascade' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    primaryKey({ columns: [table.meetingId, table.attenderId] }),
+    index('map_meeting_id_idx').on(table.meetingId)
   ]
 );
 
@@ -576,8 +591,8 @@ export type MonthlyClosing = typeof monthlyClosings.$inferSelect;
 export type NewMonthlyClosing = typeof monthlyClosings.$inferInsert;
 export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
-export type BoardMeeting = typeof boardMeetings.$inferSelect;
-export type NewBoardMeeting = typeof boardMeetings.$inferInsert;
+export type Meeting = typeof meetings.$inferSelect;
+export type NewMeeting = typeof meetings.$inferInsert;
 export type AgendaItem = typeof agendaItems.$inferSelect;
 export type NewAgendaItem = typeof agendaItems.$inferInsert;
 export type Minute = typeof minutes.$inferSelect;
@@ -586,5 +601,7 @@ export type MinuteVersion = typeof minuteVersions.$inferSelect;
 export type NewMinuteVersion = typeof minuteVersions.$inferInsert;
 export type MinuteTemplate = typeof minuteTemplates.$inferSelect;
 export type NewMinuteTemplate = typeof minuteTemplates.$inferInsert;
+export type MeetingAttenderPresent = typeof meetingAttendersPresent.$inferSelect;
+export type NewMeetingAttenderPresent = typeof meetingAttendersPresent.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type NewAuditLog = typeof auditLog.$inferInsert;

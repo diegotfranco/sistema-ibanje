@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,19 +12,28 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import DateInput from '@/components/DateInput';
-import { MemberFormSchema, type MemberFormValues } from '@/schemas/member';
+import { AdmissionMode } from '@sistema-ibanje/shared';
+import { AttenderFormSchema, type AttenderFormValues } from '@/schemas/attender';
 
-interface MemberFormProps {
+interface AttenderFormProps {
   open: boolean;
   onOpenChange: (v: boolean) => void;
-  defaultValues?: MemberFormValues;
-  onSubmit: (values: MemberFormValues) => void;
+  defaultValues?: AttenderFormValues;
+  onSubmit: (values: AttenderFormValues) => void;
   isPending: boolean;
-  formRef?: React.Ref<ReturnType<typeof useForm<MemberFormValues>> | null>;
+  formRef?: React.Ref<ReturnType<typeof useForm<AttenderFormValues>> | null>;
 }
 
-const EMPTY: MemberFormValues = {
+const EMPTY: AttenderFormValues = {
   name: '',
   userId: null,
   birthDate: null,
@@ -36,19 +45,23 @@ const EMPTY: MemberFormValues = {
   addressDistrict: null,
   state: null,
   city: null,
-  postalCode: null
+  postalCode: null,
+  isMember: false,
+  memberSince: null,
+  congregatingSinceYear: null,
+  admissionMode: null
 };
 
-export default function MemberForm({
+export default function AttenderForm({
   open,
   onOpenChange,
   defaultValues,
   onSubmit,
   isPending,
   formRef
-}: MemberFormProps) {
-  const form = useForm<MemberFormValues>({
-    resolver: zodResolver(MemberFormSchema),
+}: AttenderFormProps) {
+  const form = useForm<AttenderFormValues>({
+    resolver: zodResolver(AttenderFormSchema),
     defaultValues: defaultValues ?? EMPTY
   });
 
@@ -56,21 +69,21 @@ export default function MemberForm({
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors }
   } = form;
 
+  const isMember = useWatch({ control, name: 'isMember' }) ?? false;
+
   useEffect(() => {
-    // Populate form ref for error handling from parent
-    if (formRef) {
-      if ('current' in formRef) {
-        formRef.current = form;
-      }
+    if (formRef && 'current' in formRef) {
+      formRef.current = form;
     }
 
     if (open) reset(defaultValues ?? EMPTY);
   }, [open, defaultValues, reset, formRef, form]);
 
-  function prepare(values: MemberFormValues): MemberFormValues {
+  function prepare(values: AttenderFormValues): AttenderFormValues {
     return {
       ...values,
       email: values.email?.trim() || null,
@@ -80,7 +93,9 @@ export default function MemberForm({
       addressComplement: values.addressComplement?.trim() || null,
       addressDistrict: values.addressDistrict?.trim() || null,
       city: values.city?.trim() || null,
-      state: values.state?.trim() || null
+      state: values.state?.trim() || null,
+      memberSince: values.isMember ? values.memberSince || null : null,
+      admissionMode: values.isMember ? (values.admissionMode ?? null) : null
     };
   }
 
@@ -88,7 +103,7 @@ export default function MemberForm({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{defaultValues ? 'Editar Membro' : 'Novo Membro'}</DialogTitle>
+          <DialogTitle>{defaultValues ? 'Editar Congregado' : 'Novo Congregado'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit((v) => onSubmit(prepare(v)))} className="space-y-4">
           <p className="text-sm font-medium text-muted-foreground">Dados Pessoais</p>
@@ -103,7 +118,19 @@ export default function MemberForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="birthDate">Data de Nascimento</Label>
-              <DateInput id="birthDate" {...register('birthDate')} />
+              <Controller
+                control={control}
+                name="birthDate"
+                render={({ field }) => (
+                  <DateInput
+                    id="birthDate"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
+              />
             </div>
             <div className="space-y-1">
               <Label htmlFor="phone">Telefone</Label>
@@ -117,6 +144,95 @@ export default function MemberForm({
             <Input id="email" type="email" {...register('email')} />
             {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
           </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="congregatingSinceYear">Congregando desde (ano)</Label>
+            <Input
+              id="congregatingSinceYear"
+              type="number"
+              min={1900}
+              max={2100}
+              placeholder="2010"
+              {...register('congregatingSinceYear', {
+                setValueAs: (v) => (v === '' || v === null ? null : Number(v))
+              })}
+            />
+            {errors.congregatingSinceYear && (
+              <p className="text-xs text-red-500">{errors.congregatingSinceYear.message}</p>
+            )}
+          </div>
+
+          <p className="pt-2 text-sm font-medium text-muted-foreground">Membresia</p>
+          <Separator />
+
+          <div className="flex items-center gap-2">
+            <Controller
+              name="isMember"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="isMember"
+                  checked={field.value ?? false}
+                  onCheckedChange={(v) => field.onChange(v === true)}
+                />
+              )}
+            />
+            <Label htmlFor="isMember" className="cursor-pointer">
+              É membro da igreja
+            </Label>
+          </div>
+
+          {isMember && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="memberSince">Membro desde</Label>
+                <Controller
+                  control={control}
+                  name="memberSince"
+                  render={({ field }) => (
+                    <DateInput
+                      id="memberSince"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="admissionMode">Modo de Admissão</Label>
+                <Controller
+                  name="admissionMode"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value ?? ''}
+                      onValueChange={(v) =>
+                        field.onChange(v === '' ? null : (v as AttenderFormValues['admissionMode']))
+                      }>
+                      <SelectTrigger id="admissionMode" className="w-full">
+                        <SelectValue placeholder="Selecionar..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={AdmissionMode.Acclamation}>Aclamação</SelectItem>
+                        <SelectItem value={AdmissionMode.Baptism}>Batismo</SelectItem>
+                        <SelectItem value={AdmissionMode.TransferLetter}>
+                          Carta de Transferência
+                        </SelectItem>
+                        <SelectItem value={AdmissionMode.FaithProfession}>
+                          Profissão de Fé
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.admissionMode && (
+                  <p className="text-xs text-red-500">{errors.admissionMode.message}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <p className="pt-2 text-sm font-medium text-muted-foreground">Endereço</p>
           <Separator />

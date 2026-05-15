@@ -19,7 +19,7 @@ import { zodResolver } from '@/lib/zodResolver';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
-import { useMembers } from '@/modules/members/useMembers';
+import { useAttenders } from '@/modules/attenders/useAttenders';
 import { ReceiptField } from './ReceiptField';
 import {
   ExpenseEntryFormSchema,
@@ -53,7 +53,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       categoryId: initialValues?.categoryId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
-      memberId: initialValues?.memberId ?? undefined,
+      attenderId: initialValues?.attenderId ?? undefined,
       notes: initialValues?.notes ?? '',
       status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? undefined
     }
@@ -62,7 +62,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
   const designatedFunds = useDesignatedFunds();
-  const members = useMembers();
+  const attenders = useAttenders();
 
   const allCats = expenseCategories.data?.data ?? [];
   const parentIds = new Set(allCats.filter((c) => c.parentId !== null).map((c) => c.parentId!));
@@ -79,7 +79,9 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
 
   const designatedFundsList = designatedFunds.data?.data ?? [];
 
-  const membersList = (members.data?.data ?? []).filter((m) => m.status === ActiveStatus.Active);
+  const attendersList = (attenders.data?.data ?? []).filter(
+    (a) => a.status === ActiveStatus.Active
+  );
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -262,26 +264,26 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
             )}
           />
 
-          {/* memberId */}
+          {/* attenderId */}
           <Controller
-            name="memberId"
+            name="attenderId"
             control={control}
             render={({ field }) => (
               <Field>
-                <FieldLabel htmlFor="memberId">Membro Patrocinador (opcional)</FieldLabel>
+                <FieldLabel htmlFor="attenderId">Congregado Patrocinador (opcional)</FieldLabel>
                 <EntityPicker
-                  items={membersList}
+                  items={attendersList}
                   value={field.value ?? null}
                   onChange={(v) => field.onChange(v ?? undefined)}
-                  getValue={(m) => m.id}
-                  getLabel={(m) => m.name}
-                  placeholder="Selecionar membro..."
-                  emptyMessage="Nenhum membro encontrado."
-                  isLoading={members.isLoading}
+                  getValue={(a) => a.id}
+                  getLabel={(a) => a.name}
+                  placeholder="Selecionar congregado..."
+                  emptyMessage="Nenhum congregado encontrado."
+                  isLoading={attenders.isLoading}
                   allowClear
                   className="w-full"
                 />
-                {errors.memberId && <FieldError>{errors.memberId.message}</FieldError>}
+                {errors.attenderId && <FieldError>{errors.attenderId.message}</FieldError>}
               </Field>
             )}
           />

@@ -217,7 +217,10 @@ export async function createUser(
     await repo.copyRolePermissionsToUser(body.roleId, newUser.id, tx);
 
     if (body.attenderId !== undefined) {
-      await tx.update(attenders).set({ userId: newUser.id }).where(eq(attenders.id, body.attenderId));
+      await tx
+        .update(attenders)
+        .set({ userId: newUser.id })
+        .where(eq(attenders.id, body.attenderId));
     }
 
     const rawToken = await generateInviteToken(tx, newUser.id, body.email);

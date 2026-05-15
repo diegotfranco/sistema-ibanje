@@ -6,7 +6,7 @@ export const paths = {
   dashboard: '/dashboard',
   roles: '/roles',
   users: '/users',
-  members: '/members',
+  attenders: '/attenders',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
   incomeCategories: '/income-categories',
@@ -16,7 +16,7 @@ export const paths = {
   monthlyClosings: '/monthly-closings',
   monthlyClosingDetail: '/monthly-closings/:id',
   reports: '/reports',
-  boardMeetings: '/board-meetings',
+  meetings: '/meetings',
   minutes: '/minutes',
   minuteDetail: '/minutes/:id'
 } as const;

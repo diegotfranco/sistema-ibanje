@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { AdmissionMode } from '@sistema-ibanje/shared';
 
-export const MemberFormSchema = z.object({
+export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
   userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
@@ -16,12 +17,30 @@ export const MemberFormSchema = z.object({
     .string()
     .regex(/^\d{8}$/, 'CEP inválido')
     .optional()
+    .nullable(),
+  isMember: z.boolean().optional().default(false),
+  memberSince: z.string().optional().nullable(),
+  congregatingSinceYear: z
+    .number()
+    .int()
+    .min(1900, 'Ano inválido')
+    .max(2100, 'Ano inválido')
+    .optional()
+    .nullable(),
+  admissionMode: z
+    .enum([
+      AdmissionMode.Acclamation,
+      AdmissionMode.Baptism,
+      AdmissionMode.TransferLetter,
+      AdmissionMode.FaithProfession
+    ] as const)
+    .optional()
     .nullable()
 });
 
-export type MemberFormValues = z.infer<typeof MemberFormSchema>;
+export type AttenderFormValues = z.infer<typeof AttenderFormSchema>;
 
-export type MemberResponse = {
+export type AttenderResponse = {
   id: number;
   userId: number | null;
   name: string;
@@ -36,5 +55,9 @@ export type MemberResponse = {
   email: string | null;
   phone: string | null;
   status: string;
+  isMember: boolean;
+  memberSince: string | null;
+  congregatingSinceYear: number | null;
+  admissionMode: string | null;
   createdAt: Date;
 };

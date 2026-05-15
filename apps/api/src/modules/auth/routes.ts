@@ -42,7 +42,7 @@ export async function authRoutes(app: FastifyInstance) {
         }
       },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 5, timeWindow: '15 minutes' } }
+      config: { rateLimit: { max: 8, timeWindow: '15 minutes' } }
     },
     controller.login
   );
@@ -92,7 +92,7 @@ export async function authRoutes(app: FastifyInstance) {
         }
       },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 3, timeWindow: '1 hour' } }
+      config: { rateLimit: { max: 4, timeWindow: '1 hour' } }
     },
     controller.register
   );
@@ -110,7 +110,7 @@ export async function authRoutes(app: FastifyInstance) {
         }
       },
       preHandler: [app.csrfProtection],
-      config: { rateLimit: { max: 3, timeWindow: '1 hour' } }
+      config: { rateLimit: { max: 4, timeWindow: '1 hour' } }
     },
     controller.requestPasswordReset
   );

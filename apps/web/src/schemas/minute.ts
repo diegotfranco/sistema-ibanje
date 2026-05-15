@@ -1,16 +1,30 @@
 import { z } from 'zod';
 import { type MinuteStatusValue } from '@sistema-ibanje/shared';
 
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 export const MinuteFormSchema = z.object({
-  boardMeetingId: z.number({ error: 'Reunião é obrigatória' }).int().positive(),
+  meetingId: z.number({ error: 'Reunião é obrigatória' }).int().positive(),
   minuteNumber: z.string().min(1, 'Número obrigatório').max(32),
-  content: z.string().min(1, 'Conteúdo obrigatório')
+  presidingPastorName: z.string().max(96).optional().or(z.literal('')),
+  secretaryName: z.string().max(96).optional().or(z.literal('')),
+  openingTime: z.string().regex(timeRegex, 'Formato HH:MM').optional().or(z.literal('')),
+  closingTime: z.string().regex(timeRegex, 'Formato HH:MM').optional().or(z.literal(''))
 });
 
 export type MinuteFormValues = z.infer<typeof MinuteFormSchema>;
 
+export const UpdateMinuteSchema = z.object({
+  presidingPastorName: z.string().max(96).optional().or(z.literal('')),
+  secretaryName: z.string().max(96).optional().or(z.literal('')),
+  openingTime: z.string().regex(timeRegex, 'Formato HH:MM').optional().or(z.literal('')),
+  closingTime: z.string().regex(timeRegex, 'Formato HH:MM').optional().or(z.literal(''))
+});
+
+export type UpdateMinuteValues = z.infer<typeof UpdateMinuteSchema>;
+
 export const EditApprovedMinuteSchema = z.object({
-  content: z.string().min(1, 'Conteúdo obrigatório'),
+  content: z.unknown().refine((v) => v !== null && typeof v === 'object', 'Conteúdo obrigatório'),
   reasonForChange: z.string().min(1, 'Motivo obrigatório').max(512)
 });
 
@@ -25,7 +39,7 @@ export type ApproveMinuteValues = z.infer<typeof ApproveMinuteSchema>;
 export type MinuteVersionResponse = {
   id: number;
   version: number;
-  content: string;
+  content: unknown;
   status: MinuteStatusValue;
   reasonForChange: string | null;
   createdByUserId: number;
@@ -35,8 +49,14 @@ export type MinuteVersionResponse = {
 
 export type MinuteResponse = {
   id: number;
-  boardMeetingId: number;
+  meetingId: number;
   minuteNumber: string;
+  presidingPastorName: string | null;
+  secretaryName: string | null;
+  openingTime: string | null;
+  closingTime: string | null;
+  attendersPresent: { id: number; name: string }[];
+  signedDocumentPath: string | null;
   isNotarized: boolean;
   notarizedAt: string | null;
   correctsMinuteId: number | null;

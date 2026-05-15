@@ -1,24 +1,58 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import { Bold, Italic, List, ListOrdered, Heading2, Heading3, Undo, Redo } from 'lucide-react';
+import Underline from '@tiptap/extension-underline';
+import { Bold, Italic, Underline as UnderlineIcon, Undo, Redo } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
+export type TipTapDoc = Record<string, unknown>;
+type Vars = Record<string, string>;
+
+export const EMPTY_TIPTAP_DOC: TipTapDoc = { type: 'doc', content: [{ type: 'paragraph' }] };
+
+export function interpolateTipTapDoc(doc: unknown, vars: Vars): unknown {
+  if (doc == null) return doc;
+  if (Array.isArray(doc)) return doc.map((n) => interpolateTipTapDoc(n, vars));
+  if (typeof doc === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(doc)) {
+      if (k === 'text' && typeof v === 'string') {
+        out[k] = v.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? `{{${key}}}`);
+      } else {
+        out[k] = interpolateTipTapDoc(v, vars);
+      }
+    }
+    return out;
+  }
+  return doc;
+}
+
 interface RichTextEditorProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: TipTapDoc | null | undefined;
+  onChange: (value: TipTapDoc) => void;
   disabled?: boolean;
   className?: string;
 }
 
 export function RichTextEditor({ value, onChange, disabled, className }: RichTextEditorProps) {
   const editor = useEditor({
-    extensions: [StarterKit],
-    content: value,
+    extensions: [
+      StarterKit.configure({
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        codeBlock: false,
+        blockquote: false,
+        horizontalRule: false
+      }),
+      Underline
+    ],
+    content: value ?? undefined,
     editable: !disabled,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      onChange(editor.getJSON());
     }
   });
 
@@ -27,23 +61,6 @@ export function RichTextEditor({ value, onChange, disabled, className }: RichTex
   return (
     <div className={cn('rounded-md border border-input bg-background', className)}>
       <div className="flex flex-wrap items-center gap-0.5 border-b border-input p-1">
-        <Toggle
-          size="sm"
-          pressed={editor.isActive('heading', { level: 2 })}
-          onPressedChange={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          disabled={disabled}
-          aria-label="Heading 2">
-          <Heading2 className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive('heading', { level: 3 })}
-          onPressedChange={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          disabled={disabled}
-          aria-label="Heading 3">
-          <Heading3 className="h-4 w-4" />
-        </Toggle>
-        <Separator orientation="vertical" className="mx-0.5 h-6" />
         <Toggle
           size="sm"
           pressed={editor.isActive('bold')}
@@ -60,22 +77,13 @@ export function RichTextEditor({ value, onChange, disabled, className }: RichTex
           aria-label="Italic">
           <Italic className="h-4 w-4" />
         </Toggle>
-        <Separator orientation="vertical" className="mx-0.5 h-6" />
         <Toggle
           size="sm"
-          pressed={editor.isActive('bulletList')}
-          onPressedChange={() => editor.chain().focus().toggleBulletList().run()}
+          pressed={editor.isActive('underline')}
+          onPressedChange={() => editor.chain().focus().toggleUnderline().run()}
           disabled={disabled}
-          aria-label="Bullet list">
-          <List className="h-4 w-4" />
-        </Toggle>
-        <Toggle
-          size="sm"
-          pressed={editor.isActive('orderedList')}
-          onPressedChange={() => editor.chain().focus().toggleOrderedList().run()}
-          disabled={disabled}
-          aria-label="Ordered list">
-          <ListOrdered className="h-4 w-4" />
+          aria-label="Underline">
+          <UnderlineIcon className="h-4 w-4" />
         </Toggle>
         <Separator orientation="vertical" className="mx-0.5 h-6" />
         <Toggle
@@ -103,11 +111,34 @@ export function RichTextEditor({ value, onChange, disabled, className }: RichTex
   );
 }
 
-export function RichTextDisplay({ html, className }: { html: string; className?: string }) {
+interface RichTextDisplayProps {
+  content: TipTapDoc | null | undefined;
+  className?: string;
+}
+
+export function RichTextDisplay({ content, className }: RichTextDisplayProps) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        listItem: false,
+        codeBlock: false,
+        blockquote: false,
+        horizontalRule: false
+      }),
+      Underline
+    ],
+    content: content ?? undefined,
+    editable: false
+  });
+
+  if (!editor) return null;
+
   return (
-    <div
-      className={cn('prose prose-sm dark:prose-invert max-w-none', className)}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <div className={cn('prose prose-sm dark:prose-invert max-w-none', className)}>
+      <EditorContent editor={editor} />
+    </div>
   );
 }

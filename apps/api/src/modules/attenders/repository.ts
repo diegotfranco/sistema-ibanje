@@ -41,7 +41,11 @@ export async function listAttenders(offset: number, limit: number) {
 }
 
 export async function findAttenderById(id: number) {
-  const result = await db.select(ATTENDER_COLUMNS).from(attenders).where(eq(attenders.id, id)).limit(1);
+  const result = await db
+    .select(ATTENDER_COLUMNS)
+    .from(attenders)
+    .where(eq(attenders.id, id))
+    .limit(1);
 
   return result[0] ?? null;
 }

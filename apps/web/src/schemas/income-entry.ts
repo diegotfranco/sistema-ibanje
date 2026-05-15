@@ -9,7 +9,7 @@ export const IncomeEntryFormSchema = z.object({
     .min(1, 'Valor é obrigatório.')
     .regex(/^\d+(\.\d{1,2})?$/, 'Use formato decimal (ex.: 100.00).'),
   categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
-  memberId: z.number().int().positive().optional(),
+  attenderId: z.number().int().positive().optional(),
   paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
   designatedFundId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional().or(z.literal('')),
@@ -23,7 +23,7 @@ export type IncomeEntryCreateBody = {
   depositDate?: string;
   amount: number;
   categoryId: number;
-  memberId?: number;
+  attenderId?: number;
   paymentMethodId: number;
   designatedFundId?: number;
   notes?: string;
@@ -40,8 +40,8 @@ export type IncomeEntryResponse = {
   amount: string;
   categoryId: number;
   categoryName: string;
-  memberId: number | null;
-  memberName: string | null;
+  attenderId: number | null;
+  attenderName: string | null;
   paymentMethodId: number;
   paymentMethodName: string;
   designatedFundId: number | null;

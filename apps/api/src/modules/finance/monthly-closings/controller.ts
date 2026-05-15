@@ -66,7 +66,7 @@ export async function reject(req: FastifyRequest, reply: FastifyReply) {
 export async function reprove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as ReproveClosingRequest;
-  const closing = await service.reproveApprovedClosing(req.session.userId!, id, body);
+  const closing = await service.reproveApprovedClosing(req.session.userId!, id);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
     notes: body.reason,
     ipAddress: req.ip

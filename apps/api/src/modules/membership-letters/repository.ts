@@ -1,4 +1,5 @@
 import { eq, and, count } from 'drizzle-orm';
+import type { MembershipLetterTypeValue } from '@sistema-ibanje/shared';
 import { db } from '../../db/index.js';
 import { membershipLetters } from '../../db/schema.js';
 
@@ -32,7 +33,7 @@ export async function listMembershipLetters(
     conditions.push(eq(membershipLetters.attenderId, attenderId));
   }
   if (type !== undefined) {
-    conditions.push(eq(membershipLetters.type, type as any));
+    conditions.push(eq(membershipLetters.type, type as MembershipLetterTypeValue));
   }
 
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -81,7 +82,19 @@ export async function insertMembershipLetter(
 export async function updateMembershipLetter(
   id: number,
   data: Partial<
-    Omit<typeof membershipLetters.$inferInsert, 'id' | 'attenderId' | 'type' | 'createdByUserId' | 'createdAt' | 'updatedAt' | 'signingSecretaryName' | 'signingSecretaryTitle' | 'signingPresidentName' | 'signingPresidentTitle'>
+    Omit<
+      typeof membershipLetters.$inferInsert,
+      | 'id'
+      | 'attenderId'
+      | 'type'
+      | 'createdByUserId'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'signingSecretaryName'
+      | 'signingSecretaryTitle'
+      | 'signingPresidentName'
+      | 'signingPresidentTitle'
+    >
   >
 ) {
   const result = await db

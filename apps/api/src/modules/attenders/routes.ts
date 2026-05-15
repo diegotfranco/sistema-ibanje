@@ -30,7 +30,7 @@ export async function attendersRoutes(app: FastifyInstance) {
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Create)]
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Create)]
     },
     controller.create
   );
@@ -47,7 +47,7 @@ export async function attendersRoutes(app: FastifyInstance) {
           403: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.View)]
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.View)]
     },
     controller.list
   );
@@ -85,7 +85,7 @@ export async function attendersRoutes(app: FastifyInstance) {
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Update)]
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Update)]
     },
     controller.update
   );
@@ -122,7 +122,7 @@ export async function attendersRoutes(app: FastifyInstance) {
           404: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Members, Action.Delete)]
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Delete)]
     },
     controller.remove
   );

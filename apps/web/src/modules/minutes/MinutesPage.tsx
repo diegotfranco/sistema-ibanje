@@ -94,7 +94,7 @@ export default function MinutesPage() {
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.minuteNumber}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      Reunião #{row.boardMeetingId}
+                      Reunião #{row.meetingId}
                     </TableCell>
                     <TableCell>
                       {row.currentVersion ? `v${row.currentVersion.version}` : '—'}

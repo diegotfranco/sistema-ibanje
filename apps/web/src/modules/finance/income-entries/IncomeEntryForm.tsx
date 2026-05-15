@@ -18,7 +18,7 @@ import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
-import { useMembers } from '@/modules/members/useMembers';
+import { useAttenders } from '@/modules/attenders/useAttenders';
 import {
   IncomeEntryFormSchema,
   type IncomeEntryFormValues,
@@ -38,7 +38,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
   const incomeCategories = useIncomeCategories();
   const paymentMethods = usePaymentMethods();
   const designatedFunds = useDesignatedFunds();
-  const members = useMembers();
+  const attenders = useAttenders();
 
   const allCats = incomeCategories.data?.data ?? [];
   const parentIds = new Set(allCats.filter((c) => c.parentId !== null).map((c) => c.parentId!));
@@ -52,7 +52,9 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
   const activeFunds = (designatedFunds.data?.data ?? []).filter(
     (f) => f.status === ActiveStatus.Active
   );
-  const activeMembers = (members.data?.data ?? []).filter((m) => m.status === ActiveStatus.Active);
+  const activeAttenders = (attenders.data?.data ?? []).filter(
+    (a) => a.status === ActiveStatus.Active
+  );
 
   const getCategoryLabel = (cat: { id: number; name: string; parentId: number | null }) => {
     const parent = allCats.find((c) => c.id === cat.parentId);
@@ -66,7 +68,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
       depositDate: initialValues?.depositDate ?? '',
       amount: initialValues?.amount ?? '',
       categoryId: initialValues?.categoryId ?? undefined,
-      memberId: initialValues?.memberId ?? undefined,
+      attenderId: initialValues?.attenderId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
       notes: initialValues?.notes ?? '',
@@ -79,8 +81,8 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
   const requiresMember = selectedCategory?.requiresMember ?? false;
 
   const handleSubmit = (values: IncomeEntryFormValues) => {
-    if (requiresMember && !values.memberId) {
-      form.setError('memberId', { message: 'Membro é obrigatório para esta categoria.' });
+    if (requiresMember && !values.attenderId) {
+      form.setError('attenderId', { message: 'Congregado é obrigatório para esta categoria.' });
       return;
     }
     onSubmit(values);
@@ -182,20 +184,20 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
         />
 
         <Controller
-          name="memberId"
+          name="attenderId"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Membro{requiresMember ? ' *' : ' (opcional)'}</FieldLabel>
+              <FieldLabel>Congregado{requiresMember ? ' *' : ' (opcional)'}</FieldLabel>
               <EntityPicker
-                items={activeMembers}
+                items={activeAttenders}
                 value={field.value ?? null}
                 onChange={(v) => field.onChange(v ?? undefined)}
-                getValue={(m) => m.id}
-                getLabel={(m) => m.name}
-                placeholder="Selecionar membro..."
-                emptyMessage="Nenhum membro encontrado."
-                isLoading={members.isLoading}
+                getValue={(a) => a.id}
+                getLabel={(a) => a.name}
+                placeholder="Selecionar congregado..."
+                emptyMessage="Nenhum congregado encontrado."
+                isLoading={attenders.isLoading}
                 allowClear
                 className="w-full"
               />

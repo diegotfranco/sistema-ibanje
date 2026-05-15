@@ -1,25 +1,22 @@
+import type { MeetingTypeValue } from '@sistema-ibanje/shared';
 import * as repo from './repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
 import type {
-  CreateBoardMeetingRequest,
-  UpdateBoardMeetingRequest,
+  CreateMeetingRequest,
+  UpdateMeetingRequest,
   SetAgendaItemsRequest,
-  BoardMeetingResponse
+  MeetingResponse
 } from './schema.js';
-import type { BoardMeeting, AgendaItem } from '../../db/schema.js';
+import type { Meeting, AgendaItem } from '../../db/schema.js';
 
-function buildResponse(
-  meeting: BoardMeeting,
-  hasMin: boolean,
-  items: AgendaItem[]
-): BoardMeetingResponse {
+function buildResponse(meeting: Meeting, hasMin: boolean, items: AgendaItem[]): MeetingResponse {
   return {
     id: meeting.id,
     meetingDate: meeting.meetingDate,
-    type: meeting.type as 'ordinária' | 'extraordinária',
+    type: meeting.type as MeetingTypeValue,
     agendaItems: items.map((it) => ({
       id: it.id,
       meetingId: it.meetingId,
@@ -39,10 +36,10 @@ function buildResponse(
   };
 }
 
-export async function listBoardMeetings(callerId: number, page: number, limit: number) {
+export async function listMeetings(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.Agendas, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listBoardMeetings(offset, limit);
+  const { rows, total } = await repo.listMeetings(offset, limit);
   const responses = await Promise.all(
     rows.map(async (row) => {
       const items = await repo.listAgendaItemsForMeeting(row.id);
@@ -52,36 +49,36 @@ export async function listBoardMeetings(callerId: number, page: number, limit: n
   return paginate(responses, total, page, limit);
 }
 
-export async function getBoardMeetingById(id: number): Promise<BoardMeetingResponse | null> {
-  const meeting = await repo.findBoardMeetingById(id);
+export async function getMeetingById(id: number): Promise<MeetingResponse | null> {
+  const meeting = await repo.findMeetingById(id);
   if (!meeting) return null;
   const items = await repo.listAgendaItemsForMeeting(id);
   return buildResponse(meeting, await repo.hasMinutes(meeting.id), items);
 }
 
-export async function createBoardMeeting(
+export async function createMeeting(
   callerId: number,
-  body: CreateBoardMeetingRequest
-): Promise<BoardMeetingResponse> {
+  body: CreateMeetingRequest
+): Promise<MeetingResponse> {
   await assertPermission(callerId, Module.Agendas, Action.Create);
-  const created = await repo.insertBoardMeeting({
+  const created = await repo.insertMeeting({
     meetingDate: body.meetingDate,
     type: body.type,
     isPublic: body.isPublic
   });
-  if (!created) throw new Error('Failed to create board meeting');
+  if (!created) throw new Error('Failed to create meeting');
   return buildResponse(created, false, []);
 }
 
-export async function updateBoardMeeting(
+export async function updateMeeting(
   callerId: number,
   id: number,
-  body: UpdateBoardMeetingRequest
-): Promise<BoardMeetingResponse | null> {
+  body: UpdateMeetingRequest
+): Promise<MeetingResponse | null> {
   await assertPermission(callerId, Module.Agendas, Action.Update);
-  const meeting = await repo.findBoardMeetingById(id);
+  const meeting = await repo.findMeetingById(id);
   if (!meeting) return null;
-  const updated = await repo.updateBoardMeeting(id, body);
+  const updated = await repo.updateMeeting(id, body);
   if (!updated) return null;
   const items = await repo.listAgendaItemsForMeeting(id);
   return buildResponse(updated, await repo.hasMinutes(id), items);
@@ -91,20 +88,20 @@ export async function setAgendaItems(
   callerId: number,
   id: number,
   body: SetAgendaItemsRequest
-): Promise<BoardMeetingResponse | null> {
+): Promise<MeetingResponse | null> {
   await assertPermission(callerId, Module.Agendas, Action.Update);
-  const meeting = await repo.findBoardMeetingById(id);
+  const meeting = await repo.findMeetingById(id);
   if (!meeting || meeting.status === 'inativo') return null;
   await repo.replaceAgendaItems(id, body.items, callerId);
   const items = await repo.listAgendaItemsForMeeting(id);
   return buildResponse(meeting, await repo.hasMinutes(id), items);
 }
 
-export async function deactivateBoardMeeting(callerId: number, id: number): Promise<void | null> {
+export async function deactivateMeeting(callerId: number, id: number): Promise<void | null> {
   await assertPermission(callerId, Module.Agendas, Action.Delete);
-  const meeting = await repo.findBoardMeetingById(id);
+  const meeting = await repo.findMeetingById(id);
   if (!meeting) return null;
   if (await repo.hasMinutes(id))
     throw httpError(409, 'Cannot delete a meeting that already has minutes');
-  await repo.deactivateBoardMeeting(id);
+  await repo.deactivateMeeting(id);
 }

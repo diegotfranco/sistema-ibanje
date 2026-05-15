@@ -5,7 +5,7 @@ import { attendersRoutes } from './attenders/routes.js';
 import { churchSettingsRoutes } from './church-settings/routes.js';
 import { rolesRoutes } from './roles/routes.js';
 import { financeRoutes } from './finance/index.js';
-import { boardMeetingsRoutes } from './board-meetings/routes.js';
+import { meetingsRoutes } from './meetings/routes.js';
 import { minutesRoutes } from './minutes/routes.js';
 import { healthRoutes } from './health/routes.js';
 import { membershipLettersRoutes } from './membership-letters/routes.js';
@@ -19,6 +19,6 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(churchSettingsRoutes);
   await app.register(rolesRoutes);
   await app.register(financeRoutes);
-  await app.register(boardMeetingsRoutes);
+  await app.register(meetingsRoutes);
   await app.register(minutesRoutes);
 }

@@ -14,10 +14,10 @@ import {
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useBoardMeetings, useBoardMeetingMutations } from './useBoardMeetings';
-import BoardMeetingForm from './BoardMeetingForm';
+import { useMeetings, useMeetingMutations } from './useMeetings';
+import MeetingForm from './MeetingForm';
 import AgendaDialog from './AgendaDialog';
-import type { BoardMeetingResponse, BoardMeetingFormValues } from '@/schemas/board-meeting';
+import type { MeetingResponse, MeetingFormValues } from '@/schemas/meeting';
 
 function formatDate(d: string) {
   const [y, m, day] = d.split('-');
@@ -31,16 +31,16 @@ export default function PautasPage() {
   const canEdit = hasPermission(perms, Module.Agendas, Action.Update);
   const canDelete = hasPermission(perms, Module.Agendas, Action.Delete);
 
-  const list = useBoardMeetings();
-  const mutations = useBoardMeetingMutations();
+  const list = useMeetings();
+  const mutations = useMeetingMutations();
   const items = list.data?.data ?? [];
 
   const [formOpen, setFormOpen] = useState(false);
-  const [editing, setEditing] = useState<BoardMeetingResponse | null>(null);
-  const [agendaTarget, setAgendaTarget] = useState<BoardMeetingResponse | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<BoardMeetingResponse | null>(null);
+  const [editing, setEditing] = useState<MeetingResponse | null>(null);
+  const [agendaTarget, setAgendaTarget] = useState<MeetingResponse | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MeetingResponse | null>(null);
 
-  function handleFormSubmit(values: BoardMeetingFormValues) {
+  function handleFormSubmit(values: MeetingFormValues) {
     if (editing) {
       mutations.update.mutate(
         { id: editing.id, body: values },
@@ -61,7 +61,7 @@ export default function PautasPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Pautas de Reuniões</CardTitle>
+            <CardTitle className="text-xl">Assembleias</CardTitle>
             {canCreate && (
               <Button
                 onClick={() => {
@@ -110,9 +110,9 @@ export default function PautasPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {row.agendaItems !== null ? (
+                      {row.agendaItems.length > 0 ? (
                         <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
-                          Definida
+                          {row.agendaItems.length} {row.agendaItems.length === 1 ? 'item' : 'itens'}
                         </Badge>
                       ) : (
                         <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
@@ -166,7 +166,7 @@ export default function PautasPage() {
         </Card>
       </div>
 
-      <BoardMeetingForm
+      <MeetingForm
         open={formOpen}
         onOpenChange={setFormOpen}
         defaultValues={

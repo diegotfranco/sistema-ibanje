@@ -5,24 +5,24 @@ import { Module, Action } from '../../lib/constants.js';
 import { IdParamSchema } from '../../lib/validation.js';
 import { ErrorResponseSchema } from '../../lib/http-schemas.js';
 import {
-  ListBoardMeetingsRequestSchema,
-  CreateBoardMeetingRequestSchema,
-  UpdateBoardMeetingRequestSchema,
+  ListMeetingsRequestSchema,
+  CreateMeetingRequestSchema,
+  UpdateMeetingRequestSchema,
   SetAgendaItemsRequestSchema,
-  BoardMeetingResponseSchema,
-  BoardMeetingListResponseSchema
+  MeetingResponseSchema,
+  MeetingListResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
-export async function boardMeetingsRoutes(app: FastifyInstance) {
+export async function meetingsRoutes(app: FastifyInstance) {
   app.get(
-    '/board-meetings',
+    '/meetings',
     {
       schema: {
-        tags: ['Board Meetings'],
-        querystring: ListBoardMeetingsRequestSchema,
+        tags: ['Meetings'],
+        querystring: ListMeetingsRequestSchema,
         response: {
-          200: BoardMeetingListResponseSchema,
+          200: MeetingListResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
         }
@@ -33,13 +33,13 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/board-meetings/:id',
+    '/meetings/:id',
     {
       schema: {
-        tags: ['Board Meetings'],
+        tags: ['Meetings'],
         params: IdParamSchema,
         response: {
-          200: BoardMeetingResponseSchema,
+          200: MeetingResponseSchema,
           401: ErrorResponseSchema,
           404: ErrorResponseSchema
         }
@@ -50,13 +50,13 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.post(
-    '/board-meetings',
+    '/meetings',
     {
       schema: {
-        tags: ['Board Meetings'],
-        body: CreateBoardMeetingRequestSchema,
+        tags: ['Meetings'],
+        body: CreateMeetingRequestSchema,
         response: {
-          201: BoardMeetingResponseSchema,
+          201: MeetingResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
@@ -68,14 +68,14 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.patch(
-    '/board-meetings/:id',
+    '/meetings/:id',
     {
       schema: {
-        tags: ['Board Meetings'],
+        tags: ['Meetings'],
         params: IdParamSchema,
-        body: UpdateBoardMeetingRequestSchema,
+        body: UpdateMeetingRequestSchema,
         response: {
-          200: BoardMeetingResponseSchema,
+          200: MeetingResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -88,14 +88,14 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.put(
-    '/board-meetings/:id/agenda-items',
+    '/meetings/:id/agenda-items',
     {
       schema: {
-        tags: ['Board Meetings'],
+        tags: ['Meetings'],
         params: IdParamSchema,
         body: SetAgendaItemsRequestSchema,
         response: {
-          200: BoardMeetingResponseSchema,
+          200: MeetingResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -108,10 +108,10 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.delete(
-    '/board-meetings/:id',
+    '/meetings/:id',
     {
       schema: {
-        tags: ['Board Meetings'],
+        tags: ['Meetings'],
         params: IdParamSchema,
         response: {
           204: { type: 'null', description: 'Deleted' },

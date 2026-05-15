@@ -5,7 +5,8 @@ import type {
   UpdateMinuteRequest,
   EditApprovedMinuteRequest,
   ApproveMinuteRequest,
-  UpdateMinuteTemplateRequest
+  UpdateMinuteTemplateRequest,
+  SetAttendersPresent
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
@@ -125,4 +126,38 @@ export async function updateMinuteTemplate(req: FastifyRequest, reply: FastifyRe
   if (!template) return reply.code(404).send({ message: 'Template not found' });
   logAudit(req.session.userId!, 'update', 'minute_template', id, { ipAddress: req.ip });
   return reply.send(template);
+}
+
+export async function pdf(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const { download } = req.query as { download?: string };
+  const buffer = await service.renderMinutePdf(req.session.userId!, id);
+  if (!buffer) return reply.code(404).send({ message: 'Minute not found' });
+  const filename = `ata-${id}.pdf`;
+  const disposition = download === '1' ? 'attachment' : 'inline';
+  return reply
+    .header('Content-Type', 'application/pdf')
+    .header('Content-Disposition', `${disposition}; filename="${filename}"`)
+    .send(buffer);
+}
+
+export async function suggestedMinuteNumber(req: FastifyRequest, reply: FastifyReply) {
+  const value = await service.getSuggestedMinuteNumber(req.session.userId!);
+  return reply.send({ value });
+}
+
+export async function getAttendersPresent(req: FastifyRequest, reply: FastifyReply) {
+  const { meetingId } = req.params as { meetingId: number };
+  const data = await service.getMeetingAttendersPresent(req.session.userId!, meetingId);
+  return reply.send({ data });
+}
+
+export async function setAttendersPresent(req: FastifyRequest, reply: FastifyReply) {
+  const { meetingId } = req.params as { meetingId: number };
+  const body = req.body as SetAttendersPresent;
+  await service.setMeetingAttendersPresent(req.session.userId!, meetingId, body.attenderIds);
+  logAudit(req.session.userId!, 'update', 'meeting_attenders_present', meetingId, {
+    ipAddress: req.ip
+  });
+  return reply.code(204).send();
 }

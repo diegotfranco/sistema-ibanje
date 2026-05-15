@@ -40,7 +40,7 @@ export default function ExpenseEntriesPage() {
     categoryId: values.categoryId!,
     paymentMethodId: values.paymentMethodId!,
     ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
-    ...(values.memberId !== undefined ? { memberId: values.memberId } : {}),
+    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
     ...(values.notes ? { notes: values.notes } : {})
   });
 

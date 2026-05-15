@@ -99,6 +99,11 @@ export const SEED_PAYMENT_METHODS = [
   { name: 'Boleto Bancário', allowsInflow: false, allowsOutflow: true }
 ];
 
+export const SEED_MEETING_TYPES = {
+  Ordinary: 'ordinária',
+  Extraordinary: 'extraordinária'
+} as const;
+
 export const SEED_INCOME_CATEGORY_PARENTS = ['Contribuições', 'Outras Receitas'] as const;
 
 export function buildIncomeCategoryChildren(parentByName: Record<string, { id: number }>) {
@@ -207,7 +212,11 @@ export function buildRoleModulePermissions(
     ),
     ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id]),
     ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], writePermIds),
-    ...cross(roleByName['Secretário Responsável'].id, ['Cartas de Membros', 'Modelos de Ata'], fullPermIds),
+    ...cross(
+      roleByName['Secretário Responsável'].id,
+      ['Cartas de Membros', 'Modelos de Ata'],
+      fullPermIds
+    ),
     ...cross(roleByName['Presidente'].id, ['Dados da Igreja'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Dados da Igreja'], fullPermIds),
     ...cross(roleByName['Secretário Responsável'].id, ['Dados da Igreja'], fullPermIds),

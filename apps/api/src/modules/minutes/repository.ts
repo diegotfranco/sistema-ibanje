@@ -1,6 +1,15 @@
 import { eq, asc, desc, count, inArray } from 'drizzle-orm';
+import type { MeetingTypeValue } from '@sistema-ibanje/shared';
 import { db } from '../../db/index.js';
-import { minutes, minuteVersions, boardMeetings, minuteTemplates, agendaItems } from '../../db/schema.js';
+import {
+  minutes,
+  minuteVersions,
+  meetings,
+  minuteTemplates,
+  agendaItems,
+  meetingAttendersPresent,
+  attenders
+} from '../../db/schema.js';
 import type { Minute, MinuteVersion, MinuteTemplate } from '../../db/schema.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -21,12 +30,8 @@ export async function findMinuteById(id: number): Promise<Minute | null> {
   return result[0] ?? null;
 }
 
-export async function findMinuteByBoardMeetingId(boardMeetingId: number): Promise<Minute | null> {
-  const result = await db
-    .select()
-    .from(minutes)
-    .where(eq(minutes.boardMeetingId, boardMeetingId))
-    .limit(1);
+export async function findMinuteByMeetingId(meetingId: number): Promise<Minute | null> {
+  const result = await db.select().from(minutes).where(eq(minutes.meetingId, meetingId)).limit(1);
   return result[0] ?? null;
 }
 
@@ -41,15 +46,12 @@ export async function findMinuteByNumber(minuteNumber: string): Promise<Minute |
 
 export async function insertMinute(
   data: {
-    boardMeetingId: number;
+    meetingId: number;
     minuteNumber: string;
     presidingPastorName?: string | null;
     secretaryName?: string | null;
-    openingHymnReference?: string | null;
-    openingBibleReference?: string | null;
     openingTime?: string | null;
     closingTime?: string | null;
-    membersPresentCount?: number | null;
   },
   tx?: Tx
 ): Promise<Minute> {
@@ -132,8 +134,6 @@ export async function updateMinute(
   data: Partial<{
     presidingPastorName: string | null;
     secretaryName: string | null;
-    openingHymnReference: string | null;
-    openingBibleReference: string | null;
     openingTime: string | null;
     closingTime: string | null;
     membersPresentCount: number | null;
@@ -150,20 +150,27 @@ export async function updateMinute(
   return result[0] ?? null;
 }
 
-export async function findBoardMeetingById(id: number) {
+export async function findMeetingById(id: number) {
   const result = await db
-    .select({ id: boardMeetings.id, status: boardMeetings.status, type: boardMeetings.type, meetingDate: boardMeetings.meetingDate })
-    .from(boardMeetings)
-    .where(eq(boardMeetings.id, id))
+    .select({
+      id: meetings.id,
+      status: meetings.status,
+      type: meetings.type,
+      meetingDate: meetings.meetingDate
+    })
+    .from(meetings)
+    .where(eq(meetings.id, id))
     .limit(1);
   return result[0] ?? null;
 }
 
-export async function findDefaultTemplateForMeetingType(meetingType: string): Promise<MinuteTemplate | null> {
+export async function findDefaultTemplateForMeetingType(
+  meetingType: string
+): Promise<MinuteTemplate | null> {
   const result = await db
     .select()
     .from(minuteTemplates)
-    .where(eq(minuteTemplates.meetingType, meetingType as any))
+    .where(eq(minuteTemplates.meetingType, meetingType as MeetingTypeValue))
     .limit(1);
   return result[0] ?? null;
 }
@@ -176,7 +183,7 @@ export async function listAgendaItemsForMeeting(meetingId: number) {
     .orderBy(asc(agendaItems.order));
 }
 
-export async function findLatestMinuteByNumber(minuteNumber: string) {
+export async function findLatestMinuteByNumber() {
   const result = await db
     .select({ minuteNumber: minutes.minuteNumber })
     .from(minutes)
@@ -186,7 +193,10 @@ export async function findLatestMinuteByNumber(minuteNumber: string) {
 }
 
 export async function listMinuteTemplates() {
-  return db.select().from(minuteTemplates).orderBy(asc(minuteTemplates.meetingType), desc(minuteTemplates.isDefault));
+  return db
+    .select()
+    .from(minuteTemplates)
+    .orderBy(asc(minuteTemplates.meetingType), desc(minuteTemplates.isDefault));
 }
 
 export async function findMinuteTemplateById(id: number): Promise<MinuteTemplate | null> {
@@ -210,4 +220,61 @@ export async function updateMinuteTemplate(
     .where(eq(minuteTemplates.id, id))
     .returning();
   return result[0] ?? null;
+}
+
+export async function findMostRecentMinute(): Promise<Minute | null> {
+  const result = await db.select().from(minutes).orderBy(desc(minutes.id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function getPreviousApprovedMinuteNumber(): Promise<string> {
+  const latestVersions = await findLatestVersionsForMinutes(
+    await db
+      .select({ id: minutes.id })
+      .from(minutes)
+      .then((rows) => rows.map((r) => r.id))
+  );
+
+  for (const [, version] of latestVersions) {
+    if (version.status === 'aprovada') {
+      const minute = await findMinuteById(version.minuteId);
+      if (minute) {
+        return minute.minuteNumber;
+      }
+    }
+  }
+  return '';
+}
+
+export async function getMeetingAttendersPresent(
+  meetingId: number
+): Promise<Array<{ id: number; name: string }>> {
+  return db
+    .select({ id: attenders.id, name: attenders.name })
+    .from(meetingAttendersPresent)
+    .innerJoin(attenders, eq(meetingAttendersPresent.attenderId, attenders.id))
+    .where(eq(meetingAttendersPresent.meetingId, meetingId))
+    .orderBy(asc(attenders.name));
+}
+
+export async function setMeetingAttendersPresent(
+  meetingId: number,
+  attenderIds: number[]
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    // Delete existing attendance records for this meeting
+    await tx
+      .delete(meetingAttendersPresent)
+      .where(eq(meetingAttendersPresent.meetingId, meetingId));
+
+    // Insert new attendance records
+    if (attenderIds.length > 0) {
+      await tx.insert(meetingAttendersPresent).values(
+        attenderIds.map((attenderId) => ({
+          meetingId,
+          attenderId
+        }))
+      );
+    }
+  });
 }

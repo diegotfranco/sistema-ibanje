@@ -1,46 +1,47 @@
 import { eq, ne, count, desc, asc } from 'drizzle-orm';
+import type { MeetingTypeValue } from '@sistema-ibanje/shared';
 import { db } from '../../db/index.js';
-import { boardMeetings, minutes, agendaItems } from '../../db/schema.js';
+import { meetings, minutes, agendaItems } from '../../db/schema.js';
 
-export async function listBoardMeetings(offset: number, limit: number) {
+export async function listMeetings(offset: number, limit: number) {
   const rows = await db
     .select()
-    .from(boardMeetings)
-    .where(ne(boardMeetings.status, 'inativo'))
-    .orderBy(desc(boardMeetings.meetingDate))
+    .from(meetings)
+    .where(ne(meetings.status, 'inativo'))
+    .orderBy(desc(meetings.meetingDate))
     .offset(offset)
     .limit(limit);
 
   const countResult = await db
     .select({ count: count() })
-    .from(boardMeetings)
-    .where(ne(boardMeetings.status, 'inativo'));
+    .from(meetings)
+    .where(ne(meetings.status, 'inativo'));
 
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
-export async function findBoardMeetingById(id: number) {
-  const result = await db.select().from(boardMeetings).where(eq(boardMeetings.id, id)).limit(1);
+export async function findMeetingById(id: number) {
+  const result = await db.select().from(meetings).where(eq(meetings.id, id)).limit(1);
   return result[0] ?? null;
 }
 
-export async function insertBoardMeeting(data: {
+export async function insertMeeting(data: {
   meetingDate: string;
-  type: 'ordinária' | 'extraordinária';
+  type: MeetingTypeValue;
   isPublic: boolean;
 }) {
-  const result = await db.insert(boardMeetings).values(data).returning();
+  const result = await db.insert(meetings).values(data).returning();
   return result[0] ?? null;
 }
 
-export async function updateBoardMeeting(
+export async function updateMeeting(
   id: number,
-  data: Partial<{ meetingDate: string; type: 'ordinária' | 'extraordinária'; isPublic: boolean }>
+  data: Partial<{ meetingDate: string; type: MeetingTypeValue; isPublic: boolean }>
 ) {
   const result = await db
-    .update(boardMeetings)
+    .update(meetings)
     .set({ ...data, updatedAt: new Date() })
-    .where(eq(boardMeetings.id, id))
+    .where(eq(meetings.id, id))
     .returning();
   return result[0] ?? null;
 }
@@ -77,17 +78,17 @@ export async function replaceAgendaItems(
   });
 }
 
-export async function deactivateBoardMeeting(id: number) {
+export async function deactivateMeeting(id: number) {
   await db
-    .update(boardMeetings)
+    .update(meetings)
     .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(boardMeetings.id, id));
+    .where(eq(meetings.id, id));
 }
 
-export async function hasMinutes(boardMeetingId: number): Promise<boolean> {
+export async function hasMinutes(meetingId: number): Promise<boolean> {
   const result = await db
     .select({ count: count() })
     .from(minutes)
-    .where(eq(minutes.boardMeetingId, boardMeetingId));
+    .where(eq(minutes.meetingId, meetingId));
   return (result[0]?.count ?? 0) > 0;
 }

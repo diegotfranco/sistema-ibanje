@@ -3,12 +3,12 @@ import type { LucideIcon } from 'lucide-react';
 import type { Module, Action } from '@/lib/permissions';
 import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
-import { membersRoutes } from '@/modules/members/routes';
+import { attendersRoutes } from '@/modules/attenders/routes';
 import { financeRoutes } from '@/modules/finance/routes';
 import { rolesRouteChildren } from '@/modules/roles/routes';
 import { usersRouteChildren } from '@/modules/users/routes';
-import { pautasRouteChildren } from '@/modules/pautas/routes';
-import { atasRouteChildren } from '@/modules/atas/routes';
+import { pautasRouteChildren } from '@/modules/meetings/routes';
+import { atasRouteChildren } from '@/modules/minutes/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -38,7 +38,7 @@ export const appRoutes: AppRoute[] = [
   ...authRoutes,
   ...dashboardRoutes,
   adminSection,
-  ...membersRoutes,
+  ...attendersRoutes,
   ...financeRoutes,
   secretariaSection
 ];

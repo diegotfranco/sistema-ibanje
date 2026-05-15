@@ -3,7 +3,7 @@ export const DEFAULT_ROLE_NAME = 'Membro';
 export const Module = {
   Users: 'Usuários',
   Roles: 'Cargos',
-  Members: 'Membros',
+  Attenders: 'Membros',
   ChurchSettings: 'Configurações da Igreja',
   PaymentMethods: 'Formas de Pagamento',
   DesignatedFunds: 'Fundos Designados',

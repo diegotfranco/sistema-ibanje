@@ -1,15 +1,18 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type {
-  CreateMembershipLetterRequest,
-  UpdateMembershipLetterRequest
-} from './schema.js';
+import type { CreateMembershipLetterRequest, UpdateMembershipLetterRequest } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
-import type { PaginationQuery } from '../../lib/pagination.js';
 import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
 
+interface ListLettersQuery {
+  page: number;
+  limit: number;
+  attenderId?: number;
+  type?: string;
+}
+
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit, attenderId, type } = req.query as any;
+  const { page, limit, attenderId, type } = req.query as ListLettersQuery;
   return reply.send(
     await service.listMembershipLetters(req.session.userId!, page, limit, attenderId, type)
   );

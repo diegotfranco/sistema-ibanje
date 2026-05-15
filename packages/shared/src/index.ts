@@ -7,7 +7,7 @@ export const Module = {
   Permissions: 3,
   Areas: 4,
   Status: 5,
-  Members: 6,
+  Attenders: 6,
   IncomeCategories: 7,
   IncomeEntries: 8,
   ExpenseCategories: 9,
@@ -94,6 +94,16 @@ export const MembershipLetterType = {
 } as const;
 export type MembershipLetterTypeValue =
   (typeof MembershipLetterType)[keyof typeof MembershipLetterType];
+
+export const MeetingType = {
+  Ordinary: 'ordinária',
+  Extraordinary: 'extraordinária'
+} as const;
+export type MeetingTypeValue = (typeof MeetingType)[keyof typeof MeetingType];
+export const MEETING_TYPE_VALUES = [
+  MeetingType.Ordinary,
+  MeetingType.Extraordinary
+] as const satisfies readonly MeetingTypeValue[];
 
 export const AdmissionMode = {
   Acclamation: 'aclamação',

@@ -7,23 +7,20 @@ export const ListMinutesRequestSchema = z.object({
 });
 
 export const CreateMinuteRequestSchema = z.object({
-  boardMeetingId: z.number().int().positive(),
+  meetingId: z.number().int().positive(),
   minuteNumber: z.string().min(1).max(32),
   presidingPastorName: z.string().max(96).optional(),
   secretaryName: z.string().max(96).optional(),
-  openingHymnReference: z.string().max(128).optional(),
-  openingBibleReference: z.string().max(64).optional(),
   openingTime: z.string().max(8).optional(),
-  closingTime: z.string().max(8).optional(),
-  membersPresentCount: z.number().int().optional()
+  closingTime: z.string().max(8).optional()
 });
 
 export const UpdateMinuteVersionRequestSchema = z.object({
-  content: z.string().min(1)
+  content: z.unknown()
 });
 
 export const EditApprovedMinuteRequestSchema = z.object({
-  content: z.string().min(1),
+  content: z.unknown(),
   reasonForChange: z.string().min(1).max(512)
 });
 
@@ -34,7 +31,7 @@ export const ApproveMinuteRequestSchema = z.object({
 export const MinuteVersionResponseSchema = z.object({
   id: z.number().int().positive(),
   version: z.number().int().positive(),
-  content: z.string(),
+  content: z.unknown(),
   status: z.enum(['rascunho', 'aguardando aprovação', 'aprovada', 'substituída']),
   reasonForChange: z.string().nullable(),
   createdByUserId: z.number().int().positive(),
@@ -44,19 +41,17 @@ export const MinuteVersionResponseSchema = z.object({
 
 export const MinuteResponseSchema = z.object({
   id: z.number().int().positive(),
-  boardMeetingId: z.number().int().positive(),
+  meetingId: z.number().int().positive(),
   minuteNumber: z.string(),
   isNotarized: z.boolean(),
   notarizedAt: z.string().nullable(),
   correctsMinuteId: z.number().int().positive().nullable(),
   presidingPastorName: z.string().nullable(),
   secretaryName: z.string().nullable(),
-  openingHymnReference: z.string().nullable(),
-  openingBibleReference: z.string().nullable(),
   openingTime: z.string().nullable(),
   closingTime: z.string().nullable(),
-  membersPresentCount: z.number().int().nullable(),
   signedDocumentPath: z.string().nullable(),
+  attendersPresent: z.array(z.object({ id: z.number().int().positive(), name: z.string() })),
   currentVersion: MinuteVersionResponseSchema.nullable(),
   versions: z.array(MinuteVersionResponseSchema),
   createdAt: z.string(),
@@ -66,13 +61,14 @@ export const MinuteResponseSchema = z.object({
 export const MinuteListResponseSchema = paginatedSchema(MinuteResponseSchema);
 
 export const UpdateMinuteRequestSchema = z.object({
-  openingHymnReference: z.string().max(128).optional(),
-  openingBibleReference: z.string().max(64).optional(),
   openingTime: z.string().max(8).optional(),
   closingTime: z.string().max(8).optional(),
-  membersPresentCount: z.number().int().optional(),
   presidingPastorName: z.string().max(96).optional(),
   secretaryName: z.string().max(96).optional()
+});
+
+export const SetAttendersPresentSchema = z.object({
+  attenderIds: z.array(z.number().int().positive())
 });
 
 export const MinuteTemplateResponseSchema = z.object({
@@ -100,3 +96,4 @@ export type MinuteVersionResponse = z.infer<typeof MinuteVersionResponseSchema>;
 export type MinuteResponse = z.infer<typeof MinuteResponseSchema>;
 export type MinuteTemplateResponse = z.infer<typeof MinuteTemplateResponseSchema>;
 export type UpdateMinuteTemplateRequest = z.infer<typeof UpdateMinuteTemplateRequestSchema>;
+export type SetAttendersPresent = z.infer<typeof SetAttendersPresentSchema>;

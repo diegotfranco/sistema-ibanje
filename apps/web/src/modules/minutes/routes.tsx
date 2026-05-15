@@ -3,8 +3,8 @@ import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
-import MinutesPage from '@/modules/atas/MinutesPage';
-import MinuteDetailPage from '@/modules/atas/MinuteDetailPage';
+import MinutesPage from '@/modules/minutes/MinutesPage';
+import MinuteDetailPage from '@/modules/minutes/MinuteDetailPage';
 
 export const atasRouteChildren: AppRoute[] = [
   {

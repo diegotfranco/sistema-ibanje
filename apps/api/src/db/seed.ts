@@ -37,7 +37,8 @@ import {
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
   buildExpenseCategoryChildren,
-  buildRoleModulePermissions
+  buildRoleModulePermissions,
+  SEED_MEETING_TYPES
 } from './seed-data.js';
 import {
   roles,
@@ -53,7 +54,7 @@ import {
   attenders,
   incomeEntries,
   expenseEntries,
-  boardMeetings,
+  meetings,
   minutes,
   minuteVersions,
   financeSettings,
@@ -548,7 +549,7 @@ export async function seed() {
       drizzleSql`TRUNCATE roles, permissions, modules, users, role_module_permissions,
           user_module_permissions, payment_methods, designated_funds,
           income_categories, expense_categories, attenders, income_entries,
-          expense_entries, board_meetings, minutes, minute_versions,
+          expense_entries, meetings, minutes, minute_versions,
           monthly_closings, finance_settings, church_settings, agenda_items,
           minute_templates, membership_letters
           RESTART IDENTITY CASCADE`
@@ -857,29 +858,29 @@ export async function seed() {
     const secResp = userByEmail['secretario.resp@email.com'];
 
     const insertedMeetings = await tx
-      .insert(boardMeetings)
+      .insert(meetings)
       .values([
         {
           meetingDate: '2023-03-12',
-          type: 'ordinária' as const
+          type: SEED_MEETING_TYPES.Ordinary
         },
         {
           meetingDate: '2023-11-12',
-          type: 'extraordinária' as const
+          type: SEED_MEETING_TYPES.Extraordinary
         },
         {
           meetingDate: '2025-02-15',
-          type: 'ordinária' as const
+          type: SEED_MEETING_TYPES.Ordinary
         },
         {
           meetingDate: '2025-04-26',
-          type: 'ordinária' as const
+          type: SEED_MEETING_TYPES.Ordinary
         }
       ])
       .returning();
     const meetingByDate = Object.fromEntries(insertedMeetings.map((m) => [m.meetingDate, m]));
 
-    // --- Agenda Items (extracted from boardMeetings) ---
+    // --- Agenda Items (extracted from meetings) ---
     const agendaItemsByMeetingDate: Record<string, string[]> = {
       '2023-03-12': [
         'Oração inicial',
@@ -911,7 +912,7 @@ export async function seed() {
 
     const [minute719] = await tx
       .insert(minutes)
-      .values({ boardMeetingId: meetingByDate['2023-03-12'].id, minuteNumber: '719' })
+      .values({ meetingId: meetingByDate['2023-03-12'].id, minuteNumber: '719' })
       .returning();
     await tx.insert(minuteVersions).values({
       minuteId: minute719.id,
@@ -927,7 +928,7 @@ export async function seed() {
 
     const [minute723] = await tx
       .insert(minutes)
-      .values({ boardMeetingId: meetingByDate['2023-11-12'].id, minuteNumber: '723' })
+      .values({ meetingId: meetingByDate['2023-11-12'].id, minuteNumber: '723' })
       .returning();
     await tx.insert(minuteVersions).values({
       minuteId: minute723.id,
@@ -943,7 +944,7 @@ export async function seed() {
 
     const [minute725] = await tx
       .insert(minutes)
-      .values({ boardMeetingId: meetingByDate['2025-04-26'].id, minuteNumber: '725' })
+      .values({ meetingId: meetingByDate['2025-04-26'].id, minuteNumber: '725' })
       .returning();
     await tx.insert(minuteVersions).values([
       {
@@ -972,54 +973,96 @@ export async function seed() {
     // --- Minute Templates (default templates for meeting minutes) ---
     await tx.insert(minuteTemplates).values([
       {
-        meetingType: 'ordinária' as const,
+        meetingType: SEED_MEETING_TYPES.Ordinary,
         name: 'Modelo Padrão — Assembleia Ordinária',
         isDefault: true,
         createdByUserId: adminId,
         content: {
           type: 'doc',
           content: [
-            { type: 'paragraph', content: [{ type: 'text', text: 'Ata de número {{minute_number}} da Assembleia Ordinária Bimestral da {{church_name}}, situada na {{church_address}}, no dia {{meeting_date_extenso}}.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'O Pastor {{presiding_pastor_name}} regeu o {{opening_hymn_reference}} e fez uma reflexão com a leitura de {{opening_bible_reference}}, declarando aberta a Assembleia às {{opening_time}}.' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '1. Leitura da Ata anterior' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Foi lida e aprovada a Ata de nº {{previous_minute_number}}.' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '2. Relatório Financeiro' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '3. Relatório Beneficência' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '4. Movimento de Membros' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'a) Envio de Carta:' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'b) Recebimento de Membros:' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'c) Batismo:' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '5. Pautas' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: '{{pautas}}' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '6. Comunicações' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '7. Encerramento' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'A assembleia foi encerrada às {{closing_time}}.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.' }] }
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }],
+                  text: 'Ata de número {{minute_number}}'
+                },
+                {
+                  type: 'text',
+                  text: ' da Assembleia Ordinária Bimestral da {{church_name}}, situada na {{church_address}}, no dia {{meeting_date_extenso}}. O Pastor {{presiding_pastor_name}} fez uma reflexão e declarou aberta a Assembleia às {{opening_time}}. '
+                },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Leitura da Ata de nº {{previous_minute_number}}:'
+                },
+                { type: 'text', text: ' foi lida e aprovada sem ressalva a Ata anterior. ' },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Relatório Financeiro:'
+                },
+                { type: 'text', text: ' ' },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Movimento de membros:'
+                },
+                { type: 'text', text: ' ' },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Comunicações:'
+                },
+                { type: 'text', text: ' ' },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Encerramento:'
+                },
+                {
+                  type: 'text',
+                  text: ' A assembleia foi encerrada às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
+                }
+              ]
+            }
           ]
         }
       },
       {
-        meetingType: 'extraordinária' as const,
+        meetingType: SEED_MEETING_TYPES.Extraordinary,
         name: 'Modelo Padrão — Assembleia Extraordinária',
         isDefault: true,
         createdByUserId: adminId,
         content: {
           type: 'doc',
           content: [
-            { type: 'paragraph', content: [{ type: 'text', text: 'Ata de número {{minute_number}} da Assembleia Extraordinária da {{church_name}}, devidamente inscrita no CNPJ sob nº {{church_cnpj}}, situada na {{church_address}}. Realizada no dia {{meeting_date_extenso}}.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'O presidente, {{presiding_pastor_name}}, deu início à devocional com uma oração e com o cântico {{opening_hymn_reference}}. Meditação na leitura bíblica de {{opening_bible_reference}}, ministrada pelo presidente.' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Abertura' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Regida em acordo com as exigências Estatutárias, conforme o disposto no Capítulo IV, do Artigo 16º.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Foi declarada aberta às {{opening_time}}, não havendo impedimento. A quantidade de membros presentes somava-se a {{members_present_count}} membros.' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Leitura da Ementa' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Foi lida a agenda com os assuntos a serem tratados no dia.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: '{{pautas}}' }] },
-            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Encerramento' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Depois de discutida a pauta do dia, foi entoado o hino de encerramento e feita uma oração. Foi encerrada a Assembleia Extraordinária às {{closing_time}}.' }] },
-            { type: 'paragraph', content: [{ type: 'text', text: 'Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.' }] }
+            {
+              type: 'paragraph',
+              content: [
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }],
+                  text: 'Ata de número {{minute_number}}'
+                },
+                {
+                  type: 'text',
+                  text: ' da Assembleia Extraordinária da {{church_name}}, devidamente inscrita no CNPJ sob nº {{church_cnpj}}, situada na {{church_address}}. Realizada no dia {{meeting_date_extenso}}. O presidente, {{presiding_pastor_name}}, deu início à devocional com uma oração. Foi declarada aberta às {{opening_time}}. '
+                },
+                { type: 'text', marks: [{ type: 'bold' }, { type: 'underline' }], text: 'Pautas:' },
+                { type: 'text', text: ' {{pautas}} ' },
+                {
+                  type: 'text',
+                  marks: [{ type: 'bold' }, { type: 'underline' }],
+                  text: 'Encerramento:'
+                },
+                {
+                  type: 'text',
+                  text: ' Depois de discutida a pauta do dia, foi feita uma oração. Foi encerrada a Assembleia Extraordinária às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
+                }
+              ]
+            }
           ]
         }
       }

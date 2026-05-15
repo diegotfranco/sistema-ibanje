@@ -13,9 +13,9 @@ import {
   type UserResponse
 } from '@/schemas/user';
 import type { RoleResponse } from '@/schemas/role';
-import type { MemberResponse } from '@/schemas/member';
+import type { AttenderResponse } from '@/schemas/attender';
 import { useRoles } from '@/modules/roles/useRoles';
-import { useMembers } from '@/modules/members/useMembers';
+import { useAttenders } from '@/modules/attenders/useAttenders';
 
 interface UserFormProps {
   initialValues?: UserResponse;
@@ -40,12 +40,12 @@ export default function UserForm({
   const rolesList = useRoles();
   const roles = rolesList.data?.data ?? [];
 
-  const membersList = useMembers();
-  const members = membersList.data?.data ?? [];
+  const attendersList = useAttenders();
+  const attenders = attendersList.data?.data ?? [];
 
   const createForm = useForm<UserCreateFormValues>({
     resolver: zodResolver(UserCreateFormSchema),
-    defaultValues: { name: '', email: '', memberId: null }
+    defaultValues: { name: '', email: '', attenderId: null }
   });
 
   const editForm = useForm<UserEditFormValues>({
@@ -71,7 +71,7 @@ export default function UserForm({
       createForm.reset({
         name: '',
         email: '',
-        memberId: null
+        attenderId: null
       });
     }
   }, [initialValues, isEditing, editForm, createForm, formRef]);
@@ -164,19 +164,19 @@ export default function UserForm({
         {errors.roleId && <p className="text-xs text-red-500">{errors.roleId.message}</p>}
       </div>
       <div className="space-y-1">
-        <Label>Membro (opcional)</Label>
+        <Label>Congregado (opcional)</Label>
         <Controller
-          name="memberId"
+          name="attenderId"
           control={control}
           render={({ field }) => (
-            <EntityPicker<MemberResponse>
-              items={members}
+            <EntityPicker<AttenderResponse>
+              items={attenders}
               value={field.value ?? null}
               onChange={(v) => field.onChange(v)}
-              getValue={(m) => m.id}
-              getLabel={(m) => m.name}
-              placeholder="Vincular a um membro..."
-              isLoading={membersList.isLoading}
+              getValue={(a) => a.id}
+              getLabel={(a) => a.name}
+              placeholder="Vincular a um congregado..."
+              isLoading={attendersList.isLoading}
               allowClear
             />
           )}

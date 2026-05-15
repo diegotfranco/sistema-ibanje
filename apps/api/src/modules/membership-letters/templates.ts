@@ -173,11 +173,7 @@ export function renderLetter(
       ? INCOMING_REQUEST_TEMPLATE
       : OUTGOING_TRANSFER_TEMPLATE;
 
-  const churchAddress = [
-    settings.addressStreet,
-    settings.addressNumber,
-    settings.addressDistrict
-  ]
+  const churchAddress = [settings.addressStreet, settings.addressNumber, settings.addressDistrict]
     .filter(Boolean)
     .join(', ');
 

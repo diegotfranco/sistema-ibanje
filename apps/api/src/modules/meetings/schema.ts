@@ -1,20 +1,21 @@
 import { z } from 'zod';
+import { MEETING_TYPE_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
 
-export const ListBoardMeetingsRequestSchema = z.object({
+export const ListMeetingsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const CreateBoardMeetingRequestSchema = z.object({
+export const CreateMeetingRequestSchema = z.object({
   meetingDate: z.string().date(),
-  type: z.enum(['ordinária', 'extraordinária']),
+  type: z.enum(MEETING_TYPE_VALUES),
   isPublic: z.boolean().default(false)
 });
 
-export const UpdateBoardMeetingRequestSchema = z.object({
+export const UpdateMeetingRequestSchema = z.object({
   meetingDate: z.string().date().optional(),
-  type: z.enum(['ordinária', 'extraordinária']).optional(),
+  type: z.enum(MEETING_TYPE_VALUES).optional(),
   isPublic: z.boolean().optional()
 });
 
@@ -39,10 +40,10 @@ export const AgendaItemResponseSchema = z.object({
   updatedAt: z.string()
 });
 
-export const BoardMeetingResponseSchema = z.object({
+export const MeetingResponseSchema = z.object({
   id: z.number().int().positive(),
   meetingDate: z.string(),
-  type: z.enum(['ordinária', 'extraordinária']),
+  type: z.enum(MEETING_TYPE_VALUES),
   agendaItems: z.array(AgendaItemResponseSchema),
   isPublic: z.boolean(),
   status: z.string(),
@@ -51,10 +52,10 @@ export const BoardMeetingResponseSchema = z.object({
   updatedAt: z.string()
 });
 
-export const BoardMeetingListResponseSchema = paginatedSchema(BoardMeetingResponseSchema);
+export const MeetingListResponseSchema = paginatedSchema(MeetingResponseSchema);
 
-export type CreateBoardMeetingRequest = z.infer<typeof CreateBoardMeetingRequestSchema>;
-export type UpdateBoardMeetingRequest = z.infer<typeof UpdateBoardMeetingRequestSchema>;
+export type CreateMeetingRequest = z.infer<typeof CreateMeetingRequestSchema>;
+export type UpdateMeetingRequest = z.infer<typeof UpdateMeetingRequestSchema>;
 export type SetAgendaItemsRequest = z.infer<typeof SetAgendaItemsRequestSchema>;
 export type AgendaItemResponse = z.infer<typeof AgendaItemResponseSchema>;
-export type BoardMeetingResponse = z.infer<typeof BoardMeetingResponseSchema>;
+export type MeetingResponse = z.infer<typeof MeetingResponseSchema>;
