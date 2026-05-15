@@ -977,6 +977,16 @@ export async function seed() {
         name: 'Modelo Padrão — Assembleia Ordinária',
         isDefault: true,
         createdByUserId: adminId,
+        defaultAgendaItems: [
+          { title: 'Pauta da Assembleia' },
+          { title: 'Leitura da ata anterior' },
+          { title: 'Relatório financeiro' },
+          {
+            title: 'Encerramento',
+            description:
+              'A assembleia foi encerrada às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
+          }
+        ],
         content: {
           type: 'doc',
           content: [
@@ -1019,12 +1029,9 @@ export async function seed() {
                 {
                   type: 'text',
                   marks: [{ type: 'bold' }, { type: 'underline' }],
-                  text: 'Encerramento:'
+                  text: 'Pautas:'
                 },
-                {
-                  type: 'text',
-                  text: ' A assembleia foi encerrada às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
-                }
+                { type: 'text', text: ' {{pautas}} ' }
               ]
             }
           ]
@@ -1035,6 +1042,13 @@ export async function seed() {
         name: 'Modelo Padrão — Assembleia Extraordinária',
         isDefault: true,
         createdByUserId: adminId,
+        defaultAgendaItems: [
+          {
+            title: 'Encerramento',
+            description:
+              'Depois de discutida a pauta do dia, foi feita uma oração. Foi encerrada a Assembleia Extraordinária às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
+          }
+        ],
         content: {
           type: 'doc',
           content: [
@@ -1051,16 +1065,7 @@ export async function seed() {
                   text: ' da Assembleia Extraordinária da {{church_name}}, devidamente inscrita no CNPJ sob nº {{church_cnpj}}, situada na {{church_address}}. Realizada no dia {{meeting_date_extenso}}. O presidente, {{presiding_pastor_name}}, deu início à devocional com uma oração. Foi declarada aberta às {{opening_time}}. '
                 },
                 { type: 'text', marks: [{ type: 'bold' }, { type: 'underline' }], text: 'Pautas:' },
-                { type: 'text', text: ' {{pautas}} ' },
-                {
-                  type: 'text',
-                  marks: [{ type: 'bold' }, { type: 'underline' }],
-                  text: 'Encerramento:'
-                },
-                {
-                  type: 'text',
-                  text: ' Depois de discutida a pauta do dia, foi feita uma oração. Foi encerrada a Assembleia Extraordinária às {{closing_time}}. Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.'
-                }
+                { type: 'text', text: ' {{pautas}} ' }
               ]
             }
           ]

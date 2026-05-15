@@ -210,6 +210,7 @@ export async function updateMinuteTemplate(
     name: string;
     content: unknown;
     isDefault: boolean;
+    defaultAgendaItems: Array<{ title: string; description?: string | null }>;
   }>,
   tx?: Tx
 ): Promise<MinuteTemplate | null> {
@@ -220,6 +221,45 @@ export async function updateMinuteTemplate(
     .where(eq(minuteTemplates.id, id))
     .returning();
   return result[0] ?? null;
+}
+
+export async function createMinuteTemplate(
+  data: {
+    meetingType: string;
+    name: string;
+    content: unknown;
+    isDefault?: boolean;
+    defaultAgendaItems?: Array<{ title: string; description?: string | null }>;
+    createdByUserId: number;
+  },
+  tx?: Tx
+): Promise<MinuteTemplate> {
+  const executor = tx ?? db;
+  const result = await executor
+    .insert(minuteTemplates)
+    .values({
+      meetingType: data.meetingType as MeetingTypeValue,
+      name: data.name,
+      content: data.content,
+      isDefault: data.isDefault ?? false,
+      defaultAgendaItems: data.defaultAgendaItems ?? [],
+      createdByUserId: data.createdByUserId
+    })
+    .returning();
+  return result[0]!;
+}
+
+export async function deleteMinuteTemplate(id: number, tx?: Tx): Promise<void> {
+  const executor = tx ?? db;
+  await executor.delete(minuteTemplates).where(eq(minuteTemplates.id, id));
+}
+
+export async function clearDefaultForMeetingType(meetingType: string, tx?: Tx): Promise<void> {
+  const executor = tx ?? db;
+  await executor
+    .update(minuteTemplates)
+    .set({ isDefault: false, updatedAt: new Date() })
+    .where(eq(minuteTemplates.meetingType, meetingType as MeetingTypeValue));
 }
 
 export async function findMostRecentMinute(): Promise<Minute | null> {

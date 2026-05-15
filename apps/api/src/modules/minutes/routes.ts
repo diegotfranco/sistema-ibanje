@@ -15,6 +15,7 @@ import {
   MinuteResponseSchema,
   MinuteListResponseSchema,
   MinuteTemplateResponseSchema,
+  CreateMinuteTemplateRequestSchema,
   UpdateMinuteTemplateRequestSchema,
   SetAttendersPresentSchema
 } from './schema.js';
@@ -314,6 +315,24 @@ export async function minutesRoutes(app: FastifyInstance) {
     controller.listMinuteTemplates
   );
 
+  app.post(
+    '/minute-templates',
+    {
+      schema: {
+        tags: ['Minute Templates'],
+        body: CreateMinuteTemplateRequestSchema,
+        response: {
+          201: MinuteTemplateResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.Create)]
+    },
+    controller.createMinuteTemplate
+  );
+
   app.get(
     '/minute-templates/:id',
     {
@@ -350,5 +369,24 @@ export async function minutesRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.Update)]
     },
     controller.updateMinuteTemplate
+  );
+
+  app.delete(
+    '/minute-templates/:id',
+    {
+      schema: {
+        tags: ['Minute Templates'],
+        params: IdParamSchema,
+        response: {
+          204: z.null(),
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.Delete)]
+    },
+    controller.deleteMinuteTemplate
   );
 }

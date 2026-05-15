@@ -25,12 +25,18 @@ export async function findMeetingById(id: number) {
   return result[0] ?? null;
 }
 
-export async function insertMeeting(data: {
-  meetingDate: string;
-  type: MeetingTypeValue;
-  isPublic: boolean;
-}) {
-  const result = await db.insert(meetings).values(data).returning();
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+export async function insertMeeting(
+  data: {
+    meetingDate: string;
+    type: MeetingTypeValue;
+    isPublic: boolean;
+  },
+  tx?: Tx
+) {
+  const executor = tx ?? db;
+  const result = await executor.insert(meetings).values(data).returning();
   return result[0] ?? null;
 }
 
@@ -54,6 +60,29 @@ export async function listAgendaItemsForMeeting(meetingId: number) {
     .orderBy(asc(agendaItems.order));
 }
 
+export async function insertAgendaItems(
+  meetingId: number,
+  items: Array<{ title: string; description?: string | null }>,
+  createdByUserId: number,
+  tx?: Tx
+) {
+  const executor = tx ?? db;
+  if (items.length === 0) return [];
+  const inserted = await executor
+    .insert(agendaItems)
+    .values(
+      items.map((item, idx) => ({
+        meetingId,
+        order: idx,
+        title: item.title,
+        description: item.description ?? null,
+        createdByUserId
+      }))
+    )
+    .returning();
+  return inserted;
+}
+
 export async function replaceAgendaItems(
   meetingId: number,
   items: Array<{ title: string; description?: string | null }>,
@@ -61,20 +90,7 @@ export async function replaceAgendaItems(
 ) {
   return await db.transaction(async (tx) => {
     await tx.delete(agendaItems).where(eq(agendaItems.meetingId, meetingId));
-    if (items.length === 0) return [];
-    const inserted = await tx
-      .insert(agendaItems)
-      .values(
-        items.map((item, idx) => ({
-          meetingId,
-          order: idx,
-          title: item.title,
-          description: item.description ?? null,
-          createdByUserId
-        }))
-      )
-      .returning();
-    return inserted;
+    return insertAgendaItems(meetingId, items, createdByUserId, tx);
   });
 }
 

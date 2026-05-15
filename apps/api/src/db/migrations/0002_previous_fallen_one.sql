@@ -1,0 +1,1 @@
+ALTER TABLE "minute_templates" ADD COLUMN "default_agenda_items" jsonb DEFAULT '[]'::jsonb NOT NULL;

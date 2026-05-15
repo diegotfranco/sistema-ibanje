@@ -72,20 +72,35 @@ export const SetAttendersPresentSchema = z.object({
   attenderIds: z.array(z.number().int().positive())
 });
 
+export const AgendaItemTemplateSchema = z.object({
+  title: z.string().min(1).max(256),
+  description: z.string().max(2048).nullable().optional()
+});
+
 export const MinuteTemplateResponseSchema = z.object({
   id: z.number().int().positive(),
   meetingType: z.string(),
   name: z.string(),
-  content: z.string(),
+  content: z.unknown(),
   isDefault: z.boolean(),
+  defaultAgendaItems: z.array(AgendaItemTemplateSchema),
   createdAt: z.string(),
   updatedAt: z.string()
 });
 
+export const CreateMinuteTemplateRequestSchema = z.object({
+  meetingType: z.string(),
+  name: z.string().min(1).max(128),
+  content: z.unknown(),
+  isDefault: z.boolean().default(false),
+  defaultAgendaItems: z.array(AgendaItemTemplateSchema).default([])
+});
+
 export const UpdateMinuteTemplateRequestSchema = z.object({
   name: z.string().min(1).max(128).optional(),
-  content: z.string().optional(),
-  isDefault: z.boolean().optional()
+  content: z.unknown().optional(),
+  isDefault: z.boolean().optional(),
+  defaultAgendaItems: z.array(AgendaItemTemplateSchema).optional()
 });
 
 export type CreateMinuteRequest = z.infer<typeof CreateMinuteRequestSchema>;
@@ -95,6 +110,8 @@ export type EditApprovedMinuteRequest = z.infer<typeof EditApprovedMinuteRequest
 export type ApproveMinuteRequest = z.infer<typeof ApproveMinuteRequestSchema>;
 export type MinuteVersionResponse = z.infer<typeof MinuteVersionResponseSchema>;
 export type MinuteResponse = z.infer<typeof MinuteResponseSchema>;
+export type AgendaItemTemplate = z.infer<typeof AgendaItemTemplateSchema>;
 export type MinuteTemplateResponse = z.infer<typeof MinuteTemplateResponseSchema>;
+export type CreateMinuteTemplateRequest = z.infer<typeof CreateMinuteTemplateRequestSchema>;
 export type UpdateMinuteTemplateRequest = z.infer<typeof UpdateMinuteTemplateRequestSchema>;
 export type SetAttendersPresent = z.infer<typeof SetAttendersPresentSchema>;

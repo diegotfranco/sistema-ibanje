@@ -5,6 +5,7 @@ import type {
   UpdateMinuteRequest,
   EditApprovedMinuteRequest,
   ApproveMinuteRequest,
+  CreateMinuteTemplateRequest,
   UpdateMinuteTemplateRequest,
   SetAttendersPresent
 } from './schema.js';
@@ -119,6 +120,13 @@ export async function getMinuteTemplate(req: FastifyRequest, reply: FastifyReply
   return reply.send(template);
 }
 
+export async function createMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const body = req.body as CreateMinuteTemplateRequest;
+  const template = await service.createMinuteTemplate(req.session.userId!, body);
+  logAudit(req.session.userId!, 'create', 'minute_template', template.id, { ipAddress: req.ip });
+  return reply.code(201).send(template);
+}
+
 export async function updateMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as UpdateMinuteTemplateRequest;
@@ -126,6 +134,13 @@ export async function updateMinuteTemplate(req: FastifyRequest, reply: FastifyRe
   if (!template) return reply.code(404).send({ message: 'Template not found' });
   logAudit(req.session.userId!, 'update', 'minute_template', id, { ipAddress: req.ip });
   return reply.send(template);
+}
+
+export async function deleteMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  await service.deleteMinuteTemplate(req.session.userId!, id);
+  logAudit(req.session.userId!, 'delete', 'minute_template', id, { ipAddress: req.ip });
+  return reply.code(204).send();
 }
 
 export async function pdf(req: FastifyRequest, reply: FastifyReply) {

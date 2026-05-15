@@ -513,6 +513,10 @@ export const minuteTemplates = pgTable(
     name: varchar('name', { length: 128 }).notNull(),
     content: jsonb('content').notNull(),
     isDefault: boolean('is_default').default(false).notNull(),
+    defaultAgendaItems: jsonb('default_agenda_items')
+      .$type<Array<{ title: string; description?: string | null }>>()
+      .default([])
+      .notNull(),
     createdByUserId: integer('created_by_user_id').references(() => users.id),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()

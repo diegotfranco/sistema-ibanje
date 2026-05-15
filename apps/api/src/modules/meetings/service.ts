@@ -1,9 +1,11 @@
 import type { MeetingTypeValue } from '@sistema-ibanje/shared';
 import * as repo from './repository.js';
+import * as minutesRepo from '../minutes/repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
+import { db } from '../../db/index.js';
 import type {
   CreateMeetingRequest,
   UpdateMeetingRequest,
@@ -61,13 +63,33 @@ export async function createMeeting(
   body: CreateMeetingRequest
 ): Promise<MeetingResponse> {
   await assertPermission(callerId, Module.Agendas, Action.Create);
-  const created = await repo.insertMeeting({
-    meetingDate: body.meetingDate,
-    type: body.type,
-    isPublic: body.isPublic
+
+  const result = await db.transaction(async (tx) => {
+    const created = await repo.insertMeeting(
+      {
+        meetingDate: body.meetingDate,
+        type: body.type,
+        isPublic: body.isPublic
+      },
+      tx
+    );
+    if (!created) throw new Error('Failed to create meeting');
+
+    // Look up default template for this meeting type and auto-seed agenda items
+    const template = await minutesRepo.findDefaultTemplateForMeetingType(body.type);
+    let items: AgendaItem[] = [];
+    if (
+      template &&
+      Array.isArray(template.defaultAgendaItems) &&
+      template.defaultAgendaItems.length > 0
+    ) {
+      items = await repo.insertAgendaItems(created.id, template.defaultAgendaItems, callerId, tx);
+    }
+
+    return { meeting: created, items };
   });
-  if (!created) throw new Error('Failed to create meeting');
-  return buildResponse(created, false, []);
+
+  return buildResponse(result.meeting, false, result.items);
 }
 
 export async function updateMeeting(

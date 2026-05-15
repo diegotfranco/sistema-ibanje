@@ -10,8 +10,6 @@ import { db } from '../../db/index.js';
 import { uploadFile, deleteFile, getPresignedUrl } from '../../lib/storage.js';
 import { fileTypeFromBuffer } from 'file-type';
 import { randomUUID } from 'node:crypto';
-import { eq } from 'drizzle-orm';
-import { minuteTemplates } from '../../db/schema.js';
 import * as churchSettingsRepo from '../church-settings/repository.js';
 import { MinutePdf } from './pdf-template.js';
 import { sanitizeMinuteDoc } from './sanitize.js';
@@ -24,6 +22,7 @@ import type {
   MinuteVersionResponse,
   MinuteResponse,
   MinuteTemplateResponse,
+  CreateMinuteTemplateRequest,
   UpdateMinuteTemplateRequest
 } from './schema.js';
 import type { Minute, MinuteVersion } from '../../db/schema.js';
@@ -69,6 +68,11 @@ function formatDateExtenso(dateStr: string | null): string {
 function interpolateTemplate(template: unknown, variables: Record<string, string>): unknown {
   if (typeof template === 'string') {
     let result = template;
+    // First pass: replace all placeholders
+    for (const [key, value] of Object.entries(variables)) {
+      result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
+    }
+    // Second pass: handle nested placeholders (e.g. placeholders inside {{pautas}})
     for (const [key, value] of Object.entries(variables)) {
       result = result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value);
     }
@@ -539,8 +543,10 @@ export async function listMinuteTemplates(): Promise<MinuteTemplateResponse[]> {
     id: t.id,
     meetingType: t.meetingType,
     name: t.name,
-    content: JSON.stringify(t.content),
+    content: t.content,
     isDefault: t.isDefault,
+    defaultAgendaItems:
+      (t.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
     createdAt: t.createdAt.toISOString(),
     updatedAt: t.updatedAt.toISOString()
   }));
@@ -553,11 +559,50 @@ export async function getMinuteTemplateById(id: number): Promise<MinuteTemplateR
     id: template.id,
     meetingType: template.meetingType,
     name: template.name,
-    content: JSON.stringify(template.content),
+    content: template.content,
     isDefault: template.isDefault,
+    defaultAgendaItems:
+      (template.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
     createdAt: template.createdAt.toISOString(),
     updatedAt: template.updatedAt.toISOString()
   };
+}
+
+export async function createMinuteTemplate(
+  callerId: number,
+  body: CreateMinuteTemplateRequest
+): Promise<MinuteTemplateResponse> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.Create);
+
+  return await db.transaction(async (tx) => {
+    if (body.isDefault) {
+      await repo.clearDefaultForMeetingType(body.meetingType, tx);
+    }
+
+    const created = await repo.createMinuteTemplate(
+      {
+        meetingType: body.meetingType,
+        name: body.name,
+        content: body.content,
+        isDefault: body.isDefault ?? false,
+        defaultAgendaItems: body.defaultAgendaItems ?? [],
+        createdByUserId: callerId
+      },
+      tx
+    );
+
+    return {
+      id: created.id,
+      meetingType: created.meetingType,
+      name: created.name,
+      content: created.content,
+      isDefault: created.isDefault,
+      defaultAgendaItems:
+        (created.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString()
+    };
+  });
 }
 
 export async function updateMinuteTemplate(
@@ -567,30 +612,20 @@ export async function updateMinuteTemplate(
 ): Promise<MinuteTemplateResponse | null> {
   await assertPermission(callerId, Module.MinuteTemplates, Action.Update);
 
-  let parsedContent: unknown = undefined;
-  if (body.content) {
-    try {
-      parsedContent = JSON.parse(body.content);
-    } catch {
-      throw httpError(400, 'content must be valid JSON');
-    }
-  }
-
   return await db.transaction(async (tx) => {
     const template = await repo.findMinuteTemplateById(id);
     if (!template) return null;
 
     if (body.isDefault === true) {
-      await tx
-        .update(minuteTemplates)
-        .set({ isDefault: false })
-        .where(eq(minuteTemplates.meetingType, template.meetingType));
+      await repo.clearDefaultForMeetingType(template.meetingType, tx);
     }
 
     const updateData: Parameters<typeof repo.updateMinuteTemplate>[1] = {};
     if (body.name) updateData.name = body.name;
-    if (parsedContent !== undefined) updateData.content = parsedContent;
+    if (body.content !== undefined) updateData.content = body.content;
     if (body.isDefault !== undefined) updateData.isDefault = body.isDefault;
+    if (body.defaultAgendaItems !== undefined)
+      updateData.defaultAgendaItems = body.defaultAgendaItems;
 
     const updated = await repo.updateMinuteTemplate(id, updateData, tx);
     if (!updated) return null;
@@ -599,10 +634,22 @@ export async function updateMinuteTemplate(
       id: updated.id,
       meetingType: updated.meetingType,
       name: updated.name,
-      content: JSON.stringify(updated.content),
+      content: updated.content,
       isDefault: updated.isDefault,
+      defaultAgendaItems:
+        (updated.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
       createdAt: updated.createdAt.toISOString(),
       updatedAt: updated.updatedAt.toISOString()
     };
   });
+}
+
+export async function deleteMinuteTemplate(callerId: number, id: number): Promise<void> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.Delete);
+
+  const template = await repo.findMinuteTemplateById(id);
+  if (!template) throw httpError(404, 'Template not found');
+  if (template.isDefault) throw httpError(409, 'Cannot delete default template — replace it first');
+
+  await repo.deleteMinuteTemplate(id);
 }
