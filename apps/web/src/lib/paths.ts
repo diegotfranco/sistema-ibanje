@@ -18,7 +18,8 @@ export const paths = {
   reports: '/reports',
   meetings: '/meetings',
   minutes: '/minutes',
-  minuteDetail: '/minutes/:id'
+  minuteDetail: '/minutes/:id',
+  minuteTemplates: '/minute-templates'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];

@@ -9,6 +9,7 @@ import { rolesRouteChildren } from '@/modules/roles/routes';
 import { usersRouteChildren } from '@/modules/users/routes';
 import { pautasRouteChildren } from '@/modules/meetings/routes';
 import { atasRouteChildren } from '@/modules/minutes/routes';
+import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -31,7 +32,7 @@ const adminSection: AppRoute = {
 const secretariaSection: AppRoute = {
   layout: 'app',
   label: 'Secretaria',
-  children: [...pautasRouteChildren, ...atasRouteChildren]
+  children: [...pautasRouteChildren, ...atasRouteChildren, ...minuteTemplatesRouteChildren]
 };
 
 export const appRoutes: AppRoute[] = [
