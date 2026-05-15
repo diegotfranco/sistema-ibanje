@@ -20,7 +20,8 @@ export const paths = {
   minutes: '/minutes',
   minuteDetail: '/minutes/:id',
   minuteTemplates: '/minute-templates',
-  churchSettings: '/church-settings'
+  churchSettings: '/church-settings',
+  me: '/me'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];

@@ -1,0 +1,20 @@
+export type IncomeEntryResponse = {
+  id: number;
+  referenceDate: string;
+  depositDate: string | null;
+  attributionMonth: string | null;
+  amount: string;
+  categoryId: number;
+  categoryName: string;
+  attenderId: number | null;
+  attenderName: string | null;
+  paymentMethodId: number;
+  paymentMethodName: string;
+  designatedFundId: number | null;
+  designatedFundName: string | null;
+  notes: string | null;
+  userId: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+};

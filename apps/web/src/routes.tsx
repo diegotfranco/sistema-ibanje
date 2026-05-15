@@ -11,6 +11,7 @@ import { churchSettingsRouteChildren } from '@/modules/church-settings/routes';
 import { pautasRouteChildren } from '@/modules/meetings/routes';
 import { atasRouteChildren } from '@/modules/minutes/routes';
 import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes';
+import { meRoutes } from '@/modules/me/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -42,5 +43,6 @@ export const appRoutes: AppRoute[] = [
   adminSection,
   ...attendersRoutes,
   ...financeRoutes,
-  secretariaSection
+  secretariaSection,
+  ...meRoutes
 ];

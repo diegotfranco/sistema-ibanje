@@ -1,7 +1,8 @@
 import { useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { ResourceListPage } from '@/components/ResourceListPage';
+import { Gift } from 'lucide-react';
+import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { applyFieldErrors } from '@/lib/forms';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -9,6 +10,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenders, useAttenderMutations } from './useAttenders';
 import AttenderForm from './AttenderForm';
 import StatusBadge from '@/components/StatusBadge';
+import AttenderDonationsDialog from '@/modules/donations/AttenderDonationsDialog';
 import type { AttenderResponse, AttenderFormValues } from '@/schemas/attender';
 
 type AttenderFormInstance = ReturnType<typeof useForm<AttenderFormValues>>;
@@ -31,6 +33,8 @@ export default function AttendersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AttenderResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AttenderResponse | null>(null);
+  const [donationsDialogOpen, setDonationsDialogOpen] = useState(false);
+  const [donationsAttender, setDonationsAttender] = useState<AttenderResponse | null>(null);
 
   const formRef = useRef<AttenderFormInstance | null>(null);
 
@@ -117,6 +121,20 @@ export default function AttendersPage() {
     []
   );
 
+  const customActions: CustomAction<AttenderResponse>[] = useMemo(
+    () => [
+      {
+        label: 'Contribuições',
+        icon: <Gift className="h-4 w-4" />,
+        onClick: (row) => {
+          setDonationsAttender(row);
+          setDonationsDialogOpen(true);
+        }
+      }
+    ],
+    []
+  );
+
   return (
     <>
       <ResourceListPage<AttenderResponse>
@@ -141,6 +159,7 @@ export default function AttendersPage() {
             : undefined
         }
         onDelete={canDelete ? (r) => setDeleteTarget(r) : undefined}
+        customActions={customActions}
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
@@ -168,6 +187,13 @@ export default function AttendersPage() {
             mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
         }}
         isPending={mutations.remove.isPending}
+      />
+
+      <AttenderDonationsDialog
+        attenderId={donationsAttender?.id ?? null}
+        attenderName={donationsAttender?.name ?? null}
+        open={donationsDialogOpen}
+        onOpenChange={setDonationsDialogOpen}
       />
     </>
   );
