@@ -52,6 +52,7 @@ export const MinuteResponseSchema = z.object({
   closingTime: z.string().nullable(),
   signedDocumentPath: z.string().nullable(),
   attendersPresent: z.array(z.object({ id: z.number().int().positive(), name: z.string() })),
+  pautas: z.string(),
   currentVersion: MinuteVersionResponseSchema.nullable(),
   versions: z.array(MinuteVersionResponseSchema),
   createdAt: z.string(),

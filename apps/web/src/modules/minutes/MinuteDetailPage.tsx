@@ -188,7 +188,8 @@ export default function MinuteDetailPage() {
                   secretary_name: minute.secretaryName ?? '',
                   opening_time: minute.openingTime ?? '',
                   closing_time: minute.closingTime ?? '',
-                  members_present_count: String(minute.attendersPresent.length)
+                  members_present_count: String(minute.attendersPresent.length),
+                  pautas: minute.pautas
                 }) as TipTapDoc
               }
               className="text-sm"
@@ -579,7 +580,8 @@ export default function MinuteDetailPage() {
                     secretary_name: minute.secretaryName ?? '',
                     opening_time: minute.openingTime ?? '',
                     closing_time: minute.closingTime ?? '',
-                    members_present_count: String(minute.attendersPresent.length)
+                    members_present_count: String(minute.attendersPresent.length),
+                    pautas: minute.pautas
                   }) as TipTapDoc
                 }
                 className="text-sm"

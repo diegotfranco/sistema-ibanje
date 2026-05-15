@@ -87,6 +87,19 @@ function interpolateTemplate(template: unknown, variables: Record<string, string
   return template;
 }
 
+function formatAgendaItems(
+  agendaItems: Array<{ title: string; description: string | null }>
+): string {
+  if (agendaItems.length === 0) return '';
+  return agendaItems
+    .map((item, idx) => {
+      const n = idx + 1;
+      const desc = item.description?.trim();
+      return desc ? `${n}) ${item.title} — ${desc}.` : `${n}) ${item.title}.`;
+    })
+    .join(' ');
+}
+
 function buildInterpolationVariables(
   minute: Minute,
   meeting: { meetingDate: Date | null; type: string },
@@ -100,7 +113,8 @@ function buildInterpolationVariables(
     addressState: string;
   },
   previousMinuteNumber: string,
-  attendersPresent: Array<{ id: number; name: string }>
+  attendersPresent: Array<{ id: number; name: string }>,
+  agendaItems: Array<{ title: string; description: string | null }>
 ): Record<string, string> {
   return {
     church_name: church.name,
@@ -116,7 +130,7 @@ function buildInterpolationVariables(
     opening_time: minute.openingTime ?? '',
     closing_time: minute.closingTime ?? '',
     members_present_count: String(attendersPresent.length),
-    pautas: ''
+    pautas: formatAgendaItems(agendaItems)
   };
 }
 
@@ -134,14 +148,16 @@ export function interpolateMinutePlaceholders(
     addressState: string;
   },
   previousMinuteNumber: string,
-  attendersPresent: Array<{ id: number; name: string }>
+  attendersPresent: Array<{ id: number; name: string }>,
+  agendaItems: Array<{ title: string; description: string | null }>
 ): unknown {
   const vars = buildInterpolationVariables(
     minute,
     meeting,
     church,
     previousMinuteNumber,
-    attendersPresent
+    attendersPresent,
+    agendaItems
   );
   return interpolateTemplate(doc, vars);
 }
@@ -164,6 +180,7 @@ async function buildMinuteResponseAsync(
   }
 
   const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
+  const agendaItems = await repo.listAgendaItemsForMeeting(minute.meetingId);
 
   return {
     id: minute.id,
@@ -178,6 +195,7 @@ async function buildMinuteResponseAsync(
     closingTime: minute.closingTime ?? null,
     signedDocumentPath,
     attendersPresent,
+    pautas: formatAgendaItems(agendaItems),
     currentVersion,
     versions: sorted.map(buildVersionResponse),
     createdAt: minute.createdAt.toISOString(),
@@ -440,6 +458,7 @@ export async function renderMinutePdf(callerId: number, minuteId: number): Promi
 
   const previousMinuteNumber = await repo.getPreviousApprovedMinuteNumber();
   const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
+  const agendaItems = await repo.listAgendaItemsForMeeting(minute.meetingId);
 
   const interpolatedContent = interpolateMinutePlaceholders(
     latest?.content ?? null,
@@ -447,7 +466,8 @@ export async function renderMinutePdf(callerId: number, minuteId: number): Promi
     { meetingDate: meeting.meetingDate ? new Date(meeting.meetingDate) : null, type: meeting.type },
     churchSettings,
     previousMinuteNumber,
-    attendersPresent
+    attendersPresent,
+    agendaItems
   );
 
   return renderToBuffer(
