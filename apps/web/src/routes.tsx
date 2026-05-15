@@ -7,6 +7,7 @@ import { attendersRoutes } from '@/modules/attenders/routes';
 import { financeRoutes } from '@/modules/finance/routes';
 import { rolesRouteChildren } from '@/modules/roles/routes';
 import { usersRouteChildren } from '@/modules/users/routes';
+import { churchSettingsRouteChildren } from '@/modules/church-settings/routes';
 import { pautasRouteChildren } from '@/modules/meetings/routes';
 import { atasRouteChildren } from '@/modules/minutes/routes';
 import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes';
@@ -26,7 +27,7 @@ export type AppRoute = {
 const adminSection: AppRoute = {
   layout: 'app',
   label: 'Administração',
-  children: [...rolesRouteChildren, ...usersRouteChildren]
+  children: [...rolesRouteChildren, ...usersRouteChildren, ...churchSettingsRouteChildren]
 };
 
 const secretariaSection: AppRoute = {
