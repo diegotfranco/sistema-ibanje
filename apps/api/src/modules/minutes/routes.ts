@@ -8,10 +8,13 @@ import {
   ListMinutesRequestSchema,
   CreateMinuteRequestSchema,
   UpdateMinuteVersionRequestSchema,
+  UpdateMinuteRequestSchema,
   EditApprovedMinuteRequestSchema,
   ApproveMinuteRequestSchema,
   MinuteResponseSchema,
-  MinuteListResponseSchema
+  MinuteListResponseSchema,
+  MinuteTemplateResponseSchema,
+  UpdateMinuteTemplateRequestSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -150,5 +153,119 @@ export async function minutesRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Delete)]
     },
     controller.remove
+  );
+
+  app.patch(
+    '/minutes/:id',
+    {
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        body: UpdateMinuteRequestSchema,
+        response: {
+          200: MinuteResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
+    },
+    controller.updateMinute
+  );
+
+  app.post(
+    '/minutes/:id/finalize-draft',
+    {
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        response: {
+          200: MinuteResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
+    },
+    controller.finalizeDraft
+  );
+
+  app.post(
+    '/minutes/:id/sign',
+    {
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        response: {
+          200: MinuteResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.Update)]
+    },
+    controller.sign
+  );
+
+  app.get(
+    '/minute-templates',
+    {
+      schema: {
+        tags: ['Minute Templates'],
+        response: {
+          200: {
+            type: 'array',
+            items: MinuteTemplateResponseSchema
+          },
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.View)]
+    },
+    controller.listMinuteTemplates
+  );
+
+  app.get(
+    '/minute-templates/:id',
+    {
+      schema: {
+        tags: ['Minute Templates'],
+        params: IdParamSchema,
+        response: {
+          200: MinuteTemplateResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.View)]
+    },
+    controller.getMinuteTemplate
+  );
+
+  app.put(
+    '/minute-templates/:id',
+    {
+      schema: {
+        tags: ['Minute Templates'],
+        params: IdParamSchema,
+        body: UpdateMinuteTemplateRequestSchema,
+        response: {
+          200: MinuteTemplateResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MinuteTemplates, Action.Update)]
+    },
+    controller.updateMinuteTemplate
   );
 }

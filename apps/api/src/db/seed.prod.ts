@@ -22,8 +22,9 @@ import {
   paymentMethods,
   incomeCategories,
   expenseCategories,
-  members,
-  financeSettings
+  attenders,
+  financeSettings,
+  churchSettings
 } from './schema.js';
 import {
   SEED_ROLES,
@@ -42,7 +43,7 @@ import {
 const LEGACY_SQLITE_PATH =
   process.env.LEGACY_SQLITE_PATH ?? path.resolve(process.cwd(), 'ibanje.db');
 
-type LegacyMember = {
+type LegacyAttender = {
   nome: string | null;
   data_nascimento: string | null;
   endereco: string | null;
@@ -90,10 +91,10 @@ function cleanBirthDate(v: unknown): string | null {
   return s;
 }
 
-function readLegacyMembers(): LegacyMember[] {
+function readLegacyAttenders(): LegacyAttender[] {
   const legacy = new DatabaseSync(LEGACY_SQLITE_PATH, { readOnly: true });
   try {
-    return legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyMember[];
+    return legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyAttender[];
   } finally {
     legacy.close();
   }
@@ -103,8 +104,8 @@ export async function seedProd() {
   console.log('Production seed starting...');
   console.log(`Reading legacy SQLite from: ${LEGACY_SQLITE_PATH}`);
 
-  const legacyMembers = readLegacyMembers();
-  console.log(`Found ${legacyMembers.length} legacy members.`);
+  const legacyAttenders = readLegacyAttenders();
+  console.log(`Found ${legacyAttenders.length} legacy attenders.`);
 
   await db.transaction(async (tx) => {
     // Refuse to run if structural data already exists. Production seed is one-shot.
@@ -112,7 +113,7 @@ export async function seedProd() {
       (SELECT COUNT(*) FROM roles) AS roles,
       (SELECT COUNT(*) FROM modules) AS modules,
       (SELECT COUNT(*) FROM permissions) AS permissions,
-      (SELECT COUNT(*) FROM members) AS members,
+      (SELECT COUNT(*) FROM attenders) AS attenders,
       (SELECT COUNT(*) FROM payment_methods) AS payment_methods,
       (SELECT COUNT(*) FROM income_categories) AS income_categories,
       (SELECT COUNT(*) FROM expense_categories) AS expense_categories,
@@ -184,8 +185,28 @@ export async function seedProd() {
     // --- Finance Settings (singleton) ---
     await tx.insert(financeSettings).values({ openingBalance: '0.00' });
 
-    // --- Members (migrated from legacy SQLite) ---
-    const memberRows = legacyMembers
+    // --- Church Settings (singleton) ---
+    await tx.insert(churchSettings).values({
+      id: 1,
+      name: 'Igreja Batista Nova Jerusalém',
+      cnpj: '15.556.152/0001-42',
+      addressStreet: 'Rua Santo Amaro',
+      addressNumber: '286',
+      addressDistrict: 'Vila Carrão',
+      addressCity: 'São Paulo',
+      addressState: 'SP',
+      postalCode: '03446000',
+      phone: '(11) 2741-4262',
+      email: null,
+      websiteUrl: null,
+      currentPresidentName: 'Pr. Deucir Araújo de Almeida',
+      currentPresidentTitle: 'Presidente',
+      currentSecretaryName: 'Secretário Responsável da Silva',
+      currentSecretaryTitle: '1º Secretário(a)'
+    });
+
+    // --- Attenders (migrated from legacy SQLite) ---
+    const attenderRows = legacyAttenders
       .map((m) => {
         const name = clean(m.nome);
         if (!name) return null;
@@ -206,10 +227,10 @@ export async function seedProd() {
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
 
-    if (memberRows.length > 0) {
-      await tx.insert(members).values(memberRows);
+    if (attenderRows.length > 0) {
+      await tx.insert(attenders).values(attenderRows);
     }
-    console.log(`Inserted ${memberRows.length} members.`);
+    console.log(`Inserted ${attenderRows.length} attenders.`);
   });
 
   console.log('Production seed complete.');

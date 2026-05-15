@@ -5,23 +5,24 @@ import { Module, Action } from '../../lib/constants.js';
 import { IdParamSchema } from '../../lib/validation.js';
 import { ErrorResponseSchema } from '../../lib/http-schemas.js';
 import {
-  ListMembersRequestSchema,
-  CreateMemberRequestSchema,
-  UpdateMemberRequestSchema,
-  MemberResponseSchema,
-  MemberListResponseSchema
+  ListAttendersRequestSchema,
+  CreateAttenderRequestSchema,
+  UpdateAttenderRequestSchema,
+  AttenderResponseSchema,
+  AttenderListResponseSchema
 } from './schema.js';
+import { IncomeEntryListResponseSchema } from '../finance/income/entries/schema.js';
 import * as controller from './controller.js';
 
-export async function membersRoutes(app: FastifyInstance) {
+export async function attendersRoutes(app: FastifyInstance) {
   app.post(
-    '/members',
+    '/attenders',
     {
       schema: {
-        tags: ['Members'],
-        body: CreateMemberRequestSchema,
+        tags: ['Attenders'],
+        body: CreateAttenderRequestSchema,
         response: {
-          201: MemberResponseSchema,
+          201: AttenderResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -35,13 +36,13 @@ export async function membersRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/members',
+    '/attenders',
     {
       schema: {
-        tags: ['Members'],
-        querystring: ListMembersRequestSchema,
+        tags: ['Attenders'],
+        querystring: ListAttendersRequestSchema,
         response: {
-          200: MemberListResponseSchema,
+          200: AttenderListResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
         }
@@ -52,13 +53,13 @@ export async function membersRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/members/:id',
+    '/attenders/:id',
     {
       schema: {
-        tags: ['Members'],
+        tags: ['Attenders'],
         params: IdParamSchema,
         response: {
-          200: MemberResponseSchema,
+          200: AttenderResponseSchema,
           401: ErrorResponseSchema,
           404: ErrorResponseSchema
         }
@@ -69,14 +70,14 @@ export async function membersRoutes(app: FastifyInstance) {
   );
 
   app.patch(
-    '/members/:id',
+    '/attenders/:id',
     {
       schema: {
-        tags: ['Members'],
+        tags: ['Attenders'],
         params: IdParamSchema,
-        body: UpdateMemberRequestSchema,
+        body: UpdateAttenderRequestSchema,
         response: {
-          200: MemberResponseSchema,
+          200: AttenderResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -89,11 +90,30 @@ export async function membersRoutes(app: FastifyInstance) {
     controller.update
   );
 
-  app.delete(
-    '/members/:id',
+  app.get(
+    '/attenders/:id/donations',
     {
       schema: {
-        tags: ['Members'],
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        querystring: ListAttendersRequestSchema,
+        response: {
+          200: IncomeEntryListResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth]
+    },
+    controller.listDonations
+  );
+
+  app.delete(
+    '/attenders/:id',
+    {
+      schema: {
+        tags: ['Attenders'],
         params: IdParamSchema,
         response: {
           204: { type: 'null', description: 'Deleted' },

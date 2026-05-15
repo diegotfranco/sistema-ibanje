@@ -1,6 +1,6 @@
-import { eq, ne, count, desc } from 'drizzle-orm';
+import { eq, ne, count, desc, asc } from 'drizzle-orm';
 import { db } from '../../db/index.js';
-import { boardMeetings, minutes } from '../../db/schema.js';
+import { boardMeetings, minutes, agendaItems } from '../../db/schema.js';
 
 export async function listBoardMeetings(offset: number, limit: number) {
   const rows = await db
@@ -45,18 +45,36 @@ export async function updateBoardMeeting(
   return result[0] ?? null;
 }
 
-export async function setAgenda(id: number, items: string[], authorId: number) {
-  const result = await db
-    .update(boardMeetings)
-    .set({
-      agendaContent: items,
-      agendaAuthorId: authorId,
-      agendaCreatedAt: new Date(),
-      updatedAt: new Date()
-    })
-    .where(eq(boardMeetings.id, id))
-    .returning();
-  return result[0] ?? null;
+export async function listAgendaItemsForMeeting(meetingId: number) {
+  return await db
+    .select()
+    .from(agendaItems)
+    .where(eq(agendaItems.meetingId, meetingId))
+    .orderBy(asc(agendaItems.order));
+}
+
+export async function replaceAgendaItems(
+  meetingId: number,
+  items: Array<{ title: string; description?: string | null }>,
+  createdByUserId: number
+) {
+  return await db.transaction(async (tx) => {
+    await tx.delete(agendaItems).where(eq(agendaItems.meetingId, meetingId));
+    if (items.length === 0) return [];
+    const inserted = await tx
+      .insert(agendaItems)
+      .values(
+        items.map((item, idx) => ({
+          meetingId,
+          order: idx,
+          title: item.title,
+          description: item.description ?? null,
+          createdByUserId
+        }))
+      )
+      .returning();
+    return inserted;
+  });
 }
 
 export async function deactivateBoardMeeting(id: number) {

@@ -29,7 +29,7 @@ export const CreateUserRequestSchema = z.object({
   name: z.string().min(1).max(96),
   email: z.email(),
   roleId: z.number().int().positive(),
-  memberId: z.number().int().positive().optional()
+  attenderId: z.number().int().positive().optional()
 });
 
 export const UserResponseSchema = z.object({

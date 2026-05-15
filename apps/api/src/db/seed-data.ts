@@ -83,7 +83,10 @@ export const SEED_MODULES = [
   },
   { name: 'Fechamentos Mensais', description: 'Gerencia os fechamentos mensais de tesouraria' },
   { name: 'Pautas', description: 'Gerencia as pautas das reuniões da diretoria' },
-  { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' }
+  { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' },
+  { name: 'Cartas de Membros', description: 'Gerencia as cartas de transferência de membros' },
+  { name: 'Modelos de Ata', description: 'Gerencia os modelos de ata para assembleias' },
+  { name: 'Dados da Igreja', description: 'Gerencia os dados institucionais da igreja' }
 ];
 
 export const EXPECTED_MODULE_ORDER = SEED_MODULES.map((m) => m.name);
@@ -202,6 +205,12 @@ export function buildRoleModulePermissions(
       ['Fechamentos Mensais'],
       [permByName['Acessar'].id, permByName['Revisar'].id]
     ),
-    ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id])
+    ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id]),
+    ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], writePermIds),
+    ...cross(roleByName['Secretário Responsável'].id, ['Cartas de Membros', 'Modelos de Ata'], fullPermIds),
+    ...cross(roleByName['Presidente'].id, ['Dados da Igreja'], fullPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Dados da Igreja'], fullPermIds),
+    ...cross(roleByName['Secretário Responsável'].id, ['Dados da Igreja'], fullPermIds),
+    ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], readPermIds)
   ];
 }

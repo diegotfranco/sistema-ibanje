@@ -7,7 +7,7 @@ import {
   incomeCategories,
   expenseCategories,
   designatedFunds,
-  members
+  attenders
 } from '../../../db/schema.js';
 import type {
   IncomeReportRow,
@@ -370,8 +370,8 @@ export async function getAllExpenseReportRows(
 export async function countActiveMembers(): Promise<number> {
   const result = await db
     .select({ count: count() })
-    .from(members)
-    .where(eq(members.status, 'ativo'));
+    .from(attenders)
+    .where(eq(attenders.status, 'ativo'));
   return result[0]?.count ?? 0;
 }
 
@@ -382,7 +382,7 @@ export async function countDistinctMembersWithTithe(
 ): Promise<number> {
   if (titheIds.length === 0) return 0;
   const result = await db
-    .selectDistinct({ memberId: incomeEntries.memberId })
+    .selectDistinct({ attenderId: incomeEntries.attenderId })
     .from(incomeEntries)
     .where(
       and(
@@ -390,7 +390,7 @@ export async function countDistinctMembersWithTithe(
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga'),
         inArray(incomeEntries.categoryId, titheIds),
-        isNotNull(incomeEntries.memberId)
+        isNotNull(incomeEntries.attenderId)
       )
     );
   return result.length;
@@ -403,7 +403,7 @@ export async function countDistinctMembersWithOfferings(
 ): Promise<number> {
   if (offeringIds.length === 0) return 0;
   const result = await db
-    .selectDistinct({ memberId: incomeEntries.memberId })
+    .selectDistinct({ attenderId: incomeEntries.attenderId })
     .from(incomeEntries)
     .where(
       and(
@@ -411,7 +411,7 @@ export async function countDistinctMembersWithOfferings(
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga'),
         inArray(incomeEntries.categoryId, offeringIds),
-        isNotNull(incomeEntries.memberId)
+        isNotNull(incomeEntries.attenderId)
       )
     );
   return result.length;
@@ -533,12 +533,12 @@ export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEn
       referenceDate: incomeEntries.referenceDate,
       amount: incomeEntries.amount,
       categoryName: incomeCategories.name,
-      memberName: members.name,
+      attenderName: attenders.name,
       notes: incomeEntries.notes
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
-    .leftJoin(members, eq(incomeEntries.memberId, members.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .where(and(eq(incomeEntries.designatedFundId, fundId), eq(incomeEntries.status, 'paga')))
     .orderBy(asc(incomeEntries.referenceDate));
 
@@ -547,7 +547,7 @@ export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEn
     referenceDate: r.referenceDate,
     amount: r.amount,
     categoryName: r.categoryName,
-    memberName: r.memberName ?? null,
+    attenderName: r.attenderName ?? null,
     notes: r.notes ?? null
   }));
 }
@@ -588,12 +588,12 @@ export async function getFundIncomeEntriesForRange(
       referenceDate: incomeEntries.referenceDate,
       amount: incomeEntries.amount,
       categoryName: incomeCategories.name,
-      memberName: members.name,
+      attenderName: attenders.name,
       notes: incomeEntries.notes
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
-    .leftJoin(members, eq(incomeEntries.memberId, members.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .where(
       and(
         eq(incomeEntries.designatedFundId, fundId),
@@ -609,7 +609,7 @@ export async function getFundIncomeEntriesForRange(
     referenceDate: r.referenceDate,
     amount: r.amount,
     categoryName: r.categoryName,
-    memberName: r.memberName ?? null,
+    attenderName: r.attenderName ?? null,
     notes: r.notes ?? null
   }));
 }

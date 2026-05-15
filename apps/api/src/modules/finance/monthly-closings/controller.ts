@@ -3,7 +3,8 @@ import type {
   CreateMonthlyClosingRequest,
   SubmitMonthlyClosingRequest,
   ApproveMonthlyClosingRequest,
-  RejectMonthlyClosingRequest
+  RejectMonthlyClosingRequest,
+  ReproveClosingRequest
 } from './schema.js';
 import type { IdParam } from '../../../lib/validation.js';
 import type { PaginationQuery } from '../../../lib/pagination.js';
@@ -57,6 +58,17 @@ export async function reject(req: FastifyRequest, reply: FastifyReply) {
   const closing = await service.rejectMonthlyClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
     notes: 'aberto',
+    ipAddress: req.ip
+  });
+  return reply.send(closing);
+}
+
+export async function reprove(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as ReproveClosingRequest;
+  const closing = await service.reproveApprovedClosing(req.session.userId!, id, body);
+  logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
+    notes: body.reason,
     ipAddress: req.ip
   });
   return reply.send(closing);

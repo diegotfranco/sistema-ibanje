@@ -50,13 +50,16 @@ import {
   designatedFunds,
   incomeCategories,
   expenseCategories,
-  members,
+  attenders,
   incomeEntries,
   expenseEntries,
   boardMeetings,
   minutes,
   minuteVersions,
-  financeSettings
+  financeSettings,
+  agendaItems,
+  churchSettings,
+  minuteTemplates
 } from './schema.js';
 
 const LEGACY_SQLITE_PATH =
@@ -152,7 +155,7 @@ async function hashPassword(password: string) {
 }
 
 // --- legacy types ---
-type LegacyMember = {
+type LegacyAttender = {
   nome: string | null;
   data_nascimento: string | null;
   endereco: string | null;
@@ -182,7 +185,7 @@ type LegacySaida = { destino: string; valor: number; data: string };
 function readLegacy() {
   if (!existsSync(LEGACY_SQLITE_PATH)) {
     return {
-      membros: [] as LegacyMember[],
+      membros: [] as LegacyAttender[],
       entradas: [] as LegacyEntrada[],
       saidas: [] as LegacySaida[]
     };
@@ -190,7 +193,7 @@ function readLegacy() {
   const legacy = new DatabaseSync(LEGACY_SQLITE_PATH, { readOnly: true });
   try {
     return {
-      membros: legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyMember[],
+      membros: legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyAttender[],
       entradas: legacy.prepare('SELECT * FROM entradas').all() as unknown as LegacyEntrada[],
       saidas: legacy.prepare('SELECT * FROM saidas').all() as unknown as LegacySaida[]
     };
@@ -291,26 +294,26 @@ function mapForma(forma: string): string {
 }
 
 // --- member matching ---
-type MemberMatch =
-  | { kind: 'exact'; memberId: number; matchedName: string }
-  | { kind: 'fuzzy'; memberId: number; matchedName: string; reason: string }
+type AttenderMatch =
+  | { kind: 'exact'; attenderId: number; matchedName: string }
+  | { kind: 'fuzzy'; attenderId: number; matchedName: string; reason: string }
   | { kind: 'none' };
 
-function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
+function buildAttenderMatcher(attenderRows: { id: number; name: string }[]) {
   const byNorm = new Map<string, { id: number; name: string }>();
-  for (const m of memberRows) {
+  for (const m of attenderRows) {
     const n = normalizeName(m.name);
     if (n) byNorm.set(n, m);
   }
-  const allNormed = [...byNorm.entries()].map(([n, m]) => ({ norm: n, member: m }));
+  const allNormed = [...byNorm.entries()].map(([n, m]) => ({ norm: n, attender: m }));
 
-  return function match(legacyName: string | null | undefined): MemberMatch {
+  return function match(legacyName: string | null | undefined): AttenderMatch {
     if (!legacyName) return { kind: 'none' };
     const norm = normalizeName(legacyName);
     if (!norm) return { kind: 'none' };
 
     const exact = byNorm.get(norm);
-    if (exact) return { kind: 'exact', memberId: exact.id, matchedName: exact.name };
+    if (exact) return { kind: 'exact', attenderId: exact.id, matchedName: exact.name };
 
     // Skip strings that obviously aren't a person's name.
     if (
@@ -321,16 +324,16 @@ function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
       return { kind: 'none' };
     }
 
-    // Token-subset: all 2+ tokens of legacy name must appear as tokens in a member's name; needs to be unambiguous.
+    // Token-subset: all 2+ tokens of legacy name must appear as tokens in an attender's name; needs to be unambiguous.
     const legacyTokens = norm.split(' ').filter((t) => t.length >= 2);
     if (legacyTokens.length >= 2) {
-      const subsetMatches = allNormed.filter(({ norm: memberNorm }) => {
-        const memberTokens = new Set(memberNorm.split(' '));
-        return legacyTokens.every((t) => memberTokens.has(t));
+      const subsetMatches = allNormed.filter(({ norm: attenderNorm }) => {
+        const attenderTokens = new Set(attenderNorm.split(' '));
+        return legacyTokens.every((t) => attenderTokens.has(t));
       });
       if (subsetMatches.length === 1) {
-        const m = subsetMatches[0].member;
-        return { kind: 'fuzzy', memberId: m.id, matchedName: m.name, reason: 'token-subset' };
+        const a = subsetMatches[0].attender;
+        return { kind: 'fuzzy', attenderId: a.id, matchedName: a.name, reason: 'token-subset' };
       }
     }
 
@@ -343,8 +346,8 @@ function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
     if (close.length === 1 || (close.length > 1 && close[0].dist < close[1].dist)) {
       return {
         kind: 'fuzzy',
-        memberId: close[0].member.id,
-        matchedName: close[0].member.name,
+        attenderId: close[0].attender.id,
+        matchedName: close[0].attender.name,
         reason: `levenshtein=${close[0].dist}`
       };
     }
@@ -354,9 +357,9 @@ function buildMemberMatcher(memberRows: { id: number; name: string }[]) {
 
 function lookupMatch(
   name: string | null | undefined,
-  cache: Map<string, MemberMatch>,
-  matcher: (name: string | null | undefined) => MemberMatch
-): MemberMatch {
+  cache: Map<string, AttenderMatch>,
+  matcher: (name: string | null | undefined) => AttenderMatch
+): AttenderMatch {
   const key = name ?? '';
   const cached = cache.get(key);
   if (cached) return cached;
@@ -365,7 +368,7 @@ function lookupMatch(
   return result;
 }
 
-function noteForMatch(legacyName: string | null, match: MemberMatch): string | null {
+function noteForMatch(legacyName: string | null, match: AttenderMatch): string | null {
   if (match.kind === 'fuzzy') {
     return `[REVISAR] Vínculo automático (${match.reason}): nome legado "${legacyName ?? ''}" → "${match.matchedName}"`;
   }
@@ -390,12 +393,12 @@ type ExpenseRow = typeof expenseEntries.$inferInsert;
 function buildIncomeRows(
   entradas: LegacyEntrada[],
   pmByName: Record<string, { id: number }>,
-  matchMember: (name: string | null | undefined) => MemberMatch,
+  matchAttender: (name: string | null | undefined) => AttenderMatch,
   icByName: Record<string, { id: number }>,
   dfByName: Record<string, { id: number }>,
   tesoureiroId: number
 ): { rows: IncomeRow[]; skippedBadDate: number } {
-  const matchCache = new Map<string, MemberMatch>();
+  const matchCache = new Map<string, AttenderMatch>();
   const rows: IncomeRow[] = [];
   let skippedBadDate = 0;
 
@@ -407,8 +410,8 @@ function buildIncomeRows(
       continue;
     }
     const paymentMethodId = pmByName[mapForma(e.forma_pagamento)].id;
-    const match = lookupMatch(e.nome, matchCache, matchMember);
-    const memberId = match.kind === 'none' ? null : match.memberId;
+    const match = lookupMatch(e.nome, matchCache, matchAttender);
+    const attenderId = match.kind === 'none' ? null : match.attenderId;
     const baseNote = noteForMatch(e.nome, match);
 
     const dizimo = parseAmount(e.dizimo);
@@ -421,7 +424,7 @@ function buildIncomeRows(
     const common = {
       referenceDate: refDate!,
       depositDate: isValidDate(depDate) ? depDate! : refDate!,
-      memberId,
+      attenderId,
       paymentMethodId,
       status: 'paga' as const,
       userId: tesoureiroId
@@ -544,9 +547,10 @@ export async function seed() {
     await tx.execute(
       drizzleSql`TRUNCATE roles, permissions, modules, users, role_module_permissions,
           user_module_permissions, payment_methods, designated_funds,
-          income_categories, expense_categories, members, income_entries,
+          income_categories, expense_categories, attenders, income_entries,
           expense_entries, board_meetings, minutes, minute_versions,
-          monthly_closings, finance_settings
+          monthly_closings, finance_settings, church_settings, agenda_items,
+          minute_templates, membership_letters
           RESTART IDENTITY CASCADE`
     );
 
@@ -730,8 +734,28 @@ export async function seed() {
     // --- Finance Settings ---
     await tx.insert(financeSettings).values({ openingBalance: '0.00' });
 
-    // --- Members (legacy + demo) ---
-    const legacyMemberRows = legacy.membros
+    // --- Church Settings (singleton) ---
+    await tx.insert(churchSettings).values({
+      id: 1,
+      name: 'Igreja Batista Nova Jerusalém',
+      cnpj: '15.556.152/0001-42',
+      addressStreet: 'Rua Santo Amaro',
+      addressNumber: '286',
+      addressDistrict: 'Vila Carrão',
+      addressCity: 'São Paulo',
+      addressState: 'SP',
+      postalCode: '03446000',
+      phone: '(11) 2741-4262',
+      email: null,
+      websiteUrl: null,
+      currentPresidentName: 'Pr. Deucir Araújo de Almeida',
+      currentPresidentTitle: 'Presidente',
+      currentSecretaryName: 'Secretário Responsável da Silva',
+      currentSecretaryTitle: '1º Secretário(a)'
+    });
+
+    // --- Attenders (legacy + demo) ---
+    const legacyAttenderRows = legacy.membros
       .map((m) => {
         const name = clean(m.nome);
         if (!name) return null;
@@ -752,14 +776,14 @@ export async function seed() {
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
 
-    const insertedLegacyMembers = legacyMemberRows.length
-      ? await tx.insert(members).values(legacyMemberRows).returning()
+    const insertedLegacyAttenders = legacyAttenderRows.length
+      ? await tx.insert(attenders).values(legacyAttenderRows).returning()
       : [];
-    console.log(`Inserted ${insertedLegacyMembers.length} members from legacy DB.`);
+    console.log(`Inserted ${insertedLegacyAttenders.length} attenders from legacy DB.`);
 
-    // Demo member linked to the membro@email.com user for the link-flow demo.
-    const insertedDemoMembers = await tx
-      .insert(members)
+    // Demo attender linked to the membro@email.com user for the link-flow demo.
+    const insertedDemoAttenders = await tx
+      .insert(attenders)
       .values([
         {
           name: 'João da Silva',
@@ -773,13 +797,17 @@ export async function seed() {
           city: 'São Paulo',
           postalCode: '01001000',
           email: 'joao.silva@email.com',
-          phone: '11987654321'
+          phone: '11987654321',
+          isMember: true,
+          memberSince: '2010-04-18',
+          congregatingSinceYear: 2008,
+          admissionMode: 'aclamação' as const
         }
       ])
       .returning();
 
-    const allMembers = [...insertedLegacyMembers, ...insertedDemoMembers];
-    const matchMember = buildMemberMatcher(allMembers);
+    const allAttenders = [...insertedLegacyAttenders, ...insertedDemoAttenders];
+    const matchAttender = buildAttenderMatcher(allAttenders);
 
     // --- Income Entries (from legacy entradas) ---
     const tesoureiroId = userByEmail['tesoureiro@email.com'].id;
@@ -787,7 +815,7 @@ export async function seed() {
     const { rows: incomeRows, skippedBadDate } = buildIncomeRows(
       legacy.entradas,
       pmByName,
-      matchMember,
+      matchAttender,
       icByName,
       dfByName,
       tesoureiroId
@@ -833,47 +861,53 @@ export async function seed() {
       .values([
         {
           meetingDate: '2023-03-12',
-          type: 'ordinária' as const,
-          agendaAuthorId: adminId,
-          agendaCreatedAt: new Date('2023-03-01T10:00:00Z'),
-          agendaContent: [
-            'Oração inicial',
-            'Leitura e aprovação da Ata anterior (Nº 718)',
-            'Apresentação do Relatório Financeiro (Janeiro e Fevereiro 2023)',
-            'Deliberação sobre o apoio a seminaristas',
-            'Oração de encerramento'
-          ]
+          type: 'ordinária' as const
         },
         {
           meetingDate: '2023-11-12',
-          type: 'extraordinária' as const,
-          agendaAuthorId: adminId,
-          agendaCreatedAt: new Date('2023-11-01T14:00:00Z'),
-          agendaContent: ['Eleição e posse da diretoria para o exercício de 2024.']
+          type: 'extraordinária' as const
         },
         {
           meetingDate: '2025-02-15',
-          type: 'ordinária' as const,
-          agendaAuthorId: adminId,
-          agendaCreatedAt: new Date('2025-02-05T09:00:00Z'),
-          agendaContent: [
-            'Leitura e aprovação das atas anteriores',
-            'Leitura e aprovação do Relatório Financeiro',
-            'Movimento de Membros: Saída — Promovido para a Nova Jerusalém Celestial irmão Paulo Rodrigues de Oliveira, dia 30/01/2025',
-            'Metas Ministeriais e Estruturais para 2025',
-            'Apresentação do Orçamento Anual 2025'
-          ]
+          type: 'ordinária' as const
         },
         {
           meetingDate: '2025-04-26',
-          type: 'ordinária' as const,
-          agendaAuthorId: adminId,
-          agendaCreatedAt: new Date('2025-04-15T11:00:00Z'),
-          agendaContent: ['Assuntos gerais e planejamento do retiro de Páscoa.']
+          type: 'ordinária' as const
         }
       ])
       .returning();
     const meetingByDate = Object.fromEntries(insertedMeetings.map((m) => [m.meetingDate, m]));
+
+    // --- Agenda Items (extracted from boardMeetings) ---
+    const agendaItemsByMeetingDate: Record<string, string[]> = {
+      '2023-03-12': [
+        'Oração inicial',
+        'Leitura e aprovação da Ata anterior (Nº 718)',
+        'Apresentação do Relatório Financeiro (Janeiro e Fevereiro 2023)',
+        'Deliberação sobre o apoio a seminaristas',
+        'Oração de encerramento'
+      ],
+      '2023-11-12': ['Eleição e posse da diretoria para o exercício de 2024.'],
+      '2025-02-15': [
+        'Leitura e aprovação das atas anteriores',
+        'Leitura e aprovação do Relatório Financeiro',
+        'Movimento de Membros: Saída — Promovido para a Nova Jerusalém Celestial irmão Paulo Rodrigues de Oliveira, dia 30/01/2025',
+        'Metas Ministeriais e Estruturais para 2025',
+        'Apresentação do Orçamento Anual 2025'
+      ],
+      '2025-04-26': ['Assuntos gerais e planejamento do retiro de Páscoa.']
+    };
+
+    const agendaItemRows = Object.entries(agendaItemsByMeetingDate).flatMap(([date, titles]) =>
+      titles.map((title, idx) => ({
+        meetingId: meetingByDate[date].id,
+        order: idx,
+        title,
+        createdByUserId: adminId
+      }))
+    );
+    await tx.insert(agendaItems).values(agendaItemRows);
 
     const [minute719] = await tx
       .insert(minutes)
@@ -931,6 +965,62 @@ export async function seed() {
         createdByUserId: secResp.id,
         content: {
           text: '<h2>Ata de número 725 — Versão Corrigida</h2><p>Discussão sobre os preparativos para o Retiro de Páscoa. Foi aprovado o orçamento de R$ 5.500,00 para o evento. Foi incluída também a organização de uma equipe de louvor específica para o retiro.</p>'
+        }
+      }
+    ]);
+
+    // --- Minute Templates (default templates for meeting minutes) ---
+    await tx.insert(minuteTemplates).values([
+      {
+        meetingType: 'ordinária' as const,
+        name: 'Modelo Padrão — Assembleia Ordinária',
+        isDefault: true,
+        createdByUserId: adminId,
+        content: {
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Ata de número {{minute_number}} da Assembleia Ordinária Bimestral da {{church_name}}, situada na {{church_address}}, no dia {{meeting_date_extenso}}.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'O Pastor {{presiding_pastor_name}} regeu o {{opening_hymn_reference}} e fez uma reflexão com a leitura de {{opening_bible_reference}}, declarando aberta a Assembleia às {{opening_time}}.' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '1. Leitura da Ata anterior' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Foi lida e aprovada a Ata de nº {{previous_minute_number}}.' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '2. Relatório Financeiro' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '3. Relatório Beneficência' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '4. Movimento de Membros' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'a) Envio de Carta:' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'b) Recebimento de Membros:' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'c) Batismo:' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '5. Pautas' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: '{{pautas}}' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '6. Comunicações' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: '' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: '7. Encerramento' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'A assembleia foi encerrada às {{closing_time}}.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.' }] }
+          ]
+        }
+      },
+      {
+        meetingType: 'extraordinária' as const,
+        name: 'Modelo Padrão — Assembleia Extraordinária',
+        isDefault: true,
+        createdByUserId: adminId,
+        content: {
+          type: 'doc',
+          content: [
+            { type: 'paragraph', content: [{ type: 'text', text: 'Ata de número {{minute_number}} da Assembleia Extraordinária da {{church_name}}, devidamente inscrita no CNPJ sob nº {{church_cnpj}}, situada na {{church_address}}. Realizada no dia {{meeting_date_extenso}}.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'O presidente, {{presiding_pastor_name}}, deu início à devocional com uma oração e com o cântico {{opening_hymn_reference}}. Meditação na leitura bíblica de {{opening_bible_reference}}, ministrada pelo presidente.' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Abertura' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Regida em acordo com as exigências Estatutárias, conforme o disposto no Capítulo IV, do Artigo 16º.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Foi declarada aberta às {{opening_time}}, não havendo impedimento. A quantidade de membros presentes somava-se a {{members_present_count}} membros.' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Leitura da Ementa' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Foi lida a agenda com os assuntos a serem tratados no dia.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: '{{pautas}}' }] },
+            { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text: 'Encerramento' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Depois de discutida a pauta do dia, foi entoado o hino de encerramento e feita uma oração. Foi encerrada a Assembleia Extraordinária às {{closing_time}}.' }] },
+            { type: 'paragraph', content: [{ type: 'text', text: 'Eu, {{secretary_name}}, lavrei a presente Ata, assinada por mim e pelo presidente.' }] }
+          ]
         }
       }
     ]);

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import * as repo from './repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
-import { findMemberById } from '../../../members/repository.js';
+import { findAttenderById } from '../../../attenders/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
@@ -26,7 +26,7 @@ async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
-  memberId?: number;
+  attenderId?: number;
   parentId?: number;
 }) {
   const category = await findExpenseCategoryById(data.categoryId);
@@ -36,9 +36,9 @@ async function validateEntry(data: {
     throw httpError(400, 'Cannot select a parent category; choose a specific sub-category');
   }
 
-  if (data.memberId) {
-    const member = await findMemberById(data.memberId);
-    if (!member) throw httpError(404, 'Member not found');
+  if (data.attenderId) {
+    const attender = await findAttenderById(data.attenderId);
+    if (!attender) throw httpError(404, 'Attender not found');
   }
 
   const paymentMethod = await findPaymentMethodById(data.paymentMethodId);
@@ -96,7 +96,7 @@ export async function createExpenseEntry(
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
-    memberId: body.memberId,
+    attenderId: body.attenderId,
     parentId: body.parentId
   });
 
@@ -120,7 +120,7 @@ export async function updateExpenseEntry(
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
     designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
-    memberId: body.memberId ?? entry.memberId ?? undefined,
+    attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined
   };
   await validateEntry(mergedValues);

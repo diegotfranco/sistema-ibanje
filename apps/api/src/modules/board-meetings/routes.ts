@@ -8,7 +8,7 @@ import {
   ListBoardMeetingsRequestSchema,
   CreateBoardMeetingRequestSchema,
   UpdateBoardMeetingRequestSchema,
-  SetAgendaRequestSchema,
+  SetAgendaItemsRequestSchema,
   BoardMeetingResponseSchema,
   BoardMeetingListResponseSchema
 } from './schema.js';
@@ -88,12 +88,12 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
   );
 
   app.put(
-    '/board-meetings/:id/agenda',
+    '/board-meetings/:id/agenda-items',
     {
       schema: {
         tags: ['Board Meetings'],
         params: IdParamSchema,
-        body: SetAgendaRequestSchema,
+        body: SetAgendaItemsRequestSchema,
         response: {
           200: BoardMeetingResponseSchema,
           400: ErrorResponseSchema,
@@ -104,7 +104,7 @@ export async function boardMeetingsRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth, checkPermission(Module.Agendas, Action.Update)]
     },
-    controller.setAgenda
+    controller.setAgendaItems
   );
 
   app.delete(

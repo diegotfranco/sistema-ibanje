@@ -1,9 +1,9 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, desc } from 'drizzle-orm';
 import { db } from '../../../../db/index.js';
 import {
   incomeEntries,
   incomeCategories,
-  members,
+  attenders,
   paymentMethods,
   designatedFunds
 } from '../../../../db/schema.js';
@@ -12,11 +12,12 @@ const selectFields = {
   id: incomeEntries.id,
   referenceDate: incomeEntries.referenceDate,
   depositDate: incomeEntries.depositDate,
+  attributionMonth: incomeEntries.attributionMonth,
   amount: incomeEntries.amount,
   categoryId: incomeEntries.categoryId,
   categoryName: incomeCategories.name,
-  memberId: incomeEntries.memberId,
-  memberName: members.name,
+  attenderId: incomeEntries.attenderId,
+  attenderName: attenders.name,
   paymentMethodId: incomeEntries.paymentMethodId,
   paymentMethodName: paymentMethods.name,
   designatedFundId: incomeEntries.designatedFundId,
@@ -34,7 +35,7 @@ function baseQuery() {
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
-    .leftJoin(members, eq(incomeEntries.memberId, members.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id));
 }
 
@@ -42,6 +43,24 @@ export async function listIncomeEntries(offset: number, limit: number) {
   const rows = await baseQuery().orderBy(incomeEntries.id).offset(offset).limit(limit);
 
   const countResult = await db.select({ count: count() }).from(incomeEntries);
+  return { rows, total: countResult[0]?.count ?? 0 };
+}
+
+export async function listIncomeEntriesByAttender(
+  attenderId: number,
+  offset: number,
+  limit: number
+) {
+  const rows = await baseQuery()
+    .where(eq(incomeEntries.attenderId, attenderId))
+    .orderBy(desc(incomeEntries.referenceDate))
+    .offset(offset)
+    .limit(limit);
+
+  const countResult = await db
+    .select({ count: count() })
+    .from(incomeEntries)
+    .where(eq(incomeEntries.attenderId, attenderId));
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
@@ -54,9 +73,10 @@ export async function findIncomeEntryById(id: number) {
 export async function insertIncomeEntry(data: {
   referenceDate: string;
   depositDate?: string;
+  attributionMonth?: string;
   amount: number;
   categoryId: number;
-  memberId?: number;
+  attenderId?: number;
   paymentMethodId: number;
   designatedFundId?: number;
   notes?: string;
@@ -82,9 +102,10 @@ export async function updateIncomeEntry(
       typeof incomeEntries.$inferInsert,
       | 'referenceDate'
       | 'depositDate'
+      | 'attributionMonth'
       | 'amount'
       | 'categoryId'
-      | 'memberId'
+      | 'attenderId'
       | 'paymentMethodId'
       | 'designatedFundId'
       | 'notes'

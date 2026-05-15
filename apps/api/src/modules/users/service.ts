@@ -2,7 +2,7 @@ import * as argon2 from 'argon2';
 import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env.js';
 import { db } from '../../db/index.js';
-import { passwordResetTokens, users, roles, members } from '../../db/schema.js';
+import { passwordResetTokens, users, roles, attenders } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import * as repo from './repository.js';
 import { assertPermission } from '../../lib/permissions.js';
@@ -172,14 +172,14 @@ export async function createUser(
   logFn: (token: string) => void
 ): Promise<UserResponse> {
   return await db.transaction(async (tx) => {
-    if (body.memberId !== undefined) {
-      const member = await repo.findMemberById(body.memberId);
-      if (!member) {
-        throw httpError(404, 'Member not found');
+    if (body.attenderId !== undefined) {
+      const attender = await repo.findAttenderById(body.attenderId);
+      if (!attender) {
+        throw httpError(404, 'Attender not found');
       }
-      if (member.userId !== null) {
-        throw httpError(409, 'Member already has a user account', {
-          fieldErrors: { memberId: 'Membro já possui usuário vinculado' }
+      if (attender.userId !== null) {
+        throw httpError(409, 'Attender already has a user account', {
+          fieldErrors: { attenderId: 'Frequentista já possui usuário vinculado' }
         });
       }
     }
@@ -216,8 +216,8 @@ export async function createUser(
 
     await repo.copyRolePermissionsToUser(body.roleId, newUser.id, tx);
 
-    if (body.memberId !== undefined) {
-      await tx.update(members).set({ userId: newUser.id }).where(eq(members.id, body.memberId));
+    if (body.attenderId !== undefined) {
+      await tx.update(attenders).set({ userId: newUser.id }).where(eq(attenders.id, body.attenderId));
     }
 
     const rawToken = await generateInviteToken(tx, newUser.id, body.email);

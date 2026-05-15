@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
 
-export const ListMembersRequestSchema = z.object({
+export const ListAttendersRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const CreateMemberRequestSchema = z.object({
+export const CreateAttenderRequestSchema = z.object({
   userId: z.number().int().positive().optional(),
   name: z.string().min(2).max(96),
   birthDate: z.iso.date().optional(),
@@ -21,12 +21,16 @@ export const CreateMemberRequestSchema = z.object({
     .regex(/^\d{8}$/)
     .optional(),
   email: z.email().optional(),
-  phone: z.string().max(16).optional()
+  phone: z.string().max(16).optional(),
+  isMember: z.boolean().optional().default(false),
+  memberSince: z.string().date().nullable().optional(),
+  congregatingSinceYear: z.number().int().min(1900).max(2100).nullable().optional(),
+  admissionMode: z.enum(['aclamação', 'batismo', 'carta de transferência', 'profissão de fé']).nullable().optional()
 });
 
-export const UpdateMemberRequestSchema = CreateMemberRequestSchema.partial();
+export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial();
 
-export const MemberResponseSchema = z.object({
+export const AttenderResponseSchema = z.object({
   id: z.number().int().positive(),
   userId: z.number().int().positive().nullable(),
   name: z.string(),
@@ -41,11 +45,15 @@ export const MemberResponseSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   status: z.string(),
+  isMember: z.boolean(),
+  memberSince: z.string().nullable(),
+  congregatingSinceYear: z.number().int().nullable(),
+  admissionMode: z.string().nullable(),
   createdAt: z.date()
 });
 
-export const MemberListResponseSchema = paginatedSchema(MemberResponseSchema);
+export const AttenderListResponseSchema = paginatedSchema(AttenderResponseSchema);
 
-export type CreateMemberRequest = z.infer<typeof CreateMemberRequestSchema>;
-export type UpdateMemberRequest = z.infer<typeof UpdateMemberRequestSchema>;
-export type MemberResponse = z.infer<typeof MemberResponseSchema>;
+export type CreateAttenderRequest = z.infer<typeof CreateAttenderRequestSchema>;
+export type UpdateAttenderRequest = z.infer<typeof UpdateAttenderRequestSchema>;
+export type AttenderResponse = z.infer<typeof AttenderResponseSchema>;

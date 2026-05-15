@@ -9,8 +9,11 @@ import {
   CsrfTokenResponseSchema,
   LoginResponseSchema,
   MessageResponseSchema,
-  MeResponseSchema
+  MeResponseSchema,
+  UpdateMyProfileRequestSchema
 } from './schema.js';
+import { ListAttendersRequestSchema, AttenderResponseSchema } from '../attenders/schema.js';
+import { IncomeEntryListResponseSchema } from '../finance/income/entries/schema.js';
 import * as controller from './controller.js';
 
 export async function authRoutes(app: FastifyInstance) {
@@ -110,6 +113,41 @@ export async function authRoutes(app: FastifyInstance) {
       config: { rateLimit: { max: 3, timeWindow: '1 hour' } }
     },
     controller.requestPasswordReset
+  );
+
+  app.get(
+    '/me/donations',
+    {
+      schema: {
+        tags: ['Me'],
+        querystring: ListAttendersRequestSchema,
+        response: {
+          200: IncomeEntryListResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth]
+    },
+    controller.listMyDonations
+  );
+
+  app.patch(
+    '/me/profile',
+    {
+      schema: {
+        tags: ['Me'],
+        body: UpdateMyProfileRequestSchema,
+        response: {
+          200: AttenderResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [app.csrfProtection, requireAuth]
+    },
+    controller.updateMyProfile
   );
 
   app.post(

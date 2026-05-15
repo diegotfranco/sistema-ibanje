@@ -42,10 +42,30 @@ export const MeResponseSchema = z.object({
   email: z.string(),
   role: z.string(),
   status: z.string(),
-  permissions: z.record(z.string(), z.number())
+  permissions: z.record(z.string(), z.number()),
+  attenderId: z.number().int().positive().nullable(),
+  isMember: z.boolean()
 });
+
+export const UpdateMyProfileRequestSchema = z
+  .object({
+    phone: z.string().max(16).optional(),
+    email: z.email().optional(),
+    addressStreet: z.string().max(96).optional(),
+    addressNumber: z.number().int().positive().optional(),
+    addressComplement: z.string().max(64).optional(),
+    addressDistrict: z.string().max(64).optional(),
+    state: z.string().length(2).optional(),
+    city: z.string().max(96).optional(),
+    postalCode: z
+      .string()
+      .regex(/^\d{8}$/)
+      .optional()
+  })
+  .strict();
 
 export type LoginRequest = z.infer<typeof LoginRequestSchema>;
 export type PasswordResetRequest = z.infer<typeof PasswordResetRequestSchema>;
 export type ResetPasswordRequest = z.infer<typeof ResetPasswordRequestSchema>;
 export type RegisterRequest = z.infer<typeof RegisterRequestSchema>;
+export type UpdateMyProfileRequest = z.infer<typeof UpdateMyProfileRequestSchema>;

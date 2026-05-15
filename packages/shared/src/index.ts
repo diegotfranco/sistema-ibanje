@@ -18,7 +18,10 @@ export const Module = {
   Reports: 14,
   MonthlyClosings: 15,
   Agendas: 16,
-  Minutes: 17
+  Minutes: 17,
+  MembershipLetters: 18,
+  MinuteTemplates: 19,
+  ChurchSettings: 20
 } as const;
 export type Module = (typeof Module)[keyof typeof Module];
 
@@ -41,6 +44,8 @@ export type MeResponse = {
   role: string;
   status: string;
   permissions: PermissionMap;
+  attenderId: number | null;
+  isMember: boolean;
 };
 
 export function hasPermission(
@@ -69,14 +74,31 @@ export type EntryStatusValue = (typeof EntryStatus)[keyof typeof EntryStatus];
 export const ClosingStatus = {
   Open: 'aberto',
   InReview: 'em revisão',
+  Rejected: 'rejeitado',
   Approved: 'aprovado',
   Closed: 'fechado'
 } as const;
 export type ClosingStatusValue = (typeof ClosingStatus)[keyof typeof ClosingStatus];
 
 export const MinuteStatus = {
+  Draft: 'rascunho',
   AwaitingApproval: 'aguardando aprovação',
   Approved: 'aprovada',
   Replaced: 'substituída'
 } as const;
 export type MinuteStatusValue = (typeof MinuteStatus)[keyof typeof MinuteStatus];
+
+export const MembershipLetterType = {
+  IncomingRequest: 'pedido_de_carta_de_transferência',
+  OutgoingTransfer: 'carta_de_transferência'
+} as const;
+export type MembershipLetterTypeValue =
+  (typeof MembershipLetterType)[keyof typeof MembershipLetterType];
+
+export const AdmissionMode = {
+  Acclamation: 'aclamação',
+  Baptism: 'batismo',
+  TransferLetter: 'carta de transferência',
+  FaithProfession: 'profissão de fé'
+} as const;
+export type AdmissionModeValue = (typeof AdmissionMode)[keyof typeof AdmissionMode];

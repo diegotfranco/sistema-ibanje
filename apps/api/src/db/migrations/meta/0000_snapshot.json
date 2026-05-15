@@ -1,9 +1,428 @@
 {
-  "id": "0bbb65e6-c209-49f0-adb1-8ffba8df5fe8",
+  "id": "2d9c0556-b82f-44b1-8b1b-ec60549dd694",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
+    "public.agenda_items": {
+      "name": "agenda_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "meeting_id": {
+          "name": "meeting_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "order": {
+          "name": "order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "active_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ativo'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "agenda_items_meeting_id_idx": {
+          "name": "agenda_items_meeting_id_idx",
+          "columns": [
+            {
+              "expression": "meeting_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "agenda_items_meeting_id_board_meetings_id_fk": {
+          "name": "agenda_items_meeting_id_board_meetings_id_fk",
+          "tableFrom": "agenda_items",
+          "tableTo": "board_meetings",
+          "columnsFrom": [
+            "meeting_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "agenda_items_created_by_user_id_users_id_fk": {
+          "name": "agenda_items_created_by_user_id_users_id_fk",
+          "tableFrom": "agenda_items",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.attenders": {
+      "name": "attenders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_member": {
+          "name": "is_member",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "member_since": {
+          "name": "member_since",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "congregating_since_year": {
+          "name": "congregating_since_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admission_mode": {
+          "name": "admission_mode",
+          "type": "admission_mode",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "birth_date": {
+          "name": "birth_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_street": {
+          "name": "address_street",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_number": {
+          "name": "address_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_complement": {
+          "name": "address_complement",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "address_district": {
+          "name": "address_district",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "city": {
+          "name": "city",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "char(8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "active_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ativo'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "attenders_status_idx": {
+          "name": "attenders_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "attenders_user_id_users_id_fk": {
+          "name": "attenders_user_id_users_id_fk",
+          "tableFrom": "attenders",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "attenders_user_id_unique": {
+          "name": "attenders_user_id_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.audit_log": {
+      "name": "audit_log",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "action": {
+          "name": "action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_type": {
+          "name": "entity_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entity_id": {
+          "name": "entity_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip_address": {
+          "name": "ip_address",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "audit_log_user_id_idx": {
+          "name": "audit_log_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_log_entity_idx": {
+          "name": "audit_log_entity_idx",
+          "columns": [
+            {
+              "expression": "entity_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "entity_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "audit_log_created_at_idx": {
+          "name": "audit_log_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "audit_log_user_id_users_id_fk": {
+          "name": "audit_log_user_id_users_id_fk",
+          "tableFrom": "audit_log",
+          "tableTo": "users",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.board_meetings": {
       "name": "board_meetings",
       "schema": "",
@@ -26,24 +445,6 @@
           "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
-        },
-        "agenda_content": {
-          "name": "agenda_content",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "agenda_author_id": {
-          "name": "agenda_author_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "agenda_created_at": {
-          "name": "agenda_created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false
         },
         "is_public": {
           "name": "is_public",
@@ -75,26 +476,180 @@
           "default": "now()"
         }
       },
-      "indexes": {},
-      "foreignKeys": {
-        "board_meetings_agenda_author_id_users_id_fk": {
-          "name": "board_meetings_agenda_author_id_users_id_fk",
-          "tableFrom": "board_meetings",
-          "tableTo": "users",
-          "columnsFrom": [
-            "agenda_author_id"
+      "indexes": {
+        "board_meetings_meeting_date_idx": {
+          "name": "board_meetings_meeting_date_idx",
+          "columns": [
+            {
+              "expression": "meeting_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "columnsTo": [
-            "id"
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "board_meetings_status_idx": {
+          "name": "board_meetings_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
           ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
+      "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.church_settings": {
+      "name": "church_settings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cnpj": {
+          "name": "cnpj",
+          "type": "varchar(18)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_street": {
+          "name": "address_street",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_number": {
+          "name": "address_number",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_district": {
+          "name": "address_district",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_city": {
+          "name": "address_city",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "address_state": {
+          "name": "address_state",
+          "type": "char(2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "postal_code": {
+          "name": "postal_code",
+          "type": "char(8)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website_url": {
+          "name": "website_url",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_path": {
+          "name": "logo_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_president_name": {
+          "name": "current_president_name",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_president_title": {
+          "name": "current_president_title",
+          "type": "varchar(48)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'Presidente'"
+        },
+        "current_secretary_name": {
+          "name": "current_secretary_name",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "current_secretary_title": {
+          "name": "current_secretary_title",
+          "type": "varchar(48)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'1º Secretário(a)'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_church_settings_singleton": {
+          "name": "chk_church_settings_singleton",
+          "value": "\"church_settings\".\"id\" = 1"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.designated_funds": {
@@ -414,8 +969,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "member_id": {
-          "name": "member_id",
+        "attender_id": {
+          "name": "attender_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -473,7 +1028,113 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "expense_entries_reference_date_idx": {
+          "name": "expense_entries_reference_date_idx",
+          "columns": [
+            {
+              "expression": "reference_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_status_idx": {
+          "name": "expense_entries_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_category_id_idx": {
+          "name": "expense_entries_category_id_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_attender_id_idx": {
+          "name": "expense_entries_attender_id_idx",
+          "columns": [
+            {
+              "expression": "attender_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_payment_method_id_idx": {
+          "name": "expense_entries_payment_method_id_idx",
+          "columns": [
+            {
+              "expression": "payment_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_designated_fund_id_idx": {
+          "name": "expense_entries_designated_fund_id_idx",
+          "columns": [
+            {
+              "expression": "designated_fund_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_parent_id_idx": {
+          "name": "expense_entries_parent_id_idx",
+          "columns": [
+            {
+              "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "expense_entries_parent_id_expense_entries_id_fk": {
           "name": "expense_entries_parent_id_expense_entries_id_fk",
@@ -501,12 +1162,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "expense_entries_member_id_members_id_fk": {
-          "name": "expense_entries_member_id_members_id_fk",
+        "expense_entries_attender_id_attenders_id_fk": {
+          "name": "expense_entries_attender_id_attenders_id_fk",
           "tableFrom": "expense_entries",
-          "tableTo": "members",
+          "tableTo": "attenders",
           "columnsFrom": [
-            "member_id"
+            "attender_id"
           ],
           "columnsTo": [
             "id"
@@ -721,6 +1382,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "attribution_month": {
+          "name": "attribution_month",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "amount": {
           "name": "amount",
           "type": "numeric(12, 2)",
@@ -733,8 +1400,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "member_id": {
-          "name": "member_id",
+        "attender_id": {
+          "name": "attender_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -786,7 +1453,98 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "income_entries_reference_date_idx": {
+          "name": "income_entries_reference_date_idx",
+          "columns": [
+            {
+              "expression": "reference_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_status_idx": {
+          "name": "income_entries_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_category_id_idx": {
+          "name": "income_entries_category_id_idx",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_attender_id_idx": {
+          "name": "income_entries_attender_id_idx",
+          "columns": [
+            {
+              "expression": "attender_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_payment_method_id_idx": {
+          "name": "income_entries_payment_method_id_idx",
+          "columns": [
+            {
+              "expression": "payment_method_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_designated_fund_id_idx": {
+          "name": "income_entries_designated_fund_id_idx",
+          "columns": [
+            {
+              "expression": "designated_fund_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "income_entries_category_id_income_categories_id_fk": {
           "name": "income_entries_category_id_income_categories_id_fk",
@@ -801,12 +1559,12 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
-        "income_entries_member_id_members_id_fk": {
-          "name": "income_entries_member_id_members_id_fk",
+        "income_entries_attender_id_attenders_id_fk": {
+          "name": "income_entries_attender_id_attenders_id_fk",
           "tableFrom": "income_entries",
-          "tableTo": "members",
+          "tableTo": "attenders",
           "columnsFrom": [
-            "member_id"
+            "attender_id"
           ],
           "columnsTo": [
             "id"
@@ -865,8 +1623,8 @@
       },
       "isRLSEnabled": false
     },
-    "public.members": {
-      "name": "members",
+    "public.membership_letters": {
+      "name": "membership_letters",
       "schema": "",
       "columns": {
         "id": {
@@ -875,85 +1633,84 @@
           "primaryKey": true,
           "notNull": true
         },
-        "user_id": {
-          "name": "user_id",
+        "attender_id": {
+          "name": "attender_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "membership_letter_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "letter_date": {
+          "name": "letter_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "other_church_name": {
+          "name": "other_church_name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "other_church_address": {
+          "name": "other_church_address",
+          "type": "varchar(256)",
           "primaryKey": false,
           "notNull": false
         },
-        "name": {
-          "name": "name",
+        "other_church_city": {
+          "name": "other_church_city",
           "type": "varchar(96)",
           "primaryKey": false,
           "notNull": true
         },
-        "birth_date": {
-          "name": "birth_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address_street": {
-          "name": "address_street",
-          "type": "varchar(96)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address_number": {
-          "name": "address_number",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address_complement": {
-          "name": "address_complement",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "address_district": {
-          "name": "address_district",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "state": {
-          "name": "state",
+        "other_church_state": {
+          "name": "other_church_state",
           "type": "char(2)",
           "primaryKey": false,
           "notNull": false
         },
-        "city": {
-          "name": "city",
+        "signing_secretary_name": {
+          "name": "signing_secretary_name",
           "type": "varchar(96)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "postal_code": {
-          "name": "postal_code",
-          "type": "char(8)",
+        "signing_secretary_title": {
+          "name": "signing_secretary_title",
+          "type": "varchar(48)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "email": {
-          "name": "email",
+        "signing_president_name": {
+          "name": "signing_president_name",
           "type": "varchar(96)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true
         },
-        "phone": {
-          "name": "phone",
-          "type": "varchar(16)",
+        "signing_president_title": {
+          "name": "signing_president_title",
+          "type": "varchar(48)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "additional_context": {
+          "name": "additional_context",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
-        "status": {
-          "name": "status",
-          "type": "active_status",
-          "typeSchema": "public",
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "default": "'ativo'"
+          "notNull": true
         },
         "created_at": {
           "name": "created_at",
@@ -970,29 +1727,169 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "membership_letters_attender_id_idx": {
+          "name": "membership_letters_attender_id_idx",
+          "columns": [
+            {
+              "expression": "attender_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "membership_letters_type_idx": {
+          "name": "membership_letters_type_idx",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
-        "members_user_id_users_id_fk": {
-          "name": "members_user_id_users_id_fk",
-          "tableFrom": "members",
-          "tableTo": "users",
+        "membership_letters_attender_id_attenders_id_fk": {
+          "name": "membership_letters_attender_id_attenders_id_fk",
+          "tableFrom": "membership_letters",
+          "tableTo": "attenders",
           "columnsFrom": [
-            "user_id"
+            "attender_id"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "set null",
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "membership_letters_created_by_user_id_users_id_fk": {
+          "name": "membership_letters_created_by_user_id_users_id_fk",
+          "tableFrom": "membership_letters",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.minute_templates": {
+      "name": "minute_templates",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "meeting_type": {
+          "name": "meeting_type",
+          "type": "meeting_type",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "content": {
+          "name": "content",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "minute_templates_meeting_type_idx": {
+          "name": "minute_templates_meeting_type_idx",
+          "columns": [
+            {
+              "expression": "meeting_type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "minute_templates_created_by_user_id_users_id_fk": {
+          "name": "minute_templates_created_by_user_id_users_id_fk",
+          "tableFrom": "minute_templates",
+          "tableTo": "users",
+          "columnsFrom": [
+            "created_by_user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "members_user_id_unique": {
-          "name": "members_user_id_unique",
+        "uq_default_template_per_type": {
+          "name": "uq_default_template_per_type",
           "nullsNotDistinct": false,
           "columns": [
-            "user_id"
+            "meeting_type",
+            "is_default"
           ]
         }
       },
@@ -1062,7 +1959,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "minute_versions_minute_id_idx": {
+          "name": "minute_versions_minute_id_idx",
+          "columns": [
+            {
+              "expression": "minute_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "minute_versions_minute_id_minutes_id_fk": {
           "name": "minute_versions_minute_id_minutes_id_fk",
@@ -1157,6 +2070,54 @@
         "corrects_minute_id": {
           "name": "corrects_minute_id",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "presiding_pastor_name": {
+          "name": "presiding_pastor_name",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "secretary_name": {
+          "name": "secretary_name",
+          "type": "varchar(96)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opening_hymn_reference": {
+          "name": "opening_hymn_reference",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opening_bible_reference": {
+          "name": "opening_bible_reference",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "opening_time": {
+          "name": "opening_time",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "closing_time": {
+          "name": "closing_time",
+          "type": "varchar(8)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "members_present_count": {
+          "name": "members_present_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "signed_document_path": {
+          "name": "signed_document_path",
+          "type": "text",
           "primaryKey": false,
           "notNull": false
         },
@@ -1379,7 +2340,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "monthly_closings_status_idx": {
+          "name": "monthly_closings_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "monthly_closings_submitted_by_user_id_users_id_fk": {
           "name": "monthly_closings_submitted_by_user_id_users_id_fk",
@@ -1488,7 +2465,38 @@
           "notNull": false
         }
       },
-      "indexes": {},
+      "indexes": {
+        "password_reset_tokens_user_id_idx": {
+          "name": "password_reset_tokens_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "password_reset_tokens_expires_at_idx": {
+          "name": "password_reset_tokens_expires_at_idx",
+          "columns": [
+            {
+              "expression": "expires_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "password_reset_tokens_user_id_users_id_fk": {
           "name": "password_reset_tokens_user_id_users_id_fk",
@@ -1931,7 +2939,38 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "users_role_id_idx": {
+          "name": "users_role_id_idx",
+          "columns": [
+            {
+              "expression": "role_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "users_status_idx": {
+          "name": "users_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "users_role_id_roles_id_fk": {
           "name": "users_role_id_roles_id_fk",
@@ -1972,6 +3011,16 @@
         "pendente"
       ]
     },
+    "public.admission_mode": {
+      "name": "admission_mode",
+      "schema": "public",
+      "values": [
+        "aclamação",
+        "batismo",
+        "carta de transferência",
+        "profissão de fé"
+      ]
+    },
     "public.closing_status": {
       "name": "closing_status",
       "schema": "public",
@@ -2001,10 +3050,19 @@
         "extraordinária"
       ]
     },
+    "public.membership_letter_type": {
+      "name": "membership_letter_type",
+      "schema": "public",
+      "values": [
+        "pedido_de_carta_de_transferência",
+        "carta_de_transferência"
+      ]
+    },
     "public.minute_version_status": {
       "name": "minute_version_status",
       "schema": "public",
       "values": [
+        "rascunho",
         "aguardando aprovação",
         "aprovada",
         "substituída"

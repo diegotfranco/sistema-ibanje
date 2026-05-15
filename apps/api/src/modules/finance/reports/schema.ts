@@ -175,7 +175,7 @@ export const FundIncomeEntrySchema = z.object({
   referenceDate: z.string(),
   amount: z.string(),
   categoryName: z.string(),
-  memberName: z.string().nullable(),
+  attenderName: z.string().nullable(),
   notes: z.string().nullable()
 });
 

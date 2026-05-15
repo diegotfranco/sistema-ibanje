@@ -2,7 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import type {
   CreateBoardMeetingRequest,
   UpdateBoardMeetingRequest,
-  SetAgendaRequest
+  SetAgendaItemsRequest
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
@@ -34,10 +34,10 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
   return reply.send(meeting);
 }
 
-export async function setAgenda(req: FastifyRequest, reply: FastifyReply) {
+export async function setAgendaItems(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const body = req.body as SetAgendaRequest;
-  const meeting = await service.setAgenda(req.session.userId!, id, body);
+  const body = req.body as SetAgendaItemsRequest;
+  const meeting = await service.setAgendaItems(req.session.userId!, id, body);
   if (!meeting) return reply.code(404).send({ message: 'Board meeting not found' });
   return reply.send(meeting);
 }

@@ -23,6 +23,10 @@ export const RejectMonthlyClosingRequestSchema = z.object({
   accountantNotes: z.string().max(2000).optional()
 });
 
+export const ReproveClosingRequestSchema = z.object({
+  reason: z.string().min(10).max(512)
+});
+
 export const MonthlyClosingResponseSchema = z.object({
   id: z.number().int().positive(),
   periodYear: z.number().int(),
@@ -51,4 +55,5 @@ export type CreateMonthlyClosingRequest = z.infer<typeof CreateMonthlyClosingReq
 export type SubmitMonthlyClosingRequest = z.infer<typeof SubmitMonthlyClosingRequestSchema>;
 export type ApproveMonthlyClosingRequest = z.infer<typeof ApproveMonthlyClosingRequestSchema>;
 export type RejectMonthlyClosingRequest = z.infer<typeof RejectMonthlyClosingRequestSchema>;
+export type ReproveClosingRequest = z.infer<typeof ReproveClosingRequestSchema>;
 export type MonthlyClosingResponse = z.infer<typeof MonthlyClosingResponseSchema>;

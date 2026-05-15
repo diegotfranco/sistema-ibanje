@@ -6,19 +6,31 @@ import { paginate } from '../../lib/pagination.js';
 import type {
   CreateBoardMeetingRequest,
   UpdateBoardMeetingRequest,
-  SetAgendaRequest,
+  SetAgendaItemsRequest,
   BoardMeetingResponse
 } from './schema.js';
-import type { BoardMeeting } from '../../db/schema.js';
+import type { BoardMeeting, AgendaItem } from '../../db/schema.js';
 
-function buildResponse(meeting: BoardMeeting, hasMin: boolean): BoardMeetingResponse {
+function buildResponse(
+  meeting: BoardMeeting,
+  hasMin: boolean,
+  items: AgendaItem[]
+): BoardMeetingResponse {
   return {
     id: meeting.id,
     meetingDate: meeting.meetingDate,
     type: meeting.type as 'ordinária' | 'extraordinária',
-    agendaItems: meeting.agendaContent as string[] | null,
-    agendaAuthorId: meeting.agendaAuthorId,
-    agendaCreatedAt: meeting.agendaCreatedAt ? meeting.agendaCreatedAt.toISOString() : null,
+    agendaItems: items.map((it) => ({
+      id: it.id,
+      meetingId: it.meetingId,
+      order: it.order,
+      title: it.title,
+      description: it.description,
+      createdByUserId: it.createdByUserId,
+      status: it.status,
+      createdAt: it.createdAt.toISOString(),
+      updatedAt: it.updatedAt.toISOString()
+    })),
     isPublic: meeting.isPublic,
     status: meeting.status,
     hasMinutes: hasMin,
@@ -32,7 +44,10 @@ export async function listBoardMeetings(callerId: number, page: number, limit: n
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listBoardMeetings(offset, limit);
   const responses = await Promise.all(
-    rows.map(async (row) => buildResponse(row, await repo.hasMinutes(row.id)))
+    rows.map(async (row) => {
+      const items = await repo.listAgendaItemsForMeeting(row.id);
+      return buildResponse(row, await repo.hasMinutes(row.id), items);
+    })
   );
   return paginate(responses, total, page, limit);
 }
@@ -40,7 +55,8 @@ export async function listBoardMeetings(callerId: number, page: number, limit: n
 export async function getBoardMeetingById(id: number): Promise<BoardMeetingResponse | null> {
   const meeting = await repo.findBoardMeetingById(id);
   if (!meeting) return null;
-  return buildResponse(meeting, await repo.hasMinutes(meeting.id));
+  const items = await repo.listAgendaItemsForMeeting(id);
+  return buildResponse(meeting, await repo.hasMinutes(meeting.id), items);
 }
 
 export async function createBoardMeeting(
@@ -54,7 +70,7 @@ export async function createBoardMeeting(
     isPublic: body.isPublic
   });
   if (!created) throw new Error('Failed to create board meeting');
-  return buildResponse(created, false);
+  return buildResponse(created, false, []);
 }
 
 export async function updateBoardMeeting(
@@ -67,20 +83,21 @@ export async function updateBoardMeeting(
   if (!meeting) return null;
   const updated = await repo.updateBoardMeeting(id, body);
   if (!updated) return null;
-  return buildResponse(updated, await repo.hasMinutes(id));
+  const items = await repo.listAgendaItemsForMeeting(id);
+  return buildResponse(updated, await repo.hasMinutes(id), items);
 }
 
-export async function setAgenda(
+export async function setAgendaItems(
   callerId: number,
   id: number,
-  body: SetAgendaRequest
+  body: SetAgendaItemsRequest
 ): Promise<BoardMeetingResponse | null> {
   await assertPermission(callerId, Module.Agendas, Action.Update);
   const meeting = await repo.findBoardMeetingById(id);
   if (!meeting || meeting.status === 'inativo') return null;
-  const updated = await repo.setAgenda(id, body.items, callerId);
-  if (!updated) return null;
-  return buildResponse(updated, await repo.hasMinutes(id));
+  await repo.replaceAgendaItems(id, body.items, callerId);
+  const items = await repo.listAgendaItemsForMeeting(id);
+  return buildResponse(meeting, await repo.hasMinutes(id), items);
 }
 
 export async function deactivateBoardMeeting(callerId: number, id: number): Promise<void | null> {

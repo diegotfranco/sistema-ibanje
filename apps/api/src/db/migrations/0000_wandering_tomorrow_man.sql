@@ -1,21 +1,90 @@
 CREATE TYPE "public"."active_status" AS ENUM('ativo', 'inativo', 'pendente');--> statement-breakpoint
+CREATE TYPE "public"."admission_mode" AS ENUM('aclamação', 'batismo', 'carta de transferência', 'profissão de fé');--> statement-breakpoint
 CREATE TYPE "public"."closing_status" AS ENUM('aberto', 'em revisão', 'rejeitado', 'aprovado', 'fechado');--> statement-breakpoint
 CREATE TYPE "public"."event_type" AS ENUM('culto', 'reunião', 'evento especial', 'outro');--> statement-breakpoint
 CREATE TYPE "public"."meeting_type" AS ENUM('ordinária', 'extraordinária');--> statement-breakpoint
-CREATE TYPE "public"."minute_version_status" AS ENUM('aguardando aprovação', 'aprovada', 'substituída');--> statement-breakpoint
+CREATE TYPE "public"."membership_letter_type" AS ENUM('pedido_de_carta_de_transferência', 'carta_de_transferência');--> statement-breakpoint
+CREATE TYPE "public"."minute_version_status" AS ENUM('rascunho', 'aguardando aprovação', 'aprovada', 'substituída');--> statement-breakpoint
 CREATE TYPE "public"."recurrence_type" AS ENUM('nenhuma', 'semanal', 'quinzenal', 'mensal');--> statement-breakpoint
 CREATE TYPE "public"."transaction_status" AS ENUM('pendente', 'paga', 'cancelada');--> statement-breakpoint
+CREATE TABLE "agenda_items" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"meeting_id" integer NOT NULL,
+	"order" integer NOT NULL,
+	"title" varchar(256) NOT NULL,
+	"description" text,
+	"created_by_user_id" integer,
+	"status" "active_status" DEFAULT 'ativo' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "attenders" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer,
+	"is_member" boolean DEFAULT false NOT NULL,
+	"member_since" date,
+	"congregating_since_year" integer,
+	"admission_mode" "admission_mode",
+	"name" varchar(96) NOT NULL,
+	"birth_date" date,
+	"address_street" varchar(96),
+	"address_number" integer,
+	"address_complement" varchar(64),
+	"address_district" varchar(64),
+	"state" char(2),
+	"city" varchar(96),
+	"postal_code" char(8),
+	"email" varchar(96),
+	"phone" varchar(16),
+	"status" "active_status" DEFAULT 'ativo' NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "attenders_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "audit_log" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"user_id" integer,
+	"action" text NOT NULL,
+	"entity_type" text NOT NULL,
+	"entity_id" integer,
+	"notes" text,
+	"ip_address" text,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE TABLE "board_meetings" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"meeting_date" date NOT NULL,
 	"type" "meeting_type" NOT NULL,
-	"agenda_content" jsonb,
-	"agenda_author_id" integer,
-	"agenda_created_at" timestamp with time zone,
 	"is_public" boolean DEFAULT false NOT NULL,
 	"status" "active_status" DEFAULT 'ativo' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "church_settings" (
+	"id" integer PRIMARY KEY DEFAULT 1 NOT NULL,
+	"name" varchar(128) NOT NULL,
+	"cnpj" varchar(18) NOT NULL,
+	"address_street" varchar(128) NOT NULL,
+	"address_number" varchar(16) NOT NULL,
+	"address_district" varchar(64) NOT NULL,
+	"address_city" varchar(64) NOT NULL,
+	"address_state" char(2) NOT NULL,
+	"postal_code" char(8) NOT NULL,
+	"phone" varchar(20),
+	"email" varchar(96),
+	"website_url" varchar(128),
+	"logo_path" text,
+	"current_president_name" varchar(96),
+	"current_president_title" varchar(48) DEFAULT 'Presidente',
+	"current_secretary_name" varchar(96),
+	"current_secretary_title" varchar(48) DEFAULT '1º Secretário(a)',
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "chk_church_settings_singleton" CHECK ("church_settings"."id" = 1)
 );
 --> statement-breakpoint
 CREATE TABLE "designated_funds" (
@@ -66,7 +135,7 @@ CREATE TABLE "expense_entries" (
 	"installment" integer DEFAULT 1 NOT NULL,
 	"total_installments" integer DEFAULT 1 NOT NULL,
 	"category_id" integer NOT NULL,
-	"member_id" integer,
+	"attender_id" integer,
 	"payment_method_id" integer NOT NULL,
 	"designated_fund_id" integer,
 	"receipt" text,
@@ -103,9 +172,10 @@ CREATE TABLE "income_entries" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"reference_date" date NOT NULL,
 	"deposit_date" date,
+	"attribution_month" date,
 	"amount" numeric(12, 2) NOT NULL,
 	"category_id" integer NOT NULL,
-	"member_id" integer,
+	"attender_id" integer,
 	"payment_method_id" integer NOT NULL,
 	"designated_fund_id" integer,
 	"notes" text,
@@ -116,24 +186,35 @@ CREATE TABLE "income_entries" (
 	CONSTRAINT "chk_income_amount_positive" CHECK ("income_entries"."amount" > 0)
 );
 --> statement-breakpoint
-CREATE TABLE "members" (
+CREATE TABLE "membership_letters" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer,
-	"name" varchar(96) NOT NULL,
-	"birth_date" date,
-	"address_street" varchar(96),
-	"address_number" integer,
-	"address_complement" varchar(64),
-	"address_district" varchar(64),
-	"state" varchar(2),
-	"city" varchar(96),
-	"postal_code" varchar(8),
-	"email" varchar(96),
-	"phone" varchar(16),
-	"status" "active_status" DEFAULT 'ativo' NOT NULL,
+	"attender_id" integer NOT NULL,
+	"type" "membership_letter_type" NOT NULL,
+	"letter_date" date NOT NULL,
+	"other_church_name" varchar(128) NOT NULL,
+	"other_church_address" varchar(256),
+	"other_church_city" varchar(96) NOT NULL,
+	"other_church_state" char(2),
+	"signing_secretary_name" varchar(96) NOT NULL,
+	"signing_secretary_title" varchar(48) NOT NULL,
+	"signing_president_name" varchar(96) NOT NULL,
+	"signing_president_title" varchar(48) NOT NULL,
+	"additional_context" text,
+	"created_by_user_id" integer NOT NULL,
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "minute_templates" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"meeting_type" "meeting_type" NOT NULL,
+	"name" varchar(128) NOT NULL,
+	"content" jsonb NOT NULL,
+	"is_default" boolean DEFAULT false NOT NULL,
+	"created_by_user_id" integer,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "members_user_id_unique" UNIQUE("user_id")
+	CONSTRAINT "uq_default_template_per_type" UNIQUE("meeting_type","is_default")
 );
 --> statement-breakpoint
 CREATE TABLE "minute_versions" (
@@ -156,6 +237,14 @@ CREATE TABLE "minutes" (
 	"is_notarized" boolean DEFAULT false NOT NULL,
 	"notarized_at" timestamp with time zone,
 	"corrects_minute_id" integer,
+	"presiding_pastor_name" varchar(96),
+	"secretary_name" varchar(96),
+	"opening_hymn_reference" varchar(128),
+	"opening_bible_reference" varchar(64),
+	"opening_time" varchar(8),
+	"closing_time" varchar(8),
+	"members_present_count" integer,
+	"signed_document_path" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "minutes_board_meeting_id_unique" UNIQUE("board_meeting_id"),
@@ -262,22 +351,27 @@ CREATE TABLE "users" (
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-ALTER TABLE "board_meetings" ADD CONSTRAINT "board_meetings_agenda_author_id_users_id_fk" FOREIGN KEY ("agenda_author_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "agenda_items" ADD CONSTRAINT "agenda_items_meeting_id_board_meetings_id_fk" FOREIGN KEY ("meeting_id") REFERENCES "public"."board_meetings"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "agenda_items" ADD CONSTRAINT "agenda_items_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "attenders" ADD CONSTRAINT "attenders_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "events" ADD CONSTRAINT "events_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_categories" ADD CONSTRAINT "expense_categories_parent_id_expense_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."expense_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_parent_id_expense_entries_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."expense_entries"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_category_id_expense_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."expense_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_attender_id_attenders_id_fk" FOREIGN KEY ("attender_id") REFERENCES "public"."attenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_payment_method_id_payment_methods_id_fk" FOREIGN KEY ("payment_method_id") REFERENCES "public"."payment_methods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_designated_fund_id_designated_funds_id_fk" FOREIGN KEY ("designated_fund_id") REFERENCES "public"."designated_funds"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "expense_entries" ADD CONSTRAINT "expense_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_categories" ADD CONSTRAINT "income_categories_parent_id_income_categories_id_fk" FOREIGN KEY ("parent_id") REFERENCES "public"."income_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_category_id_income_categories_id_fk" FOREIGN KEY ("category_id") REFERENCES "public"."income_categories"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_member_id_members_id_fk" FOREIGN KEY ("member_id") REFERENCES "public"."members"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_attender_id_attenders_id_fk" FOREIGN KEY ("attender_id") REFERENCES "public"."attenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_payment_method_id_payment_methods_id_fk" FOREIGN KEY ("payment_method_id") REFERENCES "public"."payment_methods"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_designated_fund_id_designated_funds_id_fk" FOREIGN KEY ("designated_fund_id") REFERENCES "public"."designated_funds"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "income_entries" ADD CONSTRAINT "income_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "members" ADD CONSTRAINT "members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "membership_letters" ADD CONSTRAINT "membership_letters_attender_id_attenders_id_fk" FOREIGN KEY ("attender_id") REFERENCES "public"."attenders"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "membership_letters" ADD CONSTRAINT "membership_letters_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "minute_templates" ADD CONSTRAINT "minute_templates_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "minute_versions" ADD CONSTRAINT "minute_versions_minute_id_minutes_id_fk" FOREIGN KEY ("minute_id") REFERENCES "public"."minutes"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "minute_versions" ADD CONSTRAINT "minute_versions_created_by_user_id_users_id_fk" FOREIGN KEY ("created_by_user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "minute_versions" ADD CONSTRAINT "minute_versions_approved_at_meeting_id_board_meetings_id_fk" FOREIGN KEY ("approved_at_meeting_id") REFERENCES "public"."board_meetings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -292,4 +386,33 @@ ALTER TABLE "role_module_permissions" ADD CONSTRAINT "role_module_permissions_pe
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_module_id_modules_id_fk" FOREIGN KEY ("module_id") REFERENCES "public"."modules"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_module_permissions" ADD CONSTRAINT "user_module_permissions_permission_id_permissions_id_fk" FOREIGN KEY ("permission_id") REFERENCES "public"."permissions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "users" ADD CONSTRAINT "users_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "users" ADD CONSTRAINT "users_role_id_roles_id_fk" FOREIGN KEY ("role_id") REFERENCES "public"."roles"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "agenda_items_meeting_id_idx" ON "agenda_items" USING btree ("meeting_id");--> statement-breakpoint
+CREATE INDEX "attenders_status_idx" ON "attenders" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "audit_log_user_id_idx" ON "audit_log" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "audit_log_entity_idx" ON "audit_log" USING btree ("entity_type","entity_id");--> statement-breakpoint
+CREATE INDEX "audit_log_created_at_idx" ON "audit_log" USING btree ("created_at");--> statement-breakpoint
+CREATE INDEX "board_meetings_meeting_date_idx" ON "board_meetings" USING btree ("meeting_date");--> statement-breakpoint
+CREATE INDEX "board_meetings_status_idx" ON "board_meetings" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "expense_entries_reference_date_idx" ON "expense_entries" USING btree ("reference_date");--> statement-breakpoint
+CREATE INDEX "expense_entries_status_idx" ON "expense_entries" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "expense_entries_category_id_idx" ON "expense_entries" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "expense_entries_attender_id_idx" ON "expense_entries" USING btree ("attender_id");--> statement-breakpoint
+CREATE INDEX "expense_entries_payment_method_id_idx" ON "expense_entries" USING btree ("payment_method_id");--> statement-breakpoint
+CREATE INDEX "expense_entries_designated_fund_id_idx" ON "expense_entries" USING btree ("designated_fund_id");--> statement-breakpoint
+CREATE INDEX "expense_entries_parent_id_idx" ON "expense_entries" USING btree ("parent_id");--> statement-breakpoint
+CREATE INDEX "income_entries_reference_date_idx" ON "income_entries" USING btree ("reference_date");--> statement-breakpoint
+CREATE INDEX "income_entries_status_idx" ON "income_entries" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "income_entries_category_id_idx" ON "income_entries" USING btree ("category_id");--> statement-breakpoint
+CREATE INDEX "income_entries_attender_id_idx" ON "income_entries" USING btree ("attender_id");--> statement-breakpoint
+CREATE INDEX "income_entries_payment_method_id_idx" ON "income_entries" USING btree ("payment_method_id");--> statement-breakpoint
+CREATE INDEX "income_entries_designated_fund_id_idx" ON "income_entries" USING btree ("designated_fund_id");--> statement-breakpoint
+CREATE INDEX "membership_letters_attender_id_idx" ON "membership_letters" USING btree ("attender_id");--> statement-breakpoint
+CREATE INDEX "membership_letters_type_idx" ON "membership_letters" USING btree ("type");--> statement-breakpoint
+CREATE INDEX "minute_templates_meeting_type_idx" ON "minute_templates" USING btree ("meeting_type");--> statement-breakpoint
+CREATE INDEX "minute_versions_minute_id_idx" ON "minute_versions" USING btree ("minute_id");--> statement-breakpoint
+CREATE INDEX "monthly_closings_status_idx" ON "monthly_closings" USING btree ("status");--> statement-breakpoint
+CREATE INDEX "password_reset_tokens_user_id_idx" ON "password_reset_tokens" USING btree ("user_id");--> statement-breakpoint
+CREATE INDEX "password_reset_tokens_expires_at_idx" ON "password_reset_tokens" USING btree ("expires_at");--> statement-breakpoint
+CREATE INDEX "users_role_id_idx" ON "users" USING btree ("role_id");--> statement-breakpoint
+CREATE INDEX "users_status_idx" ON "users" USING btree ("status");

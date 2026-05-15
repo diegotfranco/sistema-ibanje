@@ -16,7 +16,7 @@ export const CreateExpenseEntryRequestSchema = z.object({
   categoryId: z.number().int().positive(),
   paymentMethodId: z.number().int().positive(),
   designatedFundId: z.number().int().positive().optional(),
-  memberId: z.number().int().positive().optional(),
+  attenderId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional()
 });
@@ -31,7 +31,7 @@ export const UpdateExpenseEntryRequestSchema = z.object({
   categoryId: z.number().int().positive().optional(),
   paymentMethodId: z.number().int().positive().optional(),
   designatedFundId: z.number().int().positive().optional(),
-  memberId: z.number().int().positive().optional(),
+  attenderId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional(),
   status: z.enum(['pendente', 'paga', 'cancelada']).optional()
@@ -52,8 +52,8 @@ export const ExpenseEntryResponseSchema = z.object({
   paymentMethodName: z.string(),
   designatedFundId: z.number().int().positive().nullable(),
   designatedFundName: z.string().nullable(),
-  memberId: z.number().int().positive().nullable(),
-  memberName: z.string().nullable(),
+  attenderId: z.number().int().positive().nullable(),
+  attenderName: z.string().nullable(),
   receipt: z.string().nullable(),
   notes: z.string().nullable(),
   userId: z.number().int().positive(),

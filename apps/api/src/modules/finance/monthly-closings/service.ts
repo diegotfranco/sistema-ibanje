@@ -1,4 +1,5 @@
 import * as repo from './repository.js';
+import * as authRepo from '../../auth/repository.js';
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
 import { ClosingStatus } from '@sistema-ibanje/shared';
@@ -9,6 +10,7 @@ import type {
   SubmitMonthlyClosingRequest,
   ApproveMonthlyClosingRequest,
   RejectMonthlyClosingRequest,
+  ReproveClosingRequest,
   MonthlyClosingResponse
 } from './schema.js';
 import type { MonthlyClosing } from '../../../db/schema.js';
@@ -188,6 +190,34 @@ export async function rejectMonthlyClosing(
     status: ClosingStatus.Open,
     ...(body.accountantNotes !== undefined && { accountantNotes: body.accountantNotes }),
     reviewedAt: new Date()
+  });
+  return buildResponse(updated!);
+}
+
+export async function reproveApprovedClosing(
+  callerId: number,
+  id: number,
+  body: ReproveClosingRequest
+): Promise<MonthlyClosingResponse> {
+  await assertPermission(callerId, Module.MonthlyClosings, Action.Review);
+
+  const user = await authRepo.findUserById(callerId);
+  if (!user || user.roleName !== 'Secretário Responsável') {
+    throw httpError(403, 'Only the head secretary can reprove an approved closing');
+  }
+
+  const closing = await repo.findMonthlyClosingById(id);
+  if (!closing) throw httpError(404, 'Monthly closing not found');
+  if (closing.status === ClosingStatus.Closed) {
+    throw httpError(409, 'Closing is sealed and cannot be reproved');
+  }
+  if (closing.status !== ClosingStatus.Approved) {
+    throw httpError(409, 'Only approved closings can be reproved');
+  }
+
+  const updated = await repo.updateMonthlyClosing(id, {
+    status: 'rejeitado',
+    reviewedAt: null
   });
   return buildResponse(updated!);
 }

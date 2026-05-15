@@ -21,7 +21,7 @@ function toResponse(row: Row): IncomeEntryResponse {
 
 async function validateEntry(data: {
   categoryId: number;
-  memberId?: number;
+  attenderId?: number;
   paymentMethodId: number;
   designatedFundId?: number;
   referenceDate?: string;
@@ -29,8 +29,8 @@ async function validateEntry(data: {
   const category = await findIncomeCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Income category not found');
 
-  if (category.requiresMember && !data.memberId) {
-    throw httpError(400, 'This income category requires a donor (memberId)');
+  if (category.requiresMember && !data.attenderId) {
+    throw httpError(400, 'This income category requires a donor (attenderId)');
   }
 
   if (await hasChildrenIncomeCategory(data.categoryId)) {
@@ -62,6 +62,21 @@ export async function listIncomeEntries(callerId: number, page: number, limit: n
   return paginate(rows.map(toResponse), total, page, limit);
 }
 
+export async function listIncomeEntriesByAttender(
+  callerId: number,
+  attenderId: number,
+  page: number,
+  limit: number,
+  opts: { isSelfAccess: boolean }
+) {
+  if (!opts.isSelfAccess) {
+    await assertPermission(callerId, Module.IncomeEntries, Action.View);
+  }
+  const offset = (page - 1) * limit;
+  const { rows, total } = await repo.listIncomeEntriesByAttender(attenderId, offset, limit);
+  return paginate(rows.map(toResponse), total, page, limit);
+}
+
 export async function getIncomeEntryById(id: number): Promise<IncomeEntryResponse | null> {
   const entry = await repo.findIncomeEntryById(id);
   if (!entry) return null;
@@ -76,7 +91,7 @@ export async function createIncomeEntry(
   await assertPeriodEditable(body.referenceDate);
   await validateEntry({
     categoryId: body.categoryId,
-    memberId: body.memberId,
+    attenderId: body.attenderId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
     referenceDate: body.referenceDate
@@ -103,7 +118,7 @@ export async function updateIncomeEntry(
 
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
-    memberId: body.memberId ?? entry.memberId ?? undefined,
+    attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
     designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
     referenceDate

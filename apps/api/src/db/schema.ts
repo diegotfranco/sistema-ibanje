@@ -23,6 +23,7 @@ export const activeStatus = pgEnum('active_status', ['ativo', 'inativo', 'penden
 export const transactionStatus = pgEnum('transaction_status', ['pendente', 'paga', 'cancelada']);
 export const meetingType = pgEnum('meeting_type', ['ordinária', 'extraordinária']);
 export const minuteVersionStatus = pgEnum('minute_version_status', [
+  'rascunho',
   'aguardando aprovação',
   'aprovada',
   'substituída'
@@ -40,6 +41,18 @@ export const closingStatus = pgEnum('closing_status', [
   'rejeitado',
   'aprovado',
   'fechado'
+]);
+
+export const membershipLetterType = pgEnum('membership_letter_type', [
+  'pedido_de_carta_de_transferência',
+  'carta_de_transferência'
+]);
+
+export const admissionMode = pgEnum('admission_mode', [
+  'aclamação',
+  'batismo',
+  'carta de transferência',
+  'profissão de fé'
 ]);
 
 export const roles = pgTable('roles', {
@@ -121,13 +134,17 @@ export const userModulePermissions = pgTable(
   (table) => [primaryKey({ columns: [table.userId, table.moduleId, table.permissionId] })]
 );
 
-export const members = pgTable(
-  'members',
+export const attenders = pgTable(
+  'attenders',
   {
     id: serial('id').primaryKey(),
     userId: integer('user_id')
       .unique()
       .references(() => users.id, { onDelete: 'set null' }),
+    isMember: boolean('is_member').default(false).notNull(),
+    memberSince: date('member_since'),
+    congregatingSinceYear: integer('congregating_since_year'),
+    admissionMode: admissionMode('admission_mode'),
     name: varchar('name', { length: 96 }).notNull(),
     birthDate: date('birth_date'),
     addressStreet: varchar('address_street', { length: 96 }),
@@ -143,7 +160,65 @@ export const members = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [index('members_status_idx').on(table.status)]
+  (table) => [index('attenders_status_idx').on(table.status)]
+);
+
+export const churchSettings = pgTable(
+  'church_settings',
+  {
+    id: integer('id').primaryKey().default(1),
+    name: varchar('name', { length: 128 }).notNull(),
+    cnpj: varchar('cnpj', { length: 18 }).notNull(),
+    addressStreet: varchar('address_street', { length: 128 }).notNull(),
+    addressNumber: varchar('address_number', { length: 16 }).notNull(),
+    addressDistrict: varchar('address_district', { length: 64 }).notNull(),
+    addressCity: varchar('address_city', { length: 64 }).notNull(),
+    addressState: char('address_state', { length: 2 }).notNull(),
+    postalCode: char('postal_code', { length: 8 }).notNull(),
+    phone: varchar('phone', { length: 20 }),
+    email: varchar('email', { length: 96 }),
+    websiteUrl: varchar('website_url', { length: 128 }),
+    logoPath: text('logo_path'),
+    currentPresidentName: varchar('current_president_name', { length: 96 }),
+    currentPresidentTitle: varchar('current_president_title', { length: 48 }).default('Presidente'),
+    currentSecretaryName: varchar('current_secretary_name', { length: 96 }),
+    currentSecretaryTitle: varchar('current_secretary_title', { length: 48 }).default(
+      '1º Secretário(a)'
+    ),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [check('chk_church_settings_singleton', sql`${table.id} = 1`)]
+);
+
+export const membershipLetters = pgTable(
+  'membership_letters',
+  {
+    id: serial('id').primaryKey(),
+    attenderId: integer('attender_id')
+      .notNull()
+      .references(() => attenders.id),
+    type: membershipLetterType('type').notNull(),
+    letterDate: date('letter_date').notNull(),
+    otherChurchName: varchar('other_church_name', { length: 128 }).notNull(),
+    otherChurchAddress: varchar('other_church_address', { length: 256 }),
+    otherChurchCity: varchar('other_church_city', { length: 96 }).notNull(),
+    otherChurchState: char('other_church_state', { length: 2 }),
+    signingSecretaryName: varchar('signing_secretary_name', { length: 96 }).notNull(),
+    signingSecretaryTitle: varchar('signing_secretary_title', { length: 48 }).notNull(),
+    signingPresidentName: varchar('signing_president_name', { length: 96 }).notNull(),
+    signingPresidentTitle: varchar('signing_president_title', { length: 48 }).notNull(),
+    additionalContext: text('additional_context'),
+    createdByUserId: integer('created_by_user_id')
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    index('membership_letters_attender_id_idx').on(table.attenderId),
+    index('membership_letters_type_idx').on(table.type)
+  ]
 );
 
 export const paymentMethods = pgTable(
@@ -193,11 +268,12 @@ export const incomeEntries = pgTable(
     id: serial('id').primaryKey(),
     referenceDate: date('reference_date').notNull(),
     depositDate: date('deposit_date'),
+    attributionMonth: date('attribution_month'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     categoryId: integer('category_id')
       .notNull()
       .references(() => incomeCategories.id),
-    memberId: integer('member_id').references(() => members.id),
+    attenderId: integer('attender_id').references(() => attenders.id),
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),
@@ -215,7 +291,7 @@ export const incomeEntries = pgTable(
     index('income_entries_reference_date_idx').on(table.referenceDate),
     index('income_entries_status_idx').on(table.status),
     index('income_entries_category_id_idx').on(table.categoryId),
-    index('income_entries_member_id_idx').on(table.memberId),
+    index('income_entries_attender_id_idx').on(table.attenderId),
     index('income_entries_payment_method_id_idx').on(table.paymentMethodId),
     index('income_entries_designated_fund_id_idx').on(table.designatedFundId)
   ]
@@ -245,7 +321,7 @@ export const expenseEntries = pgTable(
     categoryId: integer('category_id')
       .notNull()
       .references(() => expenseCategories.id),
-    memberId: integer('member_id').references(() => members.id),
+    attenderId: integer('attender_id').references(() => attenders.id),
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),
@@ -269,7 +345,7 @@ export const expenseEntries = pgTable(
     index('expense_entries_reference_date_idx').on(table.referenceDate),
     index('expense_entries_status_idx').on(table.status),
     index('expense_entries_category_id_idx').on(table.categoryId),
-    index('expense_entries_member_id_idx').on(table.memberId),
+    index('expense_entries_attender_id_idx').on(table.attenderId),
     index('expense_entries_payment_method_id_idx').on(table.paymentMethodId),
     index('expense_entries_designated_fund_id_idx').on(table.designatedFundId),
     index('expense_entries_parent_id_idx').on(table.parentId)
@@ -357,9 +433,6 @@ export const boardMeetings = pgTable(
     id: serial('id').primaryKey(),
     meetingDate: date('meeting_date').notNull(),
     type: meetingType('type').notNull(),
-    agendaContent: jsonb('agenda_content'),
-    agendaAuthorId: integer('agenda_author_id').references(() => users.id),
-    agendaCreatedAt: timestamp('agenda_created_at', { withTimezone: true }),
     isPublic: boolean('is_public').default(false).notNull(),
     status: activeStatus('status').default('ativo').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
@@ -369,6 +442,24 @@ export const boardMeetings = pgTable(
     index('board_meetings_meeting_date_idx').on(table.meetingDate),
     index('board_meetings_status_idx').on(table.status)
   ]
+);
+
+export const agendaItems = pgTable(
+  'agenda_items',
+  {
+    id: serial('id').primaryKey(),
+    meetingId: integer('meeting_id')
+      .notNull()
+      .references(() => boardMeetings.id, { onDelete: 'cascade' }),
+    order: integer('order').notNull(),
+    title: varchar('title', { length: 256 }).notNull(),
+    description: text('description'),
+    createdByUserId: integer('created_by_user_id').references(() => users.id),
+    status: activeStatus('status').default('ativo').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index('agenda_items_meeting_id_idx').on(table.meetingId)]
 );
 
 export const minutes = pgTable('minutes', {
@@ -381,6 +472,14 @@ export const minutes = pgTable('minutes', {
   isNotarized: boolean('is_notarized').default(false).notNull(),
   notarizedAt: timestamp('notarized_at', { withTimezone: true }),
   correctsMinuteId: integer('corrects_minute_id').references((): AnyPgColumn => minutes.id),
+  presidingPastorName: varchar('presiding_pastor_name', { length: 96 }),
+  secretaryName: varchar('secretary_name', { length: 96 }),
+  openingHymnReference: varchar('opening_hymn_reference', { length: 128 }),
+  openingBibleReference: varchar('opening_bible_reference', { length: 64 }),
+  openingTime: varchar('opening_time', { length: 8 }),
+  closingTime: varchar('closing_time', { length: 8 }),
+  membersPresentCount: integer('members_present_count'),
+  signedDocumentPath: text('signed_document_path'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
 });
@@ -405,6 +504,24 @@ export const minuteVersions = pgTable(
   (table) => [
     unique('uq_minute_version').on(table.minuteId, table.version),
     index('minute_versions_minute_id_idx').on(table.minuteId)
+  ]
+);
+
+export const minuteTemplates = pgTable(
+  'minute_templates',
+  {
+    id: serial('id').primaryKey(),
+    meetingType: meetingType('meeting_type').notNull(),
+    name: varchar('name', { length: 128 }).notNull(),
+    content: jsonb('content').notNull(),
+    isDefault: boolean('is_default').default(false).notNull(),
+    createdByUserId: integer('created_by_user_id').references(() => users.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    unique('uq_default_template_per_type').on(table.meetingType, table.isDefault),
+    index('minute_templates_meeting_type_idx').on(table.meetingType)
   ]
 );
 
@@ -435,8 +552,12 @@ export type Permission = typeof permissions.$inferSelect;
 export type NewPermission = typeof permissions.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
-export type Member = typeof members.$inferSelect;
-export type NewMember = typeof members.$inferInsert;
+export type Attender = typeof attenders.$inferSelect;
+export type NewAttender = typeof attenders.$inferInsert;
+export type ChurchSettings = typeof churchSettings.$inferSelect;
+export type NewChurchSettings = typeof churchSettings.$inferInsert;
+export type MembershipLetter = typeof membershipLetters.$inferSelect;
+export type NewMembershipLetter = typeof membershipLetters.$inferInsert;
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type NewPaymentMethod = typeof paymentMethods.$inferInsert;
 export type DesignatedFund = typeof designatedFunds.$inferSelect;
@@ -457,9 +578,13 @@ export type Event = typeof events.$inferSelect;
 export type NewEvent = typeof events.$inferInsert;
 export type BoardMeeting = typeof boardMeetings.$inferSelect;
 export type NewBoardMeeting = typeof boardMeetings.$inferInsert;
+export type AgendaItem = typeof agendaItems.$inferSelect;
+export type NewAgendaItem = typeof agendaItems.$inferInsert;
 export type Minute = typeof minutes.$inferSelect;
 export type NewMinute = typeof minutes.$inferInsert;
 export type MinuteVersion = typeof minuteVersions.$inferSelect;
 export type NewMinuteVersion = typeof minuteVersions.$inferInsert;
+export type MinuteTemplate = typeof minuteTemplates.$inferSelect;
+export type NewMinuteTemplate = typeof minuteTemplates.$inferInsert;
 export type AuditLog = typeof auditLog.$inferSelect;
 export type NewAuditLog = typeof auditLog.$inferInsert;

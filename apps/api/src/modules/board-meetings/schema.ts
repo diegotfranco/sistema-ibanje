@@ -18,17 +18,32 @@ export const UpdateBoardMeetingRequestSchema = z.object({
   isPublic: z.boolean().optional()
 });
 
-export const SetAgendaRequestSchema = z.object({
-  items: z.array(z.string().min(1)).min(1)
+export const AgendaItemInputSchema = z.object({
+  title: z.string().min(1).max(256),
+  description: z.string().max(2000).optional()
+});
+
+export const SetAgendaItemsRequestSchema = z.object({
+  items: z.array(AgendaItemInputSchema).min(1).max(50)
+});
+
+export const AgendaItemResponseSchema = z.object({
+  id: z.number().int().positive(),
+  meetingId: z.number().int().positive(),
+  order: z.number().int(),
+  title: z.string(),
+  description: z.string().nullable(),
+  createdByUserId: z.number().int().positive().nullable(),
+  status: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string()
 });
 
 export const BoardMeetingResponseSchema = z.object({
   id: z.number().int().positive(),
   meetingDate: z.string(),
   type: z.enum(['ordinária', 'extraordinária']),
-  agendaItems: z.array(z.string()).nullable(),
-  agendaAuthorId: z.number().int().positive().nullable(),
-  agendaCreatedAt: z.string().nullable(),
+  agendaItems: z.array(AgendaItemResponseSchema),
   isPublic: z.boolean(),
   status: z.string(),
   hasMinutes: z.boolean(),
@@ -40,5 +55,6 @@ export const BoardMeetingListResponseSchema = paginatedSchema(BoardMeetingRespon
 
 export type CreateBoardMeetingRequest = z.infer<typeof CreateBoardMeetingRequestSchema>;
 export type UpdateBoardMeetingRequest = z.infer<typeof UpdateBoardMeetingRequestSchema>;
-export type SetAgendaRequest = z.infer<typeof SetAgendaRequestSchema>;
+export type SetAgendaItemsRequest = z.infer<typeof SetAgendaItemsRequestSchema>;
+export type AgendaItemResponse = z.infer<typeof AgendaItemResponseSchema>;
 export type BoardMeetingResponse = z.infer<typeof BoardMeetingResponseSchema>;
