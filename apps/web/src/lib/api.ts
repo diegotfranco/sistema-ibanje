@@ -173,6 +173,12 @@ async function requestBlob(path: string): Promise<Blob> {
   return res.blob();
 }
 
+async function getText(path: string): Promise<string> {
+  const res = await fetch(`${BASE_URL}${path}`, { method: 'GET', credentials: 'include' });
+  if (!res.ok) await throwApiError(path, res);
+  return res.text();
+}
+
 export const api = {
   get: <T>(path: string) => request<T>('GET', path),
   post: <T>(path: string, body?: unknown) => request<T>('POST', path, body),
@@ -180,5 +186,6 @@ export const api = {
   patch: <T>(path: string, body?: unknown) => request<T>('PATCH', path, body),
   delete: <T = void>(path: string) => request<T>('DELETE', path),
   postForm: <T>(path: string, body: FormData) => requestForm<T>('POST', path, body),
-  getBlob: (path: string) => requestBlob(path)
+  getBlob: (path: string) => requestBlob(path),
+  getText: (path: string) => getText(path)
 };
