@@ -1,78 +1,163 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode
+} from 'react';
 
-type Theme = 'light' | 'dark' | 'system';
-type Resolved = 'light' | 'dark';
+type Theme = 'dark' | 'light';
 
-interface ThemeContextType {
+type ThemeProviderProps = {
+  children: ReactNode;
+  defaultTheme?: Theme;
+  storageKey?: string;
+  disableTransitionOnChange?: boolean;
+};
+
+type ThemeProviderState = {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  resolved: Resolved;
+};
+
+const COLOR_SCHEME_QUERY = '(prefers-color-scheme: dark)';
+const THEME_VALUES: Theme[] = ['dark', 'light'];
+
+const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
+
+function isTheme(value: string | null): value is Theme {
+  if (value === null) {
+    return false;
+  }
+
+  return THEME_VALUES.includes(value as Theme);
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+function disableTransitionsTemporarily() {
+  const style = document.createElement('style');
+  style.appendChild(
+    document.createTextNode(
+      '*,*::before,*::after{-webkit-transition:none!important;transition:none!important}'
+    )
+  );
+  document.head.appendChild(style);
 
-export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = localStorage.getItem('theme');
-    return (stored as Theme) || 'system';
-  });
-
-  const [resolved, setResolved] = useState<Resolved>(() => {
-    const stored = localStorage.getItem('theme');
-    const t = stored || 'system';
-    if (t === 'dark') return 'dark';
-    if (t === 'light') return 'light';
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  });
-
-  const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+  return () => {
+    window.getComputedStyle(document.body);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        style.remove();
+      });
+    });
   };
+}
+
+export function ThemeProvider({
+  children,
+  defaultTheme = 'light',
+  storageKey = 'theme',
+  disableTransitionOnChange = true,
+  ...props
+}: ThemeProviderProps) {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    const storedTheme = localStorage.getItem(storageKey);
+    if (isTheme(storedTheme)) {
+      return storedTheme;
+    }
+
+    return defaultTheme;
+  });
+
+  const setTheme = useCallback(
+    (nextTheme: Theme) => {
+      localStorage.setItem(storageKey, nextTheme);
+      setThemeState(nextTheme);
+    },
+    [storageKey]
+  );
+
+  const applyTheme = useCallback(
+    (nextTheme: Theme) => {
+      const root = document.documentElement;
+      const restoreTransitions = disableTransitionOnChange ? disableTransitionsTemporarily() : null;
+
+      root.classList.remove('light', 'dark');
+      root.classList.add(nextTheme);
+
+      if (restoreTransitions) {
+        restoreTransitions();
+      }
+    },
+    [disableTransitionOnChange]
+  );
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+    applyTheme(theme);
 
-    const updateResolved = () => {
-      if (theme === 'dark') {
-        setResolved('dark');
-      } else if (theme === 'light') {
-        setResolved('light');
-      } else {
-        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        setResolved(isDark ? 'dark' : 'light');
-      }
+    if (theme !== 'light') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia(COLOR_SCHEME_QUERY);
+    const handleChange = () => {
+      applyTheme('light');
     };
 
-    updateResolved();
+    mediaQuery.addEventListener('change', handleChange);
 
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      const handleChange = () => updateResolved();
-      mediaQuery.addEventListener('change', handleChange);
-      unsubscribe = () => mediaQuery.removeEventListener('change', handleChange);
-    }
-
-    return unsubscribe;
-  }, [theme]);
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, [theme, applyTheme]);
 
   useEffect(() => {
-    if (resolved === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [resolved]);
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.storageArea !== localStorage) {
+        return;
+      }
 
-  const contextValue = useMemo(() => ({ theme, setTheme, resolved }), [theme, resolved]);
+      if (event.key !== storageKey) {
+        return;
+      }
 
-  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
+      if (isTheme(event.newValue)) {
+        setThemeState(event.newValue);
+        return;
+      }
+
+      setThemeState(defaultTheme);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [defaultTheme, storageKey]);
+
+  const value = useMemo(
+    () => ({
+      theme,
+      setTheme
+    }),
+    [theme, setTheme]
+  );
+
+  return (
+    <ThemeProviderContext.Provider {...props} value={value}>
+      {children}
+    </ThemeProviderContext.Provider>
+  );
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext);
+  const context = useContext(ThemeProviderContext);
+
   if (context === undefined) {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
+
   return context;
 }

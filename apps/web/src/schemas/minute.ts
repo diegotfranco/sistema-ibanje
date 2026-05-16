@@ -4,7 +4,7 @@ import { type MinuteStatusValue } from '@sistema-ibanje/shared';
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export const MinuteFormSchema = z.object({
-  meetingId: z.number({ error: 'Reunião é obrigatória' }).int().positive(),
+  meetingId: z.number().int().positive('Reunião é obrigatória'),
   minuteNumber: z.string().min(1, 'Número obrigatório').max(32),
   presidingPastorName: z.string().max(96).optional().or(z.literal('')),
   secretaryName: z.string().max(96).optional().or(z.literal('')),

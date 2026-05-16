@@ -214,7 +214,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
               <FieldLabel>Fundo Designado (opcional)</FieldLabel>
               <Select
                 value={field.value !== undefined ? String(field.value) : NONE}
-                onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
+                onValueChange={(v) => field.onChange(v === NONE ? undefined : Number.parseInt(v))}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Sem fundo" />
                 </SelectTrigger>

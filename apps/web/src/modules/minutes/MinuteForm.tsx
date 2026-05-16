@@ -22,15 +22,6 @@ import { MinuteFormSchema, type MinuteFormValues } from '@/schemas/minute';
 import { useMeetings } from '@/modules/meetings/useMeetings';
 import { useSuggestedMinuteNumber } from './useMinutes';
 
-const EMPTY: MinuteFormValues = {
-  meetingId: 0,
-  minuteNumber: '',
-  presidingPastorName: '',
-  secretaryName: '',
-  openingTime: '',
-  closingTime: ''
-};
-
 function formatDate(d: string) {
   const [y, m, day] = d.split('-');
   return `${day}/${m}/${y}`;
@@ -56,12 +47,19 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
     formState: { errors }
   } = useForm<MinuteFormValues>({
     resolver: zodResolver(MinuteFormSchema),
-    defaultValues: EMPTY
+    defaultValues: {
+      meetingId: 0,
+      minuteNumber: '',
+      presidingPastorName: '',
+      secretaryName: '',
+      openingTime: '',
+      closingTime: ''
+    }
   });
 
   useEffect(() => {
     if (open) {
-      reset({ ...EMPTY, minuteNumber: suggested.data?.value ?? '' });
+      reset({ minuteNumber: suggested.data?.value ?? '' });
     }
   }, [open, suggested.data?.value, reset]);
 
@@ -86,8 +84,8 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               name="meetingId"
               render={({ field }) => (
                 <Select
-                  value={field.value ? String(field.value) : ''}
-                  onValueChange={(v) => field.onChange(Number.parseInt(v, 10))}>
+                  value={field.value ? String(field.value) : undefined}
+                  onValueChange={(v) => field.onChange(Number.parseInt(v))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a reunião" />
                   </SelectTrigger>
