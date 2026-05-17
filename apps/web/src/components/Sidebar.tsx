@@ -203,7 +203,7 @@ function MenuItemRenderer({
                 tooltip={route.label}
                 className={cn(
                   'gap-2 text-muted-foreground hover:text-foreground',
-                  isParentActive && 'bg-sidebar-accent text-primary'
+                  isParentActive && 'bg-sidebar-accent text-sidebar-primary'
                 )}>
                 {route.icon && <route.icon size={16} />}
                 <span className="truncate">{route.label}</span>
@@ -237,7 +237,7 @@ function MenuItemRenderer({
             <SidebarMenuButton
               className={cn(
                 'group/collapsible-trigger gap-2 text-muted-foreground hover:text-foreground',
-                isParentActive && 'bg-sidebar-accent text-primary'
+                isParentActive && 'bg-sidebar-accent text-sidebar-primary'
               )}>
               {route.icon && <route.icon size={16} />}
               <span className="truncate">{route.label}</span>
@@ -289,7 +289,7 @@ function MenuItemRenderer({
           <SidebarMenuSubButton
             asChild
             isActive={isActive}
-            className="text-muted-foreground hover:text-foreground data-active:text-foreground data-active:bg-primary/10 data-active:font-normal">
+            className="text-muted-foreground hover:text-foreground data-active:text-foreground data-active:bg-sidebar-primary/10 data-active:font-normal">
             {navElement}
           </SidebarMenuSubButton>
         </SidebarMenuSubItem>
@@ -302,7 +302,7 @@ function MenuItemRenderer({
           asChild
           isActive={isActive}
           tooltip={route.label}
-          className="text-muted-foreground hover:text-foreground data-active:text-primary data-active:bg-sidebar-accent data-active:font-normal">
+          className="text-muted-foreground hover:text-foreground data-active:text-sidebar-primary data-active:bg-sidebar-accent data-active:font-normal">
           {navElement}
         </SidebarMenuButton>
       </SidebarMenuItem>
@@ -389,7 +389,7 @@ export function Sidebar() {
                   className="w-full justify-between data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                   <div className="flex items-center gap-2 overflow-hidden">
                     {isCollapsed ? (
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-sidebar-accent text-sidebar-foreground">
                         <User size={14} />
                       </div>
                     ) : (

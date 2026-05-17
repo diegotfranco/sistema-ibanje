@@ -11,6 +11,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Badge } from '@/components/ui/badge';
 import { MeetingType } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -115,13 +116,7 @@ export default function MinuteTemplatesPage() {
                   <TableRow key={row.id}>
                     <TableCell className="font-medium">{row.name}</TableCell>
                     <TableCell>{meetingTypeLabel(row.meetingType)}</TableCell>
-                    <TableCell>
-                      {row.isDefault && (
-                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          Padrão
-                        </span>
-                      )}
-                    </TableCell>
+                    <TableCell>{row.isDefault && <Badge variant="soft">Padrão</Badge>}</TableCell>
                     <TableCell>{row.defaultAgendaItems.length}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">

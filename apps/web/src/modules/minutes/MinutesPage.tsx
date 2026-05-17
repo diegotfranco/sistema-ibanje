@@ -12,18 +12,13 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import StatusBadge from '@/components/StatusBadge';
 import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMinutes, useCreateMinute, useDeleteMinute } from './useMinutes';
 import MinuteForm from './MinuteForm';
 import type { MinuteResponse, MinuteFormValues } from '@/schemas/minute';
-
-function statusVariant(status: string) {
-  if (status === MinuteStatus.Approved) return 'bg-muted text-success';
-  if (status === MinuteStatus.Replaced) return 'bg-muted text-muted-foreground';
-  return 'bg-muted text-warning';
-}
 
 export default function MinutesPage() {
   const { data: user } = useCurrentUser();
@@ -99,10 +94,7 @@ export default function MinutesPage() {
                     </TableCell>
                     <TableCell>
                       {row.currentVersion ? (
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusVariant(row.currentVersion.status)}`}>
-                          {row.currentVersion.status}
-                        </span>
+                        <StatusBadge status={row.currentVersion.status} />
                       ) : (
                         '—'
                       )}

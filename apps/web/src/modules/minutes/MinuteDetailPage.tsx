@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import StatusBadge from '@/components/StatusBadge';
 import {
   RichTextDisplay,
   RichTextEditor,
@@ -51,12 +52,6 @@ import {
   type UpdateMinuteValues,
   type MinuteVersionResponse
 } from '@/schemas/minute';
-
-function statusClass(status: string) {
-  if (status === MinuteStatus.Approved) return 'bg-muted text-success';
-  if (status === MinuteStatus.Replaced) return 'bg-muted text-muted-foreground';
-  return 'bg-muted text-warning';
-}
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('pt-BR');
@@ -123,12 +118,7 @@ export default function MinuteDetailPage() {
         </Button>
         <div>
           <h1 className="text-2xl font-semibold">{minute.minuteNumber}</h1>
-          {current && (
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 ${statusClass(current.status)}`}>
-              {current.status}
-            </span>
-          )}
+          {current && <StatusBadge status={current.status} className="mt-1" />}
         </div>
       </div>
 
@@ -305,10 +295,7 @@ export default function MinuteDetailPage() {
                 <TableRow key={v.id}>
                   <TableCell>v{v.version}</TableCell>
                   <TableCell>
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusClass(v.status)}`}>
-                      {v.status}
-                    </span>
+                    <StatusBadge status={v.status} />
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {v.reasonForChange ?? '—'}

@@ -104,7 +104,9 @@ export function DashboardClosingBanner() {
   // Case 3: No closing for current month - CTA
   return (
     <Alert className="mb-6 border-primary/50 bg-primary/5">
-      <AlertCircle className="h-4 w-4 text-primary" />
+      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+        <AlertCircle className="h-3.5 w-3.5 text-primary-foreground" />
+      </span>
       <AlertDescription className="flex items-center justify-between">
         <span>Crie o fechamento para {formatMonthForBanner(currentMonth)}</span>
         <Button size="sm" onClick={() => navigate('/monthly-closings')}>

@@ -30,7 +30,7 @@ export default function RegisterPage() {
           </CardTitle>
 
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-primary text-lg font-medium">Cadastro</h2>
+            <h2 className="text-primary-soft text-lg font-medium">Cadastro</h2>
             <Link
               to={paths.login}
               className="font-light hover:underline underline-offset-4 decoration-primary">

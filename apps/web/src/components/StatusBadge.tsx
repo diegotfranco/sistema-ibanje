@@ -17,29 +17,29 @@ type Props = {
 };
 
 const ACTIVE_STATUS_CLASSES: Record<ActiveStatusValue, string> = {
-  [ActiveStatus.Active]: 'bg-muted text-success',
+  [ActiveStatus.Active]: 'bg-success/15 text-success',
   [ActiveStatus.Inactive]: 'bg-muted text-muted-foreground',
-  [ActiveStatus.Pending]: 'bg-muted text-warning'
+  [ActiveStatus.Pending]: 'bg-warning/15 text-warning'
 };
 
 const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
-  [EntryStatus.Pending]: 'bg-muted text-warning',
-  [EntryStatus.Paid]: 'bg-muted text-success',
+  [EntryStatus.Pending]: 'bg-warning/15 text-warning',
+  [EntryStatus.Paid]: 'bg-success/15 text-success',
   [EntryStatus.Cancelled]: 'bg-muted text-muted-foreground'
 };
 
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
-  [ClosingStatus.Open]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
-  [ClosingStatus.InReview]: 'bg-muted text-warning',
-  [ClosingStatus.Rejected]: 'bg-muted text-destructive',
-  [ClosingStatus.Approved]: 'bg-muted text-success',
+  [ClosingStatus.Open]: 'bg-primary-soft/15 text-primary-soft',
+  [ClosingStatus.InReview]: 'bg-warning/15 text-warning',
+  [ClosingStatus.Rejected]: 'bg-destructive/15 text-destructive',
+  [ClosingStatus.Approved]: 'bg-success/15 text-success',
   [ClosingStatus.Closed]: 'bg-muted text-muted-foreground'
 };
 
 const MINUTE_STATUS_CLASSES: Record<MinuteStatusValue, string> = {
-  [MinuteStatus.Draft]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
-  [MinuteStatus.AwaitingApproval]: 'bg-muted text-warning',
-  [MinuteStatus.Approved]: 'bg-muted text-success',
+  [MinuteStatus.Draft]: 'bg-primary-soft/15 text-primary-soft',
+  [MinuteStatus.AwaitingApproval]: 'bg-warning/15 text-warning',
+  [MinuteStatus.Approved]: 'bg-success/15 text-success',
   [MinuteStatus.Replaced]: 'bg-muted text-muted-foreground'
 };
 

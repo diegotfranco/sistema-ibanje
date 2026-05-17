@@ -111,13 +111,11 @@ export default function PautasPage() {
                     </TableCell>
                     <TableCell>
                       {row.agendaItems.length > 0 ? (
-                        <Badge className="bg-muted text-success">
+                        <Badge variant="success">
                           {row.agendaItems.length} {row.agendaItems.length === 1 ? 'item' : 'itens'}
                         </Badge>
                       ) : (
-                        <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                          Pendente
-                        </Badge>
+                        <Badge variant="warning">Pendente</Badge>
                       )}
                     </TableCell>
                     <TableCell>{row.isPublic ? 'Sim' : 'Não'}</TableCell>
