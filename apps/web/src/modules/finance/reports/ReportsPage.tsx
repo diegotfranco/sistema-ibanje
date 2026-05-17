@@ -33,8 +33,13 @@ export default function ReportsPage() {
 
         <div className="flex items-end gap-4 flex-wrap">
           <div className="space-y-1">
-            <Label>Mês</Label>
-            <MonthInput value={month} onChange={(e) => setMonth(e.target.value)} className="w-40" />
+            <Label htmlFor="reports-month">Mês</Label>
+            <MonthInput
+              id="reports-month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="w-40"
+            />
           </div>
         </div>
 

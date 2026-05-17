@@ -5,14 +5,14 @@ import { Module, Action } from '../../../lib/constants.js';
 import { IdParamSchema } from '../../../lib/validation.js';
 import { ErrorResponseSchema } from '../../../lib/http-schemas.js';
 import {
-  PaginatedMonthQuerySchema,
-  MonthQuerySchema,
-  OptionalMonthQuerySchema,
+  PaginatedMonthQueryRequestSchema,
+  MonthQueryRequestSchema,
+  OptionalMonthQueryRequestSchema,
   IncomeReportResponseSchema,
   ExpenseReportResponseSchema,
   FinancialStatementResponseSchema,
   DetailedFinancialStatementResponseSchema,
-  MembersReportResponseSchema,
+  AttendersReportResponseSchema,
   FundListResponseSchema,
   FundDetailResponseSchema
 } from './schema.js';
@@ -30,7 +30,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: PaginatedMonthQuerySchema,
+        querystring: PaginatedMonthQueryRequestSchema,
         response: {
           200: IncomeReportResponseSchema,
           400: ErrorResponseSchema,
@@ -48,7 +48,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: PaginatedMonthQuerySchema,
+        querystring: PaginatedMonthQueryRequestSchema,
         response: {
           200: ExpenseReportResponseSchema,
           400: ErrorResponseSchema,
@@ -66,7 +66,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: MonthQuerySchema,
+        querystring: MonthQueryRequestSchema,
         response: {
           200: FinancialStatementResponseSchema,
           400: ErrorResponseSchema,
@@ -84,7 +84,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: MonthQuerySchema,
+        querystring: MonthQueryRequestSchema,
         response: {
           200: PdfResponseSchema,
           400: ErrorResponseSchema,
@@ -102,7 +102,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: MonthQuerySchema,
+        querystring: MonthQueryRequestSchema,
         response: {
           200: DetailedFinancialStatementResponseSchema,
           400: ErrorResponseSchema,
@@ -120,7 +120,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: MonthQuerySchema,
+        querystring: MonthQueryRequestSchema,
         response: {
           200: PdfResponseSchema,
           400: ErrorResponseSchema,
@@ -134,13 +134,13 @@ export async function reportsRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/reports/members',
+    '/reports/attenders',
     {
       schema: {
         tags: ['Reports'],
-        querystring: MonthQuerySchema,
+        querystring: MonthQueryRequestSchema,
         response: {
-          200: MembersReportResponseSchema,
+          200: AttendersReportResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
@@ -148,7 +148,7 @@ export async function reportsRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
     },
-    controller.membersReport
+    controller.attendersReport
   );
 
   app.get(
@@ -156,7 +156,7 @@ export async function reportsRoutes(app: FastifyInstance) {
     {
       schema: {
         tags: ['Reports'],
-        querystring: OptionalMonthQuerySchema,
+        querystring: OptionalMonthQueryRequestSchema,
         response: {
           200: FundListResponseSchema,
           400: ErrorResponseSchema,
@@ -175,7 +175,7 @@ export async function reportsRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Reports'],
         params: IdParamSchema,
-        querystring: OptionalMonthQuerySchema,
+        querystring: OptionalMonthQueryRequestSchema,
         response: {
           200: FundDetailResponseSchema,
           400: ErrorResponseSchema,

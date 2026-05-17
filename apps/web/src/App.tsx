@@ -6,7 +6,7 @@ import { AuthErrorListener } from '@/components/AuthErrorListener';
 import { NotFoundPage } from '@/components/status/NotFoundPage';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
-import { useTheme } from '@/lib/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 function flattenRoutes(routes: AppRoute[]): AppRoute[] {
   return routes.flatMap((route) =>
@@ -22,8 +22,8 @@ const publicRoutes = flat.filter((r) => r.layout === 'auth' && r.path && r.eleme
 const protectedRoutes = flat.filter((r) => r.layout === 'app' && r.path && r.element);
 
 function ToasterWrapper() {
-  const { resolved } = useTheme();
-  return <Toaster position="top-right" richColors theme={resolved} />;
+  const { theme } = useTheme();
+  return <Toaster position="top-right" richColors theme={theme} />;
 }
 
 export default function App() {

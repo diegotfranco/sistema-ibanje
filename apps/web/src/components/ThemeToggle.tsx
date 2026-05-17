@@ -6,16 +6,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { useTheme } from '@/lib/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 export function ThemeToggle() {
-  const { resolved, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          {resolved === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <Button variant="ghost" size="icon" aria-label="Alternar tema">
+          {theme === 'light' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           <span className="sr-only">Alternar tema</span>
         </Button>
       </DropdownMenuTrigger>

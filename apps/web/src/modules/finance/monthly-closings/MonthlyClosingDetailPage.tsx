@@ -105,7 +105,7 @@ export default function MonthlyClosingDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-mono font-semibold text-emerald-600">
+              <p className="text-lg font-mono font-semibold text-money-in">
                 {formatMoney(closing.totalIncome)}
               </p>
             </CardContent>
@@ -118,7 +118,7 @@ export default function MonthlyClosingDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-lg font-mono font-semibold text-red-600">
+              <p className="text-lg font-mono font-semibold text-money-out">
                 {formatMoney(closing.totalExpenses)}
               </p>
             </CardContent>
@@ -198,7 +198,7 @@ export default function MonthlyClosingDetailPage() {
             {closing.status === ClosingStatus.Open && canDelete && (
               <Button
                 variant="outline"
-                className="text-red-600 hover:text-red-700 border-red-200"
+                className="text-destructive hover:text-destructive/80 border-destructive/30"
                 onClick={() => setDeleteOpen(true)}>
                 Excluir
               </Button>

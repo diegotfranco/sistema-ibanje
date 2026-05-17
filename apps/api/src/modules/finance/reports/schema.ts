@@ -1,40 +1,40 @@
 import { z } from 'zod';
 
-export const MonthQuerySchema = z.object({
+export const MonthQueryRequestSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
 });
 
-export const DateRangeQuerySchema = z.object({
+export const DateRangeQueryRequestSchema = z.object({
   from: z.string().date(),
   to: z.string().date()
 });
 
-export const PaginatedDateRangeQuerySchema = DateRangeQuerySchema.extend({
+export const PaginatedDateRangeQueryRequestSchema = DateRangeQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const PaginatedMonthQuerySchema = MonthQuerySchema.extend({
+export const PaginatedMonthQueryRequestSchema = MonthQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const OptionalMonthQuerySchema = z.object({
+export const OptionalMonthQueryRequestSchema = z.object({
   month: z
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
     .optional()
 });
 
-export type DateRangeQuery = z.infer<typeof DateRangeQuerySchema>;
-export type PaginatedDateRangeQuery = z.infer<typeof PaginatedDateRangeQuerySchema>;
+export type DateRangeQueryRequest = z.infer<typeof DateRangeQueryRequestSchema>;
+export type PaginatedDateRangeQueryRequest = z.infer<typeof PaginatedDateRangeQueryRequestSchema>;
 
 const PeriodSchema = z.object({
   from: z.string(),
   to: z.string()
 });
 
-export const IncomeReportRowSchema = z.object({
+const IncomeReportRowSchema = z.object({
   referenceDate: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
@@ -55,7 +55,7 @@ export const IncomeReportResponseSchema = z.object({
   totalPages: z.number().int().nonnegative()
 });
 
-export const ExpenseReportRowSchema = z.object({
+const ExpenseReportRowSchema = z.object({
   id: z.number().int().positive(),
   referenceDate: z.string(),
   description: z.string(),
@@ -78,7 +78,7 @@ export const ExpenseReportResponseSchema = z.object({
   totalPages: z.number().int().nonnegative()
 });
 
-export const IncomeByCategoryRowSchema = z.object({
+const IncomeByCategoryRowSchema = z.object({
   parentCategoryId: z.number().int().positive().nullable(),
   parentCategoryName: z.string().nullable(),
   categoryId: z.number().int().positive(),
@@ -86,7 +86,7 @@ export const IncomeByCategoryRowSchema = z.object({
   total: z.string()
 });
 
-export const ExpenseByCategoryRowSchema = z.object({
+const ExpenseByCategoryRowSchema = z.object({
   parentCategoryId: z.number().int().positive().nullable(),
   parentCategoryName: z.string().nullable(),
   categoryId: z.number().int().positive(),
@@ -94,7 +94,7 @@ export const ExpenseByCategoryRowSchema = z.object({
   total: z.string()
 });
 
-export const IncomeByFundRowSchema = z.object({
+const IncomeByFundRowSchema = z.object({
   fundId: z.number().int().positive(),
   fundName: z.string(),
   total: z.string()
@@ -111,7 +111,7 @@ export const FinancialStatementResponseSchema = z.object({
   expensesByCategory: z.array(ExpenseByCategoryRowSchema)
 });
 
-export const IncomePivotColumnSchema = z.object({
+const IncomePivotColumnSchema = z.object({
   key: z.string(),
   label: z.string(),
   kind: z.enum(['category', 'fund']),
@@ -119,13 +119,13 @@ export const IncomePivotColumnSchema = z.object({
   total: z.string()
 });
 
-export const IncomePivotRowSchema = z.object({
+const IncomePivotRowSchema = z.object({
   referenceDate: z.string(),
   cells: z.record(z.string(), z.string()),
   total: z.string()
 });
 
-export const IncomePivotSchema = z.object({
+const IncomePivotSchema = z.object({
   columns: z.array(IncomePivotColumnSchema),
   rows: z.array(IncomePivotRowSchema),
   grandTotal: z.string()
@@ -141,21 +141,21 @@ export const DetailedFinancialStatementResponseSchema = z.object({
   expenseEntries: z.array(ExpenseReportRowSchema)
 });
 
-export const MembersReportResponseSchema = z.object({
+export const AttendersReportResponseSchema = z.object({
   period: PeriodSchema,
-  totalActiveMembers: z.number().int().nonnegative(),
+  totalActiveAttenders: z.number().int().nonnegative(),
   tithe: z.object({
-    membersWhoContributed: z.number().int().nonnegative(),
+    attendersWhoContributed: z.number().int().nonnegative(),
     percentage: z.string()
   }),
   offerings: z.object({
-    membersWhoContributed: z.number().int().nonnegative(),
+    attendersWhoContributed: z.number().int().nonnegative(),
     percentage: z.string(),
     note: z.string()
   })
 });
 
-export const FundSummarySchema = z.object({
+const FundSummarySchema = z.object({
   fundId: z.number().int().positive(),
   fundName: z.string(),
   targetAmount: z.string().nullable(),
@@ -170,16 +170,16 @@ export const FundListResponseSchema = z.object({
   funds: z.array(FundSummarySchema)
 });
 
-export const FundIncomeEntrySchema = z.object({
+const FundIncomeEntrySchema = z.object({
   id: z.number().int().positive(),
   referenceDate: z.string(),
   amount: z.string(),
   categoryName: z.string(),
-  memberName: z.string().nullable(),
+  attenderName: z.string().nullable(),
   notes: z.string().nullable()
 });
 
-export const FundExpenseEntrySchema = z.object({
+const FundExpenseEntrySchema = z.object({
   id: z.number().int().positive(),
   referenceDate: z.string(),
   description: z.string(),
@@ -215,7 +215,7 @@ export type FinancialStatementResponse = z.infer<typeof FinancialStatementRespon
 export type DetailedFinancialStatementResponse = z.infer<
   typeof DetailedFinancialStatementResponseSchema
 >;
-export type MembersReportResponse = z.infer<typeof MembersReportResponseSchema>;
+export type AttendersReportResponse = z.infer<typeof AttendersReportResponseSchema>;
 export type FundSummary = z.infer<typeof FundSummarySchema>;
 export type FundListResponse = z.infer<typeof FundListResponseSchema>;
 export type FundIncomeEntry = z.infer<typeof FundIncomeEntrySchema>;

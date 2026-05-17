@@ -9,7 +9,7 @@ import {
   PaymentMethodFormSchema,
   type PaymentMethodFormValues,
   type PaymentMethodResponse
-} from '@/schemas/payment-method';
+} from './schema';
 
 interface Props {
   initialValues?: PaymentMethodResponse;

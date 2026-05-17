@@ -31,7 +31,9 @@ export default function ResetPasswordPage() {
             <CardDescription>Link de redefinição inválido ou ausente.</CardDescription>
           </CardHeader>
           <CardFooter className="justify-center bg-transparent border-none">
-            <Link to={paths.forgotPassword} className="text-primary hover:underline font-medium">
+            <Link
+              to={paths.forgotPassword}
+              className="font-light hover:underline underline-offset-4 decoration-primary">
               Solicitar novo link
             </Link>
           </CardFooter>
@@ -49,8 +51,10 @@ export default function ResetPasswordPage() {
           </CardTitle>
 
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-primary text-lg font-medium">Definir senha</h2>
-            <Link to={paths.login} className="text-primary hover:underline font-medium">
+            <h2 className="text-lg font-medium">Definir senha</h2>
+            <Link
+              to={paths.login}
+              className="font-light hover:underline underline-offset-4 decoration-primary">
               Voltar ao login
             </Link>
           </div>

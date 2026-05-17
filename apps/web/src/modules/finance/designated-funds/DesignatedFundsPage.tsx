@@ -8,7 +8,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
 import { DesignatedFundForm } from './DesignatedFundForm';
 import { formatDate, makeSubmitHandler } from '../entries-utils';
-import type { DesignatedFundResponse } from '@/schemas/designated-fund';
+import type { DesignatedFundResponse } from './schema';
 
 export default function DesignatedFundsPage() {
   const { data: user } = useCurrentUser();

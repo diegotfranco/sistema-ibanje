@@ -4,13 +4,13 @@ import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { CategoryParentPicker, type CategoryNode } from '@/components/CategoryParentPicker';
+import { CategoryParentPicker, type CategoryNode } from '../components/CategoryParentPicker';
 import { zodResolver } from '@/lib/zodResolver';
 import {
   ExpenseCategoryFormSchema,
   type ExpenseCategoryFormValues,
   type ExpenseCategoryResponse
-} from '@/schemas/expense-category';
+} from './schema';
 
 interface Props {
   initialValues?: ExpenseCategoryResponse;

@@ -22,7 +22,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useUsers, useUserMutations } from './useUsers';
 import UserForm from './UserForm';
 import UserPermissionsDialog from './UserPermissionsDialog';
-import type { UserCreateFormValues, UserEditFormValues, UserResponse } from '@/schemas/user';
+import type { UserCreateFormValues, UserEditFormValues, UserResponse } from './schema';
 
 type UserFormRefs = {
   createForm: ReturnType<typeof useForm<UserCreateFormValues>> | null;
@@ -134,7 +134,7 @@ export default function UsersPage() {
                                   onClick={() => mutations.approve.mutate(row.id)}
                                   disabled={mutations.approve.isPending}
                                   aria-label="Aprovar"
-                                  className="text-emerald-600 hover:text-emerald-700">
+                                  className="text-success hover:text-success/80">
                                   <CheckCircle className="h-4 w-4" />
                                 </Button>
                               )}
@@ -143,7 +143,8 @@ export default function UsersPage() {
                                   size="icon"
                                   variant="ghost"
                                   onClick={() => setEditing(row)}
-                                  aria-label="Editar">
+                                  aria-label="Editar"
+                                  className="text-warning hover:text-warning/80">
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               )}
@@ -162,7 +163,7 @@ export default function UsersPage() {
                                   variant="ghost"
                                   onClick={() => setDeleting(row)}
                                   aria-label="Remover"
-                                  className="text-red-600 hover:text-red-700">
+                                  className="text-destructive hover:text-destructive/80">
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               )}

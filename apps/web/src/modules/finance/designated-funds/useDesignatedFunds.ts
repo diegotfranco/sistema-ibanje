@@ -1,5 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type { DesignatedFundResponse, DesignatedFundFormValues } from '@/schemas/designated-fund';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { DesignatedFundResponse, DesignatedFundFormValues } from './schema';
 
 const BASE = '/designated-funds';
 const KEY = ['designated-funds'] as const;

@@ -6,9 +6,9 @@ import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseCategories, useExpenseCategoryMutations } from './useExpenseCategories';
 import { ExpenseCategoryForm } from './ExpenseCategoryForm';
-import { useCategoryPageData } from '../categories-utils';
+import { useCategoryPageData } from '../useCategoryPageData';
 import { makeSubmitHandler } from '../entries-utils';
-import type { ExpenseCategoryResponse } from '@/schemas/expense-category';
+import type { ExpenseCategoryResponse } from './schema';
 
 export default function ExpenseCategoriesPage() {
   const { data: user } = useCurrentUser();

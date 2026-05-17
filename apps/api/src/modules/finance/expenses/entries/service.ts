@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import * as repo from './repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
-import { findMemberById } from '../../../members/repository.js';
+import { findAttenderById } from '../../../attenders/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
@@ -13,8 +13,9 @@ import { paginate } from '../../../../lib/pagination.js';
 import {
   uploadFile,
   deleteFile,
-  getPresignedUrl,
-  ALLOWED_MIME_TYPES
+  getFileStream,
+  ALLOWED_MIME_TYPES,
+  type StoredFile
 } from '../../../../lib/storage.js';
 import type {
   CreateExpenseEntryRequest,
@@ -26,7 +27,7 @@ async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
-  memberId?: number;
+  attenderId?: number;
   parentId?: number;
 }) {
   const category = await findExpenseCategoryById(data.categoryId);
@@ -36,9 +37,9 @@ async function validateEntry(data: {
     throw httpError(400, 'Cannot select a parent category; choose a specific sub-category');
   }
 
-  if (data.memberId) {
-    const member = await findMemberById(data.memberId);
-    if (!member) throw httpError(404, 'Member not found');
+  if (data.attenderId) {
+    const attender = await findAttenderById(data.attenderId);
+    if (!attender) throw httpError(404, 'Attender not found');
   }
 
   const paymentMethod = await findPaymentMethodById(data.paymentMethodId);
@@ -67,17 +68,16 @@ function buildReceiptKey(referenceDate: string, ext: string): string {
 
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findExpenseEntryById>>>;
 
-async function toResponse(row: Row): Promise<ExpenseEntryResponse> {
-  const receipt = row.receipt ? await getPresignedUrl(row.receipt) : null;
-  return { ...row, receipt } as ExpenseEntryResponse;
+function toResponse(row: Row): ExpenseEntryResponse {
+  const { receipt, ...rest } = row;
+  return { ...rest, hasReceipt: receipt !== null } as ExpenseEntryResponse;
 }
 
 export async function listExpenseEntries(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.ExpenseEntries, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listExpenseEntries(offset, limit);
-  const enriched = await Promise.all(rows.map(toResponse));
-  return paginate(enriched, total, page, limit);
+  return paginate(rows.map(toResponse), total, page, limit);
 }
 
 export async function getExpenseEntryById(id: number): Promise<ExpenseEntryResponse | null> {
@@ -96,7 +96,7 @@ export async function createExpenseEntry(
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
-    memberId: body.memberId,
+    attenderId: body.attenderId,
     parentId: body.parentId
   });
 
@@ -120,7 +120,7 @@ export async function updateExpenseEntry(
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
     designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
-    memberId: body.memberId ?? entry.memberId ?? undefined,
+    attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined
   };
   await validateEntry(mergedValues);
@@ -181,4 +181,14 @@ export async function deleteExpenseReceipt(
   await deleteFile(entry.receipt);
   await repo.updateReceiptKey(entryId, null);
   return 'ok';
+}
+
+export async function getExpenseReceiptFile(
+  callerId: number,
+  entryId: number
+): Promise<StoredFile | null> {
+  await assertPermission(callerId, Module.ExpenseEntries, Action.View);
+  const entry = await repo.findExpenseEntryById(entryId);
+  if (!entry || !entry.receipt) return null;
+  return getFileStream(entry.receipt);
 }

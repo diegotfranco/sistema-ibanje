@@ -9,9 +9,13 @@ export const ListIncomeEntriesRequestSchema = z.object({
 export const CreateIncomeEntryRequestSchema = z.object({
   referenceDate: z.string().date(),
   depositDate: z.string().date().optional(),
+  attributionMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-01$/, 'attributionMonth must be the first day of a month (YYYY-MM-01)')
+    .optional(),
   amount: z.number().positive(),
   categoryId: z.number().int().positive(),
-  memberId: z.number().int().positive().optional(),
+  attenderId: z.number().int().positive().optional(),
   paymentMethodId: z.number().int().positive(),
   designatedFundId: z.number().int().positive().optional(),
   notes: z.string().max(1000).optional()
@@ -25,11 +29,12 @@ export const IncomeEntryResponseSchema = z.object({
   id: z.number().int().positive(),
   referenceDate: z.string(),
   depositDate: z.string().nullable(),
+  attributionMonth: z.string().nullable(),
   amount: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
-  memberId: z.number().int().positive().nullable(),
-  memberName: z.string().nullable(),
+  attenderId: z.number().int().positive().nullable(),
+  attenderName: z.string().nullable(),
   paymentMethodId: z.number().int().positive(),
   paymentMethodName: z.string(),
   designatedFundId: z.number().int().positive().nullable(),

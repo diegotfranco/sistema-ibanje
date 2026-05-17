@@ -2,6 +2,10 @@ import * as argon2 from 'argon2';
 import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env.js';
 import * as repo from './repository.js';
+import { findAttenderByUserId } from '../attenders/repository.js';
+import { listIncomeEntriesByAttender } from '../finance/income/entries/service.js';
+import { updateAttenderProfile } from '../attenders/service.js';
+import type { UpdateMyProfileRequest } from './schema.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
 import { sendPasswordResetEmail } from '../../lib/email.js';
 import { ActiveStatus } from '@sistema-ibanje/shared';
@@ -28,7 +32,10 @@ export async function getMe(userId: number): Promise<MeResponse | null> {
   const user = await repo.findUserById(userId);
   if (!user) return null;
 
-  const permissions = await repo.findUserPermissions(userId);
+  const [permissions, attenderLink] = await Promise.all([
+    repo.findUserPermissions(userId),
+    findAttenderByUserId(userId)
+  ]);
 
   return {
     id: user.id,
@@ -36,7 +43,9 @@ export async function getMe(userId: number): Promise<MeResponse | null> {
     email: user.email,
     role: user.roleName,
     status: user.status,
-    permissions
+    permissions,
+    attenderId: attenderLink?.id ?? null,
+    isMember: attenderLink?.isMember ?? false
   };
 }
 
@@ -75,6 +84,21 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
   await repo.markPasswordResetTokenUsed(record.id);
 
   return true;
+}
+
+export async function listMyDonations(callerId: number, page: number, limit: number) {
+  const link = await findAttenderByUserId(callerId);
+  if (!link) throw httpError(404, 'No attender linked to this user');
+
+  return listIncomeEntriesByAttender(callerId, link.id, page, limit, { isSelfAccess: true });
+}
+
+export async function updateMyProfile(callerId: number, body: UpdateMyProfileRequest) {
+  const link = await findAttenderByUserId(callerId);
+  if (!link) throw httpError(404, 'No attender linked to this user');
+
+  const updated = await updateAttenderProfile(link.id, body);
+  return { attenderId: link.id, profile: updated };
 }
 
 export async function register(name: string, email: string) {

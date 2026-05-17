@@ -5,13 +5,23 @@ import { ActiveStatus, MinuteStatus } from '@sistema-ibanje/shared';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
 import { db } from '../../db/index.js';
+import { uploadFile, deleteFile, getFileStream, type StoredFile } from '../../lib/storage.js';
+import { fileTypeFromBuffer } from 'file-type';
+import { randomUUID } from 'node:crypto';
+import * as churchSettingsRepo from '../church-settings/repository.js';
+import { formatAgendaItems } from './pdf-service.js';
+import { sanitizeMinuteDoc } from './sanitize.js';
 import type {
   CreateMinuteRequest,
   UpdateMinuteVersionRequest,
+  UpdateMinuteRequest,
   EditApprovedMinuteRequest,
   ApproveMinuteRequest,
   MinuteVersionResponse,
-  MinuteResponse
+  MinuteResponse,
+  MinuteTemplateResponse,
+  CreateMinuteTemplateRequest,
+  UpdateMinuteTemplateRequest
 } from './schema.js';
 import type { Minute, MinuteVersion } from '../../db/schema.js';
 
@@ -19,7 +29,7 @@ function buildVersionResponse(v: MinuteVersion): MinuteVersionResponse {
   return {
     id: v.id,
     version: v.version,
-    content: (v.content as { text: string }).text,
+    content: v.content,
     status: v.status as MinuteVersionResponse['status'],
     reasonForChange: v.reasonForChange ?? null,
     createdByUserId: v.createdByUserId,
@@ -28,17 +38,31 @@ function buildVersionResponse(v: MinuteVersion): MinuteVersionResponse {
   };
 }
 
-function buildMinuteResponse(minute: Minute, versions: MinuteVersion[]): MinuteResponse {
+async function buildMinuteResponseAsync(
+  minute: Minute,
+  versions: MinuteVersion[]
+): Promise<MinuteResponse> {
   const sorted = [...versions].sort((a, b) => a.version - b.version);
   const currentVersion =
     sorted.length > 0 ? buildVersionResponse(sorted[sorted.length - 1]!) : null;
+
+  const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
+  const agendaItems = await repo.listAgendaItemsForMeeting(minute.meetingId);
+
   return {
     id: minute.id,
-    boardMeetingId: minute.boardMeetingId,
+    meetingId: minute.meetingId,
     minuteNumber: minute.minuteNumber,
     isNotarized: minute.isNotarized,
     notarizedAt: minute.notarizedAt ? minute.notarizedAt.toISOString() : null,
     correctsMinuteId: minute.correctsMinuteId ?? null,
+    presidingPastorName: minute.presidingPastorName ?? null,
+    secretaryName: minute.secretaryName ?? null,
+    openingTime: minute.openingTime ?? null,
+    closingTime: minute.closingTime ?? null,
+    hasSignedDocument: minute.signedDocumentPath !== null,
+    attendersPresent,
+    pautas: formatAgendaItems(agendaItems),
     currentVersion,
     versions: sorted.map(buildVersionResponse),
     createdAt: minute.createdAt.toISOString(),
@@ -51,10 +75,12 @@ export async function listMinutes(callerId: number, page: number, limit: number)
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listMinutes(offset, limit);
   const latestByMinute = await repo.findLatestVersionsForMinutes(rows.map((r) => r.id));
-  const responses = rows.map((row) => {
-    const latest = latestByMinute.get(row.id);
-    return buildMinuteResponse(row, latest ? [latest] : []);
-  });
+  const responses = await Promise.all(
+    rows.map((row) => {
+      const latest = latestByMinute.get(row.id);
+      return buildMinuteResponseAsync(row, latest ? [latest] : []);
+    })
+  );
   return paginate(responses, total, page, limit);
 }
 
@@ -62,7 +88,7 @@ export async function getMinuteById(id: number): Promise<MinuteResponse | null> 
   const minute = await repo.findMinuteById(id);
   if (!minute) return null;
   const versions = await repo.getVersionsForMinute(id);
-  return buildMinuteResponse(minute, versions);
+  return buildMinuteResponseAsync(minute, versions);
 }
 
 export async function createMinute(
@@ -71,35 +97,49 @@ export async function createMinute(
 ): Promise<MinuteResponse> {
   await assertPermission(callerId, Module.Minutes, Action.Create);
 
-  const meeting = await repo.findBoardMeetingById(body.boardMeetingId);
-  if (!meeting) throw httpError(404, 'Board meeting not found');
-  if (meeting.status === ActiveStatus.Inactive) throw httpError(400, 'Board meeting is inactive');
+  const meeting = await repo.findMeetingById(body.meetingId);
+  if (!meeting) throw httpError(404, 'Meeting not found');
+  if (meeting.status === ActiveStatus.Inactive) throw httpError(400, 'Meeting is inactive');
 
   if (await repo.findMinuteByNumber(body.minuteNumber))
     throw httpError(409, 'Minute number already exists');
-  if (await repo.findMinuteByBoardMeetingId(body.boardMeetingId))
+  if (await repo.findMinuteByMeetingId(body.meetingId))
     throw httpError(409, 'This meeting already has minutes');
+
+  const churchSettings = await churchSettingsRepo.getChurchSettings();
+  if (!churchSettings) throw httpError(409, 'Church settings not initialized');
+
+  const template = await repo.findDefaultTemplateForMeetingType(meeting.type);
+  const templateContent = template?.content ?? { type: 'doc', content: [] };
+
+  // Store template content as-is (with placeholders intact)
+  const interpolatedContent = templateContent;
 
   return await db.transaction(async (tx) => {
     const minute = await repo.insertMinute(
       {
-        boardMeetingId: body.boardMeetingId,
-        minuteNumber: body.minuteNumber
+        meetingId: body.meetingId,
+        minuteNumber: body.minuteNumber,
+        presidingPastorName:
+          body.presidingPastorName ?? churchSettings.currentPresidentName ?? null,
+        secretaryName: body.secretaryName ?? churchSettings.currentSecretaryName ?? null,
+        openingTime: body.openingTime ?? null,
+        closingTime: body.closingTime ?? null
       },
       tx
     );
     const version = await repo.insertMinuteVersion(
       {
         minuteId: minute.id,
-        content: { text: body.content },
+        content: interpolatedContent,
         version: 1,
-        status: MinuteStatus.AwaitingApproval,
+        status: MinuteStatus.Draft,
         createdByUserId: callerId
       },
       tx
     );
 
-    return buildMinuteResponse(minute, [version]);
+    return await buildMinuteResponseAsync(minute, [version]);
   });
 }
 
@@ -113,12 +153,17 @@ export async function updatePendingVersion(
   if (!minute) return null;
 
   const latest = await repo.findLatestVersion(minuteId);
-  if (!latest || latest.status !== MinuteStatus.AwaitingApproval)
+  if (
+    !latest ||
+    (latest.status !== MinuteStatus.Draft && latest.status !== MinuteStatus.AwaitingApproval)
+  )
     throw httpError(409, 'No pending version to update');
 
-  await repo.updateMinuteVersion(latest.id, { content: { text: body.content } });
+  const sanitized = sanitizeMinuteDoc(body.content);
+
+  await repo.updateMinuteVersion(latest.id, { content: sanitized });
   const versions = await repo.getVersionsForMinute(minuteId);
-  return buildMinuteResponse(minute, versions);
+  return buildMinuteResponseAsync(minute, versions);
 }
 
 export async function editApprovedMinute(
@@ -134,12 +179,14 @@ export async function editApprovedMinute(
   if (!latest || latest.status !== MinuteStatus.Approved)
     throw httpError(409, 'Latest version must be approved to create a new one');
 
+  const sanitized = sanitizeMinuteDoc(body.content);
+
   return await db.transaction(async (tx) => {
     await repo.updateMinuteVersion(latest.id, { status: MinuteStatus.Replaced }, tx);
     await repo.insertMinuteVersion(
       {
         minuteId,
-        content: { text: body.content },
+        content: sanitized,
         version: latest.version + 1,
         status: MinuteStatus.AwaitingApproval,
         reasonForChange: body.reasonForChange,
@@ -149,7 +196,7 @@ export async function editApprovedMinute(
     );
 
     const versions = await repo.getVersionsForMinute(minuteId);
-    return buildMinuteResponse(minute, versions);
+    return buildMinuteResponseAsync(minute, versions);
   });
 }
 
@@ -172,7 +219,7 @@ export async function approveMinute(
   });
 
   const versions = await repo.getVersionsForMinute(minuteId);
-  return buildMinuteResponse(minute, versions);
+  return buildMinuteResponseAsync(minute, versions);
 }
 
 export async function deleteMinute(callerId: number, minuteId: number): Promise<void | null> {
@@ -185,4 +232,243 @@ export async function deleteMinute(callerId: number, minuteId: number): Promise<
     throw httpError(409, 'Cannot delete a minute with an approved version');
 
   await repo.deleteMinute(minuteId);
+}
+
+export async function finalizeDraft(
+  callerId: number,
+  minuteId: number
+): Promise<MinuteResponse | null> {
+  await assertPermission(callerId, Module.Minutes, Action.Update);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute) return null;
+
+  const latest = await repo.findLatestVersion(minuteId);
+  if (!latest || latest.status !== MinuteStatus.Draft)
+    throw httpError(409, 'Latest version is not a draft');
+
+  await repo.updateMinuteVersion(latest.id, { status: MinuteStatus.AwaitingApproval });
+  const versions = await repo.getVersionsForMinute(minuteId);
+  return buildMinuteResponseAsync(minute, versions);
+}
+
+export async function getMinuteSignedDocumentFile(
+  callerId: number,
+  minuteId: number
+): Promise<StoredFile | null> {
+  await assertPermission(callerId, Module.Minutes, Action.View);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute || !minute.signedDocumentPath) return null;
+  return getFileStream(minute.signedDocumentPath);
+}
+
+export async function signMinute(
+  callerId: number,
+  minuteId: number,
+  buffer: Buffer,
+  mimetype: string
+): Promise<MinuteResponse | null> {
+  await assertPermission(callerId, Module.Minutes, Action.Update);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute) return null;
+
+  if (mimetype !== 'application/pdf') {
+    throw httpError(400, 'Only PDF files are accepted');
+  }
+
+  const sniffed = await fileTypeFromBuffer(buffer);
+  if (sniffed?.mime !== 'application/pdf') {
+    throw httpError(400, 'Only PDF files are accepted');
+  }
+
+  const meeting = await repo.findMeetingById(minute.meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+
+  const dateObj = new Date(meeting.meetingDate);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const key = `signed-minutes/${year}/${month}/${randomUUID()}.pdf`;
+
+  if (minute.signedDocumentPath) {
+    try {
+      await deleteFile(minute.signedDocumentPath);
+    } catch {
+      // ignore deletion errors
+    }
+  }
+
+  await uploadFile(key, buffer, mimetype);
+  await repo.updateMinute(minuteId, { signedDocumentPath: key });
+
+  const updated = await repo.findMinuteById(minuteId);
+  const versions = await repo.getVersionsForMinute(minuteId);
+  return buildMinuteResponseAsync(updated!, versions);
+}
+
+export async function updateMinute(
+  callerId: number,
+  minuteId: number,
+  body: UpdateMinuteRequest
+): Promise<MinuteResponse | null> {
+  await assertPermission(callerId, Module.Minutes, Action.Update);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute) return null;
+
+  const updateData: Partial<typeof body & { updatedAt?: Date }> = { ...body };
+  await repo.updateMinute(minuteId, updateData as Parameters<typeof repo.updateMinute>[1]);
+
+  const updated = await repo.findMinuteById(minuteId);
+  const versions = await repo.getVersionsForMinute(minuteId);
+  return buildMinuteResponseAsync(updated!, versions);
+}
+
+export async function getSuggestedMinuteNumber(callerId: number): Promise<string> {
+  await assertPermission(callerId, Module.Minutes, Action.Create);
+  const mostRecent = await repo.findMostRecentMinute();
+  if (!mostRecent) return '';
+
+  const match = mostRecent.minuteNumber.match(/(\d+)/);
+  if (match && match[1]) {
+    const num = parseInt(match[1], 10);
+    return String(num + 1);
+  }
+  return '';
+}
+
+export async function getMeetingAttendersPresent(
+  callerId: number,
+  meetingId: number
+): Promise<Array<{ id: number; name: string }>> {
+  await assertPermission(callerId, Module.Minutes, Action.View);
+  const meeting = await repo.findMeetingById(meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+  return repo.getMeetingAttendersPresent(meetingId);
+}
+
+export async function setMeetingAttendersPresent(
+  callerId: number,
+  meetingId: number,
+  attenderIds: number[]
+): Promise<void> {
+  await assertPermission(callerId, Module.Minutes, Action.Update);
+  const meeting = await repo.findMeetingById(meetingId);
+  if (!meeting) throw httpError(404, 'Board meeting not found');
+  return repo.setMeetingAttendersPresent(meetingId, attenderIds);
+}
+
+export async function listMinuteTemplates(): Promise<MinuteTemplateResponse[]> {
+  await assertPermission(0, Module.MinuteTemplates, Action.View);
+  const templates = await repo.listMinuteTemplates();
+  return templates.map((t) => ({
+    id: t.id,
+    meetingType: t.meetingType,
+    name: t.name,
+    content: t.content,
+    isDefault: t.isDefault,
+    defaultAgendaItems:
+      (t.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
+    createdAt: t.createdAt.toISOString(),
+    updatedAt: t.updatedAt.toISOString()
+  }));
+}
+
+export async function getMinuteTemplateById(id: number): Promise<MinuteTemplateResponse | null> {
+  const template = await repo.findMinuteTemplateById(id);
+  if (!template) return null;
+  return {
+    id: template.id,
+    meetingType: template.meetingType,
+    name: template.name,
+    content: template.content,
+    isDefault: template.isDefault,
+    defaultAgendaItems:
+      (template.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
+    createdAt: template.createdAt.toISOString(),
+    updatedAt: template.updatedAt.toISOString()
+  };
+}
+
+export async function createMinuteTemplate(
+  callerId: number,
+  body: CreateMinuteTemplateRequest
+): Promise<MinuteTemplateResponse> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.Create);
+
+  return await db.transaction(async (tx) => {
+    if (body.isDefault) {
+      await repo.clearDefaultForMeetingType(body.meetingType, tx);
+    }
+
+    const created = await repo.createMinuteTemplate(
+      {
+        meetingType: body.meetingType,
+        name: body.name,
+        content: body.content,
+        isDefault: body.isDefault ?? false,
+        defaultAgendaItems: body.defaultAgendaItems ?? [],
+        createdByUserId: callerId
+      },
+      tx
+    );
+
+    return {
+      id: created.id,
+      meetingType: created.meetingType,
+      name: created.name,
+      content: created.content,
+      isDefault: created.isDefault,
+      defaultAgendaItems:
+        (created.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
+      createdAt: created.createdAt.toISOString(),
+      updatedAt: created.updatedAt.toISOString()
+    };
+  });
+}
+
+export async function updateMinuteTemplate(
+  callerId: number,
+  id: number,
+  body: UpdateMinuteTemplateRequest
+): Promise<MinuteTemplateResponse | null> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.Update);
+
+  return await db.transaction(async (tx) => {
+    const template = await repo.findMinuteTemplateById(id);
+    if (!template) return null;
+
+    if (body.isDefault === true) {
+      await repo.clearDefaultForMeetingType(template.meetingType, tx);
+    }
+
+    const updateData: Parameters<typeof repo.updateMinuteTemplate>[1] = {};
+    if (body.name) updateData.name = body.name;
+    if (body.content !== undefined) updateData.content = body.content;
+    if (body.isDefault !== undefined) updateData.isDefault = body.isDefault;
+    if (body.defaultAgendaItems !== undefined)
+      updateData.defaultAgendaItems = body.defaultAgendaItems;
+
+    const updated = await repo.updateMinuteTemplate(id, updateData, tx);
+    if (!updated) return null;
+
+    return {
+      id: updated.id,
+      meetingType: updated.meetingType,
+      name: updated.name,
+      content: updated.content,
+      isDefault: updated.isDefault,
+      defaultAgendaItems:
+        (updated.defaultAgendaItems as Array<{ title: string; description?: string | null }>) ?? [],
+      createdAt: updated.createdAt.toISOString(),
+      updatedAt: updated.updatedAt.toISOString()
+    };
+  });
+}
+
+export async function deleteMinuteTemplate(callerId: number, id: number): Promise<void> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.Delete);
+
+  const template = await repo.findMinuteTemplateById(id);
+  if (!template) throw httpError(404, 'Template not found');
+  if (template.isDefault) throw httpError(409, 'Cannot delete default template — replace it first');
+
+  await repo.deleteMinuteTemplate(id);
 }

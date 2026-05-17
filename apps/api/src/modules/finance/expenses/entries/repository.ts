@@ -5,7 +5,7 @@ import {
   expenseCategories,
   paymentMethods,
   designatedFunds,
-  members
+  attenders
 } from '../../../../db/schema.js';
 
 const selectFields = {
@@ -23,8 +23,8 @@ const selectFields = {
   paymentMethodName: paymentMethods.name,
   designatedFundId: expenseEntries.designatedFundId,
   designatedFundName: designatedFunds.name,
-  memberId: expenseEntries.memberId,
-  memberName: members.name,
+  attenderId: expenseEntries.attenderId,
+  attenderName: attenders.name,
   receipt: expenseEntries.receipt,
   notes: expenseEntries.notes,
   userId: expenseEntries.userId,
@@ -40,7 +40,7 @@ function baseQuery() {
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
-    .leftJoin(members, eq(expenseEntries.memberId, members.id));
+    .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id));
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
@@ -66,7 +66,7 @@ export async function insertExpenseEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
-  memberId?: number;
+  attenderId?: number;
   parentId?: number;
   receipt?: string;
   notes?: string;
@@ -100,7 +100,7 @@ export async function updateExpenseEntry(
       | 'categoryId'
       | 'paymentMethodId'
       | 'designatedFundId'
-      | 'memberId'
+      | 'attenderId'
       | 'parentId'
       | 'receipt'
       | 'notes'

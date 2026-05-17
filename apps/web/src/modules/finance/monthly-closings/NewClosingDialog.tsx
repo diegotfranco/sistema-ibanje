@@ -17,7 +17,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { zodResolver } from '@/lib/zodResolver';
-import { NewClosingSchema, type NewClosingFormValues } from '@/schemas/monthly-closing';
+import { NewClosingSchema, type NewClosingFormValues } from './schema';
 import { useCreateMonthlyClosing } from './useMonthlyClosings';
 
 interface Props {

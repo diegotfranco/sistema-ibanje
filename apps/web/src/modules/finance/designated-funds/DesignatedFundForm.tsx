@@ -10,7 +10,7 @@ import {
   DesignatedFundFormSchema,
   type DesignatedFundFormValues,
   type DesignatedFundResponse
-} from '@/schemas/designated-fund';
+} from './schema';
 
 interface Props {
   initialValues?: DesignatedFundResponse;

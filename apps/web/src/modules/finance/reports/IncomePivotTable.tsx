@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import type { IncomePivot } from '@/schemas/report';
+import type { IncomePivot } from './schema';
 
 interface Props {
   pivot: IncomePivot;
@@ -67,7 +67,7 @@ export function IncomePivotTable({ pivot }: Props) {
                 {formatMoney(col.total)}
               </TableCell>
             ))}
-            <TableCell className="text-right font-mono text-emerald-600">
+            <TableCell className="text-right font-mono text-money-in">
               {formatMoney(pivot.grandTotal)}
             </TableCell>
           </TableRow>

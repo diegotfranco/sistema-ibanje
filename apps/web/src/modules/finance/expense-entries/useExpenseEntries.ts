@@ -1,12 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
 import { api, ApiError } from '@/lib/api';
 import type {
   ExpenseEntryResponse,
   ExpenseEntryCreateBody,
   ExpenseEntryUpdateBody
-} from '@/schemas/expense-entry';
+} from './schema';
 
 const BASE = '/expense-entries';
 const KEY = ['expense-entries'] as const;

@@ -10,7 +10,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseEntries, useExpenseEntryMutations } from './useExpenseEntries';
 import { ExpenseEntryForm } from './ExpenseEntryForm';
 import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
-import type { ExpenseEntryResponse, ExpenseEntryFormValues } from '@/schemas/expense-entry';
+import type { ExpenseEntryResponse, ExpenseEntryFormValues } from './schema';
 
 export default function ExpenseEntriesPage() {
   const { data: user } = useCurrentUser();
@@ -40,7 +40,7 @@ export default function ExpenseEntriesPage() {
     categoryId: values.categoryId!,
     paymentMethodId: values.paymentMethodId!,
     ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
-    ...(values.memberId !== undefined ? { memberId: values.memberId } : {}),
+    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
     ...(values.notes ? { notes: values.notes } : {})
   });
 
@@ -78,21 +78,22 @@ export default function ExpenseEntriesPage() {
         header: 'Comprovante',
         cell: (row: ExpenseEntryResponse) => (
           <div className="flex justify-center">
-            {row.receipt ? (
+            {row.hasReceipt ? (
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={row.receipt}
+                href={`${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${row.id}/receipt`}
                 title="Ver comprovante"
                 aria-label="Ver comprovante"
-                className="text-muted-foreground hover:text-teal-600 inline-flex">
+                className="text-muted-foreground hover:text-primary-soft inline-flex">
                 <Receipt size={16} />
               </a>
             ) : (
               <span
-                title="Sem comprovante"
+                role="img"
                 aria-label="Sem comprovante"
-                className="text-red-600 inline-flex">
+                title="Sem comprovante"
+                className="text-destructive inline-flex">
                 <Receipt size={16} />
               </span>
             )}

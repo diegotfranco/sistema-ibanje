@@ -8,7 +8,7 @@ import {
   userModulePermissions,
   modules,
   permissions,
-  members,
+  attenders,
   roleModulePermissions
 } from '../../db/schema.js';
 
@@ -167,11 +167,11 @@ export async function resolvePermissionRows(permissionsMap: Record<string, strin
   return { rows, unknownModules, unknownPermissions };
 }
 
-export async function findMemberById(id: number) {
+export async function findAttenderById(id: number) {
   const result = await db
-    .select({ id: members.id, userId: members.userId, name: members.name })
-    .from(members)
-    .where(eq(members.id, id))
+    .select({ id: attenders.id, userId: attenders.userId, name: attenders.name })
+    .from(attenders)
+    .where(eq(attenders.id, id))
     .limit(1);
   return result[0] ?? null;
 }

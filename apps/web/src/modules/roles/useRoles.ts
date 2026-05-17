@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type { RoleFormValues, RolePermissionEntry, RoleResponse } from '@/schemas/role';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { RoleFormValues, RolePermissionEntry, RoleResponse } from './schema';
 
 const BASE = '/roles';
 const KEY = ['roles'] as const;

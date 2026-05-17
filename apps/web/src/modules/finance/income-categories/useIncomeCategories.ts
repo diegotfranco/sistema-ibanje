@@ -1,5 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type { IncomeCategoryResponse, IncomeCategoryFormValues } from '@/schemas/income-category';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { IncomeCategoryResponse, IncomeCategoryFormValues } from './schema';
 
 const BASE = '/income-categories';
 const KEY = ['income-categories'] as const;

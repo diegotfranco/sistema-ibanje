@@ -9,7 +9,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeEntries, useIncomeEntryMutations } from './useIncomeEntries';
 import { IncomeEntryForm } from './IncomeEntryForm';
 import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
-import type { IncomeEntryResponse, IncomeEntryFormValues } from '@/schemas/income-entry';
+import type { IncomeEntryResponse, IncomeEntryFormValues } from './schema';
 
 export default function IncomeEntriesPage() {
   const { data: user } = useCurrentUser();
@@ -34,7 +34,7 @@ export default function IncomeEntriesPage() {
     ...(values.depositDate ? { depositDate: values.depositDate } : {}),
     amount: Number.parseFloat(values.amount),
     categoryId: values.categoryId!,
-    ...(values.memberId !== undefined ? { memberId: values.memberId } : {}),
+    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
     paymentMethodId: values.paymentMethodId!,
     ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
     ...(values.notes ? { notes: values.notes } : {})
@@ -67,8 +67,8 @@ export default function IncomeEntriesPage() {
         )
       },
       {
-        header: 'Membro',
-        cell: (row: IncomeEntryResponse) => row.memberName ?? '—'
+        header: 'Congregado',
+        cell: (row: IncomeEntryResponse) => row.attenderName ?? '—'
       },
       {
         header: 'Forma de Pag.',

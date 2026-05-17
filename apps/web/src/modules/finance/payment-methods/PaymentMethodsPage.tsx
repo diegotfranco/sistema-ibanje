@@ -8,7 +8,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { usePaymentMethods, usePaymentMethodMutations } from './usePaymentMethods';
 import { PaymentMethodForm } from './PaymentMethodForm';
 import { makeSubmitHandler } from '../entries-utils';
-import type { PaymentMethodResponse } from '@/schemas/payment-method';
+import type { PaymentMethodResponse } from './schema';
 
 export default function PaymentMethodsPage() {
   const { data: user } = useCurrentUser();

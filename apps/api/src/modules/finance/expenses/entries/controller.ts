@@ -56,3 +56,13 @@ export async function deleteReceipt(req: FastifyRequest, reply: FastifyReply) {
     return reply.code(404).send({ message: 'No receipt attached to this entry' });
   return reply.code(204).send();
 }
+
+export async function getReceipt(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const file = await service.getExpenseReceiptFile(req.session.userId!, id);
+  if (!file) return reply.code(404).send({ message: 'Receipt not found' });
+  reply.header('Content-Type', file.contentType);
+  reply.header('Content-Disposition', `inline; filename="comprovante-${id}"`);
+  if (file.contentLength !== null) reply.header('Content-Length', file.contentLength);
+  return reply.send(file.body);
+}

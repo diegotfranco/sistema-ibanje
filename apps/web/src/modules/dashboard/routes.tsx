@@ -1,4 +1,4 @@
-import { LayoutDashboard } from 'lucide-react';
+import { Home } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
@@ -9,8 +9,8 @@ export const dashboardRoutes: AppRoute[] = [
     path: paths.dashboard,
     element: <DashboardPage />,
     layout: 'app',
-    label: 'Painel',
-    icon: LayoutDashboard,
+    label: 'Início',
+    icon: Home,
     module: Module.Dashboard
   }
 ];

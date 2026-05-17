@@ -11,11 +11,11 @@ import {
   type UserCreateFormValues,
   type UserEditFormValues,
   type UserResponse
-} from '@/schemas/user';
-import type { RoleResponse } from '@/schemas/role';
-import type { MemberResponse } from '@/schemas/member';
+} from './schema';
+import type { RoleResponse } from '../roles/schema';
+import type { AttenderResponse } from '../attenders/schema';
 import { useRoles } from '@/modules/roles/useRoles';
-import { useMembers } from '@/modules/members/useMembers';
+import { useAttenders } from '@/modules/attenders/useAttenders';
 
 interface UserFormProps {
   initialValues?: UserResponse;
@@ -40,12 +40,12 @@ export default function UserForm({
   const rolesList = useRoles();
   const roles = rolesList.data?.data ?? [];
 
-  const membersList = useMembers();
-  const members = membersList.data?.data ?? [];
+  const attendersList = useAttenders();
+  const attenders = attendersList.data?.data ?? [];
 
   const createForm = useForm<UserCreateFormValues>({
     resolver: zodResolver(UserCreateFormSchema),
-    defaultValues: { name: '', email: '', memberId: null }
+    defaultValues: { name: '', email: '', attenderId: null }
   });
 
   const editForm = useForm<UserEditFormValues>({
@@ -71,7 +71,7 @@ export default function UserForm({
       createForm.reset({
         name: '',
         email: '',
-        memberId: null
+        attenderId: null
       });
     }
   }, [initialValues, isEditing, editForm, createForm, formRef]);
@@ -88,12 +88,12 @@ export default function UserForm({
         <div className="space-y-1">
           <Label htmlFor="edit-name">Nome</Label>
           <Input id="edit-name" {...register('name')} />
-          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="edit-email">E-mail</Label>
           <Input id="edit-email" type="email" {...register('email')} />
-          {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-1">
           <Label>Cargo</Label>
@@ -112,7 +112,7 @@ export default function UserForm({
               />
             )}
           />
-          {errors.roleId && <p className="text-xs text-red-500">{errors.roleId.message}</p>}
+          {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
@@ -137,12 +137,12 @@ export default function UserForm({
       <div className="space-y-1">
         <Label htmlFor="create-name">Nome *</Label>
         <Input id="create-name" {...register('name')} />
-        {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div className="space-y-1">
         <Label htmlFor="create-email">E-mail *</Label>
         <Input id="create-email" type="email" {...register('email')} />
-        {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
       </div>
       <div className="space-y-1">
         <Label>Cargo *</Label>
@@ -161,22 +161,22 @@ export default function UserForm({
             />
           )}
         />
-        {errors.roleId && <p className="text-xs text-red-500">{errors.roleId.message}</p>}
+        {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
       </div>
       <div className="space-y-1">
-        <Label>Membro (opcional)</Label>
+        <Label>Congregado (opcional)</Label>
         <Controller
-          name="memberId"
+          name="attenderId"
           control={control}
           render={({ field }) => (
-            <EntityPicker<MemberResponse>
-              items={members}
+            <EntityPicker<AttenderResponse>
+              items={attenders}
               value={field.value ?? null}
               onChange={(v) => field.onChange(v)}
-              getValue={(m) => m.id}
-              getLabel={(m) => m.name}
-              placeholder="Vincular a um membro..."
-              isLoading={membersList.isLoading}
+              getValue={(a) => a.id}
+              getLabel={(a) => a.name}
+              placeholder="Vincular a um congregado..."
+              isLoading={attendersList.isLoading}
               allowClear
             />
           )}

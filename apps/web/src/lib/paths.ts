@@ -6,7 +6,7 @@ export const paths = {
   dashboard: '/dashboard',
   roles: '/roles',
   users: '/users',
-  members: '/members',
+  attenders: '/attenders',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
   incomeCategories: '/income-categories',
@@ -16,9 +16,13 @@ export const paths = {
   monthlyClosings: '/monthly-closings',
   monthlyClosingDetail: '/monthly-closings/:id',
   reports: '/reports',
-  boardMeetings: '/board-meetings',
+  meetings: '/meetings',
   minutes: '/minutes',
-  minuteDetail: '/minutes/:id'
+  minuteDetail: '/minutes/:id',
+  minuteTemplates: '/minute-templates',
+  churchSettings: '/church-settings',
+  membershipLetters: '/membership-letters',
+  me: '/me'
 } as const;
 
 export type AppPath = (typeof paths)[keyof typeof paths];

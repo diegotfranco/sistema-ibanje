@@ -16,6 +16,13 @@ export interface ResourceColumn<T> {
   className?: string;
 }
 
+export interface CustomAction<T> {
+  label: string;
+  icon?: React.ReactNode;
+  onClick: (row: T) => void;
+  className?: string;
+}
+
 interface ResourceListPageProps<T> {
   title: string;
   columns: ResourceColumn<T>[];
@@ -27,6 +34,7 @@ interface ResourceListPageProps<T> {
   canCreate?: boolean;
   canEdit?: boolean;
   canDelete?: boolean;
+  customActions?: CustomAction<T>[];
   emptyMessage?: string;
   rowKey: (row: T) => string | number;
 }
@@ -42,10 +50,12 @@ export function ResourceListPage<T>({
   canCreate,
   canEdit,
   canDelete,
+  customActions,
   emptyMessage = 'Nenhum registro encontrado.',
   rowKey
 }: ResourceListPageProps<T>) {
-  const showActions = (canEdit && onEdit) || (canDelete && onDelete);
+  const showActions =
+    (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
 
   return (
     <div className="p-8">
@@ -101,12 +111,25 @@ export function ResourceListPage<T>({
                     {showActions && (
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          {customActions?.map((action) => (
+                            <Button
+                              key={action.label}
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => action.onClick(row)}
+                              aria-label={action.label}
+                              className={action.className}
+                              title={action.label}>
+                              {action.icon || action.label}
+                            </Button>
+                          ))}
                           {canEdit && onEdit && (
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => onEdit(row)}
-                              aria-label="Editar">
+                              aria-label="Editar"
+                              className="text-warning hover:text-warning/80">
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
@@ -116,7 +139,7 @@ export function ResourceListPage<T>({
                               variant="ghost"
                               onClick={() => onDelete(row)}
                               aria-label="Remover"
-                              className="text-red-600 hover:text-red-700">
+                              className="text-destructive hover:text-destructive/80">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}

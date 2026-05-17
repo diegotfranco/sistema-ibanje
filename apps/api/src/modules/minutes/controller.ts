@@ -2,13 +2,18 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import type {
   CreateMinuteRequest,
   UpdateMinuteVersionRequest,
+  UpdateMinuteRequest,
   EditApprovedMinuteRequest,
-  ApproveMinuteRequest
+  ApproveMinuteRequest,
+  CreateMinuteTemplateRequest,
+  UpdateMinuteTemplateRequest,
+  SetAttendersPresentRequest
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
 import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
+import { renderMinutePdf } from './pdf-service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit } = req.query as PaginationQuery;
@@ -66,5 +71,119 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const result = await service.deleteMinute(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Minute not found' });
   logAudit(req.session.userId!, 'delete', 'minute', id, { ipAddress: req.ip });
+  return reply.code(204).send();
+}
+
+export async function finalizeDraft(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const minute = await service.finalizeDraft(req.session.userId!, id);
+  if (!minute) return reply.code(404).send({ message: 'Minute not found' });
+  logAudit(req.session.userId!, 'state_change', 'minute', id, {
+    notes: 'finalized draft',
+    ipAddress: req.ip
+  });
+  return reply.send(minute);
+}
+
+export async function sign(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const file = await req.file();
+  if (!file) return reply.code(400).send({ message: 'No file uploaded' });
+
+  const buffer = await file.toBuffer();
+  const minute = await service.signMinute(req.session.userId!, id, buffer, file.mimetype);
+  if (!minute) return reply.code(404).send({ message: 'Minute not found' });
+  logAudit(req.session.userId!, 'state_change', 'minute', id, {
+    notes: 'signed PDF',
+    ipAddress: req.ip
+  });
+  return reply.send(minute);
+}
+
+export async function updateMinute(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as UpdateMinuteRequest;
+  const minute = await service.updateMinute(req.session.userId!, id, body);
+  if (!minute) return reply.code(404).send({ message: 'Minute not found' });
+  logAudit(req.session.userId!, 'update', 'minute', id, { ipAddress: req.ip });
+  return reply.send(minute);
+}
+
+export async function listMinuteTemplates(req: FastifyRequest, reply: FastifyReply) {
+  const templates = await service.listMinuteTemplates();
+  return reply.send(templates);
+}
+
+export async function getMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const template = await service.getMinuteTemplateById(id);
+  if (!template) return reply.code(404).send({ message: 'Template not found' });
+  return reply.send(template);
+}
+
+export async function createMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const body = req.body as CreateMinuteTemplateRequest;
+  const template = await service.createMinuteTemplate(req.session.userId!, body);
+  logAudit(req.session.userId!, 'create', 'minute_template', template.id, { ipAddress: req.ip });
+  return reply.code(201).send(template);
+}
+
+export async function updateMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as UpdateMinuteTemplateRequest;
+  const template = await service.updateMinuteTemplate(req.session.userId!, id, body);
+  if (!template) return reply.code(404).send({ message: 'Template not found' });
+  logAudit(req.session.userId!, 'update', 'minute_template', id, { ipAddress: req.ip });
+  return reply.send(template);
+}
+
+export async function deleteMinuteTemplate(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  await service.deleteMinuteTemplate(req.session.userId!, id);
+  logAudit(req.session.userId!, 'delete', 'minute_template', id, { ipAddress: req.ip });
+  return reply.code(204).send();
+}
+
+export async function pdf(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const { download } = req.query as { download?: string };
+  const buffer = await renderMinutePdf(req.session.userId!, id);
+  if (!buffer) return reply.code(404).send({ message: 'Minute not found' });
+  const filename = `ata-${id}.pdf`;
+  const disposition = download === '1' ? 'attachment' : 'inline';
+  return reply
+    .header('Content-Type', 'application/pdf')
+    .header('Content-Disposition', `${disposition}; filename="${filename}"`)
+    .send(buffer);
+}
+
+export async function signedDocument(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const file = await service.getMinuteSignedDocumentFile(req.session.userId!, id);
+  if (!file) return reply.code(404).send({ message: 'Signed document not found' });
+  reply.header('Content-Type', file.contentType);
+  reply.header('Content-Disposition', `inline; filename="ata-assinada-${id}.pdf"`);
+  if (file.contentLength !== null) reply.header('Content-Length', file.contentLength);
+  return reply.send(file.body);
+}
+
+export async function suggestedMinuteNumber(req: FastifyRequest, reply: FastifyReply) {
+  const value = await service.getSuggestedMinuteNumber(req.session.userId!);
+  return reply.send({ value });
+}
+
+export async function getAttendersPresent(req: FastifyRequest, reply: FastifyReply) {
+  const { meetingId } = req.params as { meetingId: number };
+  const data = await service.getMeetingAttendersPresent(req.session.userId!, meetingId);
+  return reply.send({ data });
+}
+
+export async function setAttendersPresent(req: FastifyRequest, reply: FastifyReply) {
+  const { meetingId } = req.params as { meetingId: number };
+  const body = req.body as SetAttendersPresentRequest;
+  await service.setMeetingAttendersPresent(req.session.userId!, meetingId, body.attenderIds);
+  logAudit(req.session.userId!, 'update', 'meeting_attenders_present', meetingId, {
+    ipAddress: req.ip
+  });
   return reply.code(204).send();
 }

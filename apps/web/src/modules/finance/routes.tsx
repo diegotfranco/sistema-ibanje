@@ -5,6 +5,7 @@ import { Module, Action } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPage';
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
+import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosingsPage';
 import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
 import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
@@ -102,10 +103,10 @@ export const financeRoutes: AppRoute[] = [
             action: Action.Report
           },
           {
-            path: paths.monthlyClosingDetail,
+            path: paths.monthlyClosings,
             element: (
               <RequirePermission module={Module.MonthlyClosings}>
-                <MonthlyClosingDetailPage />
+                <MonthlyClosingsPage />
               </RequirePermission>
             ),
             layout: 'app',
@@ -150,5 +151,15 @@ export const financeRoutes: AppRoute[] = [
     layout: 'app',
     module: Module.Reports,
     action: Action.Report
+  },
+  {
+    path: paths.monthlyClosingDetail,
+    element: (
+      <RequirePermission module={Module.MonthlyClosings}>
+        <MonthlyClosingDetailPage />
+      </RequirePermission>
+    ),
+    layout: 'app',
+    module: Module.MonthlyClosings
   }
 ];

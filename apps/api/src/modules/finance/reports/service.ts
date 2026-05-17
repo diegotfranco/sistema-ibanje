@@ -16,7 +16,7 @@ import type {
   ExpenseReportResponse,
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
-  MembersReportResponse,
+  AttendersReportResponse,
   FundListResponse,
   FundDetailResponse,
   FundSummary,
@@ -233,10 +233,10 @@ export async function getFinancialStatement(
   };
 }
 
-export async function getMembersReport(
+export async function getAttendersReport(
   callerId: number,
   month: string
-): Promise<MembersReportResponse> {
+): Promise<AttendersReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
   const { from: fromDate, to: toDate } = monthToRange(month);
 
@@ -245,28 +245,28 @@ export async function getMembersReport(
     repo.findIncomeCategoryIdsByNames(['Oferta de Culto', 'Oferta Missionária', 'Doação'])
   ]);
 
-  const [totalActiveMembers, tithePayers, offeringPayers] = await Promise.all([
-    repo.countActiveMembers(),
-    repo.countDistinctMembersWithTithe(fromDate, toDate, titheIds),
-    repo.countDistinctMembersWithOfferings(fromDate, toDate, offeringIds)
+  const [totalActiveAttenders, tithePayers, offeringPayers] = await Promise.all([
+    repo.countActiveAttenders(),
+    repo.countDistinctAttendersWithTithe(fromDate, toDate, titheIds),
+    repo.countDistinctAttendersWithOfferings(fromDate, toDate, offeringIds)
   ]);
 
   const tithePercentage =
-    totalActiveMembers > 0 ? ((tithePayers / totalActiveMembers) * 100).toFixed(2) : '0.00';
+    totalActiveAttenders > 0 ? ((tithePayers / totalActiveAttenders) * 100).toFixed(2) : '0.00';
   const offeringPercentage =
-    totalActiveMembers > 0 ? ((offeringPayers / totalActiveMembers) * 100).toFixed(2) : '0.00';
+    totalActiveAttenders > 0 ? ((offeringPayers / totalActiveAttenders) * 100).toFixed(2) : '0.00';
 
   return {
     period: { from: fromDate, to: toDate },
-    totalActiveMembers,
+    totalActiveAttenders,
     tithe: {
-      membersWhoContributed: tithePayers,
+      attendersWhoContributed: tithePayers,
       percentage: tithePercentage
     },
     offerings: {
-      membersWhoContributed: offeringPayers,
+      attendersWhoContributed: offeringPayers,
       percentage: offeringPercentage,
-      note: 'Only counts entries where memberId was explicitly set'
+      note: 'Only counts entries where attenderId was explicitly set'
     }
   };
 }
