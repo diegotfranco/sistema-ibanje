@@ -3,10 +3,6 @@
 @import 'shadcn/tailwind.css';
 @import '@fontsource-variable/noto-sans';
 @import '@fontsource-variable/roboto';
-@import 'tw-animate-css';
-@import 'shadcn/tailwind.css';
-@import '@fontsource-variable/noto-sans';
-@import '@fontsource-variable/roboto';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -158,6 +154,11 @@
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
+  }
+  a {
+    &:hover {
+      @apply underline;
+    }
   }
   html {
     @apply font-sans;
