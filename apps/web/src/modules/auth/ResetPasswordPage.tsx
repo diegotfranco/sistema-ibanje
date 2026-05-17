@@ -33,7 +33,7 @@ export default function ResetPasswordPage() {
           <CardFooter className="justify-center bg-transparent border-none">
             <Link
               to={paths.forgotPassword}
-              className="text-primary-soft hover:underline font-medium">
+              className="font-light hover:underline underline-offset-4 decoration-primary">
               Solicitar novo link
             </Link>
           </CardFooter>
@@ -51,8 +51,10 @@ export default function ResetPasswordPage() {
           </CardTitle>
 
           <div className="flex items-center justify-between mb-1">
-            <h2 className="text-primary-soft text-lg font-medium">Definir senha</h2>
-            <Link to={paths.login} className="text-primary-soft hover:underline font-medium">
+            <h2 className="text-lg font-medium">Definir senha</h2>
+            <Link
+              to={paths.login}
+              className="font-light hover:underline underline-offset-4 decoration-primary">
               Voltar ao login
             </Link>
           </div>

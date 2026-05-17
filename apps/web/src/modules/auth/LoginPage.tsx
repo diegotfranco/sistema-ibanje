@@ -24,7 +24,7 @@ const LoginPage = () => {
           </CardTitle>
 
           <div className="flex items-center justify-between text-left">
-            <h2 className="text-primary-soft text-lg font-medium">Login</h2>
+            <h2 className="text-lg font-medium">Login</h2>
             <Link
               to={paths.register}
               className="text-sm font-light hover:underline underline-offset-4 decoration-primary">
