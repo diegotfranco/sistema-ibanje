@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
-import { ArrowLeft, X, Eye } from 'lucide-react';
-import { useForm, Controller } from 'react-hook-form';
+import { ArrowLeft, Eye } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,25 +25,18 @@ import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
 import {
   RichTextDisplay,
-  RichTextEditor as RichTextEditorComponent,
   interpolateTipTapDoc,
-  EMPTY_TIPTAP_DOC,
   type TipTapDoc
 } from '@/components/ui/rich-text-editor';
 import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import {
-  useMinuteById,
-  useUpdatePendingVersion,
-  useUpdateMinute,
-  useMeetingAttendersPresent,
-  useSetMeetingAttendersPresent
-} from './useMinutes';
-import { useAttenders } from '@/modules/attenders/useAttenders';
+import { useMinuteById, useUpdatePendingVersion, useUpdateMinute } from './useMinutes';
 import { UpdateMinuteSchema, type UpdateMinuteValues, type MinuteVersionResponse } from './schema';
 import MinuteApprovalSection from './MinuteApprovalSection';
 import MinuteEditApprovedForm from './MinuteEditApprovedForm';
+import EditPendingDialog from './EditPendingDialog';
+import AttendersPresentsCard from './AttendersPresentsCard';
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('pt-BR');
@@ -434,230 +427,5 @@ export default function MinuteDetailPage() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-interface EditPendingDialogProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  currentContent: TipTapDoc | null;
-  onSubmit: (content: TipTapDoc) => void;
-  isPending: boolean;
-}
-
-function EditPendingDialog({
-  open,
-  onOpenChange,
-  currentContent,
-  onSubmit,
-  isPending
-}: EditPendingDialogProps) {
-  const { handleSubmit, reset, control } = useForm<{ content: TipTapDoc }>({
-    defaultValues: { content: currentContent ?? EMPTY_TIPTAP_DOC }
-  });
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (v) reset({ content: currentContent ?? EMPTY_TIPTAP_DOC });
-        onOpenChange(v);
-      }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Editar Rascunho</DialogTitle>
-        </DialogHeader>
-        <form
-          onSubmit={handleSubmit((v: { content: TipTapDoc }) => onSubmit(v.content))}
-          className="space-y-4">
-          <div className="space-y-1">
-            <Label>Conteúdo</Label>
-            <Controller
-              control={control}
-              name="content"
-              render={({ field }) => (
-                <RichTextEditorComponent
-                  value={field.value as TipTapDoc}
-                  onChange={field.onChange}
-                />
-              )}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={isPending}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isPending}>
-              {isPending ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface AttendersPresentsCardProps {
-  meetingId: number;
-  canEdit: boolean;
-}
-
-function AttendersPresentsCard({ meetingId, canEdit }: AttendersPresentsCardProps) {
-  const [editOpen, setEditOpen] = useState(false);
-  const { data: attendersList } = useAttenders();
-  const { data: presentData } = useMeetingAttendersPresent(meetingId);
-  const setPresent = useSetMeetingAttendersPresent(meetingId);
-
-  const presentIds = new Set(presentData?.data?.map((a) => a.id) ?? []);
-  const presentNames = presentData?.data?.map((a) => a.name) ?? [];
-
-  return (
-    <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <CardTitle>Membros Presentes</CardTitle>
-          {canEdit && (
-            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
-              Editar Membros Presentes
-            </Button>
-          )}
-        </CardHeader>
-        <CardContent className="text-sm">
-          {presentNames.length === 0 ? (
-            <p className="text-muted-foreground">Nenhum membro presentes registrado.</p>
-          ) : (
-            <ul className="space-y-1">
-              {presentNames.map((name) => (
-                <li key={name} className="flex items-center">
-                  {name}
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
-
-      <EditAttendersDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        selectedIds={Array.from(presentIds)}
-        availableAttenders={(attendersList?.data ?? []).filter(
-          (a) => a.isMember && a.status === 'ativo'
-        )}
-        onSubmit={(ids) => setPresent.mutate(ids, { onSuccess: () => setEditOpen(false) })}
-        isPending={setPresent.isPending}
-      />
-    </>
-  );
-}
-
-interface EditAttendersDialogProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  selectedIds: number[];
-  availableAttenders: { id: number; name: string }[];
-  onSubmit: (ids: number[]) => void;
-  isPending: boolean;
-}
-
-function EditAttendersDialog({
-  open,
-  onOpenChange,
-  selectedIds,
-  availableAttenders,
-  onSubmit,
-  isPending
-}: EditAttendersDialogProps) {
-  const [selected, setSelected] = useState<Set<number>>(new Set(selectedIds));
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const filteredAttenders = availableAttenders.filter((a) =>
-    a.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleToggle = (id: number) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  const handleSubmit = () => {
-    onSubmit(Array.from(selected));
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar Membros Presentes</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="search">Buscar Membro</Label>
-            <Input
-              id="search"
-              placeholder="Digite o nome..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 max-h-64 overflow-y-auto border rounded p-2">
-            {filteredAttenders.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Nenhum membro encontrado.</p>
-            ) : (
-              filteredAttenders.map((attender) => (
-                <div
-                  key={attender.id}
-                  className="flex items-center gap-2 p-1 rounded hover:bg-muted cursor-pointer"
-                  onClick={() => handleToggle(attender.id)}>
-                  <input
-                    type="checkbox"
-                    checked={selected.has(attender.id)}
-                    onChange={() => {}}
-                    className="cursor-pointer"
-                  />
-                  <label className="flex-1 cursor-pointer text-sm">{attender.name}</label>
-                </div>
-              ))
-            )}
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {Array.from(selected)
-              .map((id) => availableAttenders.find((a) => a.id === id))
-              .filter((a): a is { id: number; name: string } => Boolean(a))
-              .map((attender) => (
-                <div
-                  key={attender.id}
-                  className="flex items-center gap-1 bg-primary text-primary-foreground px-2 py-1 rounded text-xs">
-                  {attender.name}
-                  <button
-                    onClick={() => handleToggle(attender.id)}
-                    className="ml-1 font-bold hover:opacity-80">
-                    <X className="h-3 w-3" />
-                  </button>
-                </div>
-              ))}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={isPending}>
-            {isPending ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }
