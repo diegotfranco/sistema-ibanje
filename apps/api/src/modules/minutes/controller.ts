@@ -13,6 +13,7 @@ import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
 import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
+import { renderMinutePdf } from './pdf-service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit } = req.query as PaginationQuery;
@@ -146,7 +147,7 @@ export async function deleteMinuteTemplate(req: FastifyRequest, reply: FastifyRe
 export async function pdf(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const { download } = req.query as { download?: string };
-  const buffer = await service.renderMinutePdf(req.session.userId!, id);
+  const buffer = await renderMinutePdf(req.session.userId!, id);
   if (!buffer) return reply.code(404).send({ message: 'Minute not found' });
   const filename = `ata-${id}.pdf`;
   const disposition = download === '1' ? 'attachment' : 'inline';
