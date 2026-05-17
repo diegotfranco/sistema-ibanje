@@ -6,7 +6,7 @@ import type {
   ExpenseReportResponse,
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
-  MembersReportResponse,
+  AttendersReportResponse,
   FundListResponse,
   FundDetailResponse
 } from './schema';
@@ -65,10 +65,10 @@ export function useDetailedStatement(month: string) {
   });
 }
 
-export function useMembersReport(month: string) {
+export function useAttendersReport(month: string) {
   return useQuery({
-    queryKey: ['reports', 'members', month],
-    queryFn: () => api.get<MembersReportResponse>(`/reports/members?${buildParams(month)}`),
+    queryKey: ['reports', 'attenders', month],
+    queryFn: () => api.get<AttendersReportResponse>(`/reports/attenders?${buildParams(month)}`),
     enabled: enabled(month)
   });
 }

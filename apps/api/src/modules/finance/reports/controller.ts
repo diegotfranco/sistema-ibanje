@@ -56,9 +56,9 @@ export async function detailedFinancialStatementPdf(req: FastifyRequest, reply: 
     .send(pdf);
 }
 
-export async function membersReport(req: FastifyRequest, reply: FastifyReply) {
+export async function attendersReport(req: FastifyRequest, reply: FastifyReply) {
   const { month } = req.query as MonthQuery;
-  return reply.send(await service.getMembersReport(req.session.userId!, month));
+  return reply.send(await service.getAttendersReport(req.session.userId!, month));
 }
 
 export async function fundList(req: FastifyRequest, reply: FastifyReply) {

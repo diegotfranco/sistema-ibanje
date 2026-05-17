@@ -12,7 +12,7 @@ import {
   ExpenseReportResponseSchema,
   FinancialStatementResponseSchema,
   DetailedFinancialStatementResponseSchema,
-  MembersReportResponseSchema,
+  AttendersReportResponseSchema,
   FundListResponseSchema,
   FundDetailResponseSchema
 } from './schema.js';
@@ -134,13 +134,13 @@ export async function reportsRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/reports/members',
+    '/reports/attenders',
     {
       schema: {
         tags: ['Reports'],
         querystring: MonthQueryRequestSchema,
         response: {
-          200: MembersReportResponseSchema,
+          200: AttendersReportResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
@@ -148,7 +148,7 @@ export async function reportsRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
     },
-    controller.membersReport
+    controller.attendersReport
   );
 
   app.get(

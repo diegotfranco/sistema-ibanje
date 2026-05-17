@@ -367,7 +367,7 @@ export async function getAllExpenseReportRows(
   }));
 }
 
-export async function countActiveMembers(): Promise<number> {
+export async function countActiveAttenders(): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(attenders)
@@ -375,7 +375,7 @@ export async function countActiveMembers(): Promise<number> {
   return result[0]?.count ?? 0;
 }
 
-export async function countDistinctMembersWithTithe(
+export async function countDistinctAttendersWithTithe(
   from: string,
   to: string,
   titheIds: number[]
@@ -396,7 +396,7 @@ export async function countDistinctMembersWithTithe(
   return result.length;
 }
 
-export async function countDistinctMembersWithOfferings(
+export async function countDistinctAttendersWithOfferings(
   from: string,
   to: string,
   offeringIds: number[]

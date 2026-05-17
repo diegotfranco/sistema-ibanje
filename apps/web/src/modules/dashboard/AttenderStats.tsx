@@ -1,13 +1,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMembersReport } from '@/modules/finance/reports/useReports';
+import { useAttendersReport } from '@/modules/finance/reports/useReports';
 
 interface Props {
   month: string;
 }
 
-export function MemberStats({ month }: Props) {
-  const { data: report, isLoading } = useMembersReport(month);
+export function AttenderStats({ month }: Props) {
+  const { data: report, isLoading } = useAttendersReport(month);
 
   if (isLoading) {
     return (
@@ -25,26 +25,26 @@ export function MemberStats({ month }: Props) {
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      {/* Active Members */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">
-            Membros ativos
+            Congregados ativos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-card-foreground">{report.totalActiveMembers}</div>
+          <div className="text-3xl font-bold text-card-foreground">
+            {report.totalActiveAttenders}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Tithe */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Dízimo</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-card-foreground">
-            {report.tithe.membersWhoContributed}
+            {report.tithe.attendersWhoContributed}
           </div>
           <CardDescription className="mt-1 text-xs text-muted-foreground">
             ({report.tithe.percentage}% do total)
@@ -52,14 +52,13 @@ export function MemberStats({ month }: Props) {
         </CardContent>
       </Card>
 
-      {/* Offerings */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Ofertas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-card-foreground">
-            {report.offerings.membersWhoContributed}
+            {report.offerings.attendersWhoContributed}
           </div>
           <CardDescription className="mt-1 text-xs text-muted-foreground">
             ({report.offerings.percentage}% do total)

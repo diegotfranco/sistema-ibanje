@@ -141,15 +141,15 @@ export const DetailedFinancialStatementResponseSchema = z.object({
   expenseEntries: z.array(ExpenseReportRowSchema)
 });
 
-export const MembersReportResponseSchema = z.object({
+export const AttendersReportResponseSchema = z.object({
   period: PeriodSchema,
-  totalActiveMembers: z.number().int().nonnegative(),
+  totalActiveAttenders: z.number().int().nonnegative(),
   tithe: z.object({
-    membersWhoContributed: z.number().int().nonnegative(),
+    attendersWhoContributed: z.number().int().nonnegative(),
     percentage: z.string()
   }),
   offerings: z.object({
-    membersWhoContributed: z.number().int().nonnegative(),
+    attendersWhoContributed: z.number().int().nonnegative(),
     percentage: z.string(),
     note: z.string()
   })
@@ -215,7 +215,7 @@ export type FinancialStatementResponse = z.infer<typeof FinancialStatementRespon
 export type DetailedFinancialStatementResponse = z.infer<
   typeof DetailedFinancialStatementResponseSchema
 >;
-export type MembersReportResponse = z.infer<typeof MembersReportResponseSchema>;
+export type AttendersReportResponse = z.infer<typeof AttendersReportResponseSchema>;
 export type FundSummary = z.infer<typeof FundSummarySchema>;
 export type FundListResponse = z.infer<typeof FundListResponseSchema>;
 export type FundIncomeEntry = z.infer<typeof FundIncomeEntrySchema>;

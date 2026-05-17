@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import MonthInput from '@/components/MonthInput';
 import { DashboardClosingBanner } from './DashboardClosingBanner';
-import { MemberStats } from './MemberStats';
+import { AttenderStats } from './AttenderStats';
 import { FundsChart } from './FundsChart';
 import { getCurrentMonth } from './dashboard-utils';
 
@@ -29,10 +29,9 @@ export default function DashboardPage() {
       {/* Closing Status Banner */}
       <DashboardClosingBanner />
 
-      {/* Member Stats */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Membros</h2>
-        <MemberStats month={selectedMonth} />
+        <h2 className="text-lg font-semibold text-foreground">Congregados</h2>
+        <AttenderStats month={selectedMonth} />
       </div>
 
       {/* Funds Chart */}

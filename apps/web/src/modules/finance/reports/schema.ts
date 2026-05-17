@@ -114,11 +114,11 @@ export type DetailedFinancialStatementResponse = {
   expenseEntries: ExpenseReportRow[];
 };
 
-export type MembersReportResponse = {
+export type AttendersReportResponse = {
   period: { from: string; to: string };
-  totalActiveMembers: number;
-  tithe: { membersWhoContributed: number; percentage: string };
-  offerings: { membersWhoContributed: number; percentage: string; note: string };
+  totalActiveAttenders: number;
+  tithe: { attendersWhoContributed: number; percentage: string };
+  offerings: { attendersWhoContributed: number; percentage: string; note: string };
 };
 
 export type FundSummary = {
