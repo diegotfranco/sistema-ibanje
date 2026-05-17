@@ -26,9 +26,7 @@ const EMPTY: UpdateMyProfileFormValues = {
 
 export default function MePage() {
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
-  const { data: attender } = useAttenderProfile(
-    currentUser?.attenderId ?? null
-  );
+  const { data: attender } = useAttenderProfile(currentUser?.attenderId ?? null);
   const [donationsPage, setDonationsPage] = useState(1);
   const donationLimit = 10;
   const donations = useMyDonations(donationsPage, donationLimit);
@@ -50,10 +48,17 @@ export default function MePage() {
     const cleanValues = {
       phone: values.phone && values.phone !== '' ? values.phone : undefined,
       email: values.email && values.email !== '' ? values.email : undefined,
-      addressStreet: values.addressStreet && values.addressStreet !== '' ? values.addressStreet : undefined,
+      addressStreet:
+        values.addressStreet && values.addressStreet !== '' ? values.addressStreet : undefined,
       addressNumber: values.addressNumber,
-      addressComplement: values.addressComplement && values.addressComplement !== '' ? values.addressComplement : undefined,
-      addressDistrict: values.addressDistrict && values.addressDistrict !== '' ? values.addressDistrict : undefined,
+      addressComplement:
+        values.addressComplement && values.addressComplement !== ''
+          ? values.addressComplement
+          : undefined,
+      addressDistrict:
+        values.addressDistrict && values.addressDistrict !== ''
+          ? values.addressDistrict
+          : undefined,
       state: values.state && values.state !== '' ? values.state : undefined,
       city: values.city && values.city !== '' ? values.city : undefined,
       postalCode: values.postalCode && values.postalCode !== '' ? values.postalCode : undefined
@@ -122,9 +127,11 @@ export default function MePage() {
                   placeholder={attender?.email || 'seu@email.com'}
                   defaultValue={attender?.email || ''}
                   {...register('email')}
-                  className={errors.email ? 'border-red-500' : ''}
+                  className={errors.email ? 'border-destructive' : ''}
                 />
-                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+                )}
               </div>
 
               <div>
@@ -135,9 +142,11 @@ export default function MePage() {
                   placeholder={attender?.phone || '(11) 99999-9999'}
                   defaultValue={attender?.phone || ''}
                   {...register('phone')}
-                  className={errors.phone ? 'border-red-500' : ''}
+                  className={errors.phone ? 'border-destructive' : ''}
                 />
-                {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone.message}</p>}
+                {errors.phone && (
+                  <p className="text-xs text-destructive mt-1">{errors.phone.message}</p>
+                )}
               </div>
             </div>
 
@@ -148,10 +157,10 @@ export default function MePage() {
                 placeholder={attender?.addressStreet || 'Nome da rua'}
                 defaultValue={attender?.addressStreet || ''}
                 {...register('addressStreet')}
-                className={errors.addressStreet ? 'border-red-500' : ''}
+                className={errors.addressStreet ? 'border-destructive' : ''}
               />
               {errors.addressStreet && (
-                <p className="text-xs text-red-500 mt-1">{errors.addressStreet.message}</p>
+                <p className="text-xs text-destructive mt-1">{errors.addressStreet.message}</p>
               )}
             </div>
 
@@ -164,10 +173,10 @@ export default function MePage() {
                   placeholder={attender?.addressNumber?.toString() || '123'}
                   defaultValue={attender?.addressNumber || ''}
                   {...register('addressNumber', { valueAsNumber: true })}
-                  className={errors.addressNumber ? 'border-red-500' : ''}
+                  className={errors.addressNumber ? 'border-destructive' : ''}
                 />
                 {errors.addressNumber && (
-                  <p className="text-xs text-red-500 mt-1">{errors.addressNumber.message}</p>
+                  <p className="text-xs text-destructive mt-1">{errors.addressNumber.message}</p>
                 )}
               </div>
 
@@ -178,10 +187,12 @@ export default function MePage() {
                   placeholder={attender?.addressComplement || 'Apto, sala, etc.'}
                   defaultValue={attender?.addressComplement || ''}
                   {...register('addressComplement')}
-                  className={errors.addressComplement ? 'border-red-500' : ''}
+                  className={errors.addressComplement ? 'border-destructive' : ''}
                 />
                 {errors.addressComplement && (
-                  <p className="text-xs text-red-500 mt-1">{errors.addressComplement.message}</p>
+                  <p className="text-xs text-destructive mt-1">
+                    {errors.addressComplement.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -193,10 +204,10 @@ export default function MePage() {
                 placeholder={attender?.addressDistrict || 'Nome do bairro'}
                 defaultValue={attender?.addressDistrict || ''}
                 {...register('addressDistrict')}
-                className={errors.addressDistrict ? 'border-red-500' : ''}
+                className={errors.addressDistrict ? 'border-destructive' : ''}
               />
               {errors.addressDistrict && (
-                <p className="text-xs text-red-500 mt-1">{errors.addressDistrict.message}</p>
+                <p className="text-xs text-destructive mt-1">{errors.addressDistrict.message}</p>
               )}
             </div>
 
@@ -209,9 +220,11 @@ export default function MePage() {
                   defaultValue={attender?.state || ''}
                   maxLength={2}
                   {...register('state')}
-                  className={errors.state ? 'border-red-500' : ''}
+                  className={errors.state ? 'border-destructive' : ''}
                 />
-                {errors.state && <p className="text-xs text-red-500 mt-1">{errors.state.message}</p>}
+                {errors.state && (
+                  <p className="text-xs text-destructive mt-1">{errors.state.message}</p>
+                )}
               </div>
 
               <div className="col-span-2">
@@ -221,9 +234,11 @@ export default function MePage() {
                   placeholder={attender?.city || 'Nome da cidade'}
                   defaultValue={attender?.city || ''}
                   {...register('city')}
-                  className={errors.city ? 'border-red-500' : ''}
+                  className={errors.city ? 'border-destructive' : ''}
                 />
-                {errors.city && <p className="text-xs text-red-500 mt-1">{errors.city.message}</p>}
+                {errors.city && (
+                  <p className="text-xs text-destructive mt-1">{errors.city.message}</p>
+                )}
               </div>
             </div>
 
@@ -235,10 +250,10 @@ export default function MePage() {
                 defaultValue={attender?.postalCode || ''}
                 maxLength={8}
                 {...register('postalCode')}
-                className={errors.postalCode ? 'border-red-500' : ''}
+                className={errors.postalCode ? 'border-destructive' : ''}
               />
               {errors.postalCode && (
-                <p className="text-xs text-red-500 mt-1">{errors.postalCode.message}</p>
+                <p className="text-xs text-destructive mt-1">{errors.postalCode.message}</p>
               )}
             </div>
 

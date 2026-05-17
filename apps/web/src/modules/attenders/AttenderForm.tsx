@@ -112,7 +112,7 @@ export default function AttenderForm({
           <div className="space-y-1">
             <Label htmlFor="name">Nome *</Label>
             <Input id="name" {...register('name')} />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -135,14 +135,14 @@ export default function AttenderForm({
             <div className="space-y-1">
               <Label htmlFor="phone">Telefone</Label>
               <Input id="phone" {...register('phone')} maxLength={16} />
-              {errors.phone && <p className="text-xs text-red-500">{errors.phone.message}</p>}
+              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
 
           <div className="space-y-1">
             <Label htmlFor="email">E-mail</Label>
             <Input id="email" type="email" {...register('email')} />
-            {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-1">
@@ -158,7 +158,7 @@ export default function AttenderForm({
               })}
             />
             {errors.congregatingSinceYear && (
-              <p className="text-xs text-red-500">{errors.congregatingSinceYear.message}</p>
+              <p className="text-xs text-destructive">{errors.congregatingSinceYear.message}</p>
             )}
           </div>
 
@@ -228,7 +228,7 @@ export default function AttenderForm({
                   )}
                 />
                 {errors.admissionMode && (
-                  <p className="text-xs text-red-500">{errors.admissionMode.message}</p>
+                  <p className="text-xs text-destructive">{errors.admissionMode.message}</p>
                 )}
               </div>
             </div>
@@ -247,13 +247,13 @@ export default function AttenderForm({
                 placeholder="00000000"
               />
               {errors.postalCode && (
-                <p className="text-xs text-red-500">{errors.postalCode.message}</p>
+                <p className="text-xs text-destructive">{errors.postalCode.message}</p>
               )}
             </div>
             <div className="space-y-1">
               <Label htmlFor="state">Estado (UF)</Label>
               <Input id="state" {...register('state')} maxLength={2} placeholder="SP" />
-              {errors.state && <p className="text-xs text-red-500">{errors.state.message}</p>}
+              {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
             </div>
           </div>
 
@@ -279,7 +279,7 @@ export default function AttenderForm({
                 })}
               />
               {errors.addressNumber && (
-                <p className="text-xs text-red-500">{errors.addressNumber.message}</p>
+                <p className="text-xs text-destructive">{errors.addressNumber.message}</p>
               )}
             </div>
             <div className="space-y-1">

@@ -90,7 +90,7 @@ function SortableRow({ id, index, register, onRemove, canRemove, errors }: Sorta
         <div>
           <Input placeholder="Título do item" {...register(`items.${index}.title`)} />
           {itemErrors?.title && (
-            <p className="mt-1 text-xs text-red-500">{itemErrors.title.message}</p>
+            <p className="mt-1 text-xs text-destructive">{itemErrors.title.message}</p>
           )}
         </div>
         <div>
@@ -100,7 +100,7 @@ function SortableRow({ id, index, register, onRemove, canRemove, errors }: Sorta
             {...register(`items.${index}.description`)}
           />
           {itemErrors?.description && (
-            <p className="mt-1 text-xs text-red-500">{itemErrors.description.message}</p>
+            <p className="mt-1 text-xs text-destructive">{itemErrors.description.message}</p>
           )}
         </div>
       </div>
@@ -111,7 +111,7 @@ function SortableRow({ id, index, register, onRemove, canRemove, errors }: Sorta
         aria-label="Remover item"
         disabled={!canRemove}
         onClick={onRemove}
-        className="text-red-600 hover:text-red-700 disabled:opacity-30">
+        className="text-destructive hover:text-destructive/80 disabled:opacity-30">
         <Trash2 className="h-4 w-4" />
       </Button>
     </div>
@@ -202,7 +202,7 @@ export default function AgendaDialog({
             </SortableContext>
           </DndContext>
 
-          {rootError && <p className="text-xs text-red-500">{rootError}</p>}
+          {rootError && <p className="text-xs text-destructive">{rootError}</p>}
 
           <DialogFooter>
             <Button

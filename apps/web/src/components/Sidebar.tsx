@@ -1,9 +1,10 @@
 import { useState, type ReactElement } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { NavLink, useLocation, useNavigate } from 'react-router';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
 import { appRoutes, type AppRoute } from '@/routes';
+import { paths } from '@/lib/paths';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { hasPermission, Action, type PermissionMap } from '@/lib/permissions';
+import { hasPermission, Action, Module, type PermissionMap } from '@/lib/permissions';
 import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -75,10 +76,15 @@ function filterRoutesByPermission(
 ): AppRoute[] {
   return routes
     .map((route) => {
+      // Início is rendered for every authenticated user; the leaf redirects
+      // attenders to /me at render time. The /dashboard URL itself stays
+      // gated by RequirePermission.
+      const isHomeLeaf = route.path === paths.dashboard;
       const isVisible =
         route.layout === 'app' &&
         route.label &&
-        (!route.module ||
+        (isHomeLeaf ||
+          !route.module ||
           hasPermission(user?.permissions, route.module, route.action ?? Action.View));
 
       if (!isVisible) return null;
@@ -118,6 +124,18 @@ function isRouteActive(route: AppRoute, pathname: string, searchParams: URLSearc
   return pathname === route.path || (route.path !== '/' && pathname.startsWith(`${route.path}/`));
 }
 
+function hasActiveDescendant(
+  route: AppRoute,
+  pathname: string,
+  searchParams: URLSearchParams
+): boolean {
+  if (!route.children) return false;
+  return route.children.some(
+    (c) =>
+      isRouteActive(c, pathname, searchParams) || hasActiveDescendant(c, pathname, searchParams)
+  );
+}
+
 // Recursive component to render menu items
 function MenuItemRenderer({
   route,
@@ -140,6 +158,9 @@ function MenuItemRenderer({
   setOpenState: (key: string, isOpen: boolean) => void;
 }): ReactElement | null {
   const searchParams = new URLSearchParams(location.search);
+  const navigate = useNavigate();
+  const { state: sidebarState } = useSidebar();
+  const isCollapsed = sidebarState === 'collapsed';
 
   // Depth 0: top-level section with children
   if (depth === 0 && route.children && route.children.length > 0) {
@@ -169,15 +190,58 @@ function MenuItemRenderer({
   if (depth === 1 && route.children && route.children.length > 0) {
     const subgroupKey = route.label || '';
     const isOpen = subgroupState[subgroupKey] ?? true; // Default open
+    const isParentActive = hasActiveDescendant(route, location.pathname, searchParams);
+
+    // Collapsed (icon-only) sidebar: render parent icon as a flyout DropdownMenu
+    // so sub-items remain reachable without expanding the rail.
+    if (isCollapsed) {
+      return (
+        <SidebarMenuItem key={subgroupKey}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <SidebarMenuButton
+                tooltip={route.label}
+                className={cn(
+                  'gap-2 text-muted-foreground hover:text-foreground',
+                  isParentActive && 'bg-sidebar-accent text-primary'
+                )}>
+                {route.icon && <route.icon size={16} />}
+                <span className="truncate">{route.label}</span>
+              </SidebarMenuButton>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="min-w-48">
+              <DropdownMenuLabel>{route.label}</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {route.children.map((child) => {
+                if (!child.path || !child.label) return null;
+                const childActive = isRouteActive(child, location.pathname, searchParams);
+                return (
+                  <DropdownMenuItem
+                    key={child.path}
+                    onClick={() => navigate(child.path!)}
+                    className={cn('cursor-pointer', childActive && 'bg-primary/5 text-foreground')}>
+                    {child.label}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarMenuItem>
+      );
+    }
 
     return (
       <SidebarMenuItem key={subgroupKey}>
         <Collapsible open={isOpen} onOpenChange={(open) => setOpenState(subgroupKey, open)}>
           <CollapsibleTrigger asChild>
-            <SidebarMenuButton className="gap-2">
+            <SidebarMenuButton
+              className={cn(
+                'group/collapsible-trigger gap-2 text-muted-foreground hover:text-foreground',
+                isParentActive && 'bg-sidebar-accent text-primary'
+              )}>
               {route.icon && <route.icon size={16} />}
               <span className="truncate">{route.label}</span>
-              <ChevronRight className="ml-auto h-4 w-4 transition-transform data-[state=open]:rotate-90" />
+              <ChevronRight className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible-trigger:rotate-90" />
             </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -200,42 +264,61 @@ function MenuItemRenderer({
     );
   }
 
-  // Depth 1 or 2, leaf item
+  // Leaf item at any depth
   if (route.path && route.label) {
     const isActive = isRouteActive(route, location.pathname, searchParams);
 
+    // Início (dashboard) leaf: resolve to /me when the user lacks Dashboard:View
+    // so attenders land on their own portal from the same sidebar entry.
+    const resolvedPath =
+      route.path === paths.dashboard &&
+      !hasPermission(user?.permissions, Module.Dashboard, Action.View)
+        ? paths.me
+        : route.path;
+
     const navElement = (
-      <NavLink to={route.path}>
+      <NavLink to={resolvedPath}>
         {route.icon && <route.icon size={16} />}
         <span className="truncate">{route.label}</span>
       </NavLink>
     );
 
-    if (depth === 1) {
+    if (depth === 2) {
       return (
-        <SidebarMenuItem key={route.path}>
-          <SidebarMenuButton
+        <SidebarMenuSubItem key={route.path}>
+          <SidebarMenuSubButton
             asChild
             isActive={isActive}
-            tooltip={route.label}
-            className="text-muted-foreground hover:text-foreground">
+            className="text-muted-foreground hover:text-foreground data-active:text-foreground data-active:bg-primary/10 data-active:font-normal">
             {navElement}
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+          </SidebarMenuSubButton>
+        </SidebarMenuSubItem>
       );
     }
 
-    // depth === 2
-    return (
-      <SidebarMenuSubItem key={route.path}>
-        <SidebarMenuSubButton
+    const menuItem = (
+      <SidebarMenuItem key={route.path}>
+        <SidebarMenuButton
           asChild
           isActive={isActive}
-          className="text-muted-foreground hover:text-foreground">
+          tooltip={route.label}
+          className="text-muted-foreground hover:text-foreground data-active:text-primary data-active:bg-sidebar-accent data-active:font-normal">
           {navElement}
-        </SidebarMenuSubButton>
-      </SidebarMenuSubItem>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
     );
+
+    if (depth === 0) {
+      return (
+        <SidebarGroup key={route.path} className="py-2">
+          <SidebarGroupContent>
+            <SidebarMenu>{menuItem}</SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      );
+    }
+
+    return menuItem;
   }
 
   return null;
@@ -245,6 +328,7 @@ export function Sidebar() {
   const { data: user } = useCurrentUser();
   const { logout, isPending } = useLogout();
   const location = useLocation();
+  const navigate = useNavigate();
   const { toggleSidebar, state } = useSidebar();
   const { state: subgroupState, setOpenState } = useSubgroupState();
 
@@ -272,6 +356,7 @@ export function Sidebar() {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
+            aria-label={isCollapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
             className="h-8 w-8 text-sidebar-foreground/60 hover:text-sidebar-foreground shrink-0">
             {isCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           </Button>
@@ -321,6 +406,10 @@ export function Sidebar() {
                 className="w-[--radix-dropdown-menu-trigger-width] min-w-56 mb-2 z-10">
                 <DropdownMenuLabel>Ações do Usuário</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate(paths.me)} className="cursor-pointer">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Minha Conta</span>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => logout()}
                   disabled={isPending}

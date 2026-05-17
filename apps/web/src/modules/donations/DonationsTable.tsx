@@ -59,38 +59,36 @@ export default function DonationsTable({
 
   return (
     <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableCell className="font-semibold">Data</TableCell>
-            <TableCell className="font-semibold">Mês de Referência</TableCell>
-            <TableCell className="font-semibold text-right">Valor</TableCell>
-            <TableCell className="font-semibold">Categoria</TableCell>
-            <TableCell className="font-semibold">Forma de Pagamento</TableCell>
-            <TableCell className="font-semibold">Fundo</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map((entry) => (
-            <TableRow key={entry.id}>
-              <TableCell>{formatDate(entry.referenceDate)}</TableCell>
-              <TableCell>{getAttributionMonthDisplay(entry.attributionMonth)}</TableCell>
-              <TableCell className="text-right font-mono">{formatBRL(entry.amount)}</TableCell>
-              <TableCell>{entry.categoryName}</TableCell>
-              <TableCell>{entry.paymentMethodName}</TableCell>
-              <TableCell>{entry.designatedFundName ?? '—'}</TableCell>
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableCell className="font-semibold">Data</TableCell>
+              <TableCell className="font-semibold">Mês de Referência</TableCell>
+              <TableCell className="font-semibold text-right">Valor</TableCell>
+              <TableCell className="font-semibold">Categoria</TableCell>
+              <TableCell className="font-semibold">Forma de Pagamento</TableCell>
+              <TableCell className="font-semibold">Fundo</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {rows.map((entry) => (
+              <TableRow key={entry.id}>
+                <TableCell>{formatDate(entry.referenceDate)}</TableCell>
+                <TableCell>{getAttributionMonthDisplay(entry.attributionMonth)}</TableCell>
+                <TableCell className="text-right font-mono">{formatBRL(entry.amount)}</TableCell>
+                <TableCell>{entry.categoryName}</TableCell>
+                <TableCell>{entry.paymentMethodName}</TableCell>
+                <TableCell>{entry.designatedFundName ?? '—'}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       {maxPages > 1 && (
         <div className="flex justify-center">
-          <Pagination
-            currentPage={page}
-            totalPages={maxPages}
-            onPageChange={onPageChange}
-          />
+          <Pagination currentPage={page} totalPages={maxPages} onPageChange={onPageChange} />
         </div>
       )}
     </div>

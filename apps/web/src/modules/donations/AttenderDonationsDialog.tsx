@@ -25,11 +25,11 @@ export default function AttenderDonationsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Contribuições de {attenderName}</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
+        <div className="py-4 flex-1 overflow-auto min-w-0">
           <DonationsTable
             data={data}
             page={page}

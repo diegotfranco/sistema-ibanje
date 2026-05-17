@@ -104,9 +104,9 @@ export default function MinuteTemplateForm({
               id="name"
               placeholder="Nome do modelo"
               {...register('name')}
-              className={errors.name ? 'border-red-500' : ''}
+              className={errors.name ? 'border-destructive' : ''}
             />
-            {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
           <div className="space-y-1">
@@ -118,7 +118,7 @@ export default function MinuteTemplateForm({
                 <Select value={field.value} onValueChange={field.onChange} disabled={!!initialData}>
                   <SelectTrigger
                     id="meetingType"
-                    className={errors.meetingType ? 'border-red-500' : ''}>
+                    className={errors.meetingType ? 'border-destructive' : ''}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -129,7 +129,7 @@ export default function MinuteTemplateForm({
               )}
             />
             {errors.meetingType && (
-              <p className="text-xs text-red-500">{errors.meetingType.message}</p>
+              <p className="text-xs text-destructive">{errors.meetingType.message}</p>
             )}
           </div>
 
@@ -160,7 +160,7 @@ export default function MinuteTemplateForm({
                 <RichTextEditor value={field.value as TipTapDoc} onChange={field.onChange} />
               )}
             />
-            {errors.content && <p className="text-xs text-red-500">{errors.content.message}</p>}
+            {errors.content && <p className="text-xs text-destructive">{errors.content.message}</p>}
           </div>
 
           <div className="space-y-2">
@@ -172,7 +172,9 @@ export default function MinuteTemplateForm({
                     <Input
                       placeholder="Título do item"
                       {...register(`defaultAgendaItems.${index}.title`)}
-                      className={errors.defaultAgendaItems?.[index]?.title ? 'border-red-500' : ''}
+                      className={
+                        errors.defaultAgendaItems?.[index]?.title ? 'border-destructive' : ''
+                      }
                     />
                     <Textarea
                       placeholder="Descrição (opcional)"
@@ -180,7 +182,7 @@ export default function MinuteTemplateForm({
                       rows={2}
                     />
                     {errors.defaultAgendaItems?.[index]?.title && (
-                      <p className="text-xs text-red-500">
+                      <p className="text-xs text-destructive">
                         {errors.defaultAgendaItems[index]?.title?.message}
                       </p>
                     )}
@@ -209,7 +211,7 @@ export default function MinuteTemplateForm({
                       variant="ghost"
                       size="sm"
                       onClick={() => remove(index)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700">
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive/80">
                       <X className="h-4 w-4" />
                     </Button>
                   </div>

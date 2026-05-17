@@ -53,11 +53,9 @@ import {
 } from '@/schemas/minute';
 
 function statusClass(status: string) {
-  if (status === MinuteStatus.Approved)
-    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === MinuteStatus.Replaced)
-    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
-  return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+  if (status === MinuteStatus.Approved) return 'bg-muted text-success';
+  if (status === MinuteStatus.Replaced) return 'bg-muted text-muted-foreground';
+  return 'bg-muted text-warning';
 }
 
 function formatDate(d: string) {
@@ -362,7 +360,7 @@ export default function MinuteDetailPage() {
                   {...editDetailsForm.register('presidingPastorName')}
                 />
                 {editDetailsForm.formState.errors.presidingPastorName && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {editDetailsForm.formState.errors.presidingPastorName.message}
                   </p>
                 )}
@@ -372,7 +370,7 @@ export default function MinuteDetailPage() {
                 <Label htmlFor="ed-secretaryName">Secretário</Label>
                 <Input id="ed-secretaryName" {...editDetailsForm.register('secretaryName')} />
                 {editDetailsForm.formState.errors.secretaryName && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {editDetailsForm.formState.errors.secretaryName.message}
                   </p>
                 )}
@@ -386,7 +384,7 @@ export default function MinuteDetailPage() {
                   {...editDetailsForm.register('openingTime')}
                 />
                 {editDetailsForm.formState.errors.openingTime && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {editDetailsForm.formState.errors.openingTime.message}
                   </p>
                 )}
@@ -400,7 +398,7 @@ export default function MinuteDetailPage() {
                   {...editDetailsForm.register('closingTime')}
                 />
                 {editDetailsForm.formState.errors.closingTime && (
-                  <p className="text-xs text-red-500">
+                  <p className="text-xs text-destructive">
                     {editDetailsForm.formState.errors.closingTime.message}
                   </p>
                 )}
@@ -468,7 +466,7 @@ export default function MinuteDetailPage() {
                 )}
               />
               {editApprovedForm.formState.errors.content && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-destructive">
                   {editApprovedForm.formState.errors.content.message}
                 </p>
               )}
@@ -477,7 +475,7 @@ export default function MinuteDetailPage() {
               <Label htmlFor="ea-reason">Motivo da alteração *</Label>
               <Input id="ea-reason" {...editApprovedForm.register('reasonForChange')} />
               {editApprovedForm.formState.errors.reasonForChange && (
-                <p className="text-xs text-red-500">
+                <p className="text-xs text-destructive">
                   {editApprovedForm.formState.errors.reasonForChange.message}
                 </p>
               )}

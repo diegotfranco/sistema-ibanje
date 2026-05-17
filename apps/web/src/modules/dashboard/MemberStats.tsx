@@ -28,23 +28,25 @@ export function MemberStats({ month }: Props) {
       {/* Active Members */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Membros ativos</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Membros ativos
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">{report.totalActiveMembers}</div>
+          <div className="text-3xl font-bold text-card-foreground">{report.totalActiveMembers}</div>
         </CardContent>
       </Card>
 
       {/* Tithe */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Dízimo</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Dízimo</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">
+          <div className="text-3xl font-bold text-card-foreground">
             {report.tithe.membersWhoContributed}
           </div>
-          <CardDescription className="mt-1 text-xs text-slate-500">
+          <CardDescription className="mt-1 text-xs text-muted-foreground">
             ({report.tithe.percentage}% do total)
           </CardDescription>
         </CardContent>
@@ -53,13 +55,13 @@ export function MemberStats({ month }: Props) {
       {/* Offerings */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-slate-600">Ofertas</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Ofertas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-slate-900">
+          <div className="text-3xl font-bold text-card-foreground">
             {report.offerings.membersWhoContributed}
           </div>
-          <CardDescription className="mt-1 text-xs text-slate-500">
+          <CardDescription className="mt-1 text-xs text-muted-foreground">
             ({report.offerings.percentage}% do total)
           </CardDescription>
         </CardContent>

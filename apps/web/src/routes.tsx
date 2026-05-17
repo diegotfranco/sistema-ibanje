@@ -26,19 +26,24 @@ export type AppRoute = {
   children?: AppRoute[];
 };
 
-const adminSection: AppRoute = {
+const configuracoesSection: AppRoute = {
   layout: 'app',
-  label: 'Administração',
-  children: [...rolesRouteChildren, ...usersRouteChildren, ...churchSettingsRouteChildren]
+  label: 'Configurações',
+  children: [
+    ...rolesRouteChildren,
+    ...usersRouteChildren,
+    ...churchSettingsRouteChildren,
+    ...minuteTemplatesRouteChildren
+  ]
 };
 
 const secretariaSection: AppRoute = {
   layout: 'app',
   label: 'Secretaria',
   children: [
+    ...(attendersRoutes[0].children ?? []),
     ...pautasRouteChildren,
     ...atasRouteChildren,
-    ...minuteTemplatesRouteChildren,
     ...membershipLettersRouteChildren
   ]
 };
@@ -46,8 +51,7 @@ const secretariaSection: AppRoute = {
 export const appRoutes: AppRoute[] = [
   ...authRoutes,
   ...dashboardRoutes,
-  adminSection,
-  ...attendersRoutes,
+  configuracoesSection,
   ...financeRoutes,
   secretariaSection,
   ...meRoutes

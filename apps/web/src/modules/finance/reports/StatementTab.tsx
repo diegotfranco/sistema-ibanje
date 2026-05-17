@@ -80,12 +80,12 @@ export function StatementTab({ month }: Props) {
                   {
                     label: 'Total Entradas',
                     value: simple.data.totalIncome,
-                    color: 'text-emerald-600'
+                    color: 'text-money-in'
                   },
                   {
                     label: 'Total Saídas',
                     value: simple.data.totalExpenses,
-                    color: 'text-red-600'
+                    color: 'text-money-out'
                   },
                   { label: 'Saldo Atual', value: simple.data.currentBalance, color: '' }
                 ].map((card) => (

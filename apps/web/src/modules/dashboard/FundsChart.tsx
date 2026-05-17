@@ -22,17 +22,17 @@ export function FundsChart() {
   return (
     <div className="space-y-4">
       {funds.map((fund: FundSummary) => (
-        <div key={fund.fundId} className="space-y-2 rounded-lg border border-border p-4">
+        <div key={fund.fundId} className="space-y-2 rounded-lg border border-border bg-card p-4">
           {/* Fund name and target date chip */}
           <div className="flex items-center justify-between">
-            <h4 className="font-medium text-slate-900">{fund.fundName}</h4>
+            <h4 className="font-medium text-foreground">{fund.fundName}</h4>
             <div className="flex items-center gap-2">
               {fund.targetDate && (
                 <span
                   className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                     isDatePast(fund.targetDate)
-                      ? 'bg-slate-100 text-slate-600'
-                      : 'bg-blue-100 text-blue-700'
+                      ? 'bg-muted text-muted-foreground'
+                      : 'bg-primary/15 text-primary'
                   }`}>
                   {isDatePast(fund.targetDate) ? (
                     <>✓ Encerrado em {formatDate(fund.targetDate)}</>
@@ -47,15 +47,15 @@ export function FundsChart() {
           {/* Progress bar */}
           <div className="space-y-1">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-slate-700">Arrecadado</span>
-              <span className="font-semibold text-slate-900">{formatMoney(fund.totalRaised)}</span>
+              <span className="text-foreground">Arrecadado</span>
+              <span className="font-semibold text-foreground">{formatMoney(fund.totalRaised)}</span>
             </div>
             {fund.targetAmount && (
-              <div className="relative h-2 overflow-hidden rounded-full bg-slate-200">
+              <div className="relative h-2 overflow-hidden rounded-full bg-muted">
                 <div
                   className={`h-full transition-all ${
                     fund.targetDate && isDatePast(fund.targetDate)
-                      ? 'bg-slate-400 opacity-50'
+                      ? 'bg-muted-foreground opacity-50'
                       : 'bg-primary'
                   }`}
                   style={{
@@ -69,7 +69,7 @@ export function FundsChart() {
               </div>
             )}
             {fund.targetAmount ? (
-              <div className="flex items-center justify-between text-xs text-slate-600">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Meta: {formatMoney(fund.targetAmount)}</span>
                 <span>
                   {fund.progressPercentage
@@ -78,13 +78,13 @@ export function FundsChart() {
                 </span>
               </div>
             ) : (
-              <p className="text-xs text-slate-600">(sem meta)</p>
+              <p className="text-xs text-muted-foreground">(sem meta)</p>
             )}
           </div>
 
           {/* Balance if target is set */}
           {fund.targetAmount && (
-            <div className="text-xs text-slate-600">Saldo: {formatMoney(fund.balance)}</div>
+            <div className="text-xs text-muted-foreground">Saldo: {formatMoney(fund.balance)}</div>
           )}
         </div>
       ))}

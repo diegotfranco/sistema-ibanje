@@ -20,11 +20,9 @@ import MinuteForm from './MinuteForm';
 import type { MinuteResponse, MinuteFormValues } from '@/schemas/minute';
 
 function statusVariant(status: string) {
-  if (status === MinuteStatus.Approved)
-    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200';
-  if (status === MinuteStatus.Replaced)
-    return 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400';
-  return 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200';
+  if (status === MinuteStatus.Approved) return 'bg-muted text-success';
+  if (status === MinuteStatus.Replaced) return 'bg-muted text-muted-foreground';
+  return 'bg-muted text-warning';
 }
 
 export default function MinutesPage() {
@@ -122,7 +120,7 @@ export default function MinutesPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive hover:text-destructive/80"
                             onClick={() => setDeleteTarget(row)}>
                             Excluir
                           </Button>

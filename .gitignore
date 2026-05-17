@@ -31,3 +31,6 @@ pnpm-debug.log*
 # Legacy SQLite (PII — never commit; copy in manually when seeding)
 ibanje.db
 ibanje.db:Zone.Identifier
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/

@@ -103,10 +103,10 @@ export default function MonthlyClosingsPage() {
                     <TableCell>
                       <StatusBadge status={row.status} />
                     </TableCell>
-                    <TableCell className="font-mono text-emerald-600">
+                    <TableCell className="font-mono text-money-in">
                       {formatMoney(row.totalIncome)}
                     </TableCell>
-                    <TableCell className="font-mono text-red-600">
+                    <TableCell className="font-mono text-money-out">
                       {formatMoney(row.totalExpenses)}
                     </TableCell>
                     <TableCell className="font-mono">{formatMoney(row.closingBalance)}</TableCell>
@@ -122,7 +122,7 @@ export default function MonthlyClosingsPage() {
                           <Button
                             size="sm"
                             variant="ghost"
-                            className="text-red-600 hover:text-red-700"
+                            className="text-destructive hover:text-destructive/80"
                             onClick={() => setDeleting(row)}>
                             Excluir
                           </Button>

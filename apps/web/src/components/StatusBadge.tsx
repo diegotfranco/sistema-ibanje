@@ -17,34 +17,30 @@ type Props = {
 };
 
 const ACTIVE_STATUS_CLASSES: Record<ActiveStatusValue, string> = {
-  [ActiveStatus.Active]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  [ActiveStatus.Inactive]: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200',
-  [ActiveStatus.Pending]: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+  [ActiveStatus.Active]: 'bg-muted text-success',
+  [ActiveStatus.Inactive]: 'bg-muted text-muted-foreground',
+  [ActiveStatus.Pending]: 'bg-muted text-warning'
 };
 
 const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
-  [EntryStatus.Pending]: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  [EntryStatus.Paid]: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  [EntryStatus.Cancelled]: 'bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200'
+  [EntryStatus.Pending]: 'bg-muted text-warning',
+  [EntryStatus.Paid]: 'bg-muted text-success',
+  [EntryStatus.Cancelled]: 'bg-muted text-muted-foreground'
 };
 
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
   [ClosingStatus.Open]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
-  [ClosingStatus.InReview]: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  [ClosingStatus.Rejected]: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-  [ClosingStatus.Approved]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  [ClosingStatus.Closed]: 'bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200'
+  [ClosingStatus.InReview]: 'bg-muted text-warning',
+  [ClosingStatus.Rejected]: 'bg-muted text-destructive',
+  [ClosingStatus.Approved]: 'bg-muted text-success',
+  [ClosingStatus.Closed]: 'bg-muted text-muted-foreground'
 };
 
 const MINUTE_STATUS_CLASSES: Record<MinuteStatusValue, string> = {
   [MinuteStatus.Draft]: 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-200',
-  [MinuteStatus.AwaitingApproval]:
-    'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
-  [MinuteStatus.Approved]:
-    'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200',
-  [MinuteStatus.Replaced]: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+  [MinuteStatus.AwaitingApproval]: 'bg-muted text-warning',
+  [MinuteStatus.Approved]: 'bg-muted text-success',
+  [MinuteStatus.Replaced]: 'bg-muted text-muted-foreground'
 };
 
 function getStatusClass(status: string): string {

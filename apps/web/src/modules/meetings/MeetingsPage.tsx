@@ -111,7 +111,7 @@ export default function PautasPage() {
                     </TableCell>
                     <TableCell>
                       {row.agendaItems.length > 0 ? (
-                        <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
+                        <Badge className="bg-muted text-success">
                           {row.agendaItems.length} {row.agendaItems.length === 1 ? 'item' : 'itens'}
                         </Badge>
                       ) : (
@@ -133,7 +133,8 @@ export default function PautasPage() {
                               onClick={() => {
                                 setEditing(row);
                                 setFormOpen(true);
-                              }}>
+                              }}
+                              className="text-warning hover:text-warning/80">
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button
@@ -151,7 +152,7 @@ export default function PautasPage() {
                             variant="ghost"
                             aria-label="Excluir"
                             disabled={row.hasMinutes}
-                            className="text-red-600 hover:text-red-700 disabled:opacity-30"
+                            className="text-destructive hover:text-destructive/80 disabled:opacity-30"
                             onClick={() => setDeleteTarget(row)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>

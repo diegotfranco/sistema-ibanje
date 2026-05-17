@@ -12,9 +12,9 @@ export default function DashboardPage() {
     <div className="space-y-8 p-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-800">Painel</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Painel</h1>
         <div className="flex items-center gap-2">
-          <label htmlFor="month-input" className="text-sm font-medium text-slate-600">
+          <label htmlFor="month-input" className="text-sm font-medium text-muted-foreground">
             Mês:
           </label>
           <MonthInput
@@ -31,13 +31,13 @@ export default function DashboardPage() {
 
       {/* Member Stats */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-800">Membros</h2>
+        <h2 className="text-lg font-semibold text-foreground">Membros</h2>
         <MemberStats month={selectedMonth} />
       </div>
 
       {/* Funds Chart */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-slate-800">Fundos Designados (acumulado)</h2>
+        <h2 className="text-lg font-semibold text-foreground">Fundos Designados (acumulado)</h2>
         <FundsChart />
       </div>
     </div>

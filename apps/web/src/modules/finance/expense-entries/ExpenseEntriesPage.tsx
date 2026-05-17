@@ -85,14 +85,15 @@ export default function ExpenseEntriesPage() {
                 href={row.receipt}
                 title="Ver comprovante"
                 aria-label="Ver comprovante"
-                className="text-muted-foreground hover:text-teal-600 inline-flex">
+                className="text-muted-foreground hover:text-primary inline-flex">
                 <Receipt size={16} />
               </a>
             ) : (
               <span
-                title="Sem comprovante"
+                role="img"
                 aria-label="Sem comprovante"
-                className="text-red-600 inline-flex">
+                title="Sem comprovante"
+                className="text-destructive inline-flex">
                 <Receipt size={16} />
               </span>
             )}

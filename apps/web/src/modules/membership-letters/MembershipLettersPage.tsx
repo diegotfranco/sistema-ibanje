@@ -31,7 +31,10 @@ import {
 } from './useMembershipLetters';
 import { MembershipLetterForm } from './MembershipLetterForm';
 import { MembershipLetterPreviewDialog } from './MembershipLetterPreviewDialog';
-import type { MembershipLetterResponse, MembershipLetterFormValues } from '@/schemas/membership-letter';
+import type {
+  MembershipLetterResponse,
+  MembershipLetterFormValues
+} from '@/schemas/membership-letter';
 
 function formatDate(dateString: string): string {
   try {
@@ -76,7 +79,7 @@ export default function MembershipLettersPage() {
   );
 
   const createMutation = useCreateMembershipLetter();
-  const updateMutation = useUpdateMembershipLetter(0);
+  const updateMutation = useUpdateMembershipLetter();
   const deleteMutation = useDeleteMembershipLetter();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -97,13 +100,15 @@ export default function MembershipLettersPage() {
 
   function handleUpdateSubmit(values: MembershipLetterFormValues) {
     if (!editing) return;
-    const updateMut = useUpdateMembershipLetter(editing.id);
-    updateMut.mutate(values, {
-      onSuccess: () => {
-        setDialogOpen(false);
-        setEditing(null);
+    updateMutation.mutate(
+      { id: editing.id, body: values },
+      {
+        onSuccess: () => {
+          setDialogOpen(false);
+          setEditing(null);
+        }
       }
-    });
+    );
   }
 
   function handleDeleteConfirm() {
@@ -122,11 +127,7 @@ export default function MembershipLettersPage() {
         header: 'Tipo',
         cell: (row: unknown) => {
           const letter = row as MembershipLetterResponse;
-          return (
-            <Badge variant={typeBadgeVariant[letter.type]}>
-              {typeLabels[letter.type]}
-            </Badge>
-          );
+          return <Badge variant={typeBadgeVariant[letter.type]}>{typeLabels[letter.type]}</Badge>;
         }
       },
       {
@@ -171,8 +172,7 @@ export default function MembershipLettersPage() {
               setPreviewId(letter.id);
               setPreviewOpen(true);
             }}
-            title="Visualizar"
-          >
+            title="Visualizar">
             <Eye className="h-4 w-4" />
           </Button>
           {canEdit && (
@@ -184,7 +184,7 @@ export default function MembershipLettersPage() {
                 setDialogOpen(true);
               }}
               title="Editar"
-            >
+              className="text-warning hover:text-warning/80">
               <Pencil className="h-4 w-4" />
             </Button>
           )}
@@ -193,8 +193,7 @@ export default function MembershipLettersPage() {
               variant="ghost"
               size="sm"
               onClick={() => setDeleteTarget(letter)}
-              title="Remover"
-            >
+              title="Remover">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -212,7 +211,9 @@ export default function MembershipLettersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold tracking-tight">Cartas de Transferência</h1>
-              <p className="text-muted-foreground mt-1">Gerencie cartas de transferência de membros</p>
+              <p className="text-muted-foreground mt-1">
+                Gerencie cartas de transferência de membros
+              </p>
             </div>
             {canCreate && (
               <Button
@@ -220,8 +221,7 @@ export default function MembershipLettersPage() {
                   setEditing(null);
                   setDialogOpen(true);
                 }}
-                className="gap-2"
-              >
+                className="gap-2">
                 <Plus className="h-4 w-4" />
                 Nova Carta
               </Button>

@@ -22,13 +22,14 @@ interface ListFilters {
 }
 
 export function useMembershipLetters(filters?: ListFilters) {
-  const queryKey: any = [...KEY];
-  if (filters) {
-    queryKey.push(JSON.stringify(filters));
-  }
-
   return useQuery({
-    queryKey,
+    queryKey: [
+      ...KEY,
+      filters?.page ?? null,
+      filters?.limit ?? null,
+      filters?.attenderId ?? null,
+      filters?.type ?? null
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters?.page) params.append('page', String(filters.page));
@@ -67,12 +68,12 @@ export function useCreateMembershipLetter() {
   });
 }
 
-export function useUpdateMembershipLetter(id: number) {
+export function useUpdateMembershipLetter() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (body: Partial<MembershipLetterFormValues>) =>
+    mutationFn: ({ id, body }: { id: number; body: Partial<MembershipLetterFormValues> }) =>
       api.patch<MembershipLetterResponse>(`${BASE}/${id}`, body),
-    onSuccess: () => {
+    onSuccess: (_data, { id }) => {
       qc.invalidateQueries({ queryKey: KEY });
       qc.invalidateQueries({ queryKey: [...KEY, id] });
       toast.success('Carta de transferência atualizada.');

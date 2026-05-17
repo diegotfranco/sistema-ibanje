@@ -9,7 +9,11 @@ export const MembershipLetterFormSchema = z.object({
   otherChurchName: z.string().min(1, 'Nome da igreja obrigatório').max(128),
   otherChurchAddress: z.string().max(256).nullable().optional().or(z.literal('')),
   otherChurchCity: z.string().min(1, 'Cidade obrigatória').max(96),
-  otherChurchState: z.string().length(2, 'Estado deve ter 2 caracteres').optional().or(z.literal('')),
+  otherChurchState: z
+    .string()
+    .length(2, 'Estado deve ter 2 caracteres')
+    .optional()
+    .or(z.literal('')),
   additionalContext: z.string().max(2048).nullable().optional().or(z.literal(''))
 });
 

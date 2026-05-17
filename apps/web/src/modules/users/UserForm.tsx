@@ -88,12 +88,12 @@ export default function UserForm({
         <div className="space-y-1">
           <Label htmlFor="edit-name">Nome</Label>
           <Input id="edit-name" {...register('name')} />
-          {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="edit-email">E-mail</Label>
           <Input id="edit-email" type="email" {...register('email')} />
-          {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-1">
           <Label>Cargo</Label>
@@ -112,7 +112,7 @@ export default function UserForm({
               />
             )}
           />
-          {errors.roleId && <p className="text-xs text-red-500">{errors.roleId.message}</p>}
+          {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
@@ -137,12 +137,12 @@ export default function UserForm({
       <div className="space-y-1">
         <Label htmlFor="create-name">Nome *</Label>
         <Input id="create-name" {...register('name')} />
-        {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
+        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div className="space-y-1">
         <Label htmlFor="create-email">E-mail *</Label>
         <Input id="create-email" type="email" {...register('email')} />
-        {errors.email && <p className="text-xs text-red-500">{errors.email.message}</p>}
+        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
       </div>
       <div className="space-y-1">
         <Label>Cargo *</Label>
@@ -161,7 +161,7 @@ export default function UserForm({
             />
           )}
         />
-        {errors.roleId && <p className="text-xs text-red-500">{errors.roleId.message}</p>}
+        {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
       </div>
       <div className="space-y-1">
         <Label>Congregado (opcional)</Label>

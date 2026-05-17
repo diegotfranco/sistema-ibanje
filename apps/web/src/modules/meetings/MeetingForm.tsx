@@ -80,7 +80,7 @@ export default function MeetingForm({
               )}
             />
             {errors.meetingDate && (
-              <p className="text-xs text-red-500">{errors.meetingDate.message}</p>
+              <p className="text-xs text-destructive">{errors.meetingDate.message}</p>
             )}
           </div>
 
@@ -101,7 +101,7 @@ export default function MeetingForm({
                 </Select>
               )}
             />
-            {errors.type && <p className="text-xs text-red-500">{errors.type.message}</p>}
+            {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
           </div>
 
           <div className="flex items-center gap-2">

@@ -36,7 +36,7 @@ export function IncomeReportTab({ month }: Props) {
         {data && (
           <span className="text-sm text-muted-foreground">
             Total:{' '}
-            <span className="font-semibold text-emerald-600">{formatMoney(data.totalIncome)}</span>
+            <span className="font-semibold text-money-in">{formatMoney(data.totalIncome)}</span>
           </span>
         )}
       </CardHeader>

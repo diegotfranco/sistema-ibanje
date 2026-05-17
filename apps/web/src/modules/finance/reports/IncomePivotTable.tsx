@@ -67,7 +67,7 @@ export function IncomePivotTable({ pivot }: Props) {
                 {formatMoney(col.total)}
               </TableCell>
             ))}
-            <TableCell className="text-right font-mono text-emerald-600">
+            <TableCell className="text-right font-mono text-money-in">
               {formatMoney(pivot.grandTotal)}
             </TableCell>
           </TableRow>

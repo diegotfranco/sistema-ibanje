@@ -45,7 +45,7 @@ export function ReceiptField({ entryId, receipt }: Props) {
             type="button"
             variant="ghost"
             size="sm"
-            className="text-red-600 hover:text-red-700"
+            className="text-destructive hover:text-destructive/80"
             onClick={() => deleteReceipt.mutate(entryId)}
             disabled={deleteReceipt.isPending}>
             {deleteReceipt.isPending ? 'Removendo...' : 'Remover'}

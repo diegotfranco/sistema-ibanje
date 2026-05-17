@@ -100,14 +100,16 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
                 </Select>
               )}
             />
-            {errors.meetingId && <p className="text-xs text-red-500">{errors.meetingId.message}</p>}
+            {errors.meetingId && (
+              <p className="text-xs text-destructive">{errors.meetingId.message}</p>
+            )}
           </div>
 
           <div className="space-y-1">
             <Label htmlFor="minuteNumber">Número da Ata *</Label>
             <Input id="minuteNumber" placeholder="Ata 001/2025" {...register('minuteNumber')} />
             {errors.minuteNumber && (
-              <p className="text-xs text-red-500">{errors.minuteNumber.message}</p>
+              <p className="text-xs text-destructive">{errors.minuteNumber.message}</p>
             )}
           </div>
 
@@ -120,7 +122,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
                 {...register('presidingPastorName')}
               />
               {errors.presidingPastorName && (
-                <p className="text-xs text-red-500">{errors.presidingPastorName.message}</p>
+                <p className="text-xs text-destructive">{errors.presidingPastorName.message}</p>
               )}
             </div>
 
@@ -128,7 +130,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               <Label htmlFor="secretaryName">Secretário</Label>
               <Input id="secretaryName" placeholder="Nome" {...register('secretaryName')} />
               {errors.secretaryName && (
-                <p className="text-xs text-red-500">{errors.secretaryName.message}</p>
+                <p className="text-xs text-destructive">{errors.secretaryName.message}</p>
               )}
             </div>
 
@@ -136,7 +138,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               <Label htmlFor="openingTime">Hora de Abertura</Label>
               <Input type="time" id="openingTime" {...register('openingTime')} />
               {errors.openingTime && (
-                <p className="text-xs text-red-500">{errors.openingTime.message}</p>
+                <p className="text-xs text-destructive">{errors.openingTime.message}</p>
               )}
             </div>
 
@@ -144,7 +146,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               <Label htmlFor="closingTime">Hora de Encerramento</Label>
               <Input type="time" id="closingTime" {...register('closingTime')} />
               {errors.closingTime && (
-                <p className="text-xs text-red-500">{errors.closingTime.message}</p>
+                <p className="text-xs text-destructive">{errors.closingTime.message}</p>
               )}
             </div>
           </div>

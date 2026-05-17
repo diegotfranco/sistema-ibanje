@@ -33,12 +33,7 @@ const typeLabels = {
   carta_de_transferência: 'Carta de Transferência'
 };
 
-export function MembershipLetterForm({
-  initialValues,
-  isPending,
-  onSubmit,
-  onCancel
-}: Props) {
+export function MembershipLetterForm({ initialValues, isPending, onSubmit, onCancel }: Props) {
   const attenders = useAttenders();
   const activeAttenders = (attenders.data?.data ?? []).filter(
     (a) => a.status === ActiveStatus.Active

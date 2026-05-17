@@ -40,7 +40,7 @@ const LoginPage = () => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>E-mail</FieldLabel>
+                  <FieldLabel htmlFor="email">E-mail</FieldLabel>
                   <Input
                     {...field}
                     id="email"
@@ -60,8 +60,9 @@ const LoginPage = () => {
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Senha</FieldLabel>
+                  <FieldLabel htmlFor="password">Senha</FieldLabel>
                   <PasswordInput
+                    id="password"
                     placeholder="••••••••"
                     autoComplete="current-password"
                     {...field}
@@ -78,11 +79,14 @@ const LoginPage = () => {
                 render={({ field }) => (
                   <Field orientation="horizontal">
                     <Checkbox
+                      id="rememberMe"
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       className="cursor-pointer"
                     />
-                    <FieldLabel className="font-light cursor-pointer">Lembrar de mim</FieldLabel>
+                    <FieldLabel htmlFor="rememberMe" className="font-light cursor-pointer">
+                      Lembrar de mim
+                    </FieldLabel>
                   </Field>
                 )}
               />

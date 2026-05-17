@@ -54,7 +54,8 @@ export function ResourceListPage<T>({
   emptyMessage = 'Nenhum registro encontrado.',
   rowKey
 }: ResourceListPageProps<T>) {
-  const showActions = (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
+  const showActions =
+    (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
 
   return (
     <div className="p-8">
@@ -127,7 +128,8 @@ export function ResourceListPage<T>({
                               size="icon"
                               variant="ghost"
                               onClick={() => onEdit(row)}
-                              aria-label="Editar">
+                              aria-label="Editar"
+                              className="text-warning hover:text-warning/80">
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
@@ -137,7 +139,7 @@ export function ResourceListPage<T>({
                               variant="ghost"
                               onClick={() => onDelete(row)}
                               aria-label="Remover"
-                              className="text-red-600 hover:text-red-700">
+                              className="text-destructive hover:text-destructive/80">
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           )}

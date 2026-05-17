@@ -67,7 +67,7 @@ export default function ChurchSettingsPage() {
 
   function renderError(name: keyof ChurchSettingsFormValues) {
     const error = errors[name];
-    return error ? <p className="text-sm text-red-500 mt-1">{error.message}</p> : null;
+    return error ? <p className="text-sm text-destructive mt-1">{error.message}</p> : null;
   }
 
   return (
