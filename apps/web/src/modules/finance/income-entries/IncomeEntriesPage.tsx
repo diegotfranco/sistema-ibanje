@@ -9,7 +9,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeEntries, useIncomeEntryMutations } from './useIncomeEntries';
 import { IncomeEntryForm } from './IncomeEntryForm';
 import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
-import type { IncomeEntryResponse, IncomeEntryFormValues } from '@/schemas/income-entry';
+import type { IncomeEntryResponse, IncomeEntryFormValues } from './schema';
 
 export default function IncomeEntriesPage() {
   const { data: user } = useCurrentUser();

@@ -5,8 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useChurchSettings, useUpdateChurchSettings } from './useChurchSettings';
-import type { ChurchSettingsFormValues } from '@/schemas/church-settings';
-import { ChurchSettingsFormSchema } from '@/schemas/church-settings';
+import type { ChurchSettingsFormValues } from './schema';
+import { ChurchSettingsFormSchema } from './schema';
 
 export default function ChurchSettingsPage() {
   const { data: churchSettings, isLoading } = useChurchSettings();

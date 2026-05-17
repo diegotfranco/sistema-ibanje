@@ -31,10 +31,7 @@ import {
 } from './useMembershipLetters';
 import { MembershipLetterForm } from './MembershipLetterForm';
 import { MembershipLetterPreviewDialog } from './MembershipLetterPreviewDialog';
-import type {
-  MembershipLetterResponse,
-  MembershipLetterFormValues
-} from '@/schemas/membership-letter';
+import type { MembershipLetterResponse, MembershipLetterFormValues } from './schema';
 
 function formatDate(dateString: string): string {
   try {

@@ -6,9 +6,9 @@ import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeCategories, useIncomeCategoryMutations } from './useIncomeCategories';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
-import { useCategoryPageData } from '../categories-utils';
+import { useCategoryPageData } from '../useCategoryPageData';
 import { makeSubmitHandler } from '../entries-utils';
-import type { IncomeCategoryResponse } from '@/schemas/income-category';
+import type { IncomeCategoryResponse } from './schema';
 
 export default function IncomeCategoriesPage() {
   const { data: user } = useCurrentUser();

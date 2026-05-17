@@ -22,7 +22,7 @@ import {
   useDeleteMinuteTemplate
 } from './useMinuteTemplates';
 import MinuteTemplateForm from './MinuteTemplateForm';
-import type { MinuteTemplateFormValues, MinuteTemplateResponse } from '@/schemas/minute-template';
+import type { MinuteTemplateFormValues, MinuteTemplateResponse } from './schema';
 
 function meetingTypeLabel(type: string): string {
   return type === MeetingType.Ordinary ? 'Ordinária' : 'Extraordinária';

@@ -17,7 +17,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMeetings, useMeetingMutations } from './useMeetings';
 import MeetingForm from './MeetingForm';
 import AgendaDialog from './AgendaDialog';
-import type { MeetingResponse, MeetingFormValues } from '@/schemas/meeting';
+import type { MeetingResponse, MeetingFormValues } from './schema';
 
 function formatDate(d: string) {
   const [y, m, day] = d.split('-');

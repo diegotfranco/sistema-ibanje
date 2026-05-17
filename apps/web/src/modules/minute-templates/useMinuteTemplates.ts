@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import type { MinuteTemplateResponse, MinuteTemplateFormValues } from '@/schemas/minute-template';
+import type { MinuteTemplateResponse, MinuteTemplateFormValues } from './schema';
 
 const BASE = '/minute-templates';
 const KEY = ['minute-templates'] as const;

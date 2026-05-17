@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useResourceList } from '@/lib/resourceQuery';
+import { useResourceList } from '@/hooks/useResourceQuery';
 import { api, ApiError } from '@/lib/api';
 import type {
   MinuteFormValues,
@@ -8,7 +8,7 @@ import type {
   EditApprovedMinuteValues,
   ApproveMinuteValues,
   MinuteResponse
-} from '@/schemas/minute';
+} from './schema';
 
 const BASE = '/minutes';
 const KEY = ['minutes'] as const;

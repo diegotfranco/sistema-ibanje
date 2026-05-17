@@ -18,7 +18,7 @@ import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMinutes, useCreateMinute, useDeleteMinute } from './useMinutes';
 import MinuteForm from './MinuteForm';
-import type { MinuteResponse, MinuteFormValues } from '@/schemas/minute';
+import type { MinuteResponse, MinuteFormValues } from './schema';
 
 export default function MinutesPage() {
   const { data: user } = useCurrentUser();

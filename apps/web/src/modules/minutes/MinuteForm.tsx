@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { MinuteFormSchema, type MinuteFormValues } from '@/schemas/minute';
+import { MinuteFormSchema, type MinuteFormValues } from './schema';
 import { useMeetings } from '@/modules/meetings/useMeetings';
 import { useSuggestedMinuteNumber } from './useMinutes';
 

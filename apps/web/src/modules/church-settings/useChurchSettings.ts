@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import type { ChurchSettingsResponse, ChurchSettingsFormValues } from '@/schemas/church-settings';
+import type { ChurchSettingsResponse, ChurchSettingsFormValues } from './schema';
 
 const BASE = '/church-settings';
 const KEY = ['church-settings'] as const;

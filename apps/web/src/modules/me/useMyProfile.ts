@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import type { AttenderProfileResponse, UpdateMyProfileFormValues } from '@/schemas/me';
+import type { AttenderProfileResponse, UpdateMyProfileFormValues } from './schema';
 
 function describeError(err: unknown, fallback: string) {
   if (err instanceof ApiError) return err.message || fallback;

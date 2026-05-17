@@ -1,31 +1,8 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  type ReactNode
-} from 'react';
-
-type Theme = 'dark' | 'light';
-
-type ThemeProviderProps = {
-  children: ReactNode;
-  defaultTheme?: Theme;
-  storageKey?: string;
-  disableTransitionOnChange?: boolean;
-};
-
-type ThemeProviderState = {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-};
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ThemeProviderContext, type Theme, type ThemeProviderProps } from '@/hooks/useTheme';
 
 const COLOR_SCHEME_QUERY = '(prefers-color-scheme: dark)';
 const THEME_VALUES: Theme[] = ['dark', 'light'];
-
-const ThemeProviderContext = createContext<ThemeProviderState | undefined>(undefined);
 
 function isTheme(value: string | null): value is Theme {
   if (value === null) {
@@ -150,14 +127,4 @@ export function ThemeProvider({
       {children}
     </ThemeProviderContext.Provider>
   );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeProviderContext);
-
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-
-  return context;
 }

@@ -9,7 +9,7 @@ import type {
   MembersReportResponse,
   FundListResponse,
   FundDetailResponse
-} from '@/schemas/report';
+} from './schema';
 
 function buildParams(month: string, page?: number, limit?: number) {
   const p = new URLSearchParams({ month });

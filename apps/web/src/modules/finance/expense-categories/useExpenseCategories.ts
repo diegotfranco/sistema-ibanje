@@ -1,8 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type {
-  ExpenseCategoryResponse,
-  ExpenseCategoryFormValues
-} from '@/schemas/expense-category';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { ExpenseCategoryResponse, ExpenseCategoryFormValues } from './schema';
 
 const BASE = '/expense-categories';
 const KEY = ['expense-categories'] as const;

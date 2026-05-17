@@ -1,9 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type {
-  IncomeEntryResponse,
-  IncomeEntryCreateBody,
-  IncomeEntryUpdateBody
-} from '@/schemas/income-entry';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { IncomeEntryResponse, IncomeEntryCreateBody, IncomeEntryUpdateBody } from './schema';
 
 const BASE = '/income-entries';
 const KEY = ['income-entries'] as const;

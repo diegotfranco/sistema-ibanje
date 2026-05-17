@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { RoleFormSchema, type RoleFormValues, type RoleResponse } from '@/schemas/role';
+import { RoleFormSchema, type RoleFormValues, type RoleResponse } from './schema';
 
 interface RoleFormProps {
   initialValues?: RoleResponse;

@@ -22,7 +22,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useUsers, useUserMutations } from './useUsers';
 import UserForm from './UserForm';
 import UserPermissionsDialog from './UserPermissionsDialog';
-import type { UserCreateFormValues, UserEditFormValues, UserResponse } from '@/schemas/user';
+import type { UserCreateFormValues, UserEditFormValues, UserResponse } from './schema';
 
 type UserFormRefs = {
   createForm: ReturnType<typeof useForm<UserCreateFormValues>> | null;

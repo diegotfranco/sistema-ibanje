@@ -12,7 +12,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import DateInput from '@/components/DateInput';
-import MoneyInput from '@/components/MoneyInput';
+import MoneyInput from '../components/MoneyInput';
 import EntityPicker from '@/components/EntityPicker';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';
@@ -25,7 +25,7 @@ import {
   ExpenseEntryFormSchema,
   type ExpenseEntryFormValues,
   type ExpenseEntryResponse
-} from '@/schemas/expense-entry';
+} from './schema';
 
 interface Props {
   initialValues?: ExpenseEntryResponse;

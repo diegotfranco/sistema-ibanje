@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import type { IncomePivot } from '@/schemas/report';
+import type { IncomePivot } from './schema';
 
 interface Props {
   pivot: IncomePivot;

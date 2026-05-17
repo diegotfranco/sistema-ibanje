@@ -10,7 +10,7 @@ import {
 import PermissionsMatrix from '@/components/PermissionsMatrix';
 import { usePermissionsReference } from '@/hooks/usePermissionsReference';
 import { useRolePermissions, useSaveRolePermissions } from '@/modules/roles/useRoles';
-import type { RolePermissionEntry, RoleResponse } from '@/schemas/role';
+import type { RolePermissionEntry, RoleResponse } from './schema';
 
 function toMatrixValue(entries: RolePermissionEntry[]): Set<string> {
   return new Set(entries.map((e) => `${e.moduleId}:${e.permissionId}`));

@@ -11,7 +11,7 @@ import {
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@/lib/zodResolver';
-import { TransitionNotesSchema, type TransitionNotesFormValues } from '@/schemas/monthly-closing';
+import { TransitionNotesSchema, type TransitionNotesFormValues } from './schema';
 import { useClosingTransition } from './useMonthlyClosings';
 
 type TransitionAction = 'submit' | 'approve' | 'reject' | 'close';

@@ -14,7 +14,7 @@ import {
   type PermissionTypeRef
 } from '@/hooks/usePermissionsReference';
 import { useUserPermissions, useSaveUserPermissions } from '@/modules/users/useUsers';
-import type { UserResponse } from '@/schemas/user';
+import type { UserResponse } from './schema';
 
 function userPermsToMatrixValue(
   record: Record<string, string[]>,

@@ -10,7 +10,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useExpenseEntries, useExpenseEntryMutations } from './useExpenseEntries';
 import { ExpenseEntryForm } from './ExpenseEntryForm';
 import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
-import type { ExpenseEntryResponse, ExpenseEntryFormValues } from '@/schemas/expense-entry';
+import type { ExpenseEntryResponse, ExpenseEntryFormValues } from './schema';
 
 export default function ExpenseEntriesPage() {
   const { data: user } = useCurrentUser();

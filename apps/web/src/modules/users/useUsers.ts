@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import { useResourceList } from '@/lib/resourceQuery';
-import type { UserCreateFormValues, UserEditFormValues, UserResponse } from '@/schemas/user';
+import { useResourceList } from '@/hooks/useResourceQuery';
+import type { UserCreateFormValues, UserEditFormValues, UserResponse } from './schema';
 
 const BASE = '/users';
 const KEY = ['users'] as const;

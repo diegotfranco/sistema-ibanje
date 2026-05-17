@@ -6,7 +6,7 @@ import { AuthErrorListener } from '@/components/AuthErrorListener';
 import { NotFoundPage } from '@/components/status/NotFoundPage';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
-import { useTheme } from '@/lib/theme';
+import { useTheme } from '@/hooks/useTheme';
 
 function flattenRoutes(routes: AppRoute[]): AppRoute[] {
   return routes.flatMap((route) =>

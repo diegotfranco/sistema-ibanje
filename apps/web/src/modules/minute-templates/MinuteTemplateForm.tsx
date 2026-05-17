@@ -27,7 +27,7 @@ import {
   MinuteTemplateFormSchema,
   type MinuteTemplateFormValues,
   type MinuteTemplateResponse
-} from '@/schemas/minute-template';
+} from './schema';
 
 const EMPTY: MinuteTemplateFormValues = {
   meetingType: MeetingType.Ordinary,

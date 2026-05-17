@@ -1,8 +1,8 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import type { AgendaItemInput, MeetingFormValues, MeetingResponse } from '@/schemas/meeting';
+import type { AgendaItemInput, MeetingFormValues, MeetingResponse } from './schema';
 
 const BASE = '/meetings';
 const KEY = ['meetings'] as const;

@@ -11,7 +11,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import DateInput from '@/components/DateInput';
-import MoneyInput from '@/components/MoneyInput';
+import MoneyInput from '../components/MoneyInput';
 import EntityPicker from '@/components/EntityPicker';
 import { zodResolver } from '@/lib/zodResolver';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
@@ -23,7 +23,7 @@ import {
   IncomeEntryFormSchema,
   type IncomeEntryFormValues,
   type IncomeEntryResponse
-} from '@/schemas/income-entry';
+} from './schema';
 
 interface Props {
   initialValues?: IncomeEntryResponse;

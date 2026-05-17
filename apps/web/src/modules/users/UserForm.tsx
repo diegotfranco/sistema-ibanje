@@ -11,9 +11,9 @@ import {
   type UserCreateFormValues,
   type UserEditFormValues,
   type UserResponse
-} from '@/schemas/user';
-import type { RoleResponse } from '@/schemas/role';
-import type { AttenderResponse } from '@/schemas/attender';
+} from './schema';
+import type { RoleResponse } from '../roles/schema';
+import type { AttenderResponse } from '../attenders/schema';
 import { useRoles } from '@/modules/roles/useRoles';
 import { useAttenders } from '@/modules/attenders/useAttenders';
 

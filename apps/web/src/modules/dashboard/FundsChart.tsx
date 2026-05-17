@@ -1,7 +1,7 @@
 import { useFundsReport } from '@/modules/finance/reports/useReports';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMoney, formatDate, isDatePast } from './dashboard-utils';
-import type { FundSummary } from '@/schemas/report';
+import type { FundSummary } from '@/modules/finance/reports/schema';
 
 export function FundsChart() {
   const { data, isLoading } = useFundsReport();

@@ -18,7 +18,7 @@ import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosings, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { NewClosingDialog } from './NewClosingDialog';
-import type { MonthlyClosingResponse } from '@/schemas/monthly-closing';
+import type { MonthlyClosingResponse } from './schema';
 
 const MONTHS = [
   'Janeiro',

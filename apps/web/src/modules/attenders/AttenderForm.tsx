@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import DateInput from '@/components/DateInput';
 import { AdmissionMode } from '@sistema-ibanje/shared';
-import { AttenderFormSchema, type AttenderFormValues } from '@/schemas/attender';
+import { AttenderFormSchema, type AttenderFormValues } from './schema';
 
 interface AttenderFormProps {
   open: boolean;

@@ -1,5 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type { PaymentMethodResponse, PaymentMethodFormValues } from '@/schemas/payment-method';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { PaymentMethodResponse, PaymentMethodFormValues } from './schema';
 
 const BASE = '/payment-methods';
 const KEY = ['payment-methods'] as const;

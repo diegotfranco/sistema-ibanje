@@ -1,5 +1,5 @@
-import { useResourceList, useResourceMutations } from '@/lib/resourceQuery';
-import type { AttenderFormValues, AttenderResponse } from '@/schemas/attender';
+import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { AttenderFormValues, AttenderResponse } from './schema';
 
 const BASE = '/attenders';
 const KEY = ['attenders'] as const;

@@ -19,7 +19,7 @@ import {
   MembershipLetterFormSchema,
   type MembershipLetterFormValues,
   type MembershipLetterResponse
-} from '@/schemas/membership-letter';
+} from './schema';
 
 interface Props {
   initialValues?: MembershipLetterResponse;

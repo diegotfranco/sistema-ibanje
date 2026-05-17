@@ -20,7 +20,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/DateInput';
 import { MeetingType } from '@sistema-ibanje/shared';
-import { MeetingFormSchema, type MeetingFormValues } from '@/schemas/meeting';
+import { MeetingFormSchema, type MeetingFormValues } from './schema';
 
 const EMPTY: MeetingFormValues = {
   meetingDate: '',

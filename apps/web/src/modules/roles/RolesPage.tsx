@@ -18,7 +18,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useRoles, useRoleMutations } from './useRoles';
 import RoleForm from './RoleForm';
 import RolePermissionsDialog from './RolePermissionsDialog';
-import type { RoleFormValues, RoleResponse } from '@/schemas/role';
+import type { RoleFormValues, RoleResponse } from './schema';
 
 export default function RolesPage() {
   const { data: user } = useCurrentUser();
