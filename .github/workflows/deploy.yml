@@ -8,9 +8,9 @@ on:
         type: boolean
         default: false
       ref:
-        description: 'Git ref to deploy (branch, tag, or commit SHA)'
+        description: 'Git ref to deploy (branch, tag, or commit SHA). Leave blank to use the branch selected above.'
         type: string
-        default: main
+        default: ''
   workflow_run:
     workflows: [CI]
     types: [completed]
@@ -37,7 +37,7 @@ jobs:
       - name: Pull latest code
         working-directory: /opt/sistema-ibanje/app
         env:
-          DEPLOY_REF: ${{ inputs.ref || 'main' }}
+          DEPLOY_REF: ${{ inputs.ref != '' && inputs.ref || github.ref_name }}
         run: |
           git fetch --prune --tags
           git checkout "$DEPLOY_REF"
