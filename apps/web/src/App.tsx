@@ -22,8 +22,8 @@ const publicRoutes = flat.filter((r) => r.layout === 'auth' && r.path && r.eleme
 const protectedRoutes = flat.filter((r) => r.layout === 'app' && r.path && r.element);
 
 function ToasterWrapper() {
-  const { resolved } = useTheme();
-  return <Toaster position="top-right" richColors theme={resolved} />;
+  const { theme } = useTheme();
+  return <Toaster position="top-right" richColors theme={theme} />;
 }
 
 export default function App() {
