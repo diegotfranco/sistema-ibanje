@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { Pagination } from '@/components/ui/pagination';
-import type { IncomeEntryResponse } from '@/schemas/donation';
+import type { IncomeEntryResponse } from './donation.schema';
 
 type Props = {
   data: IncomeEntryResponse[];

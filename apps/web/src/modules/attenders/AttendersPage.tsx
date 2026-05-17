@@ -10,8 +10,8 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenders, useAttenderMutations } from './useAttenders';
 import AttenderForm from './AttenderForm';
 import StatusBadge from '@/components/StatusBadge';
-import AttenderDonationsDialog from '@/modules/donations/AttenderDonationsDialog';
-import type { AttenderResponse, AttenderFormValues } from '@/schemas/attender';
+import AttenderDonationsDialog from '@/modules/me/AttenderDonationsDialog';
+import type { AttenderResponse, AttenderFormValues } from './schema';
 
 type AttenderFormInstance = ReturnType<typeof useForm<AttenderFormValues>>;
 

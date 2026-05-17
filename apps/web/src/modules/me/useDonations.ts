@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
-import type { IncomeEntryResponse } from '@/schemas/donation';
+import type { IncomeEntryResponse } from './donation.schema';
 
 const BASE = '/me/donations';
 const KEY = ['me', 'donations'] as const;

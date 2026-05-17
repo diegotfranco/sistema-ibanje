@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
 import {
   RichTextDisplay,
-  RichTextEditor,
+  RichTextEditor as RichTextEditorComponent,
   interpolateTipTapDoc,
   EMPTY_TIPTAP_DOC,
   type TipTapDoc
@@ -36,22 +36,14 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import {
   useMinuteById,
   useUpdatePendingVersion,
-  useEditApprovedMinute,
-  useApproveMinute,
-  useFinalizeDraft,
   useUpdateMinute,
-  useSignMinute,
   useMeetingAttendersPresent,
   useSetMeetingAttendersPresent
 } from './useMinutes';
 import { useAttenders } from '@/modules/attenders/useAttenders';
-import {
-  EditApprovedMinuteSchema,
-  UpdateMinuteSchema,
-  type EditApprovedMinuteValues,
-  type UpdateMinuteValues,
-  type MinuteVersionResponse
-} from '@/schemas/minute';
+import { UpdateMinuteSchema, type UpdateMinuteValues, type MinuteVersionResponse } from './schema';
+import MinuteApprovalSection from './MinuteApprovalSection';
+import MinuteEditApprovedForm from './MinuteEditApprovedForm';
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('pt-BR');
@@ -69,25 +61,13 @@ export default function MinuteDetailPage() {
 
   const { data: minute, isLoading } = useMinuteById(minuteId);
   const updatePending = useUpdatePendingVersion(minuteId);
-  const editApproved = useEditApprovedMinute(minuteId);
-  const approveMinute = useApproveMinute(minuteId);
-  const finalizeDraft = useFinalizeDraft(minuteId);
   const updateMinute = useUpdateMinute(minuteId);
-  const signMinute = useSignMinute(minuteId);
 
   const [editPendingOpen, setEditPendingOpen] = useState(false);
   const [editDetailsOpen, setEditDetailsOpen] = useState(false);
-  const [approveOpen, setApproveOpen] = useState(false);
   const [editApprovedOpen, setEditApprovedOpen] = useState(false);
-  const [finalizeDraftOpen, setFinalizeDraftOpen] = useState(false);
-  const [uploadDocumentOpen, setUploadDocumentOpen] = useState(false);
   const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [selectedVersion, setSelectedVersion] = useState<MinuteVersionResponse | null>(null);
-
-  const editApprovedForm = useForm<EditApprovedMinuteValues>({
-    resolver: zodResolver(EditApprovedMinuteSchema),
-    defaultValues: { content: EMPTY_TIPTAP_DOC, reasonForChange: '' }
-  });
 
   const editDetailsForm = useForm<UpdateMinuteValues>({
     resolver: zodResolver(UpdateMinuteSchema),
@@ -187,7 +167,7 @@ export default function MinuteDetailPage() {
           )}
 
           {current && (
-            <div className="flex gap-2 mt-4">
+            <div className="flex gap-2 mt-4 flex-wrap">
               <Button size="sm" variant="outline" onClick={() => setPdfPreviewOpen(true)}>
                 Visualizar PDF
               </Button>
@@ -196,9 +176,6 @@ export default function MinuteDetailPage() {
                   <Button size="sm" variant="outline" onClick={() => setEditPendingOpen(true)}>
                     Editar Rascunho
                   </Button>
-                  <Button size="sm" onClick={() => setFinalizeDraftOpen(true)}>
-                    Finalizar Rascunho
-                  </Button>
                 </>
               )}
               {current.status === MinuteStatus.AwaitingApproval && canEdit && (
@@ -206,25 +183,17 @@ export default function MinuteDetailPage() {
                   Editar Rascunho
                 </Button>
               )}
-              {current.status === MinuteStatus.AwaitingApproval && canReview && (
-                <Button size="sm" onClick={() => setApproveOpen(true)}>
-                  Aprovar
-                </Button>
-              )}
               {current.status === MinuteStatus.Approved && canEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    editApprovedForm.reset({
-                      content: (current.content as TipTapDoc) ?? EMPTY_TIPTAP_DOC,
-                      reasonForChange: ''
-                    });
-                    setEditApprovedOpen(true);
-                  }}>
+                <Button size="sm" variant="outline" onClick={() => setEditApprovedOpen(true)}>
                   Criar Nova Versão
                 </Button>
               )}
+              <MinuteApprovalSection
+                minuteId={minuteId}
+                currentStatus={current.status}
+                canEdit={canEdit}
+                canReview={canReview}
+              />
             </div>
           )}
         </CardContent>
@@ -234,13 +203,8 @@ export default function MinuteDetailPage() {
 
       {minute.signedDocumentPath && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardHeader>
             <CardTitle>Documento Assinado</CardTitle>
-            {canEdit && (
-              <Button size="sm" variant="outline" onClick={() => setUploadDocumentOpen(true)}>
-                Substituir Documento
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
             <iframe
@@ -254,13 +218,8 @@ export default function MinuteDetailPage() {
 
       {!minute.signedDocumentPath && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <CardHeader>
             <CardTitle>Documento Assinado</CardTitle>
-            {canEdit && (
-              <Button size="sm" onClick={() => setUploadDocumentOpen(true)}>
-                Enviar PDF Assinado
-              </Button>
-            )}
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-sm">Nenhum documento assinado enviado.</p>
@@ -407,118 +366,12 @@ export default function MinuteDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Approve dialog */}
-      <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Aprovar Ata</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Confirmar a aprovação da versão atual? Esta ação não pode ser desfeita.
-          </p>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setApproveOpen(false)}
-              disabled={approveMinute.isPending}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() => approveMinute.mutate({}, { onSuccess: () => setApproveOpen(false) })}
-              disabled={approveMinute.isPending}>
-              {approveMinute.isPending ? 'Aprovando...' : 'Confirmar Aprovação'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit approved version dialog */}
-      <Dialog open={editApprovedOpen} onOpenChange={setEditApprovedOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Criar Nova Versão</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={editApprovedForm.handleSubmit((v) =>
-              editApproved.mutate(v, { onSuccess: () => setEditApprovedOpen(false) })
-            )}
-            className="space-y-4">
-            <div className="space-y-1">
-              <Label>Conteúdo *</Label>
-              <Controller
-                control={editApprovedForm.control}
-                name="content"
-                render={({ field }) => (
-                  <RichTextEditor value={field.value as TipTapDoc} onChange={field.onChange} />
-                )}
-              />
-              {editApprovedForm.formState.errors.content && (
-                <p className="text-xs text-destructive">
-                  {editApprovedForm.formState.errors.content.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="ea-reason">Motivo da alteração *</Label>
-              <Input id="ea-reason" {...editApprovedForm.register('reasonForChange')} />
-              {editApprovedForm.formState.errors.reasonForChange && (
-                <p className="text-xs text-destructive">
-                  {editApprovedForm.formState.errors.reasonForChange.message}
-                </p>
-              )}
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setEditApprovedOpen(false)}
-                disabled={editApproved.isPending}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={editApproved.isPending}>
-                {editApproved.isPending ? 'Salvando...' : 'Salvar Nova Versão'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Finalize draft dialog */}
-      <Dialog open={finalizeDraftOpen} onOpenChange={setFinalizeDraftOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Finalizar Rascunho</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Finalizar o rascunho? Após finalização, a ata seguirá para aprovação e o rascunho não
-            poderá mais ser editado livremente.
-          </p>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setFinalizeDraftOpen(false)}
-              disabled={finalizeDraft.isPending}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={() =>
-                finalizeDraft.mutate(undefined, { onSuccess: () => setFinalizeDraftOpen(false) })
-              }
-              disabled={finalizeDraft.isPending}>
-              {finalizeDraft.isPending ? 'Finalizando...' : 'Confirmar'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Upload document dialog */}
-      <UploadDocumentDialog
-        open={uploadDocumentOpen}
-        onOpenChange={setUploadDocumentOpen}
-        onSubmit={(file) =>
-          signMinute.mutate(file, { onSuccess: () => setUploadDocumentOpen(false) })
-        }
-        isPending={signMinute.isPending}
+      <MinuteEditApprovedForm
+        minuteId={minuteId}
+        open={editApprovedOpen}
+        onOpenChange={setEditApprovedOpen}
+        currentContent={(current?.content as TipTapDoc) ?? null}
       />
 
       {/* PDF preview dialog */}
@@ -615,7 +468,7 @@ function EditPendingDialog({
           <DialogTitle>Editar Rascunho</DialogTitle>
         </DialogHeader>
         <form
-          onSubmit={handleSubmit((v) => onSubmit(v.content as TipTapDoc))}
+          onSubmit={handleSubmit((v: { content: TipTapDoc }) => onSubmit(v.content))}
           className="space-y-4">
           <div className="space-y-1">
             <Label>Conteúdo</Label>
@@ -623,7 +476,10 @@ function EditPendingDialog({
               control={control}
               name="content"
               render={({ field }) => (
-                <RichTextEditor value={field.value} onChange={field.onChange} />
+                <RichTextEditorComponent
+                  value={field.value as TipTapDoc}
+                  onChange={field.onChange}
+                />
               )}
             />
           </div>
@@ -799,68 +655,6 @@ function EditAttendersDialog({
           </Button>
           <Button onClick={handleSubmit} disabled={isPending}>
             {isPending ? 'Salvando...' : 'Salvar'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-interface UploadDocumentDialogProps {
-  open: boolean;
-  onOpenChange: (v: boolean) => void;
-  onSubmit: (file: File) => void;
-  isPending: boolean;
-}
-
-function UploadDocumentDialog({
-  open,
-  onOpenChange,
-  onSubmit,
-  isPending
-}: UploadDocumentDialogProps) {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  const handleSubmit = () => {
-    if (selectedFile) {
-      onSubmit(selectedFile);
-      setSelectedFile(null);
-    }
-  };
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(v) => {
-        if (!v) setSelectedFile(null);
-        onOpenChange(v);
-      }}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Enviar PDF Assinado</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="pdf-file">Arquivo PDF *</Label>
-            <Input
-              id="pdf-file"
-              type="file"
-              accept="application/pdf"
-              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
-            />
-            {selectedFile && <p className="text-xs text-muted-foreground">{selectedFile.name}</p>}
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isPending}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={!selectedFile || isPending}>
-            {isPending ? 'Enviando...' : 'Enviar'}
           </Button>
         </DialogFooter>
       </DialogContent>

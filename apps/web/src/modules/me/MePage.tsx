@@ -8,9 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenderProfile, useUpdateMyProfile } from './useMyProfile';
-import { useMyDonations } from '@/modules/donations/useDonations';
-import DonationsTable from '@/modules/donations/DonationsTable';
-import { UpdateMyProfileFormSchema, type UpdateMyProfileFormValues } from '@/schemas/me';
+import { useMyDonations } from './useDonations';
+import DonationsTable from './DonationsTable';
+import { UpdateMyProfileFormSchema, type UpdateMyProfileFormValues } from './schema';
 
 const EMPTY: UpdateMyProfileFormValues = {
   phone: '',
