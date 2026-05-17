@@ -18,11 +18,11 @@ export const SEED_ROLES = [
   },
   {
     name: 'Secretário Responsável',
-    description: 'Gestão completa de atas e membros, incluindo remoção de registros.'
+    description: 'Gestão completa de atas e congregados, incluindo remoção de registros.'
   },
   {
     name: 'Secretário',
-    description: 'Gestão de atas e membros, sem permissão para remover registros.'
+    description: 'Gestão de atas e congregados, sem permissão para remover registros.'
   },
   {
     name: 'Tesoureiro Responsável',
@@ -69,7 +69,7 @@ export const SEED_MODULES = [
   { name: 'Permissões', description: 'Gerencia os tipos de permissões disponíveis' },
   { name: 'Áreas', description: 'Gerencia as seções funcionais do sistema' },
   { name: 'Status', description: 'Gerencia os status dos registros do sistema' },
-  { name: 'Membros', description: 'Gerencia os membros da igreja' },
+  { name: 'Congregados', description: 'Gerencia os congregados da igreja' },
   { name: 'Categorias de Entradas', description: 'Gerencia os tipos de entradas financeiras' },
   { name: 'Lançamentos de Entradas', description: 'Gerencia o registro de entradas financeiras' },
   { name: 'Categorias de Saídas', description: 'Gerencia os tipos de saídas financeiras' },
@@ -171,7 +171,7 @@ export function buildRoleModulePermissions(
     'Formas de Pagamento',
     'Fundos Designados'
   ];
-  const adminMods = ['Painel', 'Membros', 'Atas'];
+  const adminMods = ['Painel', 'Congregados', 'Atas'];
   const closingFullIds = ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
     (n) => permByName[n].id
   );
@@ -179,14 +179,14 @@ export function buildRoleModulePermissions(
   return [
     ...cross(roleByName['Administrador'].id, allModNames, allPermIds),
     ...cross(roleByName['Tesoureiro'].id, ['Painel', ...financialMods], writePermIds),
-    ...cross(roleByName['Tesoureiro'].id, ['Membros', 'Atas'], readPermIds),
+    ...cross(roleByName['Tesoureiro'].id, ['Congregados', 'Atas'], readPermIds),
     ...cross(
       roleByName['Comissão de Exame de Contas'].id,
       ['Painel', ...financialMods],
       readPermIds
     ),
     ...cross(roleByName['Tesoureiro Responsável'].id, ['Painel', ...financialMods], fullPermIds),
-    ...cross(roleByName['Tesoureiro Responsável'].id, ['Membros', 'Atas'], readPermIds),
+    ...cross(roleByName['Tesoureiro Responsável'].id, ['Congregados', 'Atas'], readPermIds),
     ...cross(roleByName['Secretário'].id, adminMods, writePermIds),
     ...cross(roleByName['Secretário'].id, financialMods, readPermIds),
     ...cross(roleByName['Secretário Responsável'].id, adminMods, fullPermIds),
@@ -210,7 +210,7 @@ export function buildRoleModulePermissions(
       ['Fechamentos Mensais'],
       [permByName['Acessar'].id, permByName['Revisar'].id]
     ),
-    ...cross(roleByName['Membro'].id, ['Atas', 'Membros'], [permByName['Acessar'].id]),
+    ...cross(roleByName['Membro'].id, ['Atas', 'Congregados'], [permByName['Acessar'].id]),
     ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], writePermIds),
     ...cross(
       roleByName['Secretário Responsável'].id,
