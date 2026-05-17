@@ -1,12 +1,16 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import type { IdParam } from '../../../lib/validation.js';
 import type { z } from 'zod';
-import { PaginatedMonthQuerySchema, MonthQuerySchema, OptionalMonthQuerySchema } from './schema.js';
+import {
+  PaginatedMonthQueryRequestSchema,
+  MonthQueryRequestSchema,
+  OptionalMonthQueryRequestSchema
+} from './schema.js';
 import * as service from './service.js';
 
-type PaginatedMonthQuery = z.infer<typeof PaginatedMonthQuerySchema>;
-type MonthQuery = z.infer<typeof MonthQuerySchema>;
-type OptionalMonthQuery = z.infer<typeof OptionalMonthQuerySchema>;
+type PaginatedMonthQuery = z.infer<typeof PaginatedMonthQueryRequestSchema>;
+type MonthQuery = z.infer<typeof MonthQueryRequestSchema>;
+type OptionalMonthQuery = z.infer<typeof OptionalMonthQueryRequestSchema>;
 
 export async function incomeReport(req: FastifyRequest, reply: FastifyReply) {
   const { month, page, limit } = req.query as PaginatedMonthQuery;

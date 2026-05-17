@@ -7,7 +7,7 @@ import type {
   ApproveMinuteRequest,
   CreateMinuteTemplateRequest,
   UpdateMinuteTemplateRequest,
-  SetAttendersPresent
+  SetAttendersPresentRequest
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
@@ -169,7 +169,7 @@ export async function getAttendersPresent(req: FastifyRequest, reply: FastifyRep
 
 export async function setAttendersPresent(req: FastifyRequest, reply: FastifyReply) {
   const { meetingId } = req.params as { meetingId: number };
-  const body = req.body as SetAttendersPresent;
+  const body = req.body as SetAttendersPresentRequest;
   await service.setMeetingAttendersPresent(req.session.userId!, meetingId, body.attenderIds);
   logAudit(req.session.userId!, 'update', 'meeting_attenders_present', meetingId, {
     ipAddress: req.ip

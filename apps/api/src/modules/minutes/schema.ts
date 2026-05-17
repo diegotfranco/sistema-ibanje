@@ -68,7 +68,7 @@ export const UpdateMinuteRequestSchema = z.object({
   secretaryName: z.string().max(96).optional()
 });
 
-export const SetAttendersPresentSchema = z.object({
+export const SetAttendersPresentRequestSchema = z.object({
   attenderIds: z.array(z.number().int().positive())
 });
 
@@ -114,4 +114,4 @@ export type AgendaItemTemplate = z.infer<typeof AgendaItemTemplateSchema>;
 export type MinuteTemplateResponse = z.infer<typeof MinuteTemplateResponseSchema>;
 export type CreateMinuteTemplateRequest = z.infer<typeof CreateMinuteTemplateRequestSchema>;
 export type UpdateMinuteTemplateRequest = z.infer<typeof UpdateMinuteTemplateRequestSchema>;
-export type SetAttendersPresent = z.infer<typeof SetAttendersPresentSchema>;
+export type SetAttendersPresentRequest = z.infer<typeof SetAttendersPresentRequestSchema>;

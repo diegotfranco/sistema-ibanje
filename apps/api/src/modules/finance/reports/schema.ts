@@ -1,33 +1,33 @@
 import { z } from 'zod';
 
-export const MonthQuerySchema = z.object({
+export const MonthQueryRequestSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
 });
 
-export const DateRangeQuerySchema = z.object({
+export const DateRangeQueryRequestSchema = z.object({
   from: z.string().date(),
   to: z.string().date()
 });
 
-export const PaginatedDateRangeQuerySchema = DateRangeQuerySchema.extend({
+export const PaginatedDateRangeQueryRequestSchema = DateRangeQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const PaginatedMonthQuerySchema = MonthQuerySchema.extend({
+export const PaginatedMonthQueryRequestSchema = MonthQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const OptionalMonthQuerySchema = z.object({
+export const OptionalMonthQueryRequestSchema = z.object({
   month: z
     .string()
     .regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
     .optional()
 });
 
-export type DateRangeQuery = z.infer<typeof DateRangeQuerySchema>;
-export type PaginatedDateRangeQuery = z.infer<typeof PaginatedDateRangeQuerySchema>;
+export type DateRangeQueryRequest = z.infer<typeof DateRangeQueryRequestSchema>;
+export type PaginatedDateRangeQueryRequest = z.infer<typeof PaginatedDateRangeQueryRequestSchema>;
 
 const PeriodSchema = z.object({
   from: z.string(),

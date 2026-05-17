@@ -17,7 +17,7 @@ import {
   MinuteTemplateResponseSchema,
   CreateMinuteTemplateRequestSchema,
   UpdateMinuteTemplateRequestSchema,
-  SetAttendersPresentSchema
+  SetAttendersPresentRequestSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -282,7 +282,7 @@ export async function minutesRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Minutes'],
         params: z.object({ meetingId: z.coerce.number().int().positive() }),
-        body: SetAttendersPresentSchema,
+        body: SetAttendersPresentRequestSchema,
         response: {
           204: { type: 'null', description: 'Updated' },
           400: ErrorResponseSchema,
