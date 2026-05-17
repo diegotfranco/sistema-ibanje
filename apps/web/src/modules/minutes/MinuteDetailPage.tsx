@@ -194,31 +194,22 @@ export default function MinuteDetailPage() {
 
       <AttendersPresentsCard meetingId={minute.meetingId} canEdit={canEdit} />
 
-      {minute.signedDocumentPath && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Documento Assinado</CardTitle>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle>Documento Assinado</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {minute.hasSignedDocument ? (
             <iframe
-              src={minute.signedDocumentPath}
+              src={`${import.meta.env.VITE_API_URL || '/api'}/minutes/${minuteId}/signed-document`}
               className="w-full h-96 border rounded"
               title="Documento assinado"
             />
-          </CardContent>
-        </Card>
-      )}
-
-      {!minute.signedDocumentPath && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Documento Assinado</CardTitle>
-          </CardHeader>
-          <CardContent>
+          ) : (
             <p className="text-muted-foreground text-sm">Nenhum documento assinado enviado.</p>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

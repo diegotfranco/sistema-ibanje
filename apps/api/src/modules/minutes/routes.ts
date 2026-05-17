@@ -238,6 +238,24 @@ export async function minutesRoutes(app: FastifyInstance) {
   } as const;
 
   app.get(
+    '/minutes/:id/signed-document',
+    {
+      schema: {
+        tags: ['Minutes'],
+        params: IdParamSchema,
+        response: {
+          200: PdfResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Minutes, Action.View)]
+    },
+    controller.signedDocument
+  );
+
+  app.get(
     '/minutes/:id/pdf',
     {
       schema: {

@@ -59,7 +59,7 @@ export type ExpenseEntryResponse = {
   designatedFundName: string | null;
   attenderId: number | null;
   attenderName: string | null;
-  receipt: string | null;
+  hasReceipt: boolean;
   notes: string | null;
   userId: number;
   status: string;

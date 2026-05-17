@@ -57,7 +57,7 @@ export type MinuteResponse = {
   closingTime: string | null;
   attendersPresent: { id: number; name: string }[];
   pautas: string;
-  signedDocumentPath: string | null;
+  hasSignedDocument: boolean;
   isNotarized: boolean;
   notarizedAt: string | null;
   correctsMinuteId: number | null;

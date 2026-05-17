@@ -5,7 +5,7 @@ import { ActiveStatus, MinuteStatus } from '@sistema-ibanje/shared';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
 import { db } from '../../db/index.js';
-import { uploadFile, deleteFile, getPresignedUrl } from '../../lib/storage.js';
+import { uploadFile, deleteFile, getFileStream, type StoredFile } from '../../lib/storage.js';
 import { fileTypeFromBuffer } from 'file-type';
 import { randomUUID } from 'node:crypto';
 import * as churchSettingsRepo from '../church-settings/repository.js';
@@ -46,15 +46,6 @@ async function buildMinuteResponseAsync(
   const currentVersion =
     sorted.length > 0 ? buildVersionResponse(sorted[sorted.length - 1]!) : null;
 
-  let signedDocumentPath: string | null = null;
-  if (minute.signedDocumentPath) {
-    try {
-      signedDocumentPath = await getPresignedUrl(minute.signedDocumentPath);
-    } catch {
-      signedDocumentPath = null;
-    }
-  }
-
   const attendersPresent = await repo.getMeetingAttendersPresent(minute.meetingId);
   const agendaItems = await repo.listAgendaItemsForMeeting(minute.meetingId);
 
@@ -69,7 +60,7 @@ async function buildMinuteResponseAsync(
     secretaryName: minute.secretaryName ?? null,
     openingTime: minute.openingTime ?? null,
     closingTime: minute.closingTime ?? null,
-    signedDocumentPath,
+    hasSignedDocument: minute.signedDocumentPath !== null,
     attendersPresent,
     pautas: formatAgendaItems(agendaItems),
     currentVersion,
@@ -258,6 +249,16 @@ export async function finalizeDraft(
   await repo.updateMinuteVersion(latest.id, { status: MinuteStatus.AwaitingApproval });
   const versions = await repo.getVersionsForMinute(minuteId);
   return buildMinuteResponseAsync(minute, versions);
+}
+
+export async function getMinuteSignedDocumentFile(
+  callerId: number,
+  minuteId: number
+): Promise<StoredFile | null> {
+  await assertPermission(callerId, Module.Minutes, Action.View);
+  const minute = await repo.findMinuteById(minuteId);
+  if (!minute || !minute.signedDocumentPath) return null;
+  return getFileStream(minute.signedDocumentPath);
 }
 
 export async function signMinute(

@@ -108,6 +108,31 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
     controller.remove
   );
 
+  // Receipt sub-resource — streams the stored file back so MinIO stays internal-only
+  const ReceiptResponseSchema = {
+    type: 'string',
+    format: 'binary',
+    description: 'Receipt file (image or PDF)'
+  } as const;
+
+  app.get(
+    '/expense-entries/:id/receipt',
+    {
+      schema: {
+        tags: ['Expense Entries'],
+        params: IdParamSchema,
+        response: {
+          200: ReceiptResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.View)]
+    },
+    controller.getReceipt
+  );
+
   // Receipt sub-resource — accepts multipart/form-data with a single 'receipt' file field
   app.post(
     '/expense-entries/:id/receipt',

@@ -1,3 +1,4 @@
+import type { Readable } from 'node:stream';
 import {
   S3Client,
   PutObjectCommand,
@@ -6,7 +7,6 @@ import {
   CreateBucketCommand,
   HeadBucketCommand
 } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from '../config/env.js';
 
 const s3 = new S3Client({
@@ -45,6 +45,32 @@ export async function deleteFile(key: string) {
   await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
 }
 
-export async function getPresignedUrl(key: string, expiresIn = 3600): Promise<string> {
-  return getSignedUrl(s3, new GetObjectCommand({ Bucket: BUCKET, Key: key }), { expiresIn });
+export type StoredFile = {
+  body: Readable;
+  contentType: string;
+  contentLength: number | null;
+};
+
+// MinIO stays on an internal Docker DNS name, so presigned URLs are unreachable
+// from browsers; instead the API streams stored files back through authenticated routes.
+export async function getFileStream(key: string): Promise<StoredFile | null> {
+  try {
+    const result = await s3.send(new GetObjectCommand({ Bucket: BUCKET, Key: key }));
+    if (!result.Body) return null;
+    return {
+      body: result.Body as Readable,
+      contentType: result.ContentType ?? 'application/octet-stream',
+      contentLength: result.ContentLength ?? null
+    };
+  } catch (err) {
+    if (
+      err &&
+      typeof err === 'object' &&
+      'name' in err &&
+      (err.name === 'NoSuchKey' || err.name === 'NotFound')
+    ) {
+      return null;
+    }
+    throw err;
+  }
 }

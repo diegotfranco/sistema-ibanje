@@ -13,8 +13,9 @@ import { paginate } from '../../../../lib/pagination.js';
 import {
   uploadFile,
   deleteFile,
-  getPresignedUrl,
-  ALLOWED_MIME_TYPES
+  getFileStream,
+  ALLOWED_MIME_TYPES,
+  type StoredFile
 } from '../../../../lib/storage.js';
 import type {
   CreateExpenseEntryRequest,
@@ -67,17 +68,16 @@ function buildReceiptKey(referenceDate: string, ext: string): string {
 
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findExpenseEntryById>>>;
 
-async function toResponse(row: Row): Promise<ExpenseEntryResponse> {
-  const receipt = row.receipt ? await getPresignedUrl(row.receipt) : null;
-  return { ...row, receipt } as ExpenseEntryResponse;
+function toResponse(row: Row): ExpenseEntryResponse {
+  const { receipt, ...rest } = row;
+  return { ...rest, hasReceipt: receipt !== null } as ExpenseEntryResponse;
 }
 
 export async function listExpenseEntries(callerId: number, page: number, limit: number) {
   await assertPermission(callerId, Module.ExpenseEntries, Action.View);
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listExpenseEntries(offset, limit);
-  const enriched = await Promise.all(rows.map(toResponse));
-  return paginate(enriched, total, page, limit);
+  return paginate(rows.map(toResponse), total, page, limit);
 }
 
 export async function getExpenseEntryById(id: number): Promise<ExpenseEntryResponse | null> {
@@ -181,4 +181,14 @@ export async function deleteExpenseReceipt(
   await deleteFile(entry.receipt);
   await repo.updateReceiptKey(entryId, null);
   return 'ok';
+}
+
+export async function getExpenseReceiptFile(
+  callerId: number,
+  entryId: number
+): Promise<StoredFile | null> {
+  await assertPermission(callerId, Module.ExpenseEntries, Action.View);
+  const entry = await repo.findExpenseEntryById(entryId);
+  if (!entry || !entry.receipt) return null;
+  return getFileStream(entry.receipt);
 }

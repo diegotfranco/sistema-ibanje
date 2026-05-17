@@ -54,7 +54,7 @@ export const ExpenseEntryResponseSchema = z.object({
   designatedFundName: z.string().nullable(),
   attenderId: z.number().int().positive().nullable(),
   attenderName: z.string().nullable(),
-  receipt: z.string().nullable(),
+  hasReceipt: z.boolean(),
   notes: z.string().nullable(),
   userId: z.number().int().positive(),
   status: z.string(),

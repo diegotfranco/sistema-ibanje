@@ -330,7 +330,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
           {initialValues !== undefined && (
             <Field>
               <FieldLabel>Comprovante</FieldLabel>
-              <ReceiptField entryId={initialValues.id} receipt={initialValues.receipt ?? null} />
+              <ReceiptField entryId={initialValues.id} hasReceipt={initialValues.hasReceipt} />
             </Field>
           )}
         </div>

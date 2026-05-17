@@ -157,6 +157,16 @@ export async function pdf(req: FastifyRequest, reply: FastifyReply) {
     .send(buffer);
 }
 
+export async function signedDocument(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const file = await service.getMinuteSignedDocumentFile(req.session.userId!, id);
+  if (!file) return reply.code(404).send({ message: 'Signed document not found' });
+  reply.header('Content-Type', file.contentType);
+  reply.header('Content-Disposition', `inline; filename="ata-assinada-${id}.pdf"`);
+  if (file.contentLength !== null) reply.header('Content-Length', file.contentLength);
+  return reply.send(file.body);
+}
+
 export async function suggestedMinuteNumber(req: FastifyRequest, reply: FastifyReply) {
   const value = await service.getSuggestedMinuteNumber(req.session.userId!);
   return reply.send({ value });

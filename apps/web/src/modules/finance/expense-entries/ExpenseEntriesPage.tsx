@@ -78,11 +78,11 @@ export default function ExpenseEntriesPage() {
         header: 'Comprovante',
         cell: (row: ExpenseEntryResponse) => (
           <div className="flex justify-center">
-            {row.receipt ? (
+            {row.hasReceipt ? (
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href={row.receipt}
+                href={`${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${row.id}/receipt`}
                 title="Ver comprovante"
                 aria-label="Ver comprovante"
                 className="text-muted-foreground hover:text-primary-soft inline-flex">

@@ -5,10 +5,11 @@ import { useUploadReceipt, useDeleteReceipt } from './useExpenseEntries';
 
 interface Props {
   entryId: number;
-  receipt: string | null;
+  hasReceipt: boolean;
 }
 
-export function ReceiptField({ entryId, receipt }: Props) {
+export function ReceiptField({ entryId, hasReceipt }: Props) {
+  const receiptUrl = `${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${entryId}/receipt`;
   const fileRef = React.useRef<HTMLInputElement>(null);
   const upload = useUploadReceipt();
   const deleteReceipt = useDeleteReceipt();
@@ -34,10 +35,10 @@ export function ReceiptField({ entryId, receipt }: Props) {
         className="hidden"
         onChange={handleFileChange}
       />
-      {receipt ? (
+      {hasReceipt ? (
         <>
           <Button type="button" variant="outline" size="sm" asChild>
-            <a href={receipt} target="_blank" rel="noopener noreferrer">
+            <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
               Ver comprovante
             </a>
           </Button>
