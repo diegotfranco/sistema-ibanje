@@ -1,6 +1,8 @@
 import { useState, type ReactElement } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
+import { useTheme } from '@/hooks/useTheme';
+import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -10,6 +12,7 @@ import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Make sure to import these Dropdown components
 import {
@@ -259,6 +262,7 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { toggleSidebar, state } = useSidebar();
   const { state: subgroupState, setOpenState } = useSubgroupState();
+  const { theme } = useTheme();
 
   const isCollapsed = state === 'collapsed';
 
@@ -338,6 +342,23 @@ export function Sidebar() {
                   <User className="mr-2 h-4 w-4" />
                   <span>Minha Conta</span>
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="cursor-pointer focus:bg-transparent">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex w-full items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Tema</span>
+                        <ThemeSwitch />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {theme === 'dark' ? 'Tema escuro' : 'Tema claro'}
+                    </TooltipContent>
+                  </Tooltip>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => logout()}
                   disabled={isPending}

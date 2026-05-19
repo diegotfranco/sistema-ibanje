@@ -19,7 +19,6 @@ const DEFAULT_MONTH = defaultMonth();
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'income';
-  // Handle old ?tab=members-funds by falling back to default tab
   const validTab = ['income', 'expenses', 'statement'].includes(activeTab) ? activeTab : 'income';
 
   const [month, setMonth] = useState(DEFAULT_MONTH);
@@ -27,10 +26,6 @@ export default function ReportsPage() {
   return (
     <RequirePermission module={Module.Reports} action={Action.Report}>
       <div className="p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Relatórios</h1>
-        </div>
-
         <div className="flex items-end gap-4 flex-wrap">
           <div className="space-y-1">
             <Label htmlFor="reports-month">Mês</Label>

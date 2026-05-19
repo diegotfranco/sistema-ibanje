@@ -5,6 +5,7 @@
 @import '@fontsource-variable/roboto';
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant hover (&:hover);
 
 :root {
   color-scheme: light;
@@ -54,7 +55,7 @@
   color-scheme: dark;
   --background: oklch(0.1 0.004 228.8);
   --foreground: oklch(0.987 0.002 197.1);
-  --card: oklch(0.218 0.008 223.9);
+  --card: oklch(0.32 0.008 223.9);
   --card-foreground: oklch(0.987 0.002 197.1);
   --popover: oklch(0.218 0.008 223.9);
   --popover-foreground: oklch(0.987 0.002 197.1);
@@ -155,11 +156,11 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
-  a {
+  /* a {
     &:hover {
       @apply underline;
     }
-  }
+  } */
   html {
     @apply font-sans;
   }

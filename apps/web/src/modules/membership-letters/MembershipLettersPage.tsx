@@ -206,12 +206,9 @@ export default function MembershipLettersPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Cartas de Transferência</h1>
-              <p className="text-muted-foreground mt-1">
-                Gerencie cartas de transferência de membros
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Gerencie cartas de transferência de membros
+            </p>
             {canCreate && (
               <Button
                 onClick={() => {

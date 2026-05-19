@@ -34,3 +34,6 @@ ibanje.db:Zone.Identifier
 # Playwright
 apps/web/test-results/
 apps/web/playwright-report/
+
+# Generated a11y audit output
+apps/web/a11y-report.md

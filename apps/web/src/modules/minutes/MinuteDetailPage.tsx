@@ -89,10 +89,8 @@ export default function MinuteDetailPage() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold">{minute.minuteNumber}</h1>
-          {current && <StatusBadge status={current.status} className="mt-1" />}
-        </div>
+        <span className="text-base font-medium text-muted-foreground">{minute.minuteNumber}</span>
+        {current && <StatusBadge status={current.status} />}
       </div>
 
       <Card>

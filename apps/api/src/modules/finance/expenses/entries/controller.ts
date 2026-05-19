@@ -1,5 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { CreateExpenseEntryRequest, UpdateExpenseEntryRequest } from './schema.js';
+import type {
+  CreateExpenseEntryRequest,
+  UpdateExpenseEntryRequest,
+  ExpenseSummaryQuery
+} from './schema.js';
 import type { IdParam } from '../../../../lib/validation.js';
 import type { PaginationQuery } from '../../../../lib/pagination.js';
 import * as service from './service.js';
@@ -65,4 +69,9 @@ export async function getReceipt(req: FastifyRequest, reply: FastifyReply) {
   reply.header('Content-Disposition', `inline; filename="comprovante-${id}"`);
   if (file.contentLength !== null) reply.header('Content-Length', file.contentLength);
   return reply.send(file.body);
+}
+
+export async function summary(req: FastifyRequest, reply: FastifyReply) {
+  const query = req.query as ExpenseSummaryQuery;
+  return reply.send(await service.summarizeExpenses(req.session.userId!, query));
 }

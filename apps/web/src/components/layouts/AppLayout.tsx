@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Sidebar } from '@/components/Sidebar';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
@@ -18,11 +19,9 @@ export function AppLayout() {
             <SidebarTrigger />
             <ThemeToggle />
           </header>
-          <div className="absolute top-6 right-10 z-20 hidden md:block">
-            <ThemeToggle />
-          </div>
           <main className="flex-1 overflow-y-auto bg-background">
-            <div className="min-h-full bg-muted p-6 lg:p-8 md:pt-16 lg:pt-16">
+            <div className="min-h-full bg-muted p-6 lg:p-8">
+              <Breadcrumbs />
               <ErrorBoundary FallbackComponent={ErrorPage} resetKeys={[location.pathname]}>
                 <Outlet />
               </ErrorBoundary>

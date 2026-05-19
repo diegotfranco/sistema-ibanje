@@ -53,6 +53,8 @@ export type ExpenseEntryResponse = {
   totalInstallments: number;
   categoryId: number;
   categoryName: string;
+  parentCategoryId: number | null;
+  parentCategoryName: string | null;
   paymentMethodId: number;
   paymentMethodName: string;
   designatedFundId: number | null;

@@ -1,4 +1,5 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, and, gte, lte, sum, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../../db/index.js';
 import {
   expenseEntries,
@@ -7,6 +8,8 @@ import {
   designatedFunds,
   attenders
 } from '../../../../db/schema.js';
+
+const parentExpenseCategories = alias(expenseCategories, 'parent_expense_categories');
 
 const selectFields = {
   id: expenseEntries.id,
@@ -19,6 +22,8 @@ const selectFields = {
   totalInstallments: expenseEntries.totalInstallments,
   categoryId: expenseEntries.categoryId,
   categoryName: expenseCategories.name,
+  parentCategoryId: parentExpenseCategories.id,
+  parentCategoryName: parentExpenseCategories.name,
   paymentMethodId: expenseEntries.paymentMethodId,
   paymentMethodName: paymentMethods.name,
   designatedFundId: expenseEntries.designatedFundId,
@@ -38,6 +43,7 @@ function baseQuery() {
     .select(selectFields)
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
+    .leftJoin(parentExpenseCategories, eq(parentExpenseCategories.id, expenseCategories.parentId))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
     .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id));
@@ -136,4 +142,35 @@ export async function updateReceiptKey(id: number, key: string | null) {
     .update(expenseEntries)
     .set({ receipt: key, updatedAt: new Date() })
     .where(eq(expenseEntries.id, id));
+}
+
+export async function summarizeExpensesByTopLevelCategory(
+  from: string,
+  to: string
+): Promise<{ categoryId: number; categoryName: string; total: string }[]> {
+  const parentCategories = alias(expenseCategories, 'parent_categories');
+
+  const rows = await db
+    .select({
+      categoryId: sql<number>`coalesce(${expenseCategories.parentId}, ${expenseCategories.id})`,
+      categoryName: sql<string>`coalesce(${parentCategories.name}, ${expenseCategories.name})`,
+      total: sum(expenseEntries.amount).mapWith(String)
+    })
+    .from(expenseEntries)
+    .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
+    .leftJoin(parentCategories, eq(parentCategories.id, expenseCategories.parentId))
+    .where(
+      and(
+        eq(expenseEntries.status, 'paga'),
+        gte(expenseEntries.referenceDate, from),
+        lte(expenseEntries.referenceDate, to)
+      )
+    )
+    .groupBy(
+      sql`coalesce(${expenseCategories.parentId}, ${expenseCategories.id})`,
+      sql`coalesce(${parentCategories.name}, ${expenseCategories.name})`
+    )
+    .orderBy(sql`coalesce(${parentCategories.name}, ${expenseCategories.name})`);
+
+  return rows;
 }

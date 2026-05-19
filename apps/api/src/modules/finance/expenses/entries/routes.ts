@@ -9,7 +9,9 @@ import {
   CreateExpenseEntryRequestSchema,
   UpdateExpenseEntryRequestSchema,
   ExpenseEntryResponseSchema,
-  ExpenseEntryListResponseSchema
+  ExpenseEntryListResponseSchema,
+  ExpenseSummaryQuerySchema,
+  ExpenseSummaryResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -29,6 +31,23 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.View)]
     },
     controller.list
+  );
+
+  app.get(
+    '/expense-entries/summary',
+    {
+      schema: {
+        tags: ['Expense Entries'],
+        querystring: ExpenseSummaryQuerySchema,
+        response: {
+          200: ExpenseSummaryResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.View)]
+    },
+    controller.summary
   );
 
   app.get(

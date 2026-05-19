@@ -62,19 +62,14 @@ export default function MonthlyClosingDetailPage() {
   return (
     <>
       <div className="p-8 space-y-6">
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" onClick={() => navigate('/monthly-closings')}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-semibold">
-              {formatPeriod(closing.periodYear, closing.periodMonth)}
-            </h1>
-            <div className="mt-1">
-              <StatusBadge status={closing.status} />
-            </div>
-          </div>
+          <span className="text-base font-medium text-muted-foreground">
+            {formatPeriod(closing.periodYear, closing.periodMonth)}
+          </span>
+          <StatusBadge status={closing.status} />
         </div>
 
         {/* Summary cards */}

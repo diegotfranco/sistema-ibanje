@@ -1,4 +1,4 @@
-import { eq, gte, lt, sum, count, and, or, desc, isNotNull } from 'drizzle-orm';
+import { eq, gte, lt, sum, count, and, or, desc, isNotNull, ne } from 'drizzle-orm';
 import { db } from '../../../db/index.js';
 import {
   monthlyClosings,
@@ -62,6 +62,16 @@ export async function findPreviousFechadoClosing(
         )
       )
     )
+    .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
+    .limit(1);
+  return result[0] ?? null;
+}
+
+export async function findLatestNonAbertoClosing(): Promise<MonthlyClosing | null> {
+  const result = await db
+    .select()
+    .from(monthlyClosings)
+    .where(ne(monthlyClosings.status, 'aberto'))
     .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
     .limit(1);
   return result[0] ?? null;
