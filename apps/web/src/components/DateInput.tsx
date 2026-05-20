@@ -31,11 +31,11 @@ function brToIso(br: string): string | null {
   const monthStr = trimmed.slice(3, 5);
   const yearStr = trimmed.slice(6, 10);
 
-  const day = parseInt(dayStr, 10);
-  const month = parseInt(monthStr, 10);
-  const year = parseInt(yearStr, 10);
+  const day = Number.parseInt(dayStr, 10);
+  const month = Number.parseInt(monthStr, 10);
+  const year = Number.parseInt(yearStr, 10);
 
-  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
   if (day < 1 || day > 31) return null;
   if (month < 1 || month > 12) return null;
   if (year < 1900 || year > 2999) return null;
@@ -54,10 +54,10 @@ function applyMask(raw: string): string {
 
 function isoToLocalDate(iso: string): Date | undefined {
   if (!iso || iso.length !== 10) return undefined;
-  const y = parseInt(iso.slice(0, 4), 10);
-  const m = parseInt(iso.slice(5, 7), 10);
-  const d = parseInt(iso.slice(8, 10), 10);
-  if (isNaN(y) || isNaN(m) || isNaN(d)) return undefined;
+  const y = Number.parseInt(iso.slice(0, 4), 10);
+  const m = Number.parseInt(iso.slice(5, 7), 10);
+  const d = Number.parseInt(iso.slice(8, 10), 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return undefined;
   return new Date(y, m - 1, d);
 }
 

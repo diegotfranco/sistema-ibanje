@@ -15,7 +15,7 @@ type Props = {
 };
 
 function formatBRL(value: string): string {
-  const num = parseFloat(value);
+  const num = Number.parseFloat(value);
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'

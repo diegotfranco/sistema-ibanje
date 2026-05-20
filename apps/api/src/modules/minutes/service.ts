@@ -328,7 +328,7 @@ export async function getSuggestedMinuteNumber(callerId: number): Promise<string
 
   const match = mostRecent.minuteNumber.match(/(\d+)/);
   if (match && match[1]) {
-    const num = parseInt(match[1], 10);
+    const num = Number.parseInt(match[1], 10);
     return String(num + 1);
   }
   return '';
