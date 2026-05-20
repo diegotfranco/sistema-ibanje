@@ -1,4 +1,4 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../../../db/index.js';
 import { expenseCategories } from '../../../../db/schema.js';
 
@@ -11,15 +11,37 @@ const selectFields = {
   createdAt: expenseCategories.createdAt
 };
 
-export async function listExpenseCategories(offset: number, limit: number) {
-  const rows = await db
+// Diacritic+case-insensitive match against own name, or against the name of a
+// row's parent/child. Implemented as a single correlated EXISTS so the row's
+// "is included because it matched OR because a relative matched" logic lives
+// in one place. Requires the `unaccent` extension (migration 0003).
+function expenseCategoryNameFilter(q: string): SQL {
+  const pattern = `%${q}%`;
+  return sql`EXISTS (
+    SELECT 1 FROM ${expenseCategories} AS m
+    WHERE unaccent(lower(m.name)) LIKE unaccent(lower(${pattern}))
+      AND (
+        m.id = ${expenseCategories.id}
+        OR m.id = ${expenseCategories.parentId}
+        OR m.parent_id = ${expenseCategories.id}
+      )
+  )`;
+}
+
+export async function listExpenseCategories(offset: number, limit: number, q?: string) {
+  const where = q ? expenseCategoryNameFilter(q) : undefined;
+
+  const rowsQuery = db
     .select(selectFields)
     .from(expenseCategories)
     .orderBy(expenseCategories.id)
     .offset(offset)
     .limit(limit);
+  const rows = await (where ? rowsQuery.where(where) : rowsQuery);
 
-  const countResult = await db.select({ count: count() }).from(expenseCategories);
+  const countQuery = db.select({ count: count() }).from(expenseCategories);
+  const countResult = await (where ? countQuery.where(where) : countQuery);
+
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 

@@ -1,12 +1,15 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { CreateIncomeCategoryRequest, UpdateIncomeCategoryRequest } from './schema.js';
+import type {
+  CreateIncomeCategoryRequest,
+  UpdateIncomeCategoryRequest,
+  ListIncomeCategoriesRequest
+} from './schema.js';
 import type { IdParam } from '../../../../lib/validation.js';
-import type { PaginationQuery } from '../../../../lib/pagination.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as PaginationQuery;
-  return reply.send(await service.listIncomeCategories(req.session.userId!, page, limit));
+  const { page, limit, q } = req.query as ListIncomeCategoriesRequest;
+  return reply.send(await service.listIncomeCategories(req.session.userId!, page, limit, q));
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {

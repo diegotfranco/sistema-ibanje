@@ -14,10 +14,15 @@ async function assertParentExists(parentId: number) {
   if (!parent) throw httpError(404, 'Parent category not found');
 }
 
-export async function listExpenseCategories(callerId: number, page: number, limit: number) {
+export async function listExpenseCategories(
+  callerId: number,
+  page: number,
+  limit: number,
+  q?: string
+) {
   await assertPermission(callerId, Module.ExpenseCategories, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listExpenseCategories(offset, limit);
+  const { rows, total } = await repo.listExpenseCategories(offset, limit, q);
   return paginate(
     rows.map((r): ExpenseCategoryResponse => r),
     total,
