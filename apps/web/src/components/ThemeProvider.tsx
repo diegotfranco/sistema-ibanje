@@ -60,8 +60,30 @@ export function ThemeProvider({
       const root = document.documentElement;
       const restoreTransitions = disableTransitionOnChange ? disableTransitionsTemporarily() : null;
 
-      root.classList.remove('light', 'dark');
-      root.classList.add(nextTheme);
+      const swap = () => {
+        root.classList.remove('light', 'dark');
+        root.classList.add(nextTheme);
+      };
+
+      const alreadyApplied = root.classList.contains(nextTheme);
+      const docWithVT = document as Document & {
+        startViewTransition?: (cb: () => void) => {
+          finished?: Promise<void>;
+          ready?: Promise<void>;
+          updateCallbackDone?: Promise<void>;
+        };
+      };
+
+      if (!alreadyApplied && typeof docWithVT.startViewTransition === 'function') {
+        const transition = docWithVT.startViewTransition(swap);
+        // Swallow AbortError rejections when a transition is skipped
+        // (e.g., StrictMode double-effect or rapid toggles).
+        transition.finished?.catch(() => {});
+        transition.ready?.catch(() => {});
+        transition.updateCallbackDone?.catch(() => {});
+      } else {
+        swap();
+      }
 
       if (restoreTransitions) {
         restoreTransitions();

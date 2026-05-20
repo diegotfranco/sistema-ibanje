@@ -1,6 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { RichTextEditor, EMPTY_TIPTAP_DOC, type TipTapDoc } from '@/components/ui/rich-text-editor';
+import { RichTextEditor, EMPTY_TIPTAP_DOC, type TipTapDoc } from '@/components/RichTextEditor';
 import { useEditApprovedMinute } from './useMinutes';
 import { EditApprovedMinuteSchema, type EditApprovedMinuteValues } from './schema';
 

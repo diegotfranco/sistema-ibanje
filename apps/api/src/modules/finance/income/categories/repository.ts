@@ -1,4 +1,4 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../../../db/index.js';
 import { incomeCategories } from '../../../../db/schema.js';
 
@@ -12,15 +12,36 @@ const selectFields = {
   createdAt: incomeCategories.createdAt
 };
 
-export async function listIncomeCategories(offset: number, limit: number) {
-  const rows = await db
+// See expenses/categories/repository.ts for rationale — diacritic+case-insensitive
+// match against own/parent/child name via a single correlated EXISTS. Requires
+// the `unaccent` extension (migration 0003).
+function incomeCategoryNameFilter(q: string): SQL {
+  const pattern = `%${q}%`;
+  return sql`EXISTS (
+    SELECT 1 FROM ${incomeCategories} AS m
+    WHERE unaccent(lower(m.name)) LIKE unaccent(lower(${pattern}))
+      AND (
+        m.id = ${incomeCategories.id}
+        OR m.id = ${incomeCategories.parentId}
+        OR m.parent_id = ${incomeCategories.id}
+      )
+  )`;
+}
+
+export async function listIncomeCategories(offset: number, limit: number, q?: string) {
+  const where = q ? incomeCategoryNameFilter(q) : undefined;
+
+  const rowsQuery = db
     .select(selectFields)
     .from(incomeCategories)
     .orderBy(incomeCategories.id)
     .offset(offset)
     .limit(limit);
+  const rows = await (where ? rowsQuery.where(where) : rowsQuery);
 
-  const countResult = await db.select({ count: count() }).from(incomeCategories);
+  const countQuery = db.select({ count: count() }).from(incomeCategories);
+  const countResult = await (where ? countQuery.where(where) : countQuery);
+
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 

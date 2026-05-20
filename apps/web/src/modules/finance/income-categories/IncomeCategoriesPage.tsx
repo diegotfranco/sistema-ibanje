@@ -1,13 +1,21 @@
-import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ResourceListPage } from '@/components/ResourceListPage';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useIncomeCategories, useIncomeCategoryMutations } from './useIncomeCategories';
 import { IncomeCategoryForm } from './IncomeCategoryForm';
 import { useCategoryPageData } from '../useCategoryPageData';
 import { makeSubmitHandler } from '../entries-utils';
+import { CategoryGroupedList } from '../CategoryGroupedList';
 import type { IncomeCategoryResponse } from './schema';
 
 export default function IncomeCategoriesPage() {
@@ -17,62 +25,75 @@ export default function IncomeCategoriesPage() {
   const canEdit = hasPermission(perms, Module.IncomeCategories, Action.Update);
   const canDelete = hasPermission(perms, Module.IncomeCategories, Action.Delete);
 
-  const list = useIncomeCategories();
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(searchQuery.trim(), 250);
+  // Full list (unfiltered) feeds the form's parent picker so it always shows
+  // every option. When debouncedQuery is empty both hooks resolve to the same
+  // URL/key and React Query dedupes the request.
+  const fullList = useIncomeCategories();
+  const filteredList = useIncomeCategories(debouncedQuery || undefined);
   const { create, update, remove } = useIncomeCategoryMutations();
 
   const [editing, setEditing] = useState<IncomeCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<IncomeCategoryResponse | null>(null);
+  const [defaultParentId, setDefaultParentId] = useState<number | undefined>(undefined);
 
-  const { allCategories, items, getCategoryName } = useCategoryPageData(list.data?.data);
+  const { allCategories } = useCategoryPageData(fullList.data?.data);
+  const { items } = useCategoryPageData(filteredList.data?.data);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
+  const isSearching =
+    filteredList.isFetching && (debouncedQuery !== '' || searchQuery.trim() !== '');
 
-  const columns = useMemo(() => {
-    return [
-      {
-        header: 'Nome',
-        cell: (row: IncomeCategoryResponse) => (
-          <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
-        )
-      },
-      {
-        header: 'Pai',
-        cell: (row: IncomeCategoryResponse) => getCategoryName(row.parentId)
-      },
-      {
-        header: 'Exige Membro',
-        cell: (row: IncomeCategoryResponse) => (row.requiresMember ? 'Sim' : 'Não')
-      }
-    ];
-  }, [getCategoryName]);
+  const closeDialog = () => {
+    setEditing(null);
+    setDefaultParentId(undefined);
+  };
 
   return (
-    <>
-      <ResourceListPage<IncomeCategoryResponse>
-        title="Categorias de Entradas"
-        columns={columns}
-        data={items}
-        isLoading={list.isLoading}
-        onCreate={canCreate ? () => setEditing('new') : undefined}
-        onEdit={canEdit ? (r) => setEditing(r) : undefined}
-        onDelete={canDelete ? (r) => setDeleting(r) : undefined}
+    <div className="space-y-6 p-8">
+      <CategoryGroupedList
+        title="Categorias de receitas"
+        items={items}
+        isLoading={filteredList.isLoading}
+        isSearching={isSearching}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
-        rowKey={(r) => r.id}
+        onCreate={() => {
+          setDefaultParentId(undefined);
+          setEditing('new');
+        }}
+        onCreateInGroup={(parentId) => {
+          setDefaultParentId(parentId);
+          setEditing('new');
+        }}
+        onEdit={(row) => setEditing(row)}
+        onDelete={(row) => setDeleting(row)}
+        renderRowMeta={(row) =>
+          row.requiresMember ? <Badge variant="secondary">Exige membro</Badge> : null
+        }
       />
 
-      <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+      <Dialog open={editing !== null} onOpenChange={(v) => !v && closeDialog()}>
+        <DialogContent className="sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'Nova categoria' : 'Editar categoria'}</DialogTitle>
+            <DialogDescription>
+              {editing === 'new'
+                ? 'Crie um grupo (categoria raiz) ou subdivida um grupo existente.'
+                : 'Atualize esta categoria.'}
+            </DialogDescription>
           </DialogHeader>
           {editing !== null && (
             <IncomeCategoryForm
               initialValues={editing === 'new' ? undefined : editing}
+              defaultParentId={editing === 'new' ? defaultParentId : undefined}
               categories={allCategories}
               isPending={create.isPending || update.isPending}
               onSubmit={handleSubmit}
-              onCancel={() => setEditing(null)}
+              onCancel={closeDialog}
             />
           )}
         </DialogContent>
@@ -87,6 +108,6 @@ export default function IncomeCategoriesPage() {
         }
         isPending={remove.isPending}
       />
-    </>
+    </div>
   );
 }

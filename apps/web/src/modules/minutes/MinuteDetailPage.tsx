@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
   Table,
   TableBody,
@@ -23,11 +23,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
-import {
-  RichTextDisplay,
-  interpolateTipTapDoc,
-  type TipTapDoc
-} from '@/components/ui/rich-text-editor';
+import { RichTextDisplay, interpolateTipTapDoc, type TipTapDoc } from '@/components/RichTextEditor';
 import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -89,10 +85,8 @@ export default function MinuteDetailPage() {
           <ArrowLeft className="h-4 w-4 mr-1" />
           Voltar
         </Button>
-        <div>
-          <h1 className="text-2xl font-semibold">{minute.minuteNumber}</h1>
-          {current && <StatusBadge status={current.status} className="mt-1" />}
-        </div>
+        <span className="text-base font-medium text-muted-foreground">{minute.minuteNumber}</span>
+        {current && <StatusBadge status={current.status} />}
       </div>
 
       <Card>

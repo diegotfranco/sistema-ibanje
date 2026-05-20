@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import MonthInput from '@/components/MonthInput';
-import { Label } from '@/components/ui/label';
+import { MonthPicker } from '@/components/MonthPicker';
 import { Module, Action } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import { IncomeReportTab } from './IncomeReportTab';
@@ -19,47 +19,43 @@ const DEFAULT_MONTH = defaultMonth();
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'income';
-  // Handle old ?tab=members-funds by falling back to default tab
   const validTab = ['income', 'expenses', 'statement'].includes(activeTab) ? activeTab : 'income';
 
   const [month, setMonth] = useState(DEFAULT_MONTH);
 
   return (
     <RequirePermission module={Module.Reports} action={Action.Report}>
-      <div className="p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold">Relatórios</h1>
-        </div>
+      <div className="p-8">
+        <Card className="gap-0 py-0">
+          <CardHeader className="flex flex-row items-center justify-between border-b py-4">
+            <CardTitle>Relatórios</CardTitle>
+            <MonthPicker id="reports-month" value={month} onChange={setMonth} className="w-48" />
+          </CardHeader>
+          <CardContent className="p-0">
+            <Tabs
+              className="relative"
+              value={validTab}
+              onValueChange={(v) => setSearchParams({ tab: v })}>
+              <div className="border-b px-4 py-3">
+                <TabsList>
+                  <TabsTrigger value="income">Entradas</TabsTrigger>
+                  <TabsTrigger value="expenses">Saídas</TabsTrigger>
+                  <TabsTrigger value="statement">Demonstrativo</TabsTrigger>
+                </TabsList>
+              </div>
 
-        <div className="flex items-end gap-4 flex-wrap">
-          <div className="space-y-1">
-            <Label htmlFor="reports-month">Mês</Label>
-            <MonthInput
-              id="reports-month"
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="w-40"
-            />
-          </div>
-        </div>
-
-        <Tabs value={validTab} onValueChange={(v) => setSearchParams({ tab: v })}>
-          <TabsList>
-            <TabsTrigger value="income">Entradas</TabsTrigger>
-            <TabsTrigger value="expenses">Saídas</TabsTrigger>
-            <TabsTrigger value="statement">Demonstrativo</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="income">
-            <IncomeReportTab month={month} />
-          </TabsContent>
-          <TabsContent value="expenses">
-            <ExpenseReportTab month={month} />
-          </TabsContent>
-          <TabsContent value="statement">
-            <StatementTab month={month} />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="income">
+                <IncomeReportTab month={month} />
+              </TabsContent>
+              <TabsContent value="expenses">
+                <ExpenseReportTab month={month} />
+              </TabsContent>
+              <TabsContent value="statement">
+                <StatementTab month={month} />
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </RequirePermission>
   );

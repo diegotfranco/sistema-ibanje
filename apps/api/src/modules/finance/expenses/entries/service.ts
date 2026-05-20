@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { fileTypeFromBuffer } from 'file-type';
 import * as repo from './repository.js';
+import { sumIncomeForRange } from '../../reports/repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
 import { findAttenderById } from '../../../attenders/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
@@ -20,7 +21,9 @@ import {
 import type {
   CreateExpenseEntryRequest,
   UpdateExpenseEntryRequest,
-  ExpenseEntryResponse
+  ExpenseEntryResponse,
+  ExpenseSummaryQuery,
+  ExpenseSummaryResponse
 } from './schema.js';
 
 async function validateEntry(data: {
@@ -191,4 +194,20 @@ export async function getExpenseReceiptFile(
   const entry = await repo.findExpenseEntryById(entryId);
   if (!entry || !entry.receipt) return null;
   return getFileStream(entry.receipt);
+}
+
+export async function summarizeExpenses(
+  callerId: number,
+  query: ExpenseSummaryQuery
+): Promise<ExpenseSummaryResponse> {
+  await assertPermission(callerId, Module.ExpenseEntries, Action.View);
+
+  const [rows, totalIncome] = await Promise.all([
+    repo.summarizeExpensesByTopLevelCategory(query.from, query.to),
+    sumIncomeForRange(query.from, query.to)
+  ]);
+
+  const total = rows.reduce((sum, row) => sum + Number.parseFloat(row.total), 0).toFixed(2);
+
+  return { rows, total, totalIncome };
 }

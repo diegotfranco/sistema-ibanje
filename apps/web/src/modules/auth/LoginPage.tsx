@@ -1,13 +1,13 @@
 import { Navigate, Link } from 'react-router';
 import { Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/modules/auth/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { paths } from '@/lib/paths';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardContent, CardFooter, CardHeader, CardTitle } from '@/components/Card';
 import { useLoginForm } from '@/modules/auth/useLoginForm';
 
 const LoginPage = () => {

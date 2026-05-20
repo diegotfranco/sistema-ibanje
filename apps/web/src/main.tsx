@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { queryClient } from './lib/queryClient';
 import { ThemeProvider } from './components/ThemeProvider';
 import App from './App.tsx';
+import './lib/datetime';
 import './index.css';
 
 createRoot(document.getElementById('root')!).render(

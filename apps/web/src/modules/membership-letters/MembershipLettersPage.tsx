@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import EntityPicker from '@/components/EntityPicker';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -206,12 +206,9 @@ export default function MembershipLettersPage() {
       <div className="space-y-6">
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Cartas de Transferência</h1>
-              <p className="text-muted-foreground mt-1">
-                Gerencie cartas de transferência de membros
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Gerencie cartas de transferência de membros
+            </p>
             {canCreate && (
               <Button
                 onClick={() => {

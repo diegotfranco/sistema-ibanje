@@ -4,8 +4,8 @@ import type { ExpenseCategoryResponse, ExpenseCategoryFormValues } from './schem
 const BASE = '/expense-categories';
 const KEY = ['expense-categories'] as const;
 
-export function useExpenseCategories() {
-  return useResourceList<ExpenseCategoryResponse>(BASE, KEY);
+export function useExpenseCategories(q?: string) {
+  return useResourceList<ExpenseCategoryResponse>(BASE, KEY, { q });
 }
 
 export function useExpenseCategoryMutations() {

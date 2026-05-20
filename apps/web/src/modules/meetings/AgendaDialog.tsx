@@ -18,7 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { zodResolver } from '@/lib/zodResolver';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import {
   Dialog,
   DialogContent,

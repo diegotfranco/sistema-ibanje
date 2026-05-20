@@ -80,13 +80,6 @@ export const financeRoutes: AppRoute[] = [
             layout: 'app',
             label: 'Categorias',
             module: Module.ExpenseCategories
-          },
-          {
-            path: `${paths.reports}?tab=expenses`,
-            layout: 'app',
-            label: 'Relatório',
-            module: Module.Reports,
-            action: Action.Report
           }
         ]
       },

@@ -1,5 +1,5 @@
 import { Controller, useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
@@ -14,6 +14,7 @@ import {
 
 interface Props {
   initialValues?: ExpenseCategoryResponse;
+  defaultParentId?: number;
   categories: CategoryNode[];
   isPending: boolean;
   onSubmit: (values: ExpenseCategoryFormValues) => void;
@@ -22,6 +23,7 @@ interface Props {
 
 export function ExpenseCategoryForm({
   initialValues,
+  defaultParentId,
   categories,
   isPending,
   onSubmit,
@@ -32,7 +34,7 @@ export function ExpenseCategoryForm({
     defaultValues: {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
-      parentId: initialValues?.parentId ?? undefined
+      parentId: initialValues?.parentId ?? defaultParentId
     }
   });
 
@@ -74,7 +76,7 @@ export function ExpenseCategoryForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Categoria Pai</FieldLabel>
+              <FieldLabel>Grupo</FieldLabel>
               <CategoryParentPicker
                 value={field.value}
                 onChange={field.onChange}

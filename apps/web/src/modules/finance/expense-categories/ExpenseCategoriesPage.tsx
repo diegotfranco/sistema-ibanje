@@ -1,13 +1,20 @@
-import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ResourceListPage } from '@/components/ResourceListPage';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useExpenseCategories, useExpenseCategoryMutations } from './useExpenseCategories';
 import { ExpenseCategoryForm } from './ExpenseCategoryForm';
 import { useCategoryPageData } from '../useCategoryPageData';
 import { makeSubmitHandler } from '../entries-utils';
+import { CategoryGroupedList } from '../CategoryGroupedList';
 import type { ExpenseCategoryResponse } from './schema';
 
 export default function ExpenseCategoriesPage() {
@@ -17,62 +24,73 @@ export default function ExpenseCategoriesPage() {
   const canEdit = hasPermission(perms, Module.ExpenseCategories, Action.Update);
   const canDelete = hasPermission(perms, Module.ExpenseCategories, Action.Delete);
 
-  const list = useExpenseCategories();
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedQuery = useDebouncedValue(searchQuery.trim(), 250);
+  // Full list (unfiltered) feeds the form's parent picker so it always shows
+  // every option. When debouncedQuery is empty both hooks resolve to the same
+  // URL/key and React Query dedupes the request.
+  const fullList = useExpenseCategories();
+  const filteredList = useExpenseCategories(debouncedQuery || undefined);
   const { create, update, remove } = useExpenseCategoryMutations();
 
   const [editing, setEditing] = useState<ExpenseCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<ExpenseCategoryResponse | null>(null);
+  const [defaultParentId, setDefaultParentId] = useState<number | undefined>(undefined);
 
-  const { allCategories, items, getCategoryName } = useCategoryPageData(list.data?.data);
+  const { allCategories } = useCategoryPageData(fullList.data?.data);
+  const { items } = useCategoryPageData(filteredList.data?.data);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
+  const isSearching =
+    filteredList.isFetching && (debouncedQuery !== '' || searchQuery.trim() !== '');
 
-  const columns = useMemo(() => {
-    return [
-      {
-        header: 'Nome',
-        cell: (row: ExpenseCategoryResponse) => (
-          <span className={row.parentId ? 'pl-6' : ''}>{row.name}</span>
-        )
-      },
-      {
-        header: 'Pai',
-        cell: (row: ExpenseCategoryResponse) => getCategoryName(row.parentId)
-      },
-      {
-        header: 'Descrição',
-        cell: (row: ExpenseCategoryResponse) => row.description || '—'
-      }
-    ];
-  }, [getCategoryName]);
+  const closeDialog = () => {
+    setEditing(null);
+    setDefaultParentId(undefined);
+  };
 
   return (
-    <>
-      <ResourceListPage<ExpenseCategoryResponse>
-        title="Categorias de Saídas"
-        columns={columns}
-        data={items}
-        isLoading={list.isLoading}
-        onCreate={canCreate ? () => setEditing('new') : undefined}
-        onEdit={canEdit ? (r) => setEditing(r) : undefined}
-        onDelete={canDelete ? (r) => setDeleting(r) : undefined}
+    <div className="space-y-6 p-8">
+      <CategoryGroupedList
+        title="Categorias de saídas"
+        items={items}
+        isLoading={filteredList.isLoading}
+        isSearching={isSearching}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
-        rowKey={(r) => r.id}
+        onCreate={() => {
+          setDefaultParentId(undefined);
+          setEditing('new');
+        }}
+        onCreateInGroup={(parentId) => {
+          setDefaultParentId(parentId);
+          setEditing('new');
+        }}
+        onEdit={(row) => setEditing(row)}
+        onDelete={(row) => setDeleting(row)}
+        renderRowMeta={(row) => row.description || '—'}
       />
 
-      <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+      <Dialog open={editing !== null} onOpenChange={(v) => !v && closeDialog()}>
+        <DialogContent className="sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'Nova categoria' : 'Editar categoria'}</DialogTitle>
+            <DialogDescription>
+              {editing === 'new'
+                ? 'Crie um grupo (categoria pai) ou subdivida um grupo existente.'
+                : 'Atualize o nome, descrição ou grupo desta categoria.'}
+            </DialogDescription>
           </DialogHeader>
           {editing !== null && (
             <ExpenseCategoryForm
               initialValues={editing === 'new' ? undefined : editing}
+              defaultParentId={editing === 'new' ? defaultParentId : undefined}
               categories={allCategories}
               isPending={create.isPending || update.isPending}
               onSubmit={handleSubmit}
-              onCancel={() => setEditing(null)}
+              onCancel={closeDialog}
             />
           )}
         </DialogContent>
@@ -87,6 +105,6 @@ export default function ExpenseCategoriesPage() {
         }
         isPending={remove.isPending}
       />
-    </>
+    </div>
   );
 }

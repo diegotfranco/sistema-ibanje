@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAttendersReport } from '@/modules/finance/reports/useReports';
 
@@ -26,7 +26,7 @@ export function AttenderStats({ month }: Props) {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 bg-transparent">
           <CardTitle className="text-sm font-medium text-muted-foreground">
             Congregados ativos
           </CardTitle>
@@ -39,7 +39,7 @@ export function AttenderStats({ month }: Props) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 bg-transparent">
           <CardTitle className="text-sm font-medium text-muted-foreground">Dízimo</CardTitle>
         </CardHeader>
         <CardContent>
@@ -53,7 +53,7 @@ export function AttenderStats({ month }: Props) {
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-2 bg-transparent">
           <CardTitle className="text-sm font-medium text-muted-foreground">Ofertas</CardTitle>
         </CardHeader>
         <CardContent>

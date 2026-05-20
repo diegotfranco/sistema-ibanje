@@ -29,7 +29,7 @@ export function CategoryParentPicker({
   onChange,
   options,
   excludeId,
-  placeholder = 'Sem pai (raiz)',
+  placeholder = 'Sem grupo',
   disabled
 }: CategoryParentPickerProps) {
   // Two-level hierarchy: only root categories (parentId === null) can be parents.
@@ -44,7 +44,7 @@ export function CategoryParentPicker({
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={NONE_VALUE}>Sem pai (raiz)</SelectItem>
+        <SelectItem value={NONE_VALUE}>Sem grupo</SelectItem>
         {rootOptions.map((opt) => (
           <SelectItem key={opt.id} value={String(opt.id)}>
             {opt.name}

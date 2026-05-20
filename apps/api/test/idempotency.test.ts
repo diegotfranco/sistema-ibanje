@@ -132,7 +132,7 @@ describe('idempotency plugin', () => {
 
   it('does not replay across different users for the same key', async () => {
     const key = randomUUID();
-    const referenceDate = '2098-05-15';
+    const referenceDate = '2098-01-15';
 
     const userA = await app.inject({
       method: 'POST',
@@ -164,7 +164,7 @@ describe('idempotency plugin', () => {
 
   it('does not cache non-2xx responses', async () => {
     const key = randomUUID();
-    const referenceDate = '2098-06-15';
+    const referenceDate = '2098-02-20';
 
     const bad = await app.inject({
       method: 'POST',

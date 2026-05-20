@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import {
   Dialog,
   DialogContent,

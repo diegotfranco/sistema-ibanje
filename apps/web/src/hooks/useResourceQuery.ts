@@ -4,10 +4,27 @@ import { api, ApiError, rateLimitMessage } from '@/lib/api';
 
 type Paginated<T> = { data: T[]; total: number; page: number; limit: number; totalPages: number };
 
-export function useResourceList<T>(basePath: string, queryKey: readonly unknown[]) {
+type ListParams = Record<string, string | number | boolean | undefined>;
+
+function buildQueryString(params: ListParams): string {
+  const usp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === '') continue;
+    usp.set(k, String(v));
+  }
+  return usp.toString();
+}
+
+export function useResourceList<T>(
+  basePath: string,
+  queryKey: readonly unknown[],
+  params?: ListParams
+) {
+  const merged: ListParams = { limit: 100, ...params };
+  const qs = buildQueryString(merged);
   return useQuery({
-    queryKey: [basePath, ...queryKey],
-    queryFn: () => api.get<Paginated<T>>(`${basePath}?limit=100`)
+    queryKey: [basePath, ...queryKey, qs],
+    queryFn: () => api.get<Paginated<T>>(`${basePath}?${qs}`)
   });
 }
 

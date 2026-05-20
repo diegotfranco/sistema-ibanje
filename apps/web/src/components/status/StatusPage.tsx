@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/Card';
 
 export type StatusPageProps = {
   icon: LucideIcon;

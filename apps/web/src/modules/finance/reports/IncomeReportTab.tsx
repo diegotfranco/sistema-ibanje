@@ -1,27 +1,14 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTable } from '@/components/DataTable';
+import { Pagination } from '@/components/Pagination';
+import { formatDate, formatMoney } from '../entries-utils';
 import { useIncomeReport } from './useReports';
+import type { IncomeReportRow } from './schema';
 
 interface Props {
   month: string;
 }
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
-
-const formatMoney = (s: string) =>
-  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function IncomeReportTab({ month }: Props) {
   const [page, setPage] = useState(1);
@@ -29,76 +16,64 @@ export function IncomeReportTab({ month }: Props) {
 
   const rows = data?.data ?? [];
 
+  const columns: ColumnDef<IncomeReportRow, unknown>[] = [
+    {
+      id: 'date',
+      header: 'Data',
+      cell: (info) => (
+        <span className="tabular-nums">{formatDate(info.row.original.referenceDate)}</span>
+      )
+    },
+    {
+      id: 'category',
+      header: 'Categoria',
+      cell: (info) => info.row.original.categoryName,
+      meta: { className: 'w-full' }
+    },
+    {
+      id: 'group',
+      header: 'Grupo',
+      cell: (info) => info.row.original.parentCategoryName ?? '—',
+      meta: { hideBelow: 'lg' }
+    },
+    {
+      id: 'fund',
+      header: 'Fundo',
+      cell: (info) => info.row.original.fundName ?? '—',
+      meta: { hideBelow: 'xl' }
+    },
+    {
+      id: 'total',
+      header: 'Total',
+      cell: (info) => (
+        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.total)}</span>
+      ),
+      meta: { align: 'right' }
+    }
+  ];
+
   return (
-    <Card className="mt-4">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-base">Entradas</CardTitle>
-        {data && (
-          <span className="text-sm text-muted-foreground">
-            Total:{' '}
-            <span className="font-semibold text-money-in">{formatMoney(data.totalIncome)}</span>
+    <>
+      {data && (
+        <div className="pointer-events-none absolute top-3 right-4 hidden h-9 items-center text-sm md:flex">
+          <span className="text-muted-foreground">Total:&nbsp;</span>
+          <span className="font-mono font-semibold tabular-nums text-money-in">
+            R$ {formatMoney(data.totalIncome)}
           </span>
-        )}
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Grupo</TableHead>
-              <TableHead>Fundo</TableHead>
-              <TableHead className="text-right">Total</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Carregando...
-                </TableCell>
-              </TableRow>
-            )}
-            {!isLoading && rows.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Nenhum registro encontrado.
-                </TableCell>
-              </TableRow>
-            )}
-            {rows.map((row) => (
-              <TableRow key={`${row.referenceDate}-${row.categoryName}-${row.fundName}`}>
-                <TableCell>{formatDate(row.referenceDate)}</TableCell>
-                <TableCell>{row.categoryName}</TableCell>
-                <TableCell>{row.parentCategoryName ?? '—'}</TableCell>
-                <TableCell>{row.fundName ?? '—'}</TableCell>
-                <TableCell className="text-right font-mono">{formatMoney(row.total)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {data && data.totalPages > 1 && (
-          <div className="mt-4 flex items-center justify-end gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}>
-              Anterior
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {page} / {data.totalPages}
-            </span>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page >= data.totalPages}>
-              Próxima
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+      <DataTable
+        columns={columns}
+        data={rows}
+        isLoading={isLoading}
+        emptyMessage="Nenhum registro encontrado."
+        getRowKey={(row) => `${row.referenceDate}-${row.categoryId}-${row.fundId ?? 'none'}`}
+      />
+      {data && (
+        <div className="flex justify-end border-t px-4 py-2">
+          <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
+        </div>
+      )}
+    </>
   );
 }

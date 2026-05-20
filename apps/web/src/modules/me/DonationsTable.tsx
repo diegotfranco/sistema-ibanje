@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { Pagination } from '@/components/ui/pagination';
+import { Pagination } from '@/components/Pagination';
+import { formatDate, formatMonthYear } from '@/lib/datetime';
 import type { IncomeEntryResponse } from './donation.schema';
 
 type Props = {
@@ -13,16 +14,8 @@ type Props = {
   emptyMessage?: string;
 };
 
-function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 function formatBRL(value: string): string {
-  const num = parseFloat(value);
+  const num = Number.parseFloat(value);
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
@@ -31,9 +24,7 @@ function formatBRL(value: string): string {
 
 function getAttributionMonthDisplay(attributionMonth: string | null): string {
   if (!attributionMonth) return '—';
-  const [year, month] = attributionMonth.split('-');
-  const date = new Date(parseInt(year), parseInt(month) - 1);
-  return date.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+  return formatMonthYear(attributionMonth);
 }
 
 export default function DonationsTable({

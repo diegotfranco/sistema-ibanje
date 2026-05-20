@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Pencil, Plus, Trash2, ClipboardEdit } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
   Table,
   TableBody,

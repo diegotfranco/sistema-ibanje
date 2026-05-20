@@ -6,16 +6,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { formatDate } from '@/lib/datetime';
 import type { IncomePivot } from './schema';
 
 interface Props {
   pivot: IncomePivot;
 }
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
 
 const formatMoney = (s: string) =>
   Number.parseFloat(s).toLocaleString('pt-BR', {

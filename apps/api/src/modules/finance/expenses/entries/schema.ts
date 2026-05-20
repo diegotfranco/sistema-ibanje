@@ -48,6 +48,8 @@ export const ExpenseEntryResponseSchema = z.object({
   totalInstallments: z.number().int(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
+  parentCategoryId: z.number().int().positive().nullable(),
+  parentCategoryName: z.string().nullable(),
   paymentMethodId: z.number().int().positive(),
   paymentMethodName: z.string(),
   designatedFundId: z.number().int().positive().nullable(),
@@ -64,6 +66,25 @@ export const ExpenseEntryResponseSchema = z.object({
 
 export const ExpenseEntryListResponseSchema = paginatedSchema(ExpenseEntryResponseSchema);
 
+export const ExpenseSummaryQuerySchema = z.object({
+  from: z.iso.date(),
+  to: z.iso.date()
+});
+
+export const ExpenseSummaryRowSchema = z.object({
+  categoryId: z.number().int().positive(),
+  categoryName: z.string(),
+  total: z.string()
+});
+
+export const ExpenseSummaryResponseSchema = z.object({
+  rows: z.array(ExpenseSummaryRowSchema),
+  total: z.string(),
+  totalIncome: z.string()
+});
+
 export type CreateExpenseEntryRequest = z.infer<typeof CreateExpenseEntryRequestSchema>;
 export type UpdateExpenseEntryRequest = z.infer<typeof UpdateExpenseEntryRequestSchema>;
 export type ExpenseEntryResponse = z.infer<typeof ExpenseEntryResponseSchema>;
+export type ExpenseSummaryQuery = z.infer<typeof ExpenseSummaryQuerySchema>;
+export type ExpenseSummaryResponse = z.infer<typeof ExpenseSummaryResponseSchema>;

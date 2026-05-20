@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Check, ChevronsUpDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import {
   Command,
   CommandEmpty,
@@ -56,12 +56,13 @@ function EntityPickerInner<T>(
           role="combobox"
           aria-expanded={open}
           disabled={disabled}
+          data-input-trigger=""
           className={cn('justify-between', className)}>
           {selectedLabel}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-50 p-0">
+      <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
         <Command>
           <CommandInput placeholder={placeholder} />
           <CommandEmpty>{emptyMessage}</CommandEmpty>

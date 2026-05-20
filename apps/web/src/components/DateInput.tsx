@@ -1,44 +1,41 @@
 import * as React from 'react';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { ptBR } from 'date-fns/locale';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/Button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
 
 type Props = Omit<React.ComponentPropsWithoutRef<typeof Input>, 'type'>;
 
-/**
- * Convert ISO date string (yyyy-MM-dd) to Brazilian format (dd/MM/yyyy).
- * Returns empty string if input is empty/falsy or invalid.
- */
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
+
 function isoToBr(iso: string): string {
   if (!iso || typeof iso !== 'string') return '';
   const trimmed = iso.trim();
-  if (trimmed.length !== 10 || trimmed[4] !== '-' || trimmed[7] !== '-') {
-    return '';
-  }
+  if (trimmed.length !== 10 || trimmed[4] !== '-' || trimmed[7] !== '-') return '';
   const year = trimmed.slice(0, 4);
   const month = trimmed.slice(5, 7);
   const day = trimmed.slice(8, 10);
   return `${day}/${month}/${year}`;
 }
 
-/**
- * Convert Brazilian format (dd/MM/yyyy) to ISO date string (yyyy-MM-dd).
- * Returns null if input is invalid, incomplete, or out of range.
- * Validates: day 1-31, month 1-12, year 1900-2999.
- */
 function brToIso(br: string): string | null {
   if (!br || typeof br !== 'string') return null;
   const trimmed = br.trim();
-  if (trimmed.length !== 10 || trimmed[2] !== '/' || trimmed[5] !== '/') {
-    return null;
-  }
+  if (trimmed.length !== 10 || trimmed[2] !== '/' || trimmed[5] !== '/') return null;
   const dayStr = trimmed.slice(0, 2);
   const monthStr = trimmed.slice(3, 5);
   const yearStr = trimmed.slice(6, 10);
 
-  const day = parseInt(dayStr, 10);
-  const month = parseInt(monthStr, 10);
-  const year = parseInt(yearStr, 10);
+  const day = Number.parseInt(dayStr, 10);
+  const month = Number.parseInt(monthStr, 10);
+  const year = Number.parseInt(yearStr, 10);
 
-  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  if (Number.isNaN(day) || Number.isNaN(month) || Number.isNaN(year)) return null;
   if (day < 1 || day > 31) return null;
   if (month < 1 || month > 12) return null;
   if (year < 1900 || year > 2999) return null;
@@ -46,10 +43,6 @@ function brToIso(br: string): string | null {
   return `${yearStr}-${monthStr}-${dayStr}`;
 }
 
-/**
- * Apply mask to raw input: strips non-digits, then inserts '/' after positions 2 and 5.
- * Returns formatted string up to 10 characters (dd/MM/yyyy).
- */
 function applyMask(raw: string): string {
   if (!raw) return '';
   const digits = raw.replace(/\D/g, '');
@@ -59,61 +52,97 @@ function applyMask(raw: string): string {
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
 }
 
-export default React.forwardRef<HTMLInputElement, Props>(
-  ({ value, onChange, onBlur, name, ...props }, ref) => {
-    const [displayValue, setDisplayValue] = React.useState<string>(() => {
-      return isoToBr(value as string);
-    });
+function isoToLocalDate(iso: string): Date | undefined {
+  if (!iso || iso.length !== 10) return undefined;
+  const y = Number.parseInt(iso.slice(0, 4), 10);
+  const m = Number.parseInt(iso.slice(5, 7), 10);
+  const d = Number.parseInt(iso.slice(8, 10), 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return undefined;
+  return new Date(y, m - 1, d);
+}
 
-    // Sync external changes (e.g., form reset) to display value
+function localDateToIso(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
+export default React.forwardRef<HTMLInputElement, Props>(
+  ({ value, onChange, onBlur, name, className, disabled, ...props }, ref) => {
+    const [displayValue, setDisplayValue] = React.useState<string>(() => isoToBr(value as string));
+    const [open, setOpen] = React.useState(false);
+
     React.useEffect(() => {
       setDisplayValue(isoToBr(value as string));
     }, [value]);
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const raw = e.currentTarget.value;
-      const masked = applyMask(raw);
-      setDisplayValue(masked);
+    const emit = (iso: string) => {
+      const syntheticEvent = {
+        target: { value: iso, name }
+      } as React.ChangeEvent<HTMLInputElement>;
+      onChange?.(syntheticEvent);
+    };
 
-      // Try to parse and emit ISO value if valid
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const masked = applyMask(e.currentTarget.value);
+      setDisplayValue(masked);
       const iso = brToIso(masked);
-      if (iso) {
-        // Emit synthetic event with ISO value
-        const syntheticEvent = {
-          target: { value: iso, name }
-        } as React.ChangeEvent<HTMLInputElement>;
-        onChange?.(syntheticEvent);
-      } else {
-        // Emit empty string for invalid/incomplete input
-        const syntheticEvent = {
-          target: { value: '', name }
-        } as React.ChangeEvent<HTMLInputElement>;
-        onChange?.(syntheticEvent);
-      }
+      emit(iso ?? '');
     };
 
     const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      // Validate on blur; if invalid, clear display
-      const iso = brToIso(displayValue);
-      if (!iso) {
-        setDisplayValue('');
-      }
+      if (!brToIso(displayValue)) setDisplayValue('');
       onBlur?.(e);
     };
 
+    const handleCalendarSelect = (date: Date | undefined) => {
+      if (!date) return;
+      const iso = localDateToIso(date);
+      setDisplayValue(isoToBr(iso));
+      emit(iso);
+      setOpen(false);
+    };
+
+    const selected = isoToLocalDate(typeof value === 'string' ? value : '');
+
     return (
-      <Input
-        ref={ref}
-        type="text"
-        inputMode="numeric"
-        placeholder="dd/mm/aaaa"
-        maxLength={10}
-        value={displayValue}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        name={name}
-        {...props}
-      />
+      <div className={cn('flex items-center gap-2', className)}>
+        <Input
+          ref={ref}
+          type="text"
+          inputMode="numeric"
+          placeholder="dd/mm/aaaa"
+          maxLength={10}
+          value={displayValue}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          name={name}
+          disabled={disabled}
+          {...props}
+        />
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              disabled={disabled}
+              data-input-trigger=""
+              aria-label="Abrir calendário"
+              className="shrink-0">
+              <CalendarIcon size={16} />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              mode="single"
+              selected={selected}
+              defaultMonth={selected}
+              onSelect={handleCalendarSelect}
+              locale={ptBR}
+              captionLayout="dropdown"
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
     );
   }
 );
