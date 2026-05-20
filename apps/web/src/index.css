@@ -182,8 +182,19 @@
 /* Light-mode input fills: lift inputs off pure-white card backgrounds.
    Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment. */
 :root:not(.dark) [data-slot='input'],
+:root:not(.dark) [data-slot="input-group"],
 :root:not(.dark) [data-slot='select-trigger'],
 :root:not(.dark) [data-slot='textarea'],
 :root:not(.dark) [data-input-trigger] {
   background-color: color-mix(in oklch, var(--accent) 40%, transparent);
+}
+
+/* Auth pages sit on a translucent card over the glow background — the accent
+   fill above muddies that, so opt out and let inputs read fully transparent. */
+:root:not(.dark) .auth-layout [data-slot='input'],
+:root:not(.dark) .auth-layout [data-slot="input-group"],
+:root:not(.dark) .auth-layout [data-slot='select-trigger'],
+:root:not(.dark) .auth-layout [data-slot='textarea'],
+:root:not(.dark) .auth-layout [data-input-trigger] {
+  background-color: transparent;
 }

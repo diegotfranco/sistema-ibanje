@@ -208,7 +208,10 @@ export function CategoryGroupedList<T extends CategoryLike>({
           </span>
           <Badge
             variant={destructive ? 'destructive' : 'soft'}
-            className={cn('tabular-nums', !destructive && 'dark:bg-secondary dark:text-secondary-foreground')}>
+            className={cn(
+              'tabular-nums',
+              !destructive && 'dark:bg-secondary dark:text-secondary-foreground'
+            )}>
             {row.count}
           </Badge>
         </button>
