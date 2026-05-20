@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import {
@@ -19,10 +20,15 @@ import {
   type ExpenseEntryResponse
 } from './schema';
 
+export interface StagedReceipt {
+  stagedFile: File | null;
+  stagedRemoval: boolean;
+}
+
 interface Props {
   initialValues?: ExpenseEntryResponse;
   isPending: boolean;
-  onSubmit: (values: ExpenseEntryFormValues) => void;
+  onSubmit: (values: ExpenseEntryFormValues, receipt: StagedReceipt) => void;
   onCancel: () => void;
 }
 
@@ -49,9 +55,32 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
     }
   });
 
+  const [stagedFile, setStagedFile] = useState<File | null>(null);
+  const [stagedRemoval, setStagedRemoval] = useState(false);
+
+  const detailsDefaultOpen = Boolean(
+    initialValues?.designatedFundId || initialValues?.attenderId || initialValues?.notes
+  );
+
+  const handleStage = (file: File | null) => {
+    setStagedFile(file);
+    if (file) setStagedRemoval(false);
+  };
+
+  const handleStageRemoval = (remove: boolean) => {
+    setStagedRemoval(remove);
+    if (remove) setStagedFile(null);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-      <ExpenseEntryFields control={control} errors={errors} />
+    <form
+      onSubmit={handleSubmit((values) => onSubmit(values, { stagedFile, stagedRemoval }))}
+      className="space-y-6">
+      <ExpenseEntryFields
+        control={control}
+        errors={errors}
+        detailsDefaultOpen={detailsDefaultOpen}
+      />
 
       {initialValues !== undefined && (
         <>
@@ -79,7 +108,14 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
 
           <Field>
             <FieldLabel>Comprovante</FieldLabel>
-            <ReceiptField entryId={initialValues.id} hasReceipt={initialValues.hasReceipt} />
+            <ReceiptField
+              entryId={initialValues.id}
+              hasReceipt={initialValues.hasReceipt}
+              stagedFile={stagedFile}
+              stagedRemoval={stagedRemoval}
+              onStage={handleStage}
+              onStageRemoval={handleStageRemoval}
+            />
           </Field>
         </>
       )}

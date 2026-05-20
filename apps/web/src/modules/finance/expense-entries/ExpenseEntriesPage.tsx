@@ -3,7 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useExpenseEntries, useExpenseEntryMutations } from './useExpenseEntries';
+import {
+  useExpenseEntries,
+  useExpenseEntryMutations,
+  useUploadReceipt,
+  useDeleteReceipt
+} from './useExpenseEntries';
 import { ExpenseEntryForm } from './ExpenseEntryForm';
 import { ExpenseSummaryCard } from './ExpenseSummaryCard';
 import { ExpenseQuickEntryForm } from './ExpenseQuickEntryForm';
@@ -19,6 +24,8 @@ export default function ExpenseEntriesPage() {
 
   const list = useExpenseEntries();
   const { update, remove } = useExpenseEntryMutations();
+  const uploadReceipt = useUploadReceipt();
+  const deleteReceipt = useDeleteReceipt();
 
   const [editing, setEditing] = useState<ExpenseEntryResponse | null>(null);
   const [deleting, setDeleting] = useState<ExpenseEntryResponse | null>(null);
@@ -55,15 +62,15 @@ export default function ExpenseEntriesPage() {
       />
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar lançamento de saída</DialogTitle>
           </DialogHeader>
           {editing !== null && (
             <ExpenseEntryForm
               initialValues={editing}
-              isPending={update.isPending}
-              onSubmit={(values) => {
+              isPending={update.isPending || uploadReceipt.isPending || deleteReceipt.isPending}
+              onSubmit={(values, receipt) => {
                 const body = toCreateBody(values);
                 const updateBody = {
                   ...body,
@@ -71,7 +78,23 @@ export default function ExpenseEntriesPage() {
                 };
                 update.mutate(
                   { id: editing.id, body: updateBody },
-                  { onSuccess: () => setEditing(null) }
+                  {
+                    onSuccess: async () => {
+                      try {
+                        if (receipt.stagedRemoval) {
+                          await deleteReceipt.mutateAsync(editing.id);
+                        } else if (receipt.stagedFile) {
+                          await uploadReceipt.mutateAsync({
+                            id: editing.id,
+                            file: receipt.stagedFile
+                          });
+                        }
+                        setEditing(null);
+                      } catch {
+                        // mutation hooks already toasted; keep dialog open
+                      }
+                    }
+                  }
                 );
               }}
               onCancel={() => setEditing(null)}

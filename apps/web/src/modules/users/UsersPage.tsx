@@ -1,8 +1,8 @@
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { CheckCircle, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,

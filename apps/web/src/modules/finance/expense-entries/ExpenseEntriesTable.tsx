@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Edit, Trash2, Receipt, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
 import { formatDate, formatMoney } from '../entries-utils';
@@ -50,17 +50,31 @@ export function ExpenseEntriesTable({
       id: 'category',
       header: 'Categoria',
       cell: (info) => info.row.original.categoryName,
-      meta: {}
+      meta: { className: 'w-full' }
+    },
+    {
+      id: 'designatedFund',
+      header: 'Fundo',
+      cell: (info) => info.row.original.designatedFundName ?? '—',
+      meta: { hideBelow: 'xl' }
+    },
+    {
+      id: 'sponsor',
+      header: 'Patrocinador',
+      cell: (info) => info.row.original.attenderName ?? '—',
+      meta: { hideBelow: 'xl' }
     },
     {
       id: 'description',
       header: 'Descrição',
       cell: (info) => (
-        <span className="block max-w-48 truncate text-muted-foreground">
+        <span
+          title={info.row.original.description}
+          className="block max-w-full truncate text-muted-foreground">
           {info.row.original.description}
         </span>
       ),
-      meta: { hideBelow: 'md' }
+      meta: { hideBelow: 'md', className: 'max-w-64' }
     },
     {
       id: 'paymentMethod',
@@ -159,13 +173,13 @@ export function ExpenseEntriesTable({
   return (
     <Card className="pb-0">
       <CardHeader>
-        <CardTitle className="flex items-center justify-between">
+        <CardTitle className="flex items-center text-primary-soft justify-between">
           <span>Últimos lançamentos</span>
           <Button
             asChild
-            variant="ghost"
+            variant="link"
             size="sm"
-            className="text-muted-foreground hover:text-foreground">
+            className="text-muted-foreground hover:text-primary-soft">
             <Link to="/reports?tab=expenses" className="inline-flex items-center gap-1">
               Ver todos
               <ArrowRight size={14} />

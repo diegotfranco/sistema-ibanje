@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
   Table,
   TableBody,
@@ -9,16 +9,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { formatDate } from '@/lib/datetime';
 import { useExpenseReport } from './useReports';
 
 interface Props {
   month: string;
 }
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
 
 const formatMoney = (s: string) =>
   `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;

@@ -1,7 +1,7 @@
 import { AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import type { FallbackProps } from 'react-error-boundary';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { StatusPage } from './StatusPage';
 import { paths } from '@/lib/paths';
 

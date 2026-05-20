@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
   Table,
   TableBody,
@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { formatDate } from '@/lib/datetime';
 import { useFinancialStatement, useDetailedStatement, usePdfDownload } from './useReports';
 import { IncomePivotTable } from './IncomePivotTable';
 
@@ -19,11 +20,6 @@ interface Props {
 
 const formatMoney = (s: string) =>
   `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const formatDate = (s: string) => {
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
 
 export function StatementTab({ month }: Props) {
   const [view, setView] = useState<'simple' | 'detailed'>('simple');

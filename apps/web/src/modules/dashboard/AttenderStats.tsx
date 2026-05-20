@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAttendersReport } from '@/modules/finance/reports/useReports';
 

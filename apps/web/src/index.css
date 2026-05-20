@@ -9,7 +9,7 @@
 
 :root {
   color-scheme: light;
-  --background: oklch(1 0 0);
+  --background: oklch(0.985 0.002 220);
   --foreground: oklch(0.148 0.004 228.8);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.148 0.004 228.8);
@@ -156,11 +156,6 @@
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
-  /* a {
-    &:hover {
-      @apply underline;
-    }
-  } */
   html {
     @apply font-sans;
   }
@@ -173,4 +168,22 @@
   label {
     @apply font-heading;
   }
+}
+
+/* Keep the root view-transition synced with ThemeSwitch's thumb/icon crossfade
+   (300 ms ease-out in ThemeSwitch.tsx). Same duration + same timing function
+   so the page recolor lands exactly when the switch thumb arrives. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Light-mode input fills: lift inputs off pure-white card backgrounds.
+   Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment. */
+:root:not(.dark) [data-slot='input'],
+:root:not(.dark) [data-slot='select-trigger'],
+:root:not(.dark) [data-slot='textarea'],
+:root:not(.dark) [data-input-trigger] {
+  background-color: color-mix(in oklch, var(--accent) 40%, transparent);
 }

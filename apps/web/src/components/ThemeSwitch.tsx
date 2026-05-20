@@ -1,5 +1,5 @@
 import { Switch as SwitchPrimitive } from 'radix-ui';
-import { Sun, Moon } from 'lucide-react';
+import { SunMedium, Moon } from 'lucide-react';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 
@@ -12,19 +12,19 @@ export function ThemeSwitch() {
       checked={isDark}
       onCheckedChange={(v) => setTheme(v ? 'dark' : 'light')}
       aria-label="Alternar tema"
-      className="group/theme-switch relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full border border-transparent bg-input transition-colors duration-300 ease-in-out data-[state=checked]:bg-foreground/20 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-      <SwitchPrimitive.Thumb className="pointer-events-none relative flex h-4 w-4 translate-x-0.5 items-center justify-center rounded-full bg-background text-foreground shadow-sm transition-transform duration-300 ease-in-out data-[state=checked]:translate-x-5">
-        <Sun
-          size={10}
+      className="group/theme-switch relative inline-flex h-4.5 w-9 shrink-0 cursor-pointer items-center rounded-full border border-sidebar-border bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+      <SwitchPrimitive.Thumb className="pointer-events-none relative flex h-3.5 w-4 translate-x-px items-center justify-center rounded-full bg-zinc-50 shadow-sm transition-all duration-300 ease-out data-[state=checked]:translate-x-4.25 data-[state=checked]:bg-zinc-950">
+        <SunMedium
+          size={8}
           className={cn(
-            'absolute transition-opacity duration-300 ease-in-out',
+            'absolute text-zinc-950 transition-opacity duration-300 ease-out',
             isDark ? 'opacity-0' : 'opacity-100'
           )}
         />
         <Moon
-          size={10}
+          size={8}
           className={cn(
-            'absolute transition-opacity duration-300 ease-in-out',
+            'absolute text-zinc-50 transition-opacity duration-300 ease-out',
             isDark ? 'opacity-100' : 'opacity-0'
           )}
         />

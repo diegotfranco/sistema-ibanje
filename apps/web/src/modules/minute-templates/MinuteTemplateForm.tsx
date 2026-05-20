@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { MeetingType } from '@sistema-ibanje/shared';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import {
   Dialog,
   DialogContent,

@@ -1,4 +1,4 @@
-import { Card } from '@/components/ui/card';
+import { Card } from '@/components/Card';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import type { ReactNode } from 'react';
 

@@ -1,16 +1,10 @@
 import { Link } from 'react-router';
 import { Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { paths } from '@/lib/paths';
-import {
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter
-} from '@/components/ui/card';
+import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/Card';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { useForgotPasswordForm } from '@/modules/auth/useForgotPasswordForm';
 

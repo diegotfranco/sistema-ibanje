@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router';
 import { ArrowLeft, Eye } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
   Table,
   TableBody,

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { AlertTriangle, AlertCircle } from 'lucide-react';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useMonthlyClosings } from '@/modules/finance/monthly-closings/useMonthlyClosings';

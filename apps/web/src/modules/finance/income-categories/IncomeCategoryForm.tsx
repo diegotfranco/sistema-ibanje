@@ -1,5 +1,5 @@
 import { Controller, useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -15,6 +15,7 @@ import {
 
 interface Props {
   initialValues?: IncomeCategoryResponse;
+  defaultParentId?: number;
   categories: CategoryNode[];
   isPending: boolean;
   onSubmit: (values: IncomeCategoryFormValues) => void;
@@ -23,6 +24,7 @@ interface Props {
 
 export function IncomeCategoryForm({
   initialValues,
+  defaultParentId,
   categories,
   isPending,
   onSubmit,
@@ -33,7 +35,7 @@ export function IncomeCategoryForm({
     defaultValues: {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
-      parentId: initialValues?.parentId ?? undefined,
+      parentId: initialValues?.parentId ?? defaultParentId,
       requiresMember: initialValues?.requiresMember ?? false
     }
   });
@@ -76,7 +78,7 @@ export function IncomeCategoryForm({
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Categoria Pai</FieldLabel>
+              <FieldLabel>Grupo</FieldLabel>
               <CategoryParentPicker
                 value={field.value}
                 onChange={field.onChange}

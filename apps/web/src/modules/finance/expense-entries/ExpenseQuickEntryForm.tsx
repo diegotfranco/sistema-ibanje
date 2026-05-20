@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { zodResolver } from '@/lib/zodResolver';
 import { ExpenseEntryFields } from './ExpenseEntryFields';
 import { ExpenseEntryFormSchema, type ExpenseEntryFormValues } from './schema';
@@ -79,9 +79,9 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Novo lançamento</CardTitle>
+        <CardTitle className="py-0.75">Novo lançamento</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <ExpenseEntryFields control={control} errors={errors} />
 

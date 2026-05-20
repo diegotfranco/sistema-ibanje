@@ -1,4 +1,5 @@
 import { Wallet } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
 import { formatMoney } from '../entries-utils';
 import { useExpenseSummary } from './useExpenseSummary';
 
@@ -32,10 +33,10 @@ function currentMonthRange() {
 }
 
 function pickBarColor(ratio: number): string {
-  if (ratio > BUDGET_DANGER_MAX) return 'bg-rose-500';
-  if (ratio > BUDGET_WARN_MAX) return 'bg-orange-500';
-  if (ratio > BUDGET_OK_MAX) return 'bg-amber-400';
-  return 'bg-emerald-400';
+  if (ratio > BUDGET_DANGER_MAX) return 'bg-destructive';
+  if (ratio > BUDGET_WARN_MAX) return 'bg-warning';
+  if (ratio > BUDGET_OK_MAX) return 'bg-warning/70';
+  return 'bg-success';
 }
 
 export function ExpenseSummaryCard() {
@@ -46,58 +47,63 @@ export function ExpenseSummaryCard() {
   const totalIncome = Number.parseFloat(data?.totalIncome ?? '0');
   const ratio = totalIncome > 0 ? totalExpense / totalIncome : null;
   const barWidth = ratio === null ? 0 : Math.min(100, ratio * 100);
-  const barColor = ratio === null ? 'bg-white/30' : pickBarColor(ratio);
+  const barColor = ratio === null ? 'bg-muted-foreground/30' : pickBarColor(ratio);
   const overBudget = ratio !== null && ratio > 1;
 
   return (
-    <div className="bg-primary text-primary-foreground rounded-xl p-4 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-white/15 rounded-md p-2">
+          <div className="bg-primary/10 text-primary-soft rounded-md p-2">
             <Wallet size={20} />
           </div>
           <div>
-            <p className="text-sm opacity-90">Total do mês</p>
-            <p className="text-xs opacity-75">{label}</p>
+            <CardTitle>Total do mês</CardTitle>
+            <CardDescription>{label}</CardDescription>
           </div>
         </div>
         <div className="text-right text-sm">
-          <p className="opacity-75">Entradas</p>
-          <p className="font-mono tabular-nums">R$ {formatMoney(data?.totalIncome ?? '0')}</p>
-        </div>
-      </div>
-
-      <div className="mt-3">
-        {isLoading ? (
-          <div className="h-7 w-48 animate-pulse rounded bg-white/20" />
-        ) : (
-          <p className="text-2xl font-semibold font-mono tabular-nums">
-            R$ {formatMoney(data?.total ?? '0')}
+          <p className="text-muted-foreground">Entradas</p>
+          <p className="font-mono tabular-nums text-money-in">
+            R$ {formatMoney(data?.totalIncome ?? '0')}
           </p>
-        )}
-        {ratio === null && !isLoading && (
-          <p className="mt-1 text-xs opacity-75">Sem entradas no mês</p>
-        )}
-      </div>
-
-      <div className="mt-3">
-        <div className="h-2 w-full rounded-full bg-white/20 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-[width,background-color] ${barColor}`}
-            style={{ width: `${barWidth}%` }}
-          />
         </div>
-        <div className="mt-2 flex items-center justify-end text-xs">
-          {ratio === null ? (
-            <span className="opacity-75">—</span>
+      </CardHeader>
+      <CardContent className="mt-3">
+        <div>
+          {isLoading ? (
+            <div className="h-7 w-48 animate-pulse rounded bg-muted" />
           ) : (
-            <span
-              className={`font-mono tabular-nums ${overBudget ? 'text-rose-200 font-semibold' : ''}`}>
-              {Math.round(ratio * 100)}%
-            </span>
+            <p className="text-2xl font-semibold font-mono tabular-nums">
+              R$ {formatMoney(data?.total ?? '0')}
+            </p>
+          )}
+          {ratio === null && !isLoading && (
+            <p className="mt-1 text-xs text-muted-foreground">Sem entradas no mês</p>
           )}
         </div>
-      </div>
-    </div>
+
+        <div className="mt-3">
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-[width,background-color] ${barColor}`}
+              style={{ width: `${barWidth}%` }}
+            />
+          </div>
+          <div className="mt-2 flex items-center justify-end text-xs">
+            {ratio === null ? (
+              <span className="text-muted-foreground">—</span>
+            ) : (
+              <span
+                className={`font-mono tabular-nums ${
+                  overBudget ? 'text-destructive font-semibold' : 'text-muted-foreground'
+                }`}>
+                {Math.round(ratio * 100)}%
+              </span>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

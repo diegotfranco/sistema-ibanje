@@ -1,17 +1,13 @@
 import { EntryStatus } from '@sistema-ibanje/shared';
 
+export { formatDate } from '@/lib/datetime';
+
 export const STATUS_FILTERS = [
   { value: 'all', label: 'Todos' },
   { value: EntryStatus.Pending, label: 'Pendente' },
   { value: EntryStatus.Paid, label: 'Paga' },
   { value: EntryStatus.Cancelled, label: 'Cancelada' }
 ] as const;
-
-export const formatDate = (s: string | null | undefined) => {
-  if (!s) return '—';
-  const [y, m, d] = s.split('-');
-  return `${d}/${m}/${y}`;
-};
 
 export const formatMoney = (s: string) =>
   Number.parseFloat(s).toLocaleString('pt-BR', {

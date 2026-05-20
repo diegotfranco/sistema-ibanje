@@ -1,7 +1,4 @@
-import { ChevronDown } from 'lucide-react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +24,7 @@ const NONE = '__none__';
 interface Props {
   control: Control<ExpenseEntryFormValues>;
   errors: FieldErrors<ExpenseEntryFormValues>;
+  detailsDefaultOpen?: boolean;
 }
 
 export function ExpenseEntryFields({ control, errors }: Props) {
@@ -191,90 +189,72 @@ export function ExpenseEntryFields({ control, errors }: Props) {
         />
       </div>
 
-      <Collapsible>
-        <CollapsibleTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="-ml-2 text-muted-foreground data-[state=open]:[&_svg]:rotate-180">
-            <ChevronDown size={16} className="mr-1 transition-transform" />
-            Detalhes opcionais
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-2 data-[state=open]:animate-in data-[state=closed]:animate-out">
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Controller
-                name="designatedFundId"
-                control={control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="designatedFundId">Fundo Designado (opcional)</FieldLabel>
-                    <Select
-                      value={field.value !== undefined ? String(field.value) : NONE}
-                      onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
-                      <SelectTrigger id="designatedFundId" className="w-full">
-                        <SelectValue placeholder="Selecione um fundo (opcional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE}>Sem fundo</SelectItem>
-                        {designatedFundsList.map((fund) => (
-                          <SelectItem key={fund.id} value={String(fund.id)}>
-                            {fund.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.designatedFundId && (
-                      <FieldError>{errors.designatedFundId.message}</FieldError>
-                    )}
-                  </Field>
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Controller
+            name="designatedFundId"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="designatedFundId">Campanha</FieldLabel>
+                <Select
+                  value={field.value !== undefined ? String(field.value) : NONE}
+                  onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
+                  <SelectTrigger id="designatedFundId" className="w-full">
+                    <SelectValue placeholder="Selecione uma campanha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={NONE}>Sem fundo</SelectItem>
+                    {designatedFundsList.map((fund) => (
+                      <SelectItem key={fund.id} value={String(fund.id)}>
+                        {fund.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.designatedFundId && (
+                  <FieldError>{errors.designatedFundId.message}</FieldError>
                 )}
-              />
+              </Field>
+            )}
+          />
 
-              <Controller
-                name="attenderId"
-                control={control}
-                render={({ field }) => (
-                  <Field>
-                    <FieldLabel htmlFor="attenderId">Congregado Patrocinador (opcional)</FieldLabel>
-                    <EntityPicker
-                      items={attendersList}
-                      value={field.value ?? null}
-                      onChange={(v) => field.onChange(v ?? undefined)}
-                      getValue={(a) => a.id}
-                      getLabel={(a) => a.name}
-                      placeholder="Selecionar congregado..."
-                      emptyMessage="Nenhum congregado encontrado."
-                      isLoading={attenders.isLoading}
-                      allowClear
-                      className="w-full"
-                    />
-                    {errors.attenderId && <FieldError>{errors.attenderId.message}</FieldError>}
-                  </Field>
-                )}
-              />
-            </div>
+          <Controller
+            name="attenderId"
+            control={control}
+            render={({ field }) => (
+              <Field>
+                <FieldLabel htmlFor="attenderId">Congregado Patrocinador</FieldLabel>
+                <EntityPicker
+                  items={attendersList}
+                  value={field.value ?? null}
+                  onChange={(v) => field.onChange(v ?? undefined)}
+                  getValue={(a) => a.id}
+                  getLabel={(a) => a.name}
+                  placeholder="Selecionar congregado..."
+                  emptyMessage="Nenhum congregado encontrado."
+                  isLoading={attenders.isLoading}
+                  allowClear
+                  className="w-full"
+                />
+                {errors.attenderId && <FieldError>{errors.attenderId.message}</FieldError>}
+              </Field>
+            )}
+          />
+        </div>
 
-            <Controller
-              name="notes"
-              control={control}
-              render={({ field }) => (
-                <Field>
-                  <FieldLabel htmlFor="notes">Observações (opcional)</FieldLabel>
-                  <Textarea
-                    id="notes"
-                    placeholder="Adicione observações se necessário"
-                    {...field}
-                  />
-                  {errors.notes && <FieldError>{errors.notes.message}</FieldError>}
-                </Field>
-              )}
-            />
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+        <Controller
+          name="notes"
+          control={control}
+          render={({ field }) => (
+            <Field>
+              <FieldLabel htmlFor="notes">Observações</FieldLabel>
+              <Textarea id="notes" placeholder="Adicione observações se necessário" {...field} />
+              {errors.notes && <FieldError>{errors.notes.message}</FieldError>}
+            </Field>
+          )}
+        />
+      </div>
     </div>
   );
 }

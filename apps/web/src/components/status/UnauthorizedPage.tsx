@@ -1,6 +1,6 @@
 import { Lock } from 'lucide-react';
 import { Link } from 'react-router';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/Button';
 import { StatusPage } from './StatusPage';
 import { paths } from '@/lib/paths';
 
