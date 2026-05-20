@@ -12,7 +12,7 @@ import {
   RichTextEditor as RichTextEditorComponent,
   EMPTY_TIPTAP_DOC,
   type TipTapDoc
-} from '@/components/ui/rich-text-editor';
+} from '@/components/RichTextEditor';
 
 interface Props {
   open: boolean;

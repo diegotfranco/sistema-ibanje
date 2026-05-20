@@ -31,7 +31,7 @@ const enabled = (month: string) => month.length > 0;
 export function useIncomeReport(month: string, page = 1) {
   return useQuery({
     queryKey: ['reports', 'income', month, page],
-    queryFn: () => api.get<IncomeReportResponse>(`/reports/income?${buildParams(month, page, 50)}`),
+    queryFn: () => api.get<IncomeReportResponse>(`/reports/income?${buildParams(month, page, 30)}`),
     enabled: enabled(month)
   });
 }
@@ -40,7 +40,7 @@ export function useExpenseReport(month: string, page = 1) {
   return useQuery({
     queryKey: ['reports', 'expenses', month, page],
     queryFn: () =>
-      api.get<ExpenseReportResponse>(`/reports/expenses?${buildParams(month, page, 50)}`),
+      api.get<ExpenseReportResponse>(`/reports/expenses?${buildParams(month, page, 30)}`),
     enabled: enabled(month)
   });
 }

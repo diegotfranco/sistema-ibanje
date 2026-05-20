@@ -27,7 +27,7 @@ import {
   RichTextDisplay,
   interpolateTipTapDoc,
   type TipTapDoc
-} from '@/components/ui/rich-text-editor';
+} from '@/components/RichTextEditor';
 import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';

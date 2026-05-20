@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import MonthInput from '@/components/MonthInput';
+import { MonthPicker } from '@/components/MonthPicker';
 import { DashboardClosingBanner } from './DashboardClosingBanner';
 import { AttenderStats } from './AttenderStats';
 import { FundsChart } from './FundsChart';
@@ -14,11 +14,11 @@ export default function DashboardPage() {
         <label htmlFor="month-input" className="text-sm font-medium text-muted-foreground">
           Mês:
         </label>
-        <MonthInput
+        <MonthPicker
           id="month-input"
           value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.currentTarget.value)}
-          className="w-40"
+          onChange={setSelectedMonth}
+          className="w-48"
         />
       </div>
 

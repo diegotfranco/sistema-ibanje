@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ChevronUp, ChevronDown, X, Plus } from 'lucide-react';
-import { RichTextEditor, type TipTapDoc, EMPTY_TIPTAP_DOC } from '@/components/ui/rich-text-editor';
+import { RichTextEditor, type TipTapDoc, EMPTY_TIPTAP_DOC } from '@/components/RichTextEditor';
 import {
   MinuteTemplateFormSchema,
   type MinuteTemplateFormValues,

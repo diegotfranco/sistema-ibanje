@@ -30,7 +30,7 @@ export function StatementTab({ month }: Props) {
   const params = new URLSearchParams({ month }).toString();
 
   return (
-    <div className="mt-4 space-y-4">
+    <div className="space-y-4 p-4">
       {/* Sub-toggle + PDF button */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex gap-2">

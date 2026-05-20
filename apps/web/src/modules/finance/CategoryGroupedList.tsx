@@ -6,9 +6,15 @@ import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Input } from '@/components/ui/input';
+import { Pagination } from '@/components/Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { groupCategoriesByParent, type CategoryLike } from './category-grouping';
+
+// Paginate parent groups (not items). Children always render fully under their
+// parent on the current page; orphans always appear on the last page so they
+// aren't shuffled around as the user pages through.
+const GROUPS_PER_PAGE = 5;
 
 interface Props<T extends CategoryLike> {
   title: string;
@@ -66,13 +72,23 @@ export function CategoryGroupedList<T extends CategoryLike>({
 }: Props<T>) {
   const { groups, orphans } = useMemo(() => groupCategoriesByParent(items), [items]);
   const [collapsed, setCollapsed] = useState<Partial<Record<SectionKey, boolean>>>({});
+  const [page, setPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(groups.length / GROUPS_PER_PAGE));
+  // Clamp page during render (instead of useEffect) when the underlying list
+  // shrinks due to search — see CLAUDE.md "set-state-in-effect" lint pattern.
+  if (page > totalPages) setPage(1);
+  const safePage = Math.min(page, totalPages);
+  const pageStart = (safePage - 1) * GROUPS_PER_PAGE;
+  const pageGroups = groups.slice(pageStart, pageStart + GROUPS_PER_PAGE);
+  const isLastPage = safePage === totalPages;
 
   const toggle = (key: SectionKey) =>
     setCollapsed((prev) => ({ ...prev, [key]: !(prev[key] ?? false) }));
 
   const flatRows = useMemo<FlatRow<T>[]>(() => {
     const rows: FlatRow<T>[] = [];
-    for (const { parent, children } of groups) {
+    for (const { parent, children } of pageGroups) {
       rows.push({
         _kind: 'section',
         parentId: parent.id,
@@ -87,7 +103,7 @@ export function CategoryGroupedList<T extends CategoryLike>({
         }
       }
     }
-    if (orphans.length > 0) {
+    if (isLastPage && orphans.length > 0) {
       rows.push({
         _kind: 'section',
         parentId: 'orphans',
@@ -102,7 +118,7 @@ export function CategoryGroupedList<T extends CategoryLike>({
       }
     }
     return rows;
-  }, [groups, orphans, collapsed]);
+  }, [pageGroups, orphans, collapsed, isLastPage]);
 
   const columns = useMemo<ColumnDef<FlatRow<T>, unknown>[]>(
     () => [
@@ -294,6 +310,9 @@ export function CategoryGroupedList<T extends CategoryLike>({
           renderSectionHeader={renderSectionHeader}
           getRowKey={flatRowKey}
         />
+        <div className="border-t px-3 py-2 flex justify-end">
+          <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />
+        </div>
       </CardContent>
     </Card>
   );

@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { Pagination } from '@/components/ui/pagination';
+import { Pagination } from '@/components/Pagination';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
 import type { IncomeEntryResponse } from './donation.schema';
 
