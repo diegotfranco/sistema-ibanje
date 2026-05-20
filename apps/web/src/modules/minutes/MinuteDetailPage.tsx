@@ -23,11 +23,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
-import {
-  RichTextDisplay,
-  interpolateTipTapDoc,
-  type TipTapDoc
-} from '@/components/RichTextEditor';
+import { RichTextDisplay, interpolateTipTapDoc, type TipTapDoc } from '@/components/RichTextEditor';
 import { MinuteStatus } from '@sistema-ibanje/shared';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
