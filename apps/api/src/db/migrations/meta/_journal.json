@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1778870090301,
-      "tag": "0000_empty_eternity",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1778877273866,
-      "tag": "0001_romantic_metal_master",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1778887011890,
-      "tag": "0002_previous_fallen_one",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1779254317040,
-      "tag": "0003_enable_unaccent",
+      "when": 1779396222618,
+      "tag": "0000_baseline",
       "breakpoints": true
     }
   ]

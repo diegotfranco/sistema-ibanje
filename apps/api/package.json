@@ -18,6 +18,7 @@
     "db:push": "dotenv -e ../../.env -- drizzle-kit push",
     "db:seed": "tsx src/db/seed.ts",
     "db:seed:prod": "tsx src/db/seed.prod.ts",
+    "db:dump-fixtures": "tsx src/db/scripts/dump-fixtures.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },

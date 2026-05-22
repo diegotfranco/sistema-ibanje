@@ -104,25 +104,63 @@ export const SEED_MEETING_TYPES = {
   Extraordinary: 'extraordinária'
 } as const;
 
+/**
+ * Structural designated funds — present in every dev/prod seed.
+ * Historical campaign funds are appended at dev-seed time from fixtures/designated_funds.json.
+ */
+export const SEED_DESIGNATED_FUNDS: {
+  name: string;
+  description?: string | null;
+  targetAmount?: string;
+}[] = [
+  {
+    name: 'Fundo de Obras',
+    description: 'Reserva para reformas e melhorias da sede',
+    targetAmount: '50000.00'
+  },
+  {
+    name: 'Fundo Missionário',
+    description: 'Recursos destinados ao apoio de missionários e seminaristas'
+  },
+  {
+    name: 'Dia das Crianças',
+    description: 'Campanha anual para o evento infantil',
+    targetAmount: '2000.00'
+  },
+  { name: 'Terenos', description: 'Apoio à congregação irmã em Terenos/MS' },
+  { name: 'PAM', description: 'Plano de Auxílio Missionário' }
+];
+
+/**
+ * Income taxonomy — category answers WHAT kind of inflow.
+ * The WHERE-it's-earmarked dimension lives in designated_funds (e.g. missionary offering =
+ * Oferta + Fundo Missionário; campaign contribution = Oferta + the specific Campanha X fund).
+ */
 export const SEED_INCOME_CATEGORY_PARENTS = ['Contribuições', 'Outras Receitas'] as const;
 
 export function buildIncomeCategoryChildren(parentByName: Record<string, { id: number }>) {
   return [
     { name: 'Dízimo', parentId: parentByName['Contribuições'].id, requiresMember: true },
-    { name: 'Oferta de Culto', parentId: parentByName['Contribuições'].id },
-    { name: 'Oferta Missionária', parentId: parentByName['Contribuições'].id },
+    { name: 'Oferta', parentId: parentByName['Contribuições'].id },
     { name: 'Doação', parentId: parentByName['Contribuições'].id },
+    { name: 'Eventos', parentId: parentByName['Outras Receitas'].id },
     { name: 'Rendimentos Financeiros', parentId: parentByName['Outras Receitas'].id },
-    { name: 'Eventos / Campanhas', parentId: parentByName['Outras Receitas'].id }
+    { name: 'Aluguel de Espaço', parentId: parentByName['Outras Receitas'].id },
+    { name: 'Venda de Material', parentId: parentByName['Outras Receitas'].id }
   ];
 }
 
 export const SEED_EXPENSE_CATEGORY_PARENTS = [
   { name: 'Pessoal' },
+  { name: 'Administrativo' },
   { name: 'Operacional' },
   { name: 'Manutenção' },
   { name: 'Equipamentos' },
-  { name: 'Eventos / Programas' }
+  { name: 'Eventos / Programas' },
+  { name: 'Missões' },
+  { name: 'Contribuições Eclesiásticas' },
+  { name: 'Auxílios' },
+  { name: 'Diversos' }
 ];
 
 export function buildExpenseCategoryChildren(parentByName: Record<string, { id: number }>) {
@@ -130,17 +168,35 @@ export function buildExpenseCategoryChildren(parentByName: Record<string, { id: 
     { name: 'Honorários Pastorais', parentId: parentByName['Pessoal'].id },
     { name: 'FGTM', parentId: parentByName['Pessoal'].id },
     { name: 'Encargos', parentId: parentByName['Pessoal'].id },
+    { name: 'Treinamento / Desenvolvimento', parentId: parentByName['Pessoal'].id },
+    { name: 'Contador', parentId: parentByName['Administrativo'].id },
+    { name: 'Material de Expediente', parentId: parentByName['Administrativo'].id },
+    { name: 'Cartório / Registros', parentId: parentByName['Administrativo'].id },
+    { name: 'Assinaturas / Software', parentId: parentByName['Administrativo'].id },
+    { name: 'Tarifa Bancária', parentId: parentByName['Administrativo'].id },
     { name: 'Água', parentId: parentByName['Operacional'].id },
     { name: 'Energia', parentId: parentByName['Operacional'].id },
     { name: 'Internet / Telefone', parentId: parentByName['Operacional'].id },
     { name: 'Vigilância Patrimonial', parentId: parentByName['Operacional'].id },
-    { name: 'Tarifa Bancária', parentId: parentByName['Operacional'].id },
     { name: 'Material de Limpeza', parentId: parentByName['Operacional'].id },
+    { name: 'Seguros', parentId: parentByName['Operacional'].id },
     { name: 'Manutenção Predial', parentId: parentByName['Manutenção'].id },
     { name: 'Reparo Hidráulico', parentId: parentByName['Manutenção'].id },
     { name: 'Reparo Elétrico', parentId: parentByName['Manutenção'].id },
     { name: 'Compra de Equipamentos', parentId: parentByName['Equipamentos'].id },
-    { name: 'Despesas com Eventos', parentId: parentByName['Eventos / Programas'].id }
+    { name: 'Despesas com Eventos', parentId: parentByName['Eventos / Programas'].id },
+    { name: 'Material Didático', parentId: parentByName['Eventos / Programas'].id },
+    { name: 'Gratificações', parentId: parentByName['Eventos / Programas'].id },
+    { name: 'Missões Nacionais', parentId: parentByName['Missões'].id },
+    { name: 'Missões Mundiais', parentId: parentByName['Missões'].id },
+    { name: 'PAM', parentId: parentByName['Missões'].id },
+    { name: 'Auxílio a Seminarista', parentId: parentByName['Missões'].id },
+    { name: 'Auxílio a Pastor em Formação', parentId: parentByName['Missões'].id },
+    { name: 'Plano Cooperativo', parentId: parentByName['Contribuições Eclesiásticas'].id },
+    { name: 'Acibams', parentId: parentByName['Contribuições Eclesiásticas'].id },
+    { name: 'Auxílio Combustível', parentId: parentByName['Auxílios'].id },
+    { name: 'Transporte / Deslocamento', parentId: parentByName['Auxílios'].id },
+    { name: 'Outras Despesas', parentId: parentByName['Diversos'].id }
   ];
 }
 
@@ -175,6 +231,8 @@ export function buildRoleModulePermissions(
   const closingFullIds = ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(
     (n) => permByName[n].id
   );
+  // Comissão precisa anotar correções durante a revisão antes de aprovar — Editar habilita isso.
+  const examCommissionClosingIds = ['Acessar', 'Editar', 'Revisar'].map((n) => permByName[n].id);
 
   return [
     ...cross(roleByName['Administrador'].id, allModNames, allPermIds),
@@ -208,7 +266,7 @@ export function buildRoleModulePermissions(
     ...cross(
       roleByName['Comissão de Exame de Contas'].id,
       ['Fechamentos Mensais'],
-      [permByName['Acessar'].id, permByName['Revisar'].id]
+      examCommissionClosingIds
     ),
     ...cross(roleByName['Membro'].id, ['Atas', 'Congregados'], [permByName['Acessar'].id]),
     ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], writePermIds),
@@ -223,3 +281,90 @@ export function buildRoleModulePermissions(
     ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], readPermIds)
   ];
 }
+
+/**
+ * Demo login accounts seeded in dev. One per role so every RBAC branch can be exercised
+ * by logging in. Passwords are throwaway and only valid in development.
+ */
+export type SeedDemoUser = {
+  name: string;
+  email: string;
+  password: string;
+  roleName: string;
+};
+
+export const SEED_DEMO_USERS: SeedDemoUser[] = [
+  {
+    name: 'Administrador da Silva',
+    email: 'admin@email.com',
+    password: 'admin123',
+    roleName: 'Administrador'
+  },
+  {
+    name: 'Presidente da Silva',
+    email: 'presidente@email.com',
+    password: 'presidente123',
+    roleName: 'Presidente'
+  },
+  {
+    name: 'Vice Presidente da Silva',
+    email: 'vice.presidente@email.com',
+    password: 'vicepres123',
+    roleName: 'Vice-Presidente'
+  },
+  {
+    name: 'Tesoureiro Responsável da Silva',
+    email: 'tesoureiro.resp@email.com',
+    password: 'tesresp123',
+    roleName: 'Tesoureiro Responsável'
+  },
+  {
+    name: 'Tesoureiro da Silva',
+    email: 'tesoureiro@email.com',
+    password: 'tesoureiro123',
+    roleName: 'Tesoureiro'
+  },
+  {
+    name: 'Secretário Responsável da Silva',
+    email: 'secretario.resp@email.com',
+    password: 'secresp123',
+    roleName: 'Secretário Responsável'
+  },
+  {
+    name: 'Secretário da Silva',
+    email: 'secretario@email.com',
+    password: 'secretario123',
+    roleName: 'Secretário'
+  },
+  {
+    name: 'Comissão da Silva',
+    email: 'comissao@email.com',
+    password: 'comissao123',
+    roleName: 'Comissão de Exame de Contas'
+  },
+  {
+    name: 'Membro da Silva',
+    email: 'membro@email.com',
+    password: 'membro123',
+    roleName: 'Membro'
+  }
+];
+
+export const SEED_CHURCH_SETTINGS = {
+  id: 1,
+  name: 'Igreja Batista Nova Jerusalém',
+  cnpj: '15.556.152/0001-42',
+  addressStreet: 'Rua Santo Amaro',
+  addressNumber: '286',
+  addressDistrict: 'Vila Carrão',
+  addressCity: 'São Paulo',
+  addressState: 'SP',
+  postalCode: '03446000',
+  phone: '(11) 2741-4262',
+  email: null,
+  websiteUrl: null,
+  currentPresidentName: 'Pr. Deucir Araújo de Almeida',
+  currentPresidentTitle: 'Presidente',
+  currentSecretaryName: 'Secretário Responsável da Silva',
+  currentSecretaryTitle: '1º Secretário(a)'
+} as const;

@@ -51,6 +51,7 @@ services:
   backup:
     image: postgres:18-alpine
     restart: unless-stopped
+    profiles: ['backup']
     depends_on:
       postgres:
         condition: service_healthy
