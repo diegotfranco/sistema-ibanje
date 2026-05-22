@@ -354,7 +354,7 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
         <View key={row.referenceDate} wrap={false}>
           <View
             style={tw(
-              ['flex-row bg-slate-100', rowIdx > 0 ? 'border-t border-slate-200' : '']
+              ['flex-row bg-gray-100', rowIdx > 0 ? 'border-t border-gray-200' : '']
                 .filter(Boolean)
                 .join(' ')
             )}>
@@ -382,11 +382,7 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
                 <View
                   key={`${row.referenceDate}:${bucket.key}`}
                   style={tw('flex-row border-b border-slate-100')}>
-                  <Text
-                    style={[
-                      tw('px-2 py-1 pl-5 text-xs text-slate-700'),
-                      { flex: labelFlex }
-                    ]}>
+                  <Text style={[tw('px-2 py-1 pl-5 text-xs text-slate-700'), { flex: labelFlex }]}>
                     {bucketDisplayLabel(bucket)}
                   </Text>
                   <Text
@@ -402,11 +398,7 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
             return (
               <Fragment key={`${row.referenceDate}:${bucket.key}`}>
                 <View style={tw('flex-row border-b border-slate-100')}>
-                  <Text
-                    style={[
-                      tw('px-2 py-1 pl-5 text-xs text-slate-700'),
-                      { flex: labelFlex }
-                    ]}>
+                  <Text style={[tw('px-2 py-1 pl-5 text-xs text-slate-700'), { flex: labelFlex }]}>
                     {bucket.label}
                   </Text>
                   <Text
