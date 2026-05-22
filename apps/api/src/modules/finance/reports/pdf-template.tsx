@@ -126,7 +126,7 @@ function PageHeader({
   title?: string;
 }) {
   return (
-    <View style={tw('px-8 pt-8 pb-6 mb-6 border-b border-gray-200')}>
+    <View style={tw('px-8 pb-6 mb-6 border-b border-gray-200')}>
       <View style={tw('flex-row justify-between items-end mb-2')}>
         <View>
           <Text style={tw('text-sm font-roboto font-bold text-brand-primary tracking-widest mb-1')}>
@@ -351,7 +351,7 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
   return (
     <View>
       {pivot.rows.map((row, rowIdx) => (
-        <Fragment key={row.referenceDate}>
+        <View key={row.referenceDate} wrap={false}>
           <View
             style={tw(
               ['flex-row bg-slate-100', rowIdx > 0 ? 'border-t border-slate-200' : '']
@@ -360,14 +360,14 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
             )}>
             <Text
               style={[
-                tw('px-2 py-1.5 text-xs font-roboto font-bold text-slate-800'),
+                tw('px-2 py-1.5 text-xs font-roboto font-medium text-slate-700'),
                 { flex: labelFlex }
               ]}>
               {fmtDate(row.referenceDate)}
             </Text>
             <Text
               style={[
-                tw('px-2 py-1.5 text-xs font-roboto font-bold text-right text-green-900'),
+                tw('px-2 py-1.5 text-xs font-roboto font-medium text-right text-slate-700'),
                 { flex: valueFlex }
               ]}>
               {fmtCurrency(row.total)}
@@ -404,14 +404,14 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
                 <View style={tw('flex-row border-b border-slate-100')}>
                   <Text
                     style={[
-                      tw('px-2 py-1 pl-5 text-xs font-roboto font-medium text-slate-700'),
+                      tw('px-2 py-1 pl-5 text-xs text-slate-700'),
                       { flex: labelFlex }
                     ]}>
                     {bucket.label}
                   </Text>
                   <Text
                     style={[
-                      tw('px-2 py-1 text-xs font-roboto font-medium text-slate-700 text-right'),
+                      tw('px-2 py-1 text-xs text-slate-700 text-right'),
                       { flex: valueFlex }
                     ]}>
                     {fmtCurrency(bucketSum.toFixed(2))}
@@ -442,7 +442,7 @@ function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
               </Fragment>
             );
           })}
-        </Fragment>
+        </View>
       ))}
       <View style={tw('flex-row bg-green-50 border-t border-green-100')}>
         <Text
@@ -485,7 +485,10 @@ function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
         const border = i < a.length - 1 ? 'border-b border-slate-200' : '';
         const bg = i % 2 !== 0 ? 'bg-slate-50' : '';
         return (
-          <View key={r.id} style={tw(['flex-row', border, bg].filter(Boolean).join(' '))}>
+          <View
+            key={r.id}
+            wrap={false}
+            style={tw(['flex-row', border, bg].filter(Boolean).join(' '))}>
             <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 0.9 }]}>
               {fmtDate(r.referenceDate)}
             </Text>
@@ -528,7 +531,7 @@ export function DetailedFinancialStatementPdf({
 }) {
   return (
     <Document>
-      <Page size="A4" orientation="landscape" style={tw('font-noto text-zinc-600 pb-14')}>
+      <Page size="A4" orientation="landscape" style={tw('font-noto text-zinc-600 pt-8 pb-14')}>
         <PageHeader period={data.period} title="Relatório de Fechamento Detalhado" />
         <View style={tw('px-8')}>
           <SummaryCards
@@ -556,7 +559,7 @@ export function DetailedFinancialStatementPdf({
 export function FinancialStatementPdf({ data }: { data: FinancialStatementResponse }) {
   return (
     <Document>
-      <Page size="A4" style={tw('font-noto text-zinc-600 pb-14')}>
+      <Page size="A4" style={tw('font-noto text-zinc-600 pt-8 pb-14')}>
         <PageHeader period={data.period} />
 
         <View style={tw('px-8')}>
