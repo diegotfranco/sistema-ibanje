@@ -6,6 +6,23 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./colors": {
+      "types": "./dist/colors.d.ts",
+      "import": "./dist/colors.js",
+      "default": "./dist/colors.js"
+    },
+    "./colors.css": "./src/colors.css"
+  },
+  "files": [
+    "dist",
+    "src/colors.css"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

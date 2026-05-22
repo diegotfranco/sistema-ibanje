@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { PageContainer } from '@/components/PageContainer';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import {
@@ -47,7 +48,7 @@ export default function ExpenseEntriesPage() {
   });
 
   return (
-    <div className="space-y-6 p-8">
+    <PageContainer>
       <ExpenseSummaryCard />
 
       {canCreate && <ExpenseQuickEntryForm />}
@@ -112,6 +113,6 @@ export default function ExpenseEntriesPage() {
         }
         isPending={remove.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }

@@ -1,0 +1,158 @@
+import { Card, CardContent } from '@/components/Card';
+import type { FinancialStatementResponse } from './schema';
+
+const formatMoney = (s: string) =>
+  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const fmt = (n: number) =>
+  `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+interface CategoryRow {
+  parentCategoryName: string | null;
+  categoryName: string;
+  total: string;
+}
+
+interface ParentGroup {
+  name: string;
+  children: CategoryRow[];
+  subtotal: number;
+}
+
+function groupByParent(rows: CategoryRow[]): ParentGroup[] {
+  const map = new Map<string, CategoryRow[]>();
+  for (const row of rows) {
+    const key = row.parentCategoryName ?? 'Sem grupo';
+    const list = map.get(key);
+    if (list) {
+      list.push(row);
+    } else {
+      map.set(key, [row]);
+    }
+  }
+  const groups: ParentGroup[] = Array.from(map.entries()).map(([name, children]) => ({
+    name,
+    children,
+    subtotal: children.reduce((sum, c) => sum + Number.parseFloat(c.total), 0)
+  }));
+  groups.sort((a, b) => {
+    if (a.name === 'Sem grupo') return 1;
+    if (b.name === 'Sem grupo') return -1;
+    return a.name.localeCompare(b.name, 'pt-BR');
+  });
+  return groups;
+}
+
+interface SectionProps {
+  title: string;
+  groups: ParentGroup[];
+  total: string;
+  totalColor: 'in' | 'out';
+}
+
+function StatementSection({ title, groups, total, totalColor }: SectionProps) {
+  return (
+    <section aria-labelledby={`statement-${title.toLowerCase()}`} className="space-y-3">
+      <h3
+        id={`statement-${title.toLowerCase()}`}
+        className="text-sm font-semibold uppercase tracking-wide text-primary-soft">
+        {title}
+      </h3>
+      {groups.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic px-2">Sem lançamentos no período.</p>
+      ) : (
+        <div className="space-y-3">
+          {groups.map((group) => (
+            <div key={group.name} className="space-y-1">
+              <h4 className="text-sm font-medium">{group.name}</h4>
+              <dl className="space-y-0.5">
+                {group.children.map((child) => (
+                  <div
+                    key={child.categoryName}
+                    className="flex items-baseline justify-between gap-3 pl-4 text-sm">
+                    <dt className="min-w-0 truncate text-muted-foreground">{child.categoryName}</dt>
+                    <dd className="font-mono tabular-nums shrink-0">{formatMoney(child.total)}</dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="flex items-baseline justify-between gap-3 border-t pt-1 pl-4 text-sm">
+                <span className="min-w-0 text-muted-foreground">Subtotal</span>
+                <span className="font-mono tabular-nums whitespace-nowrap shrink-0 text-muted-foreground">
+                  {fmt(group.subtotal)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex items-baseline justify-between gap-3 border-t-2 pt-2 text-sm font-semibold">
+        <span className="min-w-0">Total {title}</span>
+        <span
+          className={`font-mono tabular-nums whitespace-nowrap shrink-0 ${totalColor === 'in' ? 'text-money-in' : 'text-money-out'}`}>
+          {formatMoney(total)}
+        </span>
+      </div>
+    </section>
+  );
+}
+
+interface Props {
+  data: FinancialStatementResponse;
+}
+
+export function FinancialStatementDocument({ data }: Props) {
+  const incomeGroups = groupByParent(data.incomeByCategory);
+  const expenseGroups = groupByParent(data.expensesByCategory);
+  const result = Number.parseFloat(data.totalIncome) - Number.parseFloat(data.totalExpenses);
+  const resultColor =
+    result > 0 ? 'text-money-in' : result < 0 ? 'text-money-out' : 'text-foreground';
+
+  return (
+    <div className="space-y-6">
+      <Card>
+        <CardContent className="space-y-6 py-4">
+          <StatementSection
+            title="Entradas"
+            groups={incomeGroups}
+            total={data.totalIncome}
+            totalColor="in"
+          />
+          <StatementSection
+            title="Saídas"
+            groups={expenseGroups}
+            total={data.totalExpenses}
+            totalColor="out"
+          />
+          <div className="border-y-2 py-3 flex items-baseline justify-between gap-3 text-base font-semibold">
+            <span className="min-w-0">Resultado do mês</span>
+            <span className={`font-mono tabular-nums whitespace-nowrap shrink-0 ${resultColor}`}>
+              {fmt(result)}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {data.incomeByFund.length > 0 && (
+        <Card>
+          <CardContent className="space-y-2 py-4">
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-soft">
+              Entradas por Fundo
+            </h3>
+            <dl className="space-y-0.5">
+              {data.incomeByFund.map((fund) => (
+                <div
+                  key={fund.fundId}
+                  className="flex items-baseline justify-between gap-3 text-sm">
+                  <dt className="min-w-0 truncate">{fund.fundName}</dt>
+                  <dd className="font-mono tabular-nums whitespace-nowrap shrink-0 text-money-in">
+                    {formatMoney(fund.total)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}

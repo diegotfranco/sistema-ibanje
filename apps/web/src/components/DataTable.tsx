@@ -46,6 +46,9 @@ export interface DataTableProps<TData> {
   globalFilter?: string;
   onGlobalFilterChange?: (value: string) => void;
   globalFilterFn?: FilterFn<TData>;
+  mobileRow?: (row: TData) => ReactNode;
+  mobileSectionHeader?: (row: TData) => ReactNode;
+  mobileOnRowClick?: (row: TData) => void;
 }
 
 export function DataTable<TData>({
@@ -59,7 +62,10 @@ export function DataTable<TData>({
   renderSectionHeader,
   globalFilter,
   onGlobalFilterChange,
-  globalFilterFn
+  globalFilterFn,
+  mobileRow,
+  mobileSectionHeader,
+  mobileOnRowClick
 }: DataTableProps<TData>) {
   // Call all four breakpoints unconditionally (rules of hooks)
   const isAboveSm = useIsAbove('sm');
@@ -106,6 +112,59 @@ export function DataTable<TData>({
   });
 
   const visibleColumns = table.getVisibleLeafColumns();
+
+  const useMobileCards = !!mobileRow && !isAboveMd;
+
+  if (useMobileCards) {
+    if (isLoading) {
+      return (
+        <ul className="divide-y">
+          {Array.from({ length: skeletonRows }).map((_, idx) => (
+            <li key={`skeleton-${idx}`} className="px-4 py-3">
+              <div className="h-12 animate-pulse rounded bg-muted" />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    const rows = table.getRowModel().rows;
+    if (rows.length === 0) {
+      return <p className="px-4 py-8 text-center text-sm text-muted-foreground">{emptyMessage}</p>;
+    }
+    return (
+      <ul className="divide-y">
+        {rows.map((row, idx) => {
+          const key: React.Key =
+            (getRowKey?.(row.original, idx) as React.Key) ??
+            ((row.original as unknown as Record<string, unknown>).id as React.Key) ??
+            idx;
+          if (isSectionHeader?.(row.original)) {
+            const headerContent =
+              mobileSectionHeader?.(row.original) ?? renderSectionHeader?.(row.original);
+            return (
+              <li key={key} className="bg-muted/50 border-y px-4 py-2">
+                {headerContent}
+              </li>
+            );
+          }
+          return (
+            <li key={key}>
+              {mobileOnRowClick ? (
+                <button
+                  type="button"
+                  onClick={() => mobileOnRowClick(row.original)}
+                  className="block w-full text-left px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none">
+                  {mobileRow!(row.original)}
+                </button>
+              ) : (
+                <div className="px-4 py-3">{mobileRow!(row.original)}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
 
   return (
     <Table>

@@ -35,11 +35,11 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!canGoPrev}>
             <ChevronLeftIcon data-icon="inline-start" />
-            Anterior
+            <span className="hidden sm:inline">Anterior</span>
           </Button>
         </PaginationItem>
         <PaginationItem>
-          <span className="px-3 text-sm text-muted-foreground">
+          <span className="whitespace-nowrap px-3 text-sm text-muted-foreground">
             Página {currentPage} de {totalPages}
           </span>
         </PaginationItem>
@@ -49,7 +49,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
             size="sm"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!canGoNext}>
-            Próxima
+            <span className="hidden sm:inline">Próxima</span>
             <ChevronRightIcon data-icon="inline-end" />
           </Button>
         </PaginationItem>

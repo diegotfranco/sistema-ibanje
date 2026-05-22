@@ -40,6 +40,18 @@ function CardHeader({ className, ...props }: CardHeaderProps) {
   return <ShadcnCardHeader className={cn('bg-muted py-3', className)} {...props} />;
 }
 
+function CardHeaderRow({ className, ...props }: CardHeaderProps) {
+  return (
+    <CardHeader
+      className={cn(
+        'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
+        className
+      )}
+      {...props}
+    />
+  );
+}
+
 function CardTitle({ className, ...props }: CardTitleProps) {
   return <ShadcnCardTitle className={cn('text-primary-soft', className)} {...props} />;
 }
@@ -48,4 +60,13 @@ function CardContent({ className, ...props }: CardContentProps) {
   return <ShadcnCardContent className={cn('', className)} {...props} />;
 }
 
-export { Card, CardHeader, CardFooter, CardTitle, CardAction, CardDescription, CardContent };
+export {
+  Card,
+  CardHeader,
+  CardHeaderRow,
+  CardFooter,
+  CardTitle,
+  CardAction,
+  CardDescription,
+  CardContent
+};

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import { Edit, Trash2, Receipt, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
+import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
 import { formatDate, formatMoney } from '../entries-utils';
 import type { ExpenseEntryResponse } from './schema';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -30,6 +32,8 @@ export function ExpenseEntriesTable({
   const latest = [...data]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, LATEST_LIMIT);
+
+  const [detail, setDetail] = useState<ExpenseEntryResponse | null>(null);
 
   const columns: ColumnDef<ExpenseEntryResponse, unknown>[] = [
     {
@@ -170,11 +174,85 @@ export function ExpenseEntriesTable({
     }
   ];
 
+  const renderMobileRow = (row: ExpenseEntryResponse) => (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {formatDate(row.referenceDate)}
+        </span>
+        <span className="font-mono tabular-nums font-semibold text-money-out">
+          R$ {formatMoney(row.amount)}
+        </span>
+      </div>
+      <div className="text-sm font-medium">{row.categoryName}</div>
+      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+        {row.parentCategoryName && <span>{row.parentCategoryName}</span>}
+        {row.parentCategoryName && <span aria-hidden>•</span>}
+        <span>{row.paymentMethodName}</span>
+        {row.totalInstallments > 1 && (
+          <>
+            <span aria-hidden>•</span>
+            <span className="tabular-nums">
+              {row.installment}/{row.totalInstallments}
+            </span>
+          </>
+        )}
+      </div>
+      {row.description && (
+        <p className="text-xs text-muted-foreground line-clamp-1" title={row.description}>
+          {row.description}
+        </p>
+      )}
+      <div className="mt-1">
+        <StatusBadge status={row.status} />
+      </div>
+    </div>
+  );
+
+  const buildDetailFields = (row: ExpenseEntryResponse): RowDetailField[] => [
+    { label: 'Data', value: formatDate(row.referenceDate) },
+    { label: 'Categoria', value: row.categoryName },
+    { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
+    { label: 'Fundo', value: row.designatedFundName ?? '—', hideEmpty: true },
+    { label: 'Patrocinador', value: row.attenderName ?? '—', hideEmpty: true },
+    { label: 'Forma de Pag.', value: row.paymentMethodName },
+    {
+      label: 'Parcela',
+      value: row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—',
+      hideEmpty: true
+    },
+    {
+      label: 'Valor',
+      value: (
+        <span className="font-mono tabular-nums font-semibold text-money-out">
+          R$ {formatMoney(row.amount)}
+        </span>
+      )
+    },
+    { label: 'Status', value: <StatusBadge status={row.status} /> },
+    {
+      label: 'Comprovante',
+      value: row.hasReceipt ? (
+        <a
+          target="_blank"
+          rel="noopener noreferrer"
+          href={`${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${row.id}/receipt`}
+          className="text-primary hover:text-primary-soft inline-flex">
+          Ver
+        </a>
+      ) : (
+        '—'
+      ),
+      hideEmpty: true
+    },
+    { label: 'Descrição', value: row.description ?? '—', hideEmpty: true }
+  ];
+
   return (
-    <Card className="pb-0">
-      <CardHeader>
-        <CardTitle className="flex items-center text-primary-soft justify-between">
-          <span>Últimos lançamentos</span>
+    <>
+      <Card className="pb-0">
+        <CardHeaderRow>
+          <CardTitle className="text-primary-soft">Últimos lançamentos</CardTitle>
           <Button
             asChild
             variant="link"
@@ -185,17 +263,57 @@ export function ExpenseEntriesTable({
               <ArrowRight size={14} />
             </Link>
           </Button>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <DataTable
-          columns={columns}
-          data={latest}
-          isLoading={isLoading}
-          emptyMessage="Nenhum lançamento ainda."
-          getRowKey={(row) => row.id}
-        />
-      </CardContent>
-    </Card>
+        </CardHeaderRow>
+        <CardContent className="p-0">
+          <DataTable
+            columns={columns}
+            data={latest}
+            isLoading={isLoading}
+            emptyMessage="Nenhum lançamento ainda."
+            getRowKey={(row) => row.id}
+            mobileRow={renderMobileRow}
+            mobileOnRowClick={setDetail}
+          />
+        </CardContent>
+      </Card>
+      <MobileRowDetailSheet
+        open={detail !== null}
+        onOpenChange={(open) => !open && setDetail(null)}
+        title="Detalhes do lançamento"
+        fields={detail ? buildDetailFields(detail) : []}
+        actions={
+          detail && (canEdit || canDelete) ? (
+            <div className="flex justify-end gap-2">
+              {canEdit && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const row = detail;
+                    setDetail(null);
+                    onEdit(row);
+                  }}>
+                  <Edit size={16} className="mr-1" />
+                  Editar
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    const row = detail;
+                    setDetail(null);
+                    onDelete(row);
+                  }}>
+                  <Trash2 size={16} className="mr-1" />
+                  Remover
+                </Button>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
+    </>
   );
 }

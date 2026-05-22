@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { PageContainer } from '@/components/PageContainer';
+import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MonthPicker } from '@/components/MonthPicker';
 import { Module, Action } from '@/lib/permissions';
@@ -25,18 +26,23 @@ export default function ReportsPage() {
 
   return (
     <RequirePermission module={Module.Reports} action={Action.Report}>
-      <div className="p-8">
+      <PageContainer>
         <Card className="gap-0 py-0">
-          <CardHeader className="flex flex-row items-center justify-between border-b py-4">
+          <CardHeaderRow className="border-b py-4">
             <CardTitle>Relatórios</CardTitle>
-            <MonthPicker id="reports-month" value={month} onChange={setMonth} className="w-48" />
-          </CardHeader>
+            <MonthPicker
+              id="reports-month"
+              value={month}
+              onChange={setMonth}
+              className="w-full sm:w-48"
+            />
+          </CardHeaderRow>
           <CardContent className="p-0">
             <Tabs
               className="relative"
               value={validTab}
               onValueChange={(v) => setSearchParams({ tab: v })}>
-              <div className="border-b px-4 py-3">
+              <div className="overflow-x-auto border-b px-4 py-3">
                 <TabsList>
                   <TabsTrigger value="income">Entradas</TabsTrigger>
                   <TabsTrigger value="expenses">Saídas</TabsTrigger>
@@ -56,7 +62,7 @@ export default function ReportsPage() {
             </Tabs>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </RequirePermission>
   );
 }

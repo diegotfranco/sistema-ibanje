@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
-import { formatDate, formatMoney } from '../entries-utils';
+import { MobileRowDetailSheet } from '@/components/MobileRowDetailSheet';
+import { formatMoney } from '../entries-utils';
 import { useIncomeReport } from './useReports';
+import {
+  incomeLineItemColumns,
+  renderIncomeLineItemMobile,
+  buildIncomeLineItemFields
+} from './income-line-item-display';
 import type { IncomeReportRow } from './schema';
 
 interface Props {
@@ -12,45 +17,10 @@ interface Props {
 
 export function IncomeReportTab({ month }: Props) {
   const [page, setPage] = useState(1);
+  const [detail, setDetail] = useState<IncomeReportRow | null>(null);
   const { data, isLoading } = useIncomeReport(month, page);
 
   const rows = data?.data ?? [];
-
-  const columns: ColumnDef<IncomeReportRow, unknown>[] = [
-    {
-      id: 'date',
-      header: 'Data',
-      cell: (info) => (
-        <span className="tabular-nums">{formatDate(info.row.original.referenceDate)}</span>
-      )
-    },
-    {
-      id: 'category',
-      header: 'Categoria',
-      cell: (info) => info.row.original.categoryName,
-      meta: { className: 'w-full' }
-    },
-    {
-      id: 'group',
-      header: 'Grupo',
-      cell: (info) => info.row.original.parentCategoryName ?? '—',
-      meta: { hideBelow: 'lg' }
-    },
-    {
-      id: 'fund',
-      header: 'Fundo',
-      cell: (info) => info.row.original.fundName ?? '—',
-      meta: { hideBelow: 'xl' }
-    },
-    {
-      id: 'total',
-      header: 'Total',
-      cell: (info) => (
-        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.total)}</span>
-      ),
-      meta: { align: 'right' }
-    }
-  ];
 
   return (
     <>
@@ -63,17 +33,25 @@ export function IncomeReportTab({ month }: Props) {
         </div>
       )}
       <DataTable
-        columns={columns}
+        columns={incomeLineItemColumns}
         data={rows}
         isLoading={isLoading}
         emptyMessage="Nenhum registro encontrado."
-        getRowKey={(row) => `${row.referenceDate}-${row.categoryId}-${row.fundId ?? 'none'}`}
+        getRowKey={(row) => row.id}
+        mobileRow={renderIncomeLineItemMobile}
+        mobileOnRowClick={setDetail}
       />
       {data && (
         <div className="flex justify-end border-t px-4 py-2">
           <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
         </div>
       )}
+      <MobileRowDetailSheet
+        open={detail !== null}
+        onOpenChange={(open) => !open && setDetail(null)}
+        title="Detalhes da entrada"
+        fields={detail ? buildIncomeLineItemFields(detail) : []}
+      />
     </>
   );
 }

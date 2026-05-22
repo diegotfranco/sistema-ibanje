@@ -1,3 +1,5 @@
+export { brandColors, type BrandColorKey } from './colors.js';
+
 // Numeric IDs MUST match the seed insert order in apps/api/src/db/seed.ts.
 // Append-only — never reorder, never reuse a removed value, never set a value to 0
 // (the bit math `1 << (action - 1)` requires action IDs >= 1).
