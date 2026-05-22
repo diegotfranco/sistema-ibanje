@@ -1,4 +1,4 @@
-import { eq, gte, lte, sum, count, and, isNotNull, asc, inArray, sql } from 'drizzle-orm';
+import { eq, ne, gte, lte, sum, count, and, isNotNull, asc, desc, inArray, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../db/index.js';
 import {
@@ -7,6 +7,7 @@ import {
   incomeCategories,
   expenseCategories,
   designatedFunds,
+  paymentMethods,
   attenders
 } from '../../../db/schema.js';
 import type {
@@ -31,65 +32,72 @@ export async function getIncomeReportRows(
 ): Promise<IncomeReportRow[]> {
   const rows = await db
     .select({
+      id: incomeEntries.id,
       referenceDate: incomeEntries.referenceDate,
+      depositDate: incomeEntries.depositDate,
+      amount: incomeEntries.amount,
       categoryId: incomeCategories.id,
       categoryName: incomeCategories.name,
       parentCategoryId: parentIncomeCat.id,
       parentCategoryName: parentIncomeCat.name,
       fundId: designatedFunds.id,
       fundName: designatedFunds.name,
-      total: sum(incomeEntries.amount)
+      attenderId: attenders.id,
+      attenderName: attenders.name,
+      paymentMethodName: paymentMethods.name,
+      notes: incomeEntries.notes,
+      status: incomeEntries.status
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
     .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
+    .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        eq(incomeEntries.status, 'paga')
+        ne(incomeEntries.status, 'cancelada')
       )
     )
-    .groupBy(
-      incomeEntries.referenceDate,
-      incomeCategories.id,
-      incomeCategories.name,
-      parentIncomeCat.id,
-      parentIncomeCat.name,
-      designatedFunds.id,
-      designatedFunds.name
+    .orderBy(
+      sql`COALESCE(${incomeEntries.depositDate}, ${incomeEntries.referenceDate}) DESC`,
+      desc(incomeEntries.id)
     )
-    .orderBy(asc(incomeEntries.referenceDate))
     .offset(offset)
     .limit(limit);
 
   return rows.map((r) => ({
+    id: r.id,
     referenceDate: r.referenceDate,
+    depositDate: r.depositDate,
+    amount: r.amount,
     categoryId: r.categoryId,
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
     parentCategoryName: r.parentCategoryName ?? null,
     fundId: r.fundId ?? null,
     fundName: r.fundName ?? null,
-    total: r.total ?? '0.00'
+    attenderId: r.attenderId ?? null,
+    attenderName: r.attenderName ?? null,
+    paymentMethodName: r.paymentMethodName,
+    notes: r.notes ?? null,
+    status: r.status as 'pendente' | 'paga'
   }));
 }
 
 export async function countIncomeReportRows(from: string, to: string): Promise<number> {
-  const grouped = db
-    .select({ ref: incomeEntries.referenceDate })
+  const result = await db
+    .select({ count: count() })
     .from(incomeEntries)
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        eq(incomeEntries.status, 'paga')
+        ne(incomeEntries.status, 'cancelada')
       )
-    )
-    .groupBy(incomeEntries.referenceDate, incomeEntries.categoryId, incomeEntries.designatedFundId)
-    .as('grouped');
-  const result = await db.select({ count: count() }).from(grouped);
+    );
   return result[0]?.count ?? 0;
 }
 
@@ -124,7 +132,8 @@ export async function getExpenseReportRows(
       parentCategoryName: parentExpenseCat.name,
       fundId: designatedFunds.id,
       fundName: designatedFunds.name,
-      amount: expenseEntries.amount
+      amount: expenseEntries.amount,
+      status: expenseEntries.status
     })
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
@@ -134,7 +143,7 @@ export async function getExpenseReportRows(
       and(
         gte(expenseEntries.referenceDate, from),
         lte(expenseEntries.referenceDate, to),
-        eq(expenseEntries.status, 'paga')
+        ne(expenseEntries.status, 'cancelada')
       )
     )
     .orderBy(asc(expenseEntries.referenceDate))
@@ -151,7 +160,8 @@ export async function getExpenseReportRows(
     parentCategoryName: r.parentCategoryName ?? null,
     fundId: r.fundId ?? null,
     fundName: r.fundName ?? null,
-    amount: r.amount
+    amount: r.amount,
+    status: r.status as 'pendente' | 'paga'
   }));
 }
 
@@ -163,7 +173,7 @@ export async function countExpenseReportRows(from: string, to: string): Promise<
       and(
         gte(expenseEntries.referenceDate, from),
         lte(expenseEntries.referenceDate, to),
-        eq(expenseEntries.status, 'paga')
+        ne(expenseEntries.status, 'cancelada')
       )
     );
   return result[0]?.count ?? 0;
@@ -283,43 +293,59 @@ export async function getExpensesByCategoryForRange(
   }));
 }
 
-export async function getIncomeAggregatesForRange(
-  from: string,
-  to: string
-): Promise<IncomeAggregateRow[]> {
-  const colKind = sql<
-    'category' | 'fund'
-  >`CASE WHEN ${incomeEntries.designatedFundId} IS NULL THEN 'category' ELSE 'fund' END`;
-  const colRefId = sql<number>`COALESCE(${incomeEntries.designatedFundId}, ${incomeEntries.categoryId})`;
-  const colLabel = sql<string>`COALESCE(${designatedFunds.name}, ${incomeCategories.name})`;
-
+export async function getAllIncomeReportRows(from: string, to: string): Promise<IncomeReportRow[]> {
   const rows = await db
     .select({
+      id: incomeEntries.id,
       referenceDate: incomeEntries.referenceDate,
-      columnKind: colKind,
-      columnRefId: colRefId,
-      columnLabel: colLabel,
-      total: sum(incomeEntries.amount)
+      depositDate: incomeEntries.depositDate,
+      amount: incomeEntries.amount,
+      categoryId: incomeCategories.id,
+      categoryName: incomeCategories.name,
+      parentCategoryId: parentIncomeCat.id,
+      parentCategoryName: parentIncomeCat.name,
+      fundId: designatedFunds.id,
+      fundName: designatedFunds.name,
+      attenderId: attenders.id,
+      attenderName: attenders.name,
+      paymentMethodName: paymentMethods.name,
+      notes: incomeEntries.notes,
+      status: incomeEntries.status
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
     .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
+    .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        eq(incomeEntries.status, 'paga')
+        ne(incomeEntries.status, 'cancelada')
       )
     )
-    .groupBy(incomeEntries.referenceDate, colKind, colRefId, colLabel)
-    .orderBy(asc(incomeEntries.referenceDate));
+    .orderBy(
+      sql`COALESCE(${incomeEntries.depositDate}, ${incomeEntries.referenceDate}) DESC`,
+      desc(incomeEntries.id)
+    );
 
   return rows.map((r) => ({
+    id: r.id,
     referenceDate: r.referenceDate,
-    columnKind: r.columnKind,
-    columnRefId: r.columnRefId,
-    columnLabel: r.columnLabel,
-    total: r.total ?? '0.00'
+    depositDate: r.depositDate,
+    amount: r.amount,
+    categoryId: r.categoryId,
+    categoryName: r.categoryName,
+    parentCategoryId: r.parentCategoryId ?? null,
+    parentCategoryName: r.parentCategoryName ?? null,
+    fundId: r.fundId ?? null,
+    fundName: r.fundName ?? null,
+    attenderId: r.attenderId ?? null,
+    attenderName: r.attenderName ?? null,
+    paymentMethodName: r.paymentMethodName,
+    notes: r.notes ?? null,
+    status: r.status as 'pendente' | 'paga'
   }));
 }
 
@@ -338,7 +364,8 @@ export async function getAllExpenseReportRows(
       parentCategoryName: parentExpenseCat.name,
       fundId: designatedFunds.id,
       fundName: designatedFunds.name,
-      amount: expenseEntries.amount
+      amount: expenseEntries.amount,
+      status: expenseEntries.status
     })
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
@@ -348,7 +375,7 @@ export async function getAllExpenseReportRows(
       and(
         gte(expenseEntries.referenceDate, from),
         lte(expenseEntries.referenceDate, to),
-        eq(expenseEntries.status, 'paga')
+        ne(expenseEntries.status, 'cancelada')
       )
     )
     .orderBy(asc(expenseEntries.referenceDate));
@@ -363,7 +390,8 @@ export async function getAllExpenseReportRows(
     parentCategoryName: r.parentCategoryName ?? null,
     fundId: r.fundId ?? null,
     fundName: r.fundName ?? null,
-    amount: r.amount
+    amount: r.amount,
+    status: r.status as 'pendente' | 'paga'
   }));
 }
 
@@ -686,4 +714,53 @@ export async function sumExpensesForFundRange(
       )
     );
   return result[0]?.total ?? '0.00';
+}
+
+export async function getIncomeAggregatesForRange(
+  from: string,
+  to: string
+): Promise<IncomeAggregateRow[]> {
+  const rows = await db
+    .select({
+      referenceDate: incomeEntries.referenceDate,
+      categoryId: incomeCategories.id,
+      categoryName: incomeCategories.name,
+      parentCategoryId: parentIncomeCat.id,
+      parentCategoryName: parentIncomeCat.name,
+      fundId: designatedFunds.id,
+      fundName: designatedFunds.name,
+      total: sum(incomeEntries.amount)
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
+    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .where(
+      and(
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga')
+      )
+    )
+    .groupBy(
+      incomeEntries.referenceDate,
+      incomeCategories.id,
+      incomeCategories.name,
+      parentIncomeCat.id,
+      parentIncomeCat.name,
+      designatedFunds.id,
+      designatedFunds.name
+    )
+    .orderBy(asc(incomeEntries.referenceDate));
+
+  return rows.map((r) => ({
+    referenceDate: r.referenceDate,
+    categoryId: r.categoryId,
+    categoryName: r.categoryName,
+    parentCategoryId: r.parentCategoryId,
+    parentCategoryName: r.parentCategoryName,
+    fundId: r.fundId,
+    fundName: r.fundName,
+    total: r.total ?? '0.00'
+  }));
 }

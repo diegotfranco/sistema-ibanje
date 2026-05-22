@@ -8,14 +8,21 @@ export const ReportFilterSchema = z.object({
 export type ReportFilterValues = z.infer<typeof ReportFilterSchema>;
 
 export type IncomeReportRow = {
+  id: number;
   referenceDate: string;
+  depositDate: string | null;
+  amount: string;
   categoryId: number;
   categoryName: string;
   parentCategoryId: number | null;
   parentCategoryName: string | null;
   fundId: number | null;
   fundName: string | null;
-  total: string;
+  attenderId: number | null;
+  attenderName: string | null;
+  paymentMethodName: string;
+  notes: string | null;
+  status: 'pendente' | 'paga';
 };
 
 export type IncomeReportResponse = {
@@ -39,6 +46,7 @@ export type ExpenseReportRow = {
   fundId: number | null;
   fundName: string | null;
   amount: string;
+  status: 'pendente' | 'paga';
 };
 
 export type ExpenseReportResponse = {
@@ -87,8 +95,10 @@ export type FinancialStatementResponse = {
 export type IncomePivotColumn = {
   key: string;
   label: string;
-  kind: 'category' | 'fund';
-  refId: number;
+  groupKey: string;
+  groupLabel: string;
+  parentGroupKey: 'contribuicoes' | 'outras-receitas';
+  parentGroupLabel: string;
   total: string;
 };
 
@@ -111,6 +121,7 @@ export type DetailedFinancialStatementResponse = {
   totalExpenses: string;
   currentBalance: string;
   incomePivot: IncomePivot;
+  incomeEntries: IncomeReportRow[];
   expenseEntries: ExpenseReportRow[];
 };
 

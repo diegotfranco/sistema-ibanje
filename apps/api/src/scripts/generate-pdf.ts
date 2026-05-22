@@ -3,9 +3,9 @@ import React from 'react';
 import { renderToBuffer, type DocumentProps } from '@react-pdf/renderer';
 import * as repo from '../modules/finance/reports/repository.js';
 import {
-  buildIncomePivot,
   computeOpeningBalance,
-  computeCurrentBalance
+  computeCurrentBalance,
+  buildIncomePivot
 } from '../modules/finance/reports/service.js';
 import {
   DetailedFinancialStatementPdf,
@@ -25,16 +25,24 @@ const mode: 'detailed' | 'simplified' =
   modeIdx !== -1 && args[modeIdx + 1] === 'simplified' ? 'simplified' : 'detailed';
 
 async function generateDetailed() {
-  const [incomeAggregates, expenseEntries, totalIncome, totalExpenses, openingBalance] =
-    await Promise.all([
-      repo.getIncomeAggregatesForRange(from, to),
-      repo.getAllExpenseReportRows(from, to),
-      repo.sumIncomeForRange(from, to),
-      repo.sumExpensesForRange(from, to),
-      computeOpeningBalance(from)
-    ]);
+  const [
+    incomeEntries,
+    incomeAggregates,
+    expenseEntries,
+    totalIncome,
+    totalExpenses,
+    openingBalance
+  ] = await Promise.all([
+    repo.getAllIncomeReportRows(from, to),
+    repo.getIncomeAggregatesForRange(from, to),
+    repo.getAllExpenseReportRows(from, to),
+    repo.sumIncomeForRange(from, to),
+    repo.sumExpensesForRange(from, to),
+    computeOpeningBalance(from)
+  ]);
 
   const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
+  const incomePivot = buildIncomePivot(incomeAggregates);
 
   const data: DetailedFinancialStatementResponse = {
     period: { from, to },
@@ -42,7 +50,8 @@ async function generateDetailed() {
     totalIncome,
     totalExpenses,
     currentBalance,
-    incomePivot: buildIncomePivot(incomeAggregates),
+    incomePivot,
+    incomeEntries,
     expenseEntries
   };
 

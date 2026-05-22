@@ -69,48 +69,6 @@ function buildFundSummary(
   };
 }
 
-export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
-  const columnMap = new Map<string, IncomePivotColumn>();
-
-  for (const agg of aggregates) {
-    const key = `${agg.columnKind}:${agg.columnRefId}`;
-    if (!columnMap.has(key)) {
-      columnMap.set(key, {
-        key,
-        label: agg.columnLabel,
-        kind: agg.columnKind,
-        refId: agg.columnRefId,
-        total: '0.00'
-      });
-    }
-    const col = columnMap.get(key)!;
-    col.total = (Number.parseFloat(col.total) + Number.parseFloat(agg.total)).toFixed(2);
-  }
-
-  const columns = [...columnMap.values()].sort((a, b) => {
-    if (a.kind !== b.kind) return a.kind === 'category' ? -1 : 1;
-    return a.label.localeCompare(b.label, 'pt-BR');
-  });
-
-  const rowMap = new Map<string, IncomePivotRow>();
-  for (const agg of aggregates) {
-    const key = `${agg.columnKind}:${agg.columnRefId}`;
-    if (!rowMap.has(agg.referenceDate)) {
-      rowMap.set(agg.referenceDate, { referenceDate: agg.referenceDate, cells: {}, total: '0.00' });
-    }
-    const row = rowMap.get(agg.referenceDate)!;
-    row.cells[key] = (
-      Number.parseFloat(row.cells[key] ?? '0') + Number.parseFloat(agg.total)
-    ).toFixed(2);
-    row.total = (Number.parseFloat(row.total) + Number.parseFloat(agg.total)).toFixed(2);
-  }
-
-  const rows = [...rowMap.values()].sort((a, b) => a.referenceDate.localeCompare(b.referenceDate));
-  const grandTotal = rows.reduce((s, r) => s + Number.parseFloat(r.total), 0).toFixed(2);
-
-  return { columns, rows, grandTotal };
-}
-
 export async function computeOpeningBalance(from: string): Promise<string> {
   const [fromYear, fromMonth] = from.split('-').map(Number);
   const lastFechado = await findPreviousFechadoClosing(fromYear, fromMonth);
@@ -364,6 +322,137 @@ export async function renderFinancialStatementPdf(
   );
 }
 
+type ParentGroupKey = 'contribuicoes' | 'outras-receitas';
+
+type ColumnSpec = {
+  groupKey: 'dizimo' | 'oferta' | 'doacao' | 'eventos' | 'outros';
+  groupLabel: string;
+  parentGroupKey: ParentGroupKey;
+  parentGroupLabel: string;
+  splitByFund: boolean;
+  matches: (agg: IncomeAggregateRow) => boolean;
+};
+
+const COLUMN_SPEC: ColumnSpec[] = [
+  {
+    groupKey: 'dizimo',
+    groupLabel: 'Dízimo',
+    parentGroupKey: 'contribuicoes',
+    parentGroupLabel: 'Contribuições',
+    splitByFund: false,
+    matches: (a) => a.categoryName === 'Dízimo'
+  },
+  {
+    groupKey: 'oferta',
+    groupLabel: 'Oferta',
+    parentGroupKey: 'contribuicoes',
+    parentGroupLabel: 'Contribuições',
+    splitByFund: false,
+    matches: (a) => a.categoryName === 'Oferta'
+  },
+  {
+    groupKey: 'doacao',
+    groupLabel: 'Doação',
+    parentGroupKey: 'contribuicoes',
+    parentGroupLabel: 'Contribuições',
+    splitByFund: true,
+    matches: (a) => a.categoryName === 'Doação'
+  },
+  {
+    groupKey: 'eventos',
+    groupLabel: 'Eventos',
+    parentGroupKey: 'outras-receitas',
+    parentGroupLabel: 'Outras Receitas',
+    splitByFund: false,
+    matches: (a) => a.categoryName === 'Eventos'
+  },
+  {
+    groupKey: 'outros',
+    groupLabel: 'Outros rendimentos',
+    parentGroupKey: 'outras-receitas',
+    parentGroupLabel: 'Outras Receitas',
+    splitByFund: false,
+    matches: (a) => a.parentCategoryName === 'Outras Receitas' && a.categoryName !== 'Eventos'
+  }
+];
+
+export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot {
+  // Map each aggregate to the spec it matches (first-match wins).
+  type Tagged = { spec: ColumnSpec; agg: IncomeAggregateRow };
+  const tagged: Tagged[] = [];
+  for (const agg of aggregates) {
+    const spec = COLUMN_SPEC.find((s) => s.matches(agg));
+    if (spec) tagged.push({ spec, agg });
+  }
+
+  // Resolve the per-row key for each tagged aggregate (leaf column key).
+  // - splitByFund=false → just the groupKey
+  // - splitByFund=true → 'doacao:fund:<id>' or 'doacao:sem-fundo'
+  const leafKey = (t: Tagged): string => {
+    if (!t.spec.splitByFund) return t.spec.groupKey;
+    if (t.agg.fundId == null) return `${t.spec.groupKey}:sem-fundo`;
+    return `${t.spec.groupKey}:fund:${t.agg.fundId}`;
+  };
+  const leafLabel = (t: Tagged): string => {
+    if (!t.spec.splitByFund) return t.spec.groupLabel;
+    if (t.agg.fundId == null) return 'Sem fundo';
+    return t.agg.fundName ?? 'Sem fundo';
+  };
+
+  // Build per-column totals + per-row cells in one pass.
+  const columnMap = new Map<string, IncomePivotColumn>();
+  const rowMap = new Map<string, IncomePivotRow>();
+
+  for (const t of tagged) {
+    const key = leafKey(t);
+    if (!columnMap.has(key)) {
+      columnMap.set(key, {
+        key,
+        label: leafLabel(t),
+        groupKey: t.spec.groupKey,
+        groupLabel: t.spec.groupLabel,
+        parentGroupKey: t.spec.parentGroupKey,
+        parentGroupLabel: t.spec.parentGroupLabel,
+        total: '0.00'
+      });
+    }
+    const col = columnMap.get(key)!;
+    col.total = (parseFloat(col.total) + parseFloat(t.agg.total)).toFixed(2);
+
+    if (!rowMap.has(t.agg.referenceDate)) {
+      rowMap.set(t.agg.referenceDate, {
+        referenceDate: t.agg.referenceDate,
+        cells: {},
+        total: '0.00'
+      });
+    }
+    const row = rowMap.get(t.agg.referenceDate)!;
+    const cells = row.cells as Record<string, string>;
+    cells[key] = (parseFloat(cells[key] ?? '0') + parseFloat(t.agg.total)).toFixed(2);
+    row.total = (parseFloat(row.total) + parseFloat(t.agg.total)).toFixed(2);
+  }
+
+  // Hide zero-total columns + sort by COLUMN_SPEC order, then alpha within Doação fund sub-cols.
+  const specOrder = new Map(COLUMN_SPEC.map((s, i) => [s.groupKey, i]));
+  const columns = [...columnMap.values()]
+    .filter((c) => parseFloat(c.total) !== 0)
+    .sort((a, b) => {
+      const ga = specOrder.get(a.groupKey as ColumnSpec['groupKey']) ?? 999;
+      const gb = specOrder.get(b.groupKey as ColumnSpec['groupKey']) ?? 999;
+      if (ga !== gb) return ga - gb;
+      // Within the same group (e.g. Doação fund sub-cols), 'Sem fundo' last, then alpha.
+      const aSem = a.key.endsWith(':sem-fundo');
+      const bSem = b.key.endsWith(':sem-fundo');
+      if (aSem !== bSem) return aSem ? 1 : -1;
+      return a.label.localeCompare(b.label, 'pt-BR');
+    });
+
+  const rows = [...rowMap.values()].sort((a, b) => a.referenceDate.localeCompare(b.referenceDate));
+  const grandTotal = rows.reduce((s, r) => s + parseFloat(r.total), 0).toFixed(2);
+
+  return { columns, rows, grandTotal };
+}
+
 export async function getDetailedFinancialStatement(
   callerId: number,
   month: string
@@ -371,17 +460,23 @@ export async function getDetailedFinancialStatement(
   await assertPermission(callerId, Module.Reports, Action.Report);
   const { from, to } = monthToRange(month);
 
-  const [incomeAggregates, expenseEntries, totalIncome, totalExpenses, openingBalance] =
-    await Promise.all([
-      repo.getIncomeAggregatesForRange(from, to),
-      repo.getAllExpenseReportRows(from, to),
-      repo.sumIncomeForRange(from, to),
-      repo.sumExpensesForRange(from, to),
-      computeOpeningBalance(from)
-    ]);
+  const [
+    incomeEntries,
+    incomeAggregates,
+    expenseEntries,
+    totalIncome,
+    totalExpenses,
+    openingBalance
+  ] = await Promise.all([
+    repo.getAllIncomeReportRows(from, to),
+    repo.getIncomeAggregatesForRange(from, to),
+    repo.getAllExpenseReportRows(from, to),
+    repo.sumIncomeForRange(from, to),
+    repo.sumExpensesForRange(from, to),
+    computeOpeningBalance(from)
+  ]);
 
   const currentBalance = computeCurrentBalance(openingBalance, totalIncome, totalExpenses);
-
   const incomePivot = buildIncomePivot(incomeAggregates);
 
   return {
@@ -391,6 +486,7 @@ export async function getDetailedFinancialStatement(
     totalExpenses,
     currentBalance,
     incomePivot,
+    incomeEntries,
     expenseEntries
   };
 }

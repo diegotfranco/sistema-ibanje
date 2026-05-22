@@ -1,13 +1,17 @@
 import path from 'node:path';
+import { Fragment } from 'react';
 import { Document, Page, View, Text, Font } from '@react-pdf/renderer';
 import { createTw } from 'react-pdf-tailwind';
+import { brandColors } from '@sistema-ibanje/shared/colors';
 import type {
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
   IncomeByCategoryRow,
   ExpenseByCategoryRow,
-  ExpenseReportRow,
-  IncomePivot
+  IncomePivot,
+  IncomePivotColumn,
+  IncomePivotRow,
+  ExpenseReportRow
 } from './schema.js';
 
 const FONTSOURCE = path.resolve(import.meta.dirname, '../../../../node_modules/@fontsource');
@@ -70,6 +74,13 @@ Font.register({
 });
 
 const tw = createTw({
+  colors: {
+    brand: {
+      primary: brandColors.primary.hex,
+      soft: brandColors.primarySoftLight.hex,
+      fg: brandColors.primaryForeground.hex
+    } as unknown as Record<number, string>
+  },
   fontFamily: {
     roboto: ['Roboto'],
     noto: ['NotoSans']
@@ -118,7 +129,7 @@ function PageHeader({
     <View style={tw('px-8 pt-8 pb-6 mb-6 border-b border-gray-200')}>
       <View style={tw('flex-row justify-between items-end mb-2')}>
         <View>
-          <Text style={tw('text-sm font-roboto font-bold text-teal-700 tracking-widest mb-1')}>
+          <Text style={tw('text-sm font-roboto font-bold text-brand-primary tracking-widest mb-1')}>
             IGREJA BATISTA NOVA JERUSALÉM
           </Text>
           <Text
@@ -206,7 +217,7 @@ function CategoryTable({ rows, totalLabel, type }: CategoryTableProps) {
           style={[
             tw(
               type === 'income'
-                ? 'px-2 py-1.5 text-xs font-medium font-roboto text-teal-900'
+                ? 'px-2 py-1.5 text-xs font-medium font-roboto text-green-900'
                 : 'px-2 py-1.5 text-xs font-medium font-roboto text-red-900'
             ),
             { flex: 5 }
@@ -217,7 +228,7 @@ function CategoryTable({ rows, totalLabel, type }: CategoryTableProps) {
           style={[
             tw(
               type === 'income'
-                ? 'px-2 py-1.5 text-xs font-medium font-roboto text-right text-teal-900'
+                ? 'px-2 py-1.5 text-xs font-medium font-roboto text-right text-green-900'
                 : 'px-2 py-1 text-xs font-medium font-roboto text-right text-red-900'
             ),
             { flex: 2 }
@@ -290,92 +301,161 @@ function SignatureBlock() {
 function SectionHeader({ label }: { label: string }) {
   return (
     <View style={tw('flex-row items-center mb-2')}>
-      <View style={tw('w-1 min-h-3.5 rounded-sm bg-teal-700 mr-2')} />
-      <Text style={tw('text-sm font-roboto font-semibold text-teal-900')}>{label}</Text>
+      <View style={tw('w-1 min-h-3.5 rounded-sm bg-brand-primary mr-2')} />
+      <Text style={tw('text-sm font-roboto font-semibold text-brand-primary')}>{label}</Text>
     </View>
   );
 }
 
-function IncomeDetailTable({ pivot }: { pivot: IncomePivot }) {
-  const dateColFlex = 0.9;
-  const valColFlex = 2;
-  const totalColFlex = 1.1;
+interface PivotBucket {
+  key: string;
+  label: string;
+  columns: IncomePivotColumn[];
+}
 
+function bucketPivotColumns(columns: IncomePivotColumn[]): PivotBucket[] {
+  const buckets = new Map<string, PivotBucket>();
+  for (const col of columns) {
+    const existing = buckets.get(col.groupKey);
+    if (existing) existing.columns.push(col);
+    else
+      buckets.set(col.groupKey, {
+        key: col.groupKey,
+        label: col.groupLabel,
+        columns: [col]
+      });
+  }
+  return [...buckets.values()];
+}
+
+function sumPivotCells(row: IncomePivotRow, cols: IncomePivotColumn[]): number {
+  let total = 0;
+  for (const c of cols) {
+    const v = row.cells[c.key];
+    if (v) total += parseFloat(v);
+  }
+  return total;
+}
+
+function bucketDisplayLabel(bucket: PivotBucket): string {
+  if (bucket.columns.length === 1 && bucket.key === 'doacao') {
+    return `${bucket.label} · ${bucket.columns[0].label}`;
+  }
+  return bucket.label;
+}
+
+function IncomePivotTable({ pivot }: { pivot: IncomePivot }) {
+  const buckets = bucketPivotColumns(pivot.columns);
+  const labelFlex = 5;
+  const valueFlex = 1.5;
   return (
     <View>
-      <View style={tw('flex-row bg-gray-100 border-b border-gray-200')}>
-        <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: dateColFlex }]}>
-          Data
-        </Text>
-        {pivot.columns.map((col) => (
-          <Text
-            key={col.key}
-            style={[
-              tw('px-2 py-1.5 text-xs font-roboto font-medium text-right'),
-              { flex: valColFlex }
-            ]}>
-            {col.label}
-          </Text>
-        ))}
-        <Text
-          style={[
-            tw('px-2 py-1.5 text-xs font-roboto font-medium text-right'),
-            { flex: totalColFlex }
-          ]}>
-          Total
-        </Text>
-      </View>
-
-      {pivot.rows.map((row, i) => {
-        const border = i < pivot.rows.length - 1 ? 'border-b border-slate-200' : '';
-        const bg = i % 2 !== 0 ? 'bg-slate-50' : '';
-        return (
+      {pivot.rows.map((row, rowIdx) => (
+        <Fragment key={row.referenceDate}>
           <View
-            key={row.referenceDate}
-            style={tw(['flex-row', border, bg].filter(Boolean).join(' '))}>
-            <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: dateColFlex }]}>
-              {fmtDate(row.referenceDate)}
-            </Text>
-            {pivot.columns.map((col) => (
-              <Text
-                key={col.key}
-                style={[tw('px-2 py-1.5 text-xs text-slate-700 text-right'), { flex: valColFlex }]}>
-                {fmtCurrency(row.cells[col.key] ?? '0.00')}
-              </Text>
-            ))}
+            style={tw(
+              ['flex-row bg-slate-100', rowIdx > 0 ? 'border-t border-slate-200' : '']
+                .filter(Boolean)
+                .join(' ')
+            )}>
             <Text
               style={[
-                tw('px-2 py-1.5 text-xs text-slate-700 font-medium text-right'),
-                { flex: totalColFlex }
+                tw('px-2 py-1.5 text-xs font-roboto font-bold text-slate-800'),
+                { flex: labelFlex }
+              ]}>
+              {fmtDate(row.referenceDate)}
+            </Text>
+            <Text
+              style={[
+                tw('px-2 py-1.5 text-xs font-roboto font-bold text-right text-green-900'),
+                { flex: valueFlex }
               ]}>
               {fmtCurrency(row.total)}
             </Text>
           </View>
-        );
-      })}
-
-      <View style={tw('flex-row bg-emerald-50 border-t border-green-200')}>
+          {buckets.map((bucket) => {
+            const bucketSum = sumPivotCells(row, bucket.columns);
+            if (bucketSum === 0) return null;
+            const expandable = bucket.columns.length > 1;
+            if (!expandable) {
+              return (
+                <View
+                  key={`${row.referenceDate}:${bucket.key}`}
+                  style={tw('flex-row border-b border-slate-100')}>
+                  <Text
+                    style={[
+                      tw('px-2 py-1 pl-5 text-xs text-slate-700'),
+                      { flex: labelFlex }
+                    ]}>
+                    {bucketDisplayLabel(bucket)}
+                  </Text>
+                  <Text
+                    style={[
+                      tw('px-2 py-1 text-xs text-slate-700 text-right'),
+                      { flex: valueFlex }
+                    ]}>
+                    {fmtCurrency(bucketSum.toFixed(2))}
+                  </Text>
+                </View>
+              );
+            }
+            return (
+              <Fragment key={`${row.referenceDate}:${bucket.key}`}>
+                <View style={tw('flex-row border-b border-slate-100')}>
+                  <Text
+                    style={[
+                      tw('px-2 py-1 pl-5 text-xs font-roboto font-medium text-slate-700'),
+                      { flex: labelFlex }
+                    ]}>
+                    {bucket.label}
+                  </Text>
+                  <Text
+                    style={[
+                      tw('px-2 py-1 text-xs font-roboto font-medium text-slate-700 text-right'),
+                      { flex: valueFlex }
+                    ]}>
+                    {fmtCurrency(bucketSum.toFixed(2))}
+                  </Text>
+                </View>
+                {bucket.columns
+                  .filter((col) => row.cells[col.key])
+                  .map((col) => (
+                    <View
+                      key={`${row.referenceDate}:${col.key}`}
+                      style={tw('flex-row border-b border-slate-100')}>
+                      <Text
+                        style={[
+                          tw('px-2 py-1 pl-9 text-[0.6875rem] text-slate-500'),
+                          { flex: labelFlex }
+                        ]}>
+                        · {col.label}
+                      </Text>
+                      <Text
+                        style={[
+                          tw('px-2 py-1 text-[0.6875rem] text-slate-500 text-right'),
+                          { flex: valueFlex }
+                        ]}>
+                        {fmtCurrency(row.cells[col.key])}
+                      </Text>
+                    </View>
+                  ))}
+              </Fragment>
+            );
+          })}
+        </Fragment>
+      ))}
+      <View style={tw('flex-row bg-green-50 border-t border-green-100')}>
         <Text
           style={[
-            tw('px-2 py-1.5 text-xs font-medium font-roboto text-teal-900'),
-            { flex: dateColFlex }
+            tw('px-2 py-1.5 text-xs font-medium font-roboto text-green-900'),
+            { flex: labelFlex }
           ]}>
-          Total
+          Total do período
         </Text>
-        {pivot.columns.map((col) => (
-          <Text
-            key={col.key}
-            style={[
-              tw('px-2 py-1.5 text-xs font-medium font-roboto text-right text-teal-900'),
-              { flex: valColFlex }
-            ]}>
-            {fmtCurrency(col.total)}
-          </Text>
-        ))}
         <Text
           style={[
-            tw('px-2 py-1.5 text-xs font-medium font-roboto text-right text-teal-900'),
-            { flex: totalColFlex }
+            tw('px-2 py-1.5 text-xs font-medium font-roboto text-right text-green-900'),
+            { flex: valueFlex }
           ]}>
           {fmtCurrency(pivot.grandTotal)}
         </Text>
@@ -459,7 +539,7 @@ export function DetailedFinancialStatementPdf({
           />
           <View style={tw('mb-6')}>
             <SectionHeader label="Entradas" />
-            <IncomeDetailTable pivot={data.incomePivot} />
+            <IncomePivotTable pivot={data.incomePivot} />
           </View>
           <View style={tw('mb-6')}>
             <SectionHeader label="Saídas" />
