@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { EntryStatus } from '@sistema-ibanje/shared';
 
 export const ExpenseEntryFormSchema = z.object({
-  referenceDate: z.string().min(1, 'Data de referência é obrigatória.'),
+  date: z.string().min(1, 'Data é obrigatória.'),
   description: z.string().min(1, 'Descrição é obrigatória.').max(256, 'Máximo de 256 caracteres.'),
   amount: z
     .string()
@@ -25,7 +25,7 @@ export const ExpenseEntryFormSchema = z.object({
 export type ExpenseEntryFormValues = z.infer<typeof ExpenseEntryFormSchema>;
 
 export type ExpenseEntryCreateBody = {
-  referenceDate: string;
+  date: string;
   description: string;
   amount: number;
   total: number;
@@ -45,7 +45,7 @@ export type ExpenseEntryUpdateBody = Partial<ExpenseEntryCreateBody> & {
 export type ExpenseEntryResponse = {
   id: number;
   parentId: number | null;
-  referenceDate: string;
+  date: string;
   description: string;
   total: string;
   amount: string;

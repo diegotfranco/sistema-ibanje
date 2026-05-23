@@ -482,7 +482,7 @@ function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
             wrap={false}
             style={tw(['flex-row', border, bg].filter(Boolean).join(' '))}>
             <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 0.9 }]}>
-              {fmtDate(r.referenceDate)}
+              {fmtDate(r.date)}
             </Text>
             <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 2 }]}>
               {r.parentCategoryName ?? '—'}

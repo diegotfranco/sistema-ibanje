@@ -34,7 +34,7 @@ export default function ExpenseEntriesPage() {
   const allEntries = list.data?.data ?? [];
 
   const toCreateBody = (values: ExpenseEntryFormValues) => ({
-    referenceDate: values.referenceDate,
+    date: values.date,
     description: values.description,
     amount: Number.parseFloat(values.amount),
     total: Number.parseFloat(values.total),

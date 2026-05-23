@@ -137,9 +137,7 @@ export default function MonthlyClosingDetailPage() {
         {closing.totalReservedFunds !== undefined && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Fundos Reservados
-              </CardTitle>
+              <CardTitle className="text-sm font-medium text-muted-foreground">Campanhas</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-lg font-mono font-semibold">

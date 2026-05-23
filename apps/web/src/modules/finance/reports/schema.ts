@@ -9,8 +9,8 @@ export type ReportFilterValues = z.infer<typeof ReportFilterSchema>;
 
 export type IncomeReportRow = {
   id: number;
+  depositDate: string;
   referenceDate: string;
-  depositDate: string | null;
   amount: string;
   categoryId: number;
   categoryName: string;
@@ -37,7 +37,7 @@ export type IncomeReportResponse = {
 
 export type ExpenseReportRow = {
   id: number;
-  referenceDate: string;
+  date: string;
   description: string;
   categoryId: number;
   categoryName: string;
@@ -45,6 +45,13 @@ export type ExpenseReportRow = {
   parentCategoryName: string | null;
   fundId: number | null;
   fundName: string | null;
+  attenderId: number | null;
+  attenderName: string | null;
+  paymentMethodName: string;
+  installment: number;
+  totalInstallments: number;
+  hasReceipt: boolean;
+  notes: string | null;
   amount: string;
   status: 'pendente' | 'paga';
 };
@@ -156,7 +163,7 @@ export type FundIncomeEntry = {
 
 export type FundExpenseEntry = {
   id: number;
-  referenceDate: string;
+  date: string;
   description: string;
   amount: string;
   categoryName: string;

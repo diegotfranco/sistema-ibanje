@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Receipt } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
@@ -23,27 +24,8 @@ export function ExpenseReportTab({ month }: Props) {
     {
       id: 'date',
       header: 'Data',
-      cell: (info) => (
-        <span className="tabular-nums">{formatDate(info.row.original.referenceDate)}</span>
-      )
-    },
-    {
-      id: 'description',
-      header: 'Descrição',
-      cell: (info) => (
-        <span
-          title={info.row.original.description}
-          className="block max-w-full truncate text-muted-foreground">
-          {info.row.original.description}
-        </span>
-      ),
-      meta: { className: 'max-w-64' }
-    },
-    {
-      id: 'category',
-      header: 'Categoria',
-      cell: (info) => info.row.original.categoryName,
-      meta: { className: 'w-full' }
+      cell: (info) => <span className="tabular-nums">{formatDate(info.row.original.date)}</span>,
+      meta: {}
     },
     {
       id: 'group',
@@ -52,10 +34,59 @@ export function ExpenseReportTab({ month }: Props) {
       meta: { hideBelow: 'lg' }
     },
     {
-      id: 'fund',
-      header: 'Fundo',
+      id: 'category',
+      header: 'Categoria',
+      cell: (info) => info.row.original.categoryName,
+      meta: { className: 'w-full' }
+    },
+    {
+      id: 'notes',
+      header: 'Observações',
+      cell: (info) => (
+        <span
+          title={info.row.original.notes ?? undefined}
+          className="block max-w-full truncate text-muted-foreground">
+          {info.row.original.notes ?? '—'}
+        </span>
+      ),
+      meta: { hideBelow: 'md', className: 'max-w-64' }
+    },
+    {
+      id: 'designatedFund',
+      header: 'Campanha',
       cell: (info) => info.row.original.fundName ?? '—',
       meta: { hideBelow: 'xl' }
+    },
+    {
+      id: 'sponsor',
+      header: 'Patrocinador',
+      cell: (info) => info.row.original.attenderName ?? '—',
+      meta: { hideBelow: 'xl' }
+    },
+    {
+      id: 'amount',
+      header: 'Valor',
+      cell: (info) => (
+        <span className="font-mono tabular-nums text-money-out">
+          R$ {formatMoney(info.row.original.amount)}
+        </span>
+      ),
+      meta: { align: 'right' }
+    },
+    {
+      id: 'paymentMethod',
+      header: 'Forma de Pag.',
+      cell: (info) => info.row.original.paymentMethodName,
+      meta: { hideBelow: 'lg' }
+    },
+    {
+      id: 'installment',
+      header: 'Parcela',
+      cell: (info) =>
+        info.row.original.totalInstallments > 1
+          ? `${info.row.original.installment}/${info.row.original.totalInstallments}`
+          : '—',
+      meta: { hideBelow: 'lg', align: 'center' }
     },
     {
       id: 'status',
@@ -64,21 +95,42 @@ export function ExpenseReportTab({ month }: Props) {
       meta: { hideBelow: 'md' }
     },
     {
-      id: 'amount',
-      header: 'Valor',
-      cell: (info) => (
-        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.amount)}</span>
-      ),
-      meta: { align: 'right' }
+      id: 'receipt',
+      header: 'Comprovante',
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <div className="flex justify-center">
+            {row.hasReceipt ? (
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href={`${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${row.id}/receipt`}
+                title="Ver comprovante"
+                aria-label="Ver comprovante"
+                className="text-primary hover:text-primary-soft inline-flex">
+                <Receipt size={16} />
+              </a>
+            ) : (
+              <span
+                role="img"
+                aria-label="Sem comprovante"
+                title="Sem comprovante"
+                className="text-muted-foreground/40 inline-flex">
+                <Receipt size={16} />
+              </span>
+            )}
+          </div>
+        );
+      },
+      meta: { hideBelow: 'xl', align: 'center' }
     }
   ];
 
   const renderMobileRow = (row: ExpenseReportRow) => (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {formatDate(row.referenceDate)}
-        </span>
+        <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
         <span className="font-mono tabular-nums font-semibold text-money-out">
           R$ {formatMoney(row.amount)}
         </span>
@@ -86,30 +138,36 @@ export function ExpenseReportTab({ month }: Props) {
       <div className="text-sm font-medium">{row.categoryName}</div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         {row.parentCategoryName && <span>{row.parentCategoryName}</span>}
-        {row.fundName && (
+        {row.parentCategoryName && <span aria-hidden>•</span>}
+        <span>{row.paymentMethodName}</span>
+        {row.totalInstallments > 1 && (
           <>
             <span aria-hidden>•</span>
-            <span>{row.fundName}</span>
+            <span className="tabular-nums">
+              {row.installment}/{row.totalInstallments}
+            </span>
           </>
         )}
       </div>
       {row.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2" title={row.description}>
+        <p className="text-xs text-muted-foreground line-clamp-1" title={row.description}>
           {row.description}
         </p>
       )}
-      <div className="flex items-center justify-between gap-2 mt-1">
-        <span />
+      <div className="mt-1">
         <StatusBadge status={row.status} />
       </div>
     </div>
   );
 
   const buildDetailFields = (row: ExpenseReportRow): RowDetailField[] => [
-    { label: 'Data', value: formatDate(row.referenceDate) },
-    { label: 'Categoria', value: row.categoryName },
+    { label: 'Data', value: formatDate(row.date) },
     { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
-    { label: 'Fundo', value: row.fundName ?? '—', hideEmpty: true },
+    { label: 'Categoria', value: row.categoryName },
+    { label: 'Descrição', value: row.description },
+    { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
+    { label: 'Campanha', value: row.fundName ?? '—', hideEmpty: true },
+    { label: 'Patrocinador', value: row.attenderName ?? '—', hideEmpty: true },
     {
       label: 'Valor',
       value: (
@@ -118,7 +176,12 @@ export function ExpenseReportTab({ month }: Props) {
         </span>
       )
     },
-    { label: 'Descrição', value: row.description ?? '—', hideEmpty: true },
+    { label: 'Forma de Pag.', value: row.paymentMethodName },
+    {
+      label: 'Parcela',
+      value: row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—',
+      hideEmpty: true
+    },
     { label: 'Status', value: <StatusBadge status={row.status} /> }
   ];
 

@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
       {/* Funds Chart */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Fundos Designados (acumulado)</h2>
+        <h2 className="text-lg font-semibold text-foreground">Campanhas (acumulado)</h2>
         <FundsChart />
       </div>
     </div>

@@ -64,7 +64,7 @@ export const IncomeReportResponseSchema = z.object({
 
 const ExpenseReportRowSchema = z.object({
   id: z.number().int().positive(),
-  referenceDate: z.string(),
+  date: z.string(),
   description: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
@@ -72,6 +72,13 @@ const ExpenseReportRowSchema = z.object({
   parentCategoryName: z.string().nullable(),
   fundId: z.number().int().positive().nullable(),
   fundName: z.string().nullable(),
+  attenderId: z.number().int().positive().nullable(),
+  attenderName: z.string().nullable(),
+  paymentMethodName: z.string(),
+  installment: z.number().int(),
+  totalInstallments: z.number().int(),
+  hasReceipt: z.boolean(),
+  notes: z.string().nullable(),
   amount: z.string(),
   status: z.enum(['pendente', 'paga'])
 });
@@ -195,7 +202,7 @@ const FundIncomeEntrySchema = z.object({
 
 const FundExpenseEntrySchema = z.object({
   id: z.number().int().positive(),
-  referenceDate: z.string(),
+  date: z.string(),
   description: z.string(),
   amount: z.string(),
   categoryName: z.string(),

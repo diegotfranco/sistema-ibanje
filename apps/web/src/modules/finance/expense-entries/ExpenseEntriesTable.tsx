@@ -39,9 +39,7 @@ export function ExpenseEntriesTable({
     {
       id: 'date',
       header: 'Data',
-      cell: (info) => (
-        <span className="tabular-nums">{formatDate(info.row.original.referenceDate)}</span>
-      ),
+      cell: (info) => <span className="tabular-nums">{formatDate(info.row.original.date)}</span>,
       meta: {}
     },
     {
@@ -57,8 +55,20 @@ export function ExpenseEntriesTable({
       meta: { className: 'w-full' }
     },
     {
+      id: 'notes',
+      header: 'Observações',
+      cell: (info) => (
+        <span
+          title={info.row.original.notes ?? undefined}
+          className="block max-w-full truncate text-muted-foreground">
+          {info.row.original.notes ?? '—'}
+        </span>
+      ),
+      meta: { hideBelow: 'md', className: 'max-w-64' }
+    },
+    {
       id: 'designatedFund',
-      header: 'Fundo',
+      header: 'Campanha',
       cell: (info) => info.row.original.designatedFundName ?? '—',
       meta: { hideBelow: 'xl' }
     },
@@ -69,16 +79,12 @@ export function ExpenseEntriesTable({
       meta: { hideBelow: 'xl' }
     },
     {
-      id: 'description',
-      header: 'Descrição',
+      id: 'amount',
+      header: 'Valor',
       cell: (info) => (
-        <span
-          title={info.row.original.description}
-          className="block max-w-full truncate text-muted-foreground">
-          {info.row.original.description}
-        </span>
+        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.amount)}</span>
       ),
-      meta: { hideBelow: 'md', className: 'max-w-64' }
+      meta: { align: 'right' }
     },
     {
       id: 'paymentMethod',
@@ -94,14 +100,6 @@ export function ExpenseEntriesTable({
           ? `${info.row.original.installment}/${info.row.original.totalInstallments}`
           : '—',
       meta: { hideBelow: 'lg', align: 'center' }
-    },
-    {
-      id: 'amount',
-      header: 'Valor',
-      cell: (info) => (
-        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.amount)}</span>
-      ),
-      meta: { align: 'right' }
     },
     {
       id: 'status',
@@ -177,9 +175,7 @@ export function ExpenseEntriesTable({
   const renderMobileRow = (row: ExpenseEntryResponse) => (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {formatDate(row.referenceDate)}
-        </span>
+        <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
         <span className="font-mono tabular-nums font-semibold text-money-out">
           R$ {formatMoney(row.amount)}
         </span>
@@ -198,9 +194,9 @@ export function ExpenseEntriesTable({
           </>
         )}
       </div>
-      {row.description && (
-        <p className="text-xs text-muted-foreground line-clamp-1" title={row.description}>
-          {row.description}
+      {row.notes && (
+        <p className="text-xs text-muted-foreground line-clamp-1" title={row.notes}>
+          {row.notes}
         </p>
       )}
       <div className="mt-1">
@@ -210,17 +206,12 @@ export function ExpenseEntriesTable({
   );
 
   const buildDetailFields = (row: ExpenseEntryResponse): RowDetailField[] => [
-    { label: 'Data', value: formatDate(row.referenceDate) },
-    { label: 'Categoria', value: row.categoryName },
+    { label: 'Data', value: formatDate(row.date) },
     { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
-    { label: 'Fundo', value: row.designatedFundName ?? '—', hideEmpty: true },
+    { label: 'Categoria', value: row.categoryName },
+    { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
+    { label: 'Campanha', value: row.designatedFundName ?? '—', hideEmpty: true },
     { label: 'Patrocinador', value: row.attenderName ?? '—', hideEmpty: true },
-    { label: 'Forma de Pag.', value: row.paymentMethodName },
-    {
-      label: 'Parcela',
-      value: row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—',
-      hideEmpty: true
-    },
     {
       label: 'Valor',
       value: (
@@ -228,6 +219,12 @@ export function ExpenseEntriesTable({
           R$ {formatMoney(row.amount)}
         </span>
       )
+    },
+    { label: 'Forma de Pag.', value: row.paymentMethodName },
+    {
+      label: 'Parcela',
+      value: row.totalInstallments > 1 ? `${row.installment}/${row.totalInstallments}` : '—',
+      hideEmpty: true
     },
     { label: 'Status', value: <StatusBadge status={row.status} /> },
     {
@@ -244,8 +241,7 @@ export function ExpenseEntriesTable({
         '—'
       ),
       hideEmpty: true
-    },
-    { label: 'Descrição', value: row.description ?? '—', hideEmpty: true }
+    }
   ];
 
   return (

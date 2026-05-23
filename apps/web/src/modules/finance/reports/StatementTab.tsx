@@ -31,7 +31,7 @@ export function StatementTab({ month }: Props) {
     {
       id: 'date',
       header: 'Data',
-      cell: (info) => formatDate(info.row.original.referenceDate)
+      cell: (info) => formatDate(info.row.original.date)
     },
     {
       id: 'description',
@@ -61,9 +61,7 @@ export function StatementTab({ month }: Props) {
   ) => (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm tabular-nums text-muted-foreground">
-          {formatDate(row.referenceDate)}
-        </span>
+        <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
         <span className="font-mono tabular-nums text-sm font-semibold text-money-out">
           {formatMoney(row.amount)}
         </span>

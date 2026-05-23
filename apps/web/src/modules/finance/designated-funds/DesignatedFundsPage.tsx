@@ -29,7 +29,7 @@ export default function DesignatedFundsPage() {
   return (
     <>
       <ResourceListPage<DesignatedFundResponse>
-        title="Fundos Designados"
+        title="Campanhas"
         columns={[
           {
             header: 'Nome',
