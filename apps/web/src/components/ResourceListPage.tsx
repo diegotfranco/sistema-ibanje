@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Pencil, Plus, Trash2 } from 'lucide-react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
@@ -81,7 +81,7 @@ export function ResourceListPage<T>({
           {customActions?.map((action) => (
             <Button
               key={action.label}
-              size="icon"
+              size="sm"
               variant="ghost"
               onClick={() => action.onClick(row.original)}
               aria-label={action.label}
@@ -92,22 +92,22 @@ export function ResourceListPage<T>({
           ))}
           {canEdit && onEdit && (
             <Button
-              size="icon"
+              size="sm"
               variant="ghost"
               onClick={() => onEdit(row.original)}
               aria-label="Editar"
-              className="text-warning hover:text-warning/80">
-              <Pencil className="h-4 w-4" />
+              title="Editar">
+              <Edit size={16} />
             </Button>
           )}
           {canDelete && onDelete && (
             <Button
-              size="icon"
+              size="sm"
               variant="ghost"
               onClick={() => onDelete(row.original)}
               aria-label="Remover"
-              className="text-destructive hover:text-destructive/80">
-              <Trash2 className="h-4 w-4" />
+              title="Remover">
+              <Trash2 size={16} />
             </Button>
           )}
         </div>
@@ -134,22 +134,24 @@ export function ResourceListPage<T>({
       {canEdit && onEdit && (
         <Button
           variant="outline"
+          size="sm"
           onClick={() => {
             onEdit(detailRow);
             setDetailRow(null);
           }}>
-          <Pencil className="h-4 w-4" />
+          <Edit size={16} className="mr-1" />
           Editar
         </Button>
       )}
       {canDelete && onDelete && (
         <Button
           variant="destructive"
+          size="sm"
           onClick={() => {
             onDelete(detailRow);
             setDetailRow(null);
           }}>
-          <Trash2 className="h-4 w-4" />
+          <Trash2 size={16} className="mr-1" />
           Remover
         </Button>
       )}

@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Plus } from 'lucide-react';
+import { Plus, Eye, Trash2 } from 'lucide-react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
+import { DataTable } from '@/components/DataTable';
+import { PageContainer } from '@/components/PageContainer';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -55,11 +50,71 @@ export default function MonthlyClosingsPage() {
 
   const items = list.data?.data ?? [];
 
+  const columns: ColumnDef<MonthlyClosingResponse, unknown>[] = [
+    {
+      id: 'period',
+      header: 'Período',
+      cell: ({ row }) => (
+        <span className="font-medium">{formatPeriod(row.original.periodYear, row.original.periodMonth)}</span>
+      )
+    },
+    {
+      id: 'status',
+      header: 'Status',
+      cell: ({ row }) => <StatusBadge status={row.original.status} />
+    },
+    {
+      id: 'income',
+      header: 'Entradas',
+      cell: ({ row }) => formatMoney(row.original.totalIncome),
+      meta: { className: 'font-mono text-money-in' }
+    },
+    {
+      id: 'expenses',
+      header: 'Saídas',
+      cell: ({ row }) => formatMoney(row.original.totalExpenses),
+      meta: { className: 'font-mono text-money-out' }
+    },
+    {
+      id: 'balance',
+      header: 'Saldo',
+      cell: ({ row }) => formatMoney(row.original.closingBalance),
+      meta: { className: 'font-mono' }
+    },
+    {
+      id: '__actions',
+      header: 'Ações',
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/monthly-closings/${row.original.id}`)}
+            aria-label="Abrir"
+            title="Abrir">
+            <Eye size={16} />
+          </Button>
+          {canDelete && row.original.status === ClosingStatus.Open && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setDeleting(row.original)}
+              aria-label="Excluir"
+              title="Excluir">
+              <Trash2 size={16} />
+            </Button>
+          )}
+        </div>
+      ),
+      meta: { align: 'right', className: 'w-40' }
+    }
+  ];
+
   return (
     <>
-      <div className="p-8">
+      <PageContainer>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeaderRow>
             <CardTitle className="text-xl">Fechamentos Mensais</CardTitle>
             {canCreate && (
               <Button onClick={() => setNewOpen(true)} size="sm">
@@ -67,75 +122,34 @@ export default function MonthlyClosingsPage() {
                 Novo
               </Button>
             )}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Período</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Entradas</TableHead>
-                  <TableHead>Saídas</TableHead>
-                  <TableHead>Saldo</TableHead>
-                  <TableHead className="w-32 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!list.isLoading && items.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
-                      Nenhum fechamento encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {items.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">
-                      {formatPeriod(row.periodYear, row.periodMonth)}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={row.status} />
-                    </TableCell>
-                    <TableCell className="font-mono text-money-in">
-                      {formatMoney(row.totalIncome)}
-                    </TableCell>
-                    <TableCell className="font-mono text-money-out">
-                      {formatMoney(row.totalExpenses)}
-                    </TableCell>
-                    <TableCell className="font-mono">{formatMoney(row.closingBalance)}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => navigate(`/monthly-closings/${row.id}`)}>
-                          Abrir
-                        </Button>
-                        {canDelete && row.status === ClosingStatus.Open && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-destructive hover:text-destructive/80"
-                            onClick={() => setDeleting(row)}>
-                            Excluir
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          </CardHeaderRow>
+          <CardContent className="p-0">
+            <DataTable
+              columns={columns}
+              data={items}
+              isLoading={list.isLoading}
+              emptyMessage="Nenhum fechamento encontrado."
+              getRowKey={(row) => row.id}
+              mobileRow={(row) => (
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{formatPeriod(row.periodYear, row.periodMonth)}</span>
+                    <StatusBadge status={row.status} />
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <div className="flex gap-3 font-mono">
+                      <span className="text-money-in">{formatMoney(row.totalIncome)}</span>
+                      <span className="text-money-out">{formatMoney(row.totalExpenses)}</span>
+                    </div>
+                    <span className="font-mono font-semibold">{formatMoney(row.closingBalance)}</span>
+                  </div>
+                </div>
+              )}
+              mobileOnRowClick={(row) => navigate(`/monthly-closings/${row.id}`)}
+            />
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
 
       <NewClosingDialog open={newOpen} onOpenChange={setNewOpen} />
 
