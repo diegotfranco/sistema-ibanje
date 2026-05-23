@@ -59,6 +59,36 @@ export default function DesignatedFundsPage() {
           canEdit={canEdit}
           canDelete={canDelete}
           rowKey={(r) => r.id}
+          mobileRow={(row) => (
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-medium truncate">{row.name}</p>
+                {row.description && (
+                  <p className="text-xs text-muted-foreground truncate">{row.description}</p>
+                )}
+                {row.targetDate && (
+                  <p className="text-xs text-muted-foreground">
+                    Encerra em {formatDate(row.targetDate)}
+                  </p>
+                )}
+              </div>
+              {row.targetAmount && (
+                <span className="shrink-0 font-mono text-sm text-money-in">
+                  R$ {row.targetAmount}
+                </span>
+              )}
+            </div>
+          )}
+          mobileDetailTitle={(row) => row.name}
+          mobileDetailFields={(row) => [
+            { label: 'Nome', value: row.name },
+            { label: 'Descrição', value: row.description || '—', hideEmpty: false },
+            {
+              label: 'Meta',
+              value: row.targetAmount ? `R$ ${row.targetAmount}` : '—'
+            },
+            { label: 'Encerra em', value: formatDate(row.targetDate) }
+          ]}
         />
       </PageContainer>
 

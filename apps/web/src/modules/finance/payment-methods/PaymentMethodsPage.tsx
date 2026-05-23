@@ -55,6 +55,29 @@ export default function PaymentMethodsPage() {
           canEdit={canEdit}
           canDelete={canDelete}
           rowKey={(r) => r.id}
+          mobileRow={(row) => (
+            <div className="flex flex-col gap-1">
+              <span className="font-medium">{row.name}</span>
+              <div className="flex gap-1.5">
+                {row.allowsInflow && (
+                  <span className="rounded-full bg-money-in/15 px-2 py-0.5 text-xs text-money-in">
+                    Entrada
+                  </span>
+                )}
+                {row.allowsOutflow && (
+                  <span className="rounded-full bg-money-out/15 px-2 py-0.5 text-xs text-money-out">
+                    Saída
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+          mobileDetailTitle={(row) => row.name}
+          mobileDetailFields={(row) => [
+            { label: 'Nome', value: row.name },
+            { label: 'Entrada', value: row.allowsInflow ? 'Sim' : '—' },
+            { label: 'Saída', value: row.allowsOutflow ? 'Sim' : '—' }
+          ]}
         />
       </PageContainer>
 
