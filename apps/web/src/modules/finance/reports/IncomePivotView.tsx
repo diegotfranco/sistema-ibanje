@@ -112,18 +112,20 @@ function IncomePivotTable({ pivot, buckets, collapsed, toggle }: ViewProps) {
                 }
                 return (
                   <Fragment key={`${row.referenceDate}:${bucket.key}`}>
-                    <TableRow
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => toggle(row.referenceDate)}>
+                    <TableRow className="hover:bg-muted/50">
                       <TableCell className="pl-6 py-1.5">
-                        <span className="inline-flex items-center gap-1">
+                        <button
+                          type="button"
+                          aria-expanded={!isCollapsed}
+                          onClick={() => toggle(row.referenceDate)}
+                          className="inline-flex items-center gap-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50 cursor-pointer">
                           {isCollapsed ? (
                             <ChevronRight className="size-3" />
                           ) : (
                             <ChevronDown className="size-3" />
                           )}
                           {bucket.label}
-                        </span>
+                        </button>
                       </TableCell>
                       <TableCell className="text-right font-mono tabular-nums py-1.5 whitespace-nowrap">
                         R$ {formatMoney(bucketSum.toFixed(2))}

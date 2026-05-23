@@ -55,7 +55,9 @@ export default function MonthlyClosingsPage() {
       id: 'period',
       header: 'Período',
       cell: ({ row }) => (
-        <span className="font-medium">{formatPeriod(row.original.periodYear, row.original.periodMonth)}</span>
+        <span className="font-medium">
+          {formatPeriod(row.original.periodYear, row.original.periodMonth)}
+        </span>
       )
     },
     {
@@ -133,7 +135,9 @@ export default function MonthlyClosingsPage() {
               mobileRow={(row) => (
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{formatPeriod(row.periodYear, row.periodMonth)}</span>
+                    <span className="font-medium">
+                      {formatPeriod(row.periodYear, row.periodMonth)}
+                    </span>
                     <StatusBadge status={row.status} />
                   </div>
                   <div className="flex items-center justify-between gap-2 text-sm">
@@ -141,7 +145,9 @@ export default function MonthlyClosingsPage() {
                       <span className="text-money-in">{formatMoney(row.totalIncome)}</span>
                       <span className="text-money-out">{formatMoney(row.totalExpenses)}</span>
                     </div>
-                    <span className="font-mono font-semibold">{formatMoney(row.closingBalance)}</span>
+                    <span className="font-mono font-semibold">
+                      {formatMoney(row.closingBalance)}
+                    </span>
                   </div>
                 </div>
               )}

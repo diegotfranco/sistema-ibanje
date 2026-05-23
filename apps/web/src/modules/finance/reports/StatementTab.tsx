@@ -132,13 +132,13 @@ export function StatementTab({ month }: Props) {
                   { label: 'Saldo Atual', value: simple.data.currentBalance, color: '' }
                 ].map((card) => (
                   <Card key={card.label}>
-                    <CardHeader className="pb-2">
+                    <CardHeader compact>
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         {card.label}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className={`text-lg font-mono font-semibold ${card.color}`}>
+                    <CardContent className="pt-0 pb-4">
+                      <p className={`text-lg font-mono font-semibold tabular-nums ${card.color}`}>
                         {formatMoney(card.value)}
                       </p>
                     </CardContent>
