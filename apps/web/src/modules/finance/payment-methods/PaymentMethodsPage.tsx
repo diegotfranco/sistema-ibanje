@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -28,32 +29,34 @@ export default function PaymentMethodsPage() {
 
   return (
     <>
-      <ResourceListPage<PaymentMethodResponse>
-        title="Formas de Pagamento"
-        columns={[
-          {
-            header: 'Nome',
-            cell: (row) => row.name
-          },
-          {
-            header: 'Entrada',
-            cell: (row) => (row.allowsInflow ? 'Sim' : '—')
-          },
-          {
-            header: 'Saída',
-            cell: (row) => (row.allowsOutflow ? 'Sim' : '—')
-          }
-        ]}
-        data={items}
-        isLoading={list.isLoading}
-        onCreate={canCreate ? () => setEditing('new') : undefined}
-        onEdit={canEdit ? (r) => setEditing(r) : undefined}
-        onDelete={canDelete ? (r) => setDeleting(r) : undefined}
-        canCreate={canCreate}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        rowKey={(r) => r.id}
-      />
+      <PageContainer>
+        <ResourceListPage<PaymentMethodResponse>
+          title="Formas de Pagamento"
+          columns={[
+            {
+              header: 'Nome',
+              cell: (row) => row.name
+            },
+            {
+              header: 'Entrada',
+              cell: (row) => (row.allowsInflow ? 'Sim' : '—')
+            },
+            {
+              header: 'Saída',
+              cell: (row) => (row.allowsOutflow ? 'Sim' : '—')
+            }
+          ]}
+          data={items}
+          isLoading={list.isLoading}
+          onCreate={canCreate ? () => setEditing('new') : undefined}
+          onEdit={canEdit ? (r) => setEditing(r) : undefined}
+          onDelete={canDelete ? (r) => setDeleting(r) : undefined}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          rowKey={(r) => r.id}
+        />
+      </PageContainer>
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

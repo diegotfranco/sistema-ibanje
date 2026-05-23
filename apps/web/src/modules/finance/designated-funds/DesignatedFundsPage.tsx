@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -28,36 +29,38 @@ export default function DesignatedFundsPage() {
 
   return (
     <>
-      <ResourceListPage<DesignatedFundResponse>
-        title="Campanhas"
-        columns={[
-          {
-            header: 'Nome',
-            cell: (row) => row.name
-          },
-          {
-            header: 'Descrição',
-            cell: (row) => row.description || '—'
-          },
-          {
-            header: 'Meta',
-            cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—')
-          },
-          {
-            header: 'Encerra em',
-            cell: (row) => formatDate(row.targetDate)
-          }
-        ]}
-        data={items}
-        isLoading={list.isLoading}
-        onCreate={canCreate ? () => setEditing('new') : undefined}
-        onEdit={canEdit ? (r) => setEditing(r) : undefined}
-        onDelete={canDelete ? (r) => setDeleting(r) : undefined}
-        canCreate={canCreate}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        rowKey={(r) => r.id}
-      />
+      <PageContainer>
+        <ResourceListPage<DesignatedFundResponse>
+          title="Campanhas"
+          columns={[
+            {
+              header: 'Nome',
+              cell: (row) => row.name
+            },
+            {
+              header: 'Descrição',
+              cell: (row) => row.description || '—'
+            },
+            {
+              header: 'Meta',
+              cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—')
+            },
+            {
+              header: 'Encerra em',
+              cell: (row) => formatDate(row.targetDate)
+            }
+          ]}
+          data={items}
+          isLoading={list.isLoading}
+          onCreate={canCreate ? () => setEditing('new') : undefined}
+          onEdit={canEdit ? (r) => setEditing(r) : undefined}
+          onDelete={canDelete ? (r) => setDeleting(r) : undefined}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          rowKey={(r) => r.id}
+        />
+      </PageContainer>
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

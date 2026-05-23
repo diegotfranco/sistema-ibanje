@@ -20,7 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 
 type CardProps = ComponentProps<typeof ShadcnCard>;
-type CardHeaderProps = ComponentProps<typeof ShadcnCardHeader>;
+type CardHeaderProps = ComponentProps<typeof ShadcnCardHeader> & { compact?: boolean };
 type CardTitleProps = ComponentProps<typeof ShadcnCardTitle>;
 type CardContentProps = ComponentProps<typeof ShadcnCardContent>;
 
@@ -36,13 +36,22 @@ function Card({ className, ...props }: CardProps) {
   );
 }
 
-function CardHeader({ className, ...props }: CardHeaderProps) {
-  return <ShadcnCardHeader className={cn('bg-muted py-3', className)} {...props} />;
+// `compact` drops the muted strip + tightens padding. Use it for small metric
+// tiles / summary cards where the muted header bg adds visual noise rather
+// than hierarchy.
+function CardHeader({ className, compact, ...props }: CardHeaderProps) {
+  return (
+    <ShadcnCardHeader
+      className={cn(compact ? 'pt-4 pb-2' : 'bg-muted py-3', className)}
+      {...props}
+    />
+  );
 }
 
-function CardHeaderRow({ className, ...props }: CardHeaderProps) {
+function CardHeaderRow({ className, compact, ...props }: CardHeaderProps) {
   return (
     <CardHeader
+      compact={compact}
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between',
         className

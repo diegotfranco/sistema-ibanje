@@ -2,6 +2,7 @@ import { useState, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Gift } from 'lucide-react';
+import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { applyFieldErrors } from '@/lib/forms';
@@ -137,35 +138,37 @@ export default function AttendersPage() {
 
   return (
     <>
-      <ResourceListPage<AttenderResponse>
-        title="Congregados"
-        columns={columns}
-        data={items}
-        isLoading={list.isLoading}
-        onCreate={
-          canCreate
-            ? () => {
-                setEditing(null);
-                setDialogOpen(true);
-              }
-            : undefined
-        }
-        onEdit={
-          canEdit
-            ? (r) => {
-                setEditing(r);
-                setDialogOpen(true);
-              }
-            : undefined
-        }
-        onDelete={canDelete ? (r) => setDeleteTarget(r) : undefined}
-        customActions={customActions}
-        canCreate={canCreate}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        rowKey={(row) => row.id}
-        emptyMessage="Nenhum congregado encontrado."
-      />
+      <PageContainer>
+        <ResourceListPage<AttenderResponse>
+          title="Congregados"
+          columns={columns}
+          data={items}
+          isLoading={list.isLoading}
+          onCreate={
+            canCreate
+              ? () => {
+                  setEditing(null);
+                  setDialogOpen(true);
+                }
+              : undefined
+          }
+          onEdit={
+            canEdit
+              ? (r) => {
+                  setEditing(r);
+                  setDialogOpen(true);
+                }
+              : undefined
+          }
+          onDelete={canDelete ? (r) => setDeleteTarget(r) : undefined}
+          customActions={customActions}
+          canCreate={canCreate}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          rowKey={(row) => row.id}
+          emptyMessage="Nenhum congregado encontrado."
+        />
+      </PageContainer>
 
       <AttenderForm
         open={dialogOpen}
