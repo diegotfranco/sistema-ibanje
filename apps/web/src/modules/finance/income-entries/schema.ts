@@ -2,8 +2,7 @@ import { z } from 'zod';
 import { EntryStatus } from '@sistema-ibanje/shared';
 
 export const IncomeEntryFormSchema = z.object({
-  referenceDate: z.string().min(1, 'Data de referência é obrigatória.'),
-  depositDate: z.string().optional().or(z.literal('')),
+  depositDate: z.string().min(1, 'Data de depósito é obrigatória.'),
   amount: z
     .string()
     .min(1, 'Valor é obrigatório.')
@@ -19,8 +18,7 @@ export const IncomeEntryFormSchema = z.object({
 export type IncomeEntryFormValues = z.infer<typeof IncomeEntryFormSchema>;
 
 export type IncomeEntryCreateBody = {
-  referenceDate: string;
-  depositDate?: string;
+  depositDate: string;
   amount: number;
   categoryId: number;
   attenderId?: number;
@@ -35,11 +33,13 @@ export type IncomeEntryUpdateBody = Partial<IncomeEntryCreateBody> & {
 
 export type IncomeEntryResponse = {
   id: number;
+  depositDate: string;
   referenceDate: string;
-  depositDate: string | null;
   amount: string;
   categoryId: number;
   categoryName: string;
+  parentCategoryId: number | null;
+  parentCategoryName: string | null;
   attenderId: number | null;
   attenderName: string | null;
   paymentMethodId: number;

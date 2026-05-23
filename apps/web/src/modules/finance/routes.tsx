@@ -44,13 +44,6 @@ export const financeRoutes: AppRoute[] = [
             layout: 'app',
             label: 'Categorias',
             module: Module.IncomeCategories
-          },
-          {
-            path: `${paths.reports}?tab=income`,
-            layout: 'app',
-            label: 'Relatório',
-            module: Module.Reports,
-            action: Action.Report
           }
         ]
       },
@@ -116,7 +109,7 @@ export const financeRoutes: AppRoute[] = [
           </RequirePermission>
         ),
         layout: 'app',
-        label: 'Fundos Designados',
+        label: 'Campanhas',
         icon: PiggyBank,
         module: Module.DesignatedFunds
       },

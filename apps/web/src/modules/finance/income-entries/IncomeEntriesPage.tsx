@@ -1,14 +1,15 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/Button';
-import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import StatusBadge from '@/components/StatusBadge';
+import { PageContainer } from '@/components/PageContainer';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useIncomeEntries, useIncomeEntryMutations } from './useIncomeEntries';
 import { IncomeEntryForm } from './IncomeEntryForm';
-import { STATUS_FILTERS, formatDate, formatMoney } from '../entries-utils';
+import { IncomeSummaryCard } from './IncomeSummaryCard';
+import { IncomeQuickEntryForm } from './IncomeQuickEntryForm';
+import { IncomeEntriesTable } from './IncomeEntriesTable';
+import { formatMoney } from '../entries-utils';
 import type { IncomeEntryResponse, IncomeEntryFormValues } from './schema';
 
 export default function IncomeEntriesPage() {
@@ -19,114 +20,54 @@ export default function IncomeEntriesPage() {
   const canDelete = hasPermission(perms, Module.IncomeEntries, Action.Delete);
 
   const list = useIncomeEntries();
-  const { create, update, remove } = useIncomeEntryMutations();
+  const { update, remove } = useIncomeEntryMutations();
 
-  const [editing, setEditing] = useState<IncomeEntryResponse | null | 'new'>(null);
+  const [editing, setEditing] = useState<IncomeEntryResponse | null>(null);
   const [deleting, setDeleting] = useState<IncomeEntryResponse | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const allItems = list.data?.data ?? [];
-  const filtered =
-    statusFilter === 'all' ? allItems : allItems.filter((e) => e.status === statusFilter);
+  const allEntries = list.data?.data ?? [];
 
-  const toCreateBody = (values: IncomeEntryFormValues) => ({
-    referenceDate: values.referenceDate,
-    ...(values.depositDate ? { depositDate: values.depositDate } : {}),
+  const toUpdateBody = (values: IncomeEntryFormValues) => ({
+    depositDate: values.depositDate,
     amount: Number.parseFloat(values.amount),
     categoryId: values.categoryId!,
-    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
     paymentMethodId: values.paymentMethodId!,
+    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
     ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
-    ...(values.notes ? { notes: values.notes } : {})
+    ...(values.notes ? { notes: values.notes } : {}),
+    ...(values.status ? { status: values.status } : {})
   });
 
-  const handleSubmit = (values: IncomeEntryFormValues) => {
-    const body = toCreateBody(values);
-    if (editing === 'new') {
-      create.mutate(body, { onSuccess: () => setEditing(null) });
-    } else if (editing !== null) {
-      const updateBody = { ...body, ...(values.status ? { status: values.status } : {}) };
-      update.mutate({ id: editing.id, body: updateBody }, { onSuccess: () => setEditing(null) });
-    }
-  };
-
-  const columns = useMemo(
-    () => [
-      {
-        header: 'Data',
-        cell: (row: IncomeEntryResponse) => formatDate(row.referenceDate)
-      },
-      {
-        header: 'Categoria',
-        cell: (row: IncomeEntryResponse) => row.categoryName
-      },
-      {
-        header: 'Valor',
-        cell: (row: IncomeEntryResponse) => (
-          <span className="font-mono">R$ {formatMoney(row.amount)}</span>
-        )
-      },
-      {
-        header: 'Congregado',
-        cell: (row: IncomeEntryResponse) => row.attenderName ?? '—'
-      },
-      {
-        header: 'Forma de Pag.',
-        cell: (row: IncomeEntryResponse) => row.paymentMethodName
-      },
-      {
-        header: 'Fundo',
-        cell: (row: IncomeEntryResponse) => row.designatedFundName ?? '—'
-      },
-      {
-        header: 'Status',
-        cell: (row: IncomeEntryResponse) => <StatusBadge status={row.status} />
-      }
-    ],
-    []
-  );
-
   return (
-    <>
-      <div className="px-8 pt-6 pb-0 flex gap-2">
-        {STATUS_FILTERS.map((f) => (
-          <Button
-            key={f.value}
-            variant={statusFilter === f.value ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setStatusFilter(f.value)}>
-            {f.label}
-          </Button>
-        ))}
-      </div>
+    <PageContainer>
+      <IncomeSummaryCard />
 
-      <ResourceListPage<IncomeEntryResponse>
-        title="Lançamentos de Entradas"
-        columns={columns}
-        data={filtered}
+      {canCreate && <IncomeQuickEntryForm />}
+
+      <IncomeEntriesTable
+        data={allEntries}
         isLoading={list.isLoading}
-        onCreate={canCreate ? () => setEditing('new') : undefined}
-        onEdit={canEdit ? (r) => setEditing(r) : undefined}
-        onDelete={canDelete ? (r) => setDeleting(r) : undefined}
-        canCreate={canCreate}
+        onEdit={(e) => setEditing(e)}
+        onDelete={(e) => setDeleting(e)}
         canEdit={canEdit}
         canDelete={canDelete}
-        rowKey={(r) => r.id}
-        emptyMessage="Nenhum lançamento encontrado."
       />
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {editing === 'new' ? 'Novo lançamento de entrada' : 'Editar lançamento de entrada'}
-            </DialogTitle>
+            <DialogTitle>Editar lançamento de entrada</DialogTitle>
           </DialogHeader>
           {editing !== null && (
             <IncomeEntryForm
-              initialValues={editing === 'new' ? undefined : editing}
-              isPending={create.isPending || update.isPending}
-              onSubmit={handleSubmit}
+              initialValues={editing}
+              isPending={update.isPending}
+              onSubmit={(values) => {
+                update.mutate(
+                  { id: editing.id, body: toUpdateBody(values) },
+                  { onSuccess: () => setEditing(null) }
+                );
+              }}
               onCancel={() => setEditing(null)}
             />
           )}
@@ -142,6 +83,6 @@ export default function IncomeEntriesPage() {
         }
         isPending={remove.isPending}
       />
-    </>
+    </PageContainer>
   );
 }
