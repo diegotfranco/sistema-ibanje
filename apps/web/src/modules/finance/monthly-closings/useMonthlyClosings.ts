@@ -12,8 +12,19 @@ function describeError(err: unknown, fallback: string) {
   return fallback;
 }
 
-export function useMonthlyClosings() {
-  return useResourceList<MonthlyClosingResponse>(BASE, KEY);
+export function useMonthlyClosings(params: { year?: number; page?: number } = {}) {
+  const { year, page } = params;
+  return useResourceList<MonthlyClosingResponse>(BASE, [...KEY, { year, page }] as const, {
+    year,
+    page
+  });
+}
+
+export function useMonthlyClosingYears() {
+  return useQuery({
+    queryKey: [...KEY, 'years'] as const,
+    queryFn: () => api.get<{ years: number[] }>(`${BASE}/years`)
+  });
 }
 
 export function useMonthlyClosingById(id: number) {

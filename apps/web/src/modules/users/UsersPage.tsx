@@ -79,7 +79,7 @@ export default function UsersPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Usuários</CardTitle>
+            <CardTitle>Usuários</CardTitle>
             {canCreate && (
               <Button size="sm" onClick={() => setEditing('new')}>
                 <Plus className="h-4 w-4" />

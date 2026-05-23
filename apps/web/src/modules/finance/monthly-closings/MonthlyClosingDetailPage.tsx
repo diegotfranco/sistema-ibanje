@@ -222,7 +222,7 @@ export default function MonthlyClosingDetailPage() {
                 <CardTitle>Entradas do período</CardTitle>
               </CardHeaderRow>
               <CardContent className="p-0">
-                <IncomeReportTab month={month} />
+                <IncomeReportTab month={month} mode="embedded" />
               </CardContent>
             </Card>
 
@@ -231,7 +231,7 @@ export default function MonthlyClosingDetailPage() {
                 <CardTitle>Saídas do período</CardTitle>
               </CardHeaderRow>
               <CardContent className="p-0">
-                <ExpenseReportTab month={month} />
+                <ExpenseReportTab month={month} mode="embedded" />
               </CardContent>
             </Card>
           </>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
-import { MobileRowDetailSheet } from '@/components/MobileRowDetailSheet';
+import { RowDetailPanel } from '@/components/RowDetailPanel';
 import { formatMoney } from '../entries-utils';
 import { useIncomeReport } from './useReports';
 import {
@@ -13,14 +13,18 @@ import type { IncomeReportRow } from './schema';
 
 interface Props {
   month: string;
+  mode?: 'full' | 'embedded';
 }
 
-export function IncomeReportTab({ month }: Props) {
+export function IncomeReportTab({ month, mode = 'full' }: Props) {
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [detail, setDetail] = useState<IncomeReportRow | null>(null);
-  const { data, isLoading } = useIncomeReport(month, page);
+  const limit = mode === 'embedded' ? 15 : 30;
+  const { data, isLoading } = useIncomeReport(month, page, limit, filters);
 
   const rows = data?.data ?? [];
+  const isEmbedded = mode === 'embedded';
 
   return (
     <>
@@ -40,13 +44,21 @@ export function IncomeReportTab({ month }: Props) {
         getRowKey={(row) => row.id}
         mobileRow={renderIncomeLineItemMobile}
         mobileOnRowClick={setDetail}
+        searchable={isEmbedded ? false : { placeholder: 'Buscar entradas...' }}
+        columnToggle
+        tableId={isEmbedded ? 'income-report-embedded' : 'income-report'}
+        filters={filters}
+        onFilterChange={(columnId, value) => {
+          setFilters((prev) => ({ ...prev, [columnId]: value }));
+          setPage(1);
+        }}
       />
       {data && (
         <div className="flex justify-end border-t px-4 py-2">
           <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
         </div>
       )}
-      <MobileRowDetailSheet
+      <RowDetailPanel
         open={detail !== null}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes da entrada"

@@ -257,11 +257,13 @@ export async function seed() {
     const baseFundRows = SEED_DESIGNATED_FUNDS.map((f) => ({
       name: f.name,
       description: f.description ?? null,
-      targetAmount: f.targetAmount ?? null
+      targetAmount: f.targetAmount ?? null,
+      status: 'ativo' as const
     }));
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
-      description: f.description ?? null
+      description: f.description ?? null,
+      status: 'ativo' as const
     }));
     const insertedFunds = await tx
       .insert(designatedFunds)

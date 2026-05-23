@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { type RowDetailField } from '@/components/MobileRowDetailSheet';
+import { type RowDetailField } from '@/components/RowDetailPanel';
 import StatusBadge from '@/components/StatusBadge';
-import { formatDate, formatMoney } from '../entries-utils';
+import { formatDate, formatMoney, ENTRY_STATUS_FILTER_OPTIONS } from '../entries-utils';
 import type { IncomeReportRow } from './schema';
 
 export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
@@ -19,13 +19,14 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     header: 'Data Ref.',
     cell: (info) => (
       <span className="tabular-nums">{formatDate(info.row.original.referenceDate)}</span>
-    )
+    ),
+    meta: { hideBelow: 'md' }
   },
   {
     id: 'group',
     header: 'Grupo',
     cell: (info) => info.row.original.parentCategoryName ?? '—',
-    meta: { hideBelow: 'lg' }
+    meta: { hideBelow: 'xl' }
   },
   {
     id: 'category',
@@ -43,7 +44,7 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
         {info.row.original.notes ?? '—'}
       </span>
     ),
-    meta: { hideBelow: 'md', className: 'max-w-64' }
+    meta: { hideBelow: 'lg', className: 'max-w-64' }
   },
   {
     id: 'designatedFund',
@@ -61,9 +62,7 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'amount',
     header: 'Valor',
     cell: (info) => (
-      <span className="font-mono tabular-nums text-money-in">
-        R$ {formatMoney(info.row.original.amount)}
-      </span>
+      <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.amount)}</span>
     ),
     meta: { align: 'right' }
   },
@@ -71,13 +70,13 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'paymentMethod',
     header: 'Forma de Pag.',
     cell: (info) => info.row.original.paymentMethodName,
-    meta: { hideBelow: 'lg' }
+    meta: { hideBelow: 'xl' }
   },
   {
     id: 'status',
     header: 'Status',
     cell: (info) => <StatusBadge status={info.row.original.status} />,
-    meta: { hideBelow: 'md' }
+    meta: { hideBelow: 'lg', filter: { options: ENTRY_STATUS_FILTER_OPTIONS } }
   }
 ];
 
@@ -88,9 +87,7 @@ export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
         <span className="text-sm tabular-nums text-muted-foreground">
           {formatDate(row.depositDate)} - {formatDate(row.referenceDate)}
         </span>
-        <span className="font-mono tabular-nums font-semibold text-money-in">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -128,9 +125,7 @@ export function buildIncomeLineItemFields(row: IncomeReportRow): RowDetailField[
     {
       label: 'Valor',
       value: (
-        <span className="font-mono tabular-nums font-semibold text-money-in">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       )
     },
     { label: 'Forma de Pag.', value: row.paymentMethodName },

@@ -24,11 +24,25 @@ import type {
 const parentIncomeCat = alias(incomeCategories, 'parent_income_cat');
 const parentExpenseCat = alias(expenseCategories, 'parent_expense_cat');
 
+type EntryStatus = 'pendente' | 'paga' | 'cancelada';
+
+// When `status` is provided, filter exactly to it (overriding the default
+// exclusion of cancelled). When absent, fall back to the default per call site:
+// row queries exclude 'cancelada'; sum queries restrict to 'paga'.
+function incomeStatusFilter(status: EntryStatus | undefined, defaultExpr: ReturnType<typeof eq>) {
+  return status ? eq(incomeEntries.status, status) : defaultExpr;
+}
+
+function expenseStatusFilter(status: EntryStatus | undefined, defaultExpr: ReturnType<typeof eq>) {
+  return status ? eq(expenseEntries.status, status) : defaultExpr;
+}
+
 export async function getIncomeReportRows(
   from: string,
   to: string,
   offset: number,
-  limit: number
+  limit: number,
+  status?: EntryStatus
 ): Promise<IncomeReportRow[]> {
   const rows = await db
     .select({
@@ -58,7 +72,7 @@ export async function getIncomeReportRows(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        ne(incomeEntries.status, 'cancelada')
+        incomeStatusFilter(status, ne(incomeEntries.status, 'cancelada'))
       )
     )
     .orderBy(
@@ -83,11 +97,15 @@ export async function getIncomeReportRows(
     attenderName: r.attenderName ?? null,
     paymentMethodName: r.paymentMethodName,
     notes: r.notes ?? null,
-    status: r.status as 'pendente' | 'paga'
+    status: r.status
   }));
 }
 
-export async function countIncomeReportRows(from: string, to: string): Promise<number> {
+export async function countIncomeReportRows(
+  from: string,
+  to: string,
+  status?: EntryStatus
+): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(incomeEntries)
@@ -95,13 +113,17 @@ export async function countIncomeReportRows(from: string, to: string): Promise<n
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        ne(incomeEntries.status, 'cancelada')
+        incomeStatusFilter(status, ne(incomeEntries.status, 'cancelada'))
       )
     );
   return result[0]?.count ?? 0;
 }
 
-export async function sumIncomeForRange(from: string, to: string): Promise<string> {
+export async function sumIncomeForRange(
+  from: string,
+  to: string,
+  status?: EntryStatus
+): Promise<string> {
   const result = await db
     .select({ total: sum(incomeEntries.amount) })
     .from(incomeEntries)
@@ -109,7 +131,7 @@ export async function sumIncomeForRange(from: string, to: string): Promise<strin
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
-        eq(incomeEntries.status, 'paga')
+        incomeStatusFilter(status, eq(incomeEntries.status, 'paga'))
       )
     );
   return result[0]?.total ?? '0.00';
@@ -119,7 +141,8 @@ export async function getExpenseReportRows(
   from: string,
   to: string,
   offset: number,
-  limit: number
+  limit: number,
+  status?: EntryStatus
 ): Promise<ExpenseReportRow[]> {
   const rows = await db
     .select({
@@ -152,7 +175,7 @@ export async function getExpenseReportRows(
       and(
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
-        ne(expenseEntries.status, 'cancelada')
+        expenseStatusFilter(status, ne(expenseEntries.status, 'cancelada'))
       )
     )
     .orderBy(asc(expenseEntries.date))
@@ -177,11 +200,15 @@ export async function getExpenseReportRows(
     hasReceipt: r.receipt !== null,
     notes: r.notes ?? null,
     amount: r.amount,
-    status: r.status as 'pendente' | 'paga'
+    status: r.status
   }));
 }
 
-export async function countExpenseReportRows(from: string, to: string): Promise<number> {
+export async function countExpenseReportRows(
+  from: string,
+  to: string,
+  status?: EntryStatus
+): Promise<number> {
   const result = await db
     .select({ count: count() })
     .from(expenseEntries)
@@ -189,13 +216,17 @@ export async function countExpenseReportRows(from: string, to: string): Promise<
       and(
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
-        ne(expenseEntries.status, 'cancelada')
+        expenseStatusFilter(status, ne(expenseEntries.status, 'cancelada'))
       )
     );
   return result[0]?.count ?? 0;
 }
 
-export async function sumExpensesForRange(from: string, to: string): Promise<string> {
+export async function sumExpensesForRange(
+  from: string,
+  to: string,
+  status?: EntryStatus
+): Promise<string> {
   const result = await db
     .select({ total: sum(expenseEntries.amount) })
     .from(expenseEntries)
@@ -203,7 +234,7 @@ export async function sumExpensesForRange(from: string, to: string): Promise<str
       and(
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
-        eq(expenseEntries.status, 'paga')
+        expenseStatusFilter(status, eq(expenseEntries.status, 'paga'))
       )
     );
   return result[0]?.total ?? '0.00';

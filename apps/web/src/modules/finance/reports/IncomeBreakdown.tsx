@@ -43,7 +43,7 @@ interface ViewProps {
   toggle: (referenceDate: string) => void;
 }
 
-export function IncomePivotView({ pivot }: { pivot: IncomePivot }) {
+export function IncomeBreakdown({ pivot }: { pivot: IncomePivot }) {
   const isAboveMd = useIsAbove('md');
   const buckets = useMemo(() => bucketBy(pivot.columns), [pivot.columns]);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -65,9 +65,14 @@ export function IncomePivotView({ pivot }: { pivot: IncomePivot }) {
   }
 
   return isAboveMd ? (
-    <IncomePivotTable pivot={pivot} buckets={buckets} collapsed={collapsed} toggle={toggle} />
+    <IncomeBreakdownTable pivot={pivot} buckets={buckets} collapsed={collapsed} toggle={toggle} />
   ) : (
-    <IncomePivotCardsByDate pivot={pivot} buckets={buckets} collapsed={collapsed} toggle={toggle} />
+    <IncomeBreakdownCardsByDate
+      pivot={pivot}
+      buckets={buckets}
+      collapsed={collapsed}
+      toggle={toggle}
+    />
   );
 }
 
@@ -80,7 +85,7 @@ function bucketLabel(bucket: Bucket): string {
 
 // ─── md+ Table ───────────────────────────────────────────────────────────────
 
-function IncomePivotTable({ pivot, buckets, collapsed, toggle }: ViewProps) {
+function IncomeBreakdownTable({ pivot, buckets, collapsed, toggle }: ViewProps) {
   return (
     <Table>
       <TableBody>
@@ -165,7 +170,7 @@ function IncomePivotTable({ pivot, buckets, collapsed, toggle }: ViewProps) {
 
 // ─── Mobile cards (<md) ──────────────────────────────────────────────────────
 
-function IncomePivotCardsByDate({ pivot, buckets, collapsed, toggle }: ViewProps) {
+function IncomeBreakdownCardsByDate({ pivot, buckets, collapsed, toggle }: ViewProps) {
   return (
     <ul className="divide-y">
       {pivot.rows.map((row) => {

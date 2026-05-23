@@ -1,4 +1,11 @@
-import { CreditCard, FileBarChart, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  CalendarCheck,
+  CreditCard,
+  FileBarChart,
+  PiggyBank,
+  TrendingDown,
+  TrendingUp
+} from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module, Action } from '@/lib/permissions';
@@ -77,29 +84,24 @@ export const financeRoutes: AppRoute[] = [
         ]
       },
       {
+        path: `${paths.reports}?tab=statement`,
         layout: 'app',
         label: 'Relatórios',
         icon: FileBarChart,
-        children: [
-          {
-            path: `${paths.reports}?tab=statement`,
-            layout: 'app',
-            label: 'Demonstrativo',
-            module: Module.Reports,
-            action: Action.Report
-          },
-          {
-            path: paths.monthlyClosings,
-            element: (
-              <RequirePermission module={Module.MonthlyClosings}>
-                <MonthlyClosingsPage />
-              </RequirePermission>
-            ),
-            layout: 'app',
-            label: 'Fechamentos Mensais',
-            module: Module.MonthlyClosings
-          }
-        ]
+        module: Module.Reports,
+        action: Action.Report
+      },
+      {
+        path: paths.monthlyClosings,
+        element: (
+          <RequirePermission module={Module.MonthlyClosings}>
+            <MonthlyClosingsPage />
+          </RequirePermission>
+        ),
+        layout: 'app',
+        label: 'Fechamentos Mensais',
+        icon: CalendarCheck,
+        module: Module.MonthlyClosings
       },
       {
         path: paths.designatedFunds,

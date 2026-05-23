@@ -16,7 +16,8 @@ export const PaginatedDateRangeQueryRequestSchema = DateRangeQueryRequestSchema.
 
 export const PaginatedMonthQueryRequestSchema = MonthQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20)
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
 export const OptionalMonthQueryRequestSchema = z.object({
@@ -49,7 +50,7 @@ const IncomeReportRowSchema = z.object({
   attenderName: z.string().nullable(),
   paymentMethodName: z.string(),
   notes: z.string().nullable(),
-  status: z.enum(['pendente', 'paga'])
+  status: z.enum(['pendente', 'paga', 'cancelada'])
 });
 
 export const IncomeReportResponseSchema = z.object({
@@ -80,7 +81,7 @@ const ExpenseReportRowSchema = z.object({
   hasReceipt: z.boolean(),
   notes: z.string().nullable(),
   amount: z.string(),
-  status: z.enum(['pendente', 'paga'])
+  status: z.enum(['pendente', 'paga', 'cancelada'])
 });
 
 export const ExpenseReportResponseSchema = z.object({

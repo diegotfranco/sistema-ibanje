@@ -7,6 +7,15 @@ import {
   SheetHeader,
   SheetTitle
 } from '@/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { useIsAbove } from '@/hooks/useBreakpoint';
 
 export interface RowDetailField {
   label: string;
@@ -14,7 +23,7 @@ export interface RowDetailField {
   hideEmpty?: boolean;
 }
 
-interface MobileRowDetailSheetProps {
+interface RowDetailPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -32,15 +41,42 @@ function isEmptyValue(value: ReactNode): boolean {
   return false;
 }
 
-export function MobileRowDetailSheet({
+export function RowDetailPanel({
   open,
   onOpenChange,
   title,
   description,
   fields,
   actions
-}: MobileRowDetailSheetProps) {
+}: RowDetailPanelProps) {
+  const isAboveMd = useIsAbove('md');
   const visibleFields = fields.filter((f) => !(f.hideEmpty && isEmptyValue(f.value)));
+
+  const body = (
+    <dl className="divide-y">
+      {visibleFields.map((field) => (
+        <div key={field.label} className="flex items-start justify-between gap-4 py-3">
+          <dt className="text-sm text-muted-foreground shrink-0">{field.label}</dt>
+          <dd className="text-sm text-right min-w-0">{field.value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+
+  if (isAboveMd) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            {description && <DialogDescription>{description}</DialogDescription>}
+          </DialogHeader>
+          {body}
+          {actions && <DialogFooter>{actions}</DialogFooter>}
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -49,14 +85,7 @@ export function MobileRowDetailSheet({
           <SheetTitle>{title}</SheetTitle>
           {description && <SheetDescription>{description}</SheetDescription>}
         </SheetHeader>
-        <dl className="divide-y px-4">
-          {visibleFields.map((field) => (
-            <div key={field.label} className="flex items-start justify-between gap-4 py-3">
-              <dt className="text-sm text-muted-foreground shrink-0">{field.label}</dt>
-              <dd className="text-sm text-right min-w-0">{field.value}</dd>
-            </div>
-          ))}
-        </dl>
+        <div className="px-4">{body}</div>
         {actions && <SheetFooter>{actions}</SheetFooter>}
       </SheetContent>
     </Sheet>

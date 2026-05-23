@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Edit, Trash2, Receipt, ArrowRight } from 'lucide-react';
+import { Edit, Eye, Trash2, Receipt, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
-import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
+import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 import { formatDate, formatMoney } from '../entries-utils';
 import type { ExpenseEntryResponse } from './schema';
 import type { ColumnDef } from '@tanstack/react-table';
 
-const LATEST_LIMIT = 10;
+const LATEST_LIMIT = 15;
 
 interface Props {
   data: ExpenseEntryResponse[];
@@ -46,7 +46,7 @@ export function ExpenseEntriesTable({
       id: 'group',
       header: 'Grupo',
       cell: (info) => info.row.original.parentCategoryName ?? '—',
-      meta: { hideBelow: 'lg' }
+      meta: { hideBelow: 'xl' }
     },
     {
       id: 'category',
@@ -64,7 +64,7 @@ export function ExpenseEntriesTable({
           {info.row.original.notes ?? '—'}
         </span>
       ),
-      meta: { hideBelow: 'md', className: 'max-w-64' }
+      meta: { hideBelow: 'lg', className: 'max-w-64' }
     },
     {
       id: 'designatedFund',
@@ -90,7 +90,7 @@ export function ExpenseEntriesTable({
       id: 'paymentMethod',
       header: 'Forma de Pag.',
       cell: (info) => info.row.original.paymentMethodName,
-      meta: { hideBelow: 'lg' }
+      meta: { hideBelow: 'xl' }
     },
     {
       id: 'installment',
@@ -99,13 +99,13 @@ export function ExpenseEntriesTable({
         info.row.original.totalInstallments > 1
           ? `${info.row.original.installment}/${info.row.original.totalInstallments}`
           : '—',
-      meta: { hideBelow: 'lg', align: 'center' }
+      meta: { hideBelow: 'xl', align: 'center' }
     },
     {
       id: 'status',
       header: 'Status',
       cell: (info) => <StatusBadge status={info.row.original.status} />,
-      meta: { hideBelow: 'md' }
+      meta: { hideBelow: 'lg' }
     },
     {
       id: 'receipt',
@@ -145,6 +145,14 @@ export function ExpenseEntriesTable({
         const row = info.row.original;
         return (
           <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDetail(row)}
+              title="Ver detalhes"
+              aria-label="Ver detalhes">
+              <Eye size={16} />
+            </Button>
             {canEdit && (
               <Button
                 variant="ghost"
@@ -168,7 +176,7 @@ export function ExpenseEntriesTable({
           </div>
         );
       },
-      meta: { align: 'right' }
+      meta: { align: 'right', canHide: false }
     }
   ];
 
@@ -176,9 +184,7 @@ export function ExpenseEntriesTable({
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
-        <span className="font-mono tabular-nums font-semibold text-money-out">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -215,9 +221,7 @@ export function ExpenseEntriesTable({
     {
       label: 'Valor',
       value: (
-        <span className="font-mono tabular-nums font-semibold text-money-out">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       )
     },
     { label: 'Forma de Pag.', value: row.paymentMethodName },
@@ -269,10 +273,12 @@ export function ExpenseEntriesTable({
             getRowKey={(row) => row.id}
             mobileRow={renderMobileRow}
             mobileOnRowClick={setDetail}
+            columnToggle
+            tableId="expense-entries"
           />
         </CardContent>
       </Card>
-      <MobileRowDetailSheet
+      <RowDetailPanel
         open={detail !== null}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes do lançamento"

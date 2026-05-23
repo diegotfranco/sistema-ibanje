@@ -8,10 +8,21 @@ import { DataTable } from '@/components/DataTable';
 import { PageContainer } from '@/components/PageContainer';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useMonthlyClosings, useRemoveMonthlyClosing } from './useMonthlyClosings';
+import {
+  useMonthlyClosings,
+  useMonthlyClosingYears,
+  useRemoveMonthlyClosing
+} from './useMonthlyClosings';
 import { NewClosingDialog } from './NewClosingDialog';
 import type { MonthlyClosingResponse } from './schema';
 
@@ -41,12 +52,21 @@ export default function MonthlyClosingsPage() {
   const canCreate = hasPermission(perms, Module.MonthlyClosings, Action.Create);
   const canDelete = hasPermission(perms, Module.MonthlyClosings, Action.Delete);
 
-  const list = useMonthlyClosings();
+  const [year, setYear] = useState<number>(() => new Date().getFullYear());
+  const list = useMonthlyClosings({ year });
+  const yearsQuery = useMonthlyClosingYears();
   const remove = useRemoveMonthlyClosing();
   const navigate = useNavigate();
 
   const [newOpen, setNewOpen] = useState(false);
   const [deleting, setDeleting] = useState<MonthlyClosingResponse | null>(null);
+
+  const yearOptions = (() => {
+    const fromServer = yearsQuery.data?.years ?? [];
+    const set = new Set(fromServer);
+    set.add(year);
+    return Array.from(set).sort((a, b) => b - a);
+  })();
 
   const items = list.data?.data ?? [];
 
@@ -68,20 +88,28 @@ export default function MonthlyClosingsPage() {
     {
       id: 'income',
       header: 'Entradas',
-      cell: ({ row }) => formatMoney(row.original.totalIncome),
-      meta: { className: 'font-mono text-money-in' }
+      cell: ({ row }) => (
+        <span className="font-mono tabular-nums">R$ {formatMoney(row.original.totalIncome)}</span>
+      ),
+      meta: { align: 'right' }
     },
     {
       id: 'expenses',
       header: 'Saídas',
-      cell: ({ row }) => formatMoney(row.original.totalExpenses),
-      meta: { className: 'font-mono text-money-out' }
+      cell: ({ row }) => (
+        <span className="font-mono tabular-nums">R$ {formatMoney(row.original.totalExpenses)}</span>
+      ),
+      meta: { align: 'right' }
     },
     {
       id: 'balance',
       header: 'Saldo',
-      cell: ({ row }) => formatMoney(row.original.closingBalance),
-      meta: { className: 'font-mono' }
+      cell: ({ row }) => (
+        <span className="font-mono tabular-nums">
+          R$ {formatMoney(row.original.closingBalance)}
+        </span>
+      ),
+      meta: { align: 'right' }
     },
     {
       id: '__actions',
@@ -117,13 +145,27 @@ export default function MonthlyClosingsPage() {
       <PageContainer>
         <Card>
           <CardHeaderRow>
-            <CardTitle className="text-xl">Fechamentos Mensais</CardTitle>
-            {canCreate && (
-              <Button onClick={() => setNewOpen(true)} size="sm">
-                <Plus className="h-4 w-4" />
-                Novo
-              </Button>
-            )}
+            <CardTitle>Fechamentos Mensais</CardTitle>
+            <div className="flex items-center gap-2">
+              {canCreate && (
+                <Button onClick={() => setNewOpen(true)} size="sm">
+                  <Plus className="h-4 w-4" />
+                  Novo
+                </Button>
+              )}
+              <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+                <SelectTrigger className="w-32" aria-label="Ano">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" align="end">
+                  {yearOptions.map((y) => (
+                    <SelectItem key={y} value={String(y)}>
+                      {y}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeaderRow>
           <CardContent className="p-0">
             <DataTable

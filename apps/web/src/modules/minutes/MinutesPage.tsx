@@ -48,7 +48,7 @@ export default function MinutesPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Atas de Reuniões</CardTitle>
+            <CardTitle>Atas de Reuniões</CardTitle>
             {canCreate && (
               <Button onClick={() => setFormOpen(true)} size="sm">
                 <Plus className="h-4 w-4" />

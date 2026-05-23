@@ -3,20 +3,24 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Receipt } from 'lucide-react';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
-import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
+import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 import StatusBadge from '@/components/StatusBadge';
-import { formatDate, formatMoney } from '../entries-utils';
+import { formatDate, formatMoney, ENTRY_STATUS_FILTER_OPTIONS } from '../entries-utils';
 import { useExpenseReport } from './useReports';
 import type { ExpenseReportRow } from './schema';
 
 interface Props {
   month: string;
+  mode?: 'full' | 'embedded';
 }
 
-export function ExpenseReportTab({ month }: Props) {
+export function ExpenseReportTab({ month, mode = 'full' }: Props) {
   const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [detail, setDetail] = useState<ExpenseReportRow | null>(null);
-  const { data, isLoading } = useExpenseReport(month, page);
+  const limit = mode === 'embedded' ? 15 : 30;
+  const { data, isLoading } = useExpenseReport(month, page, limit, filters);
+  const isEmbedded = mode === 'embedded';
 
   const rows = data?.data ?? [];
 
@@ -31,7 +35,7 @@ export function ExpenseReportTab({ month }: Props) {
       id: 'group',
       header: 'Grupo',
       cell: (info) => info.row.original.parentCategoryName ?? '—',
-      meta: { hideBelow: 'lg' }
+      meta: { hideBelow: 'xl' }
     },
     {
       id: 'category',
@@ -49,7 +53,7 @@ export function ExpenseReportTab({ month }: Props) {
           {info.row.original.notes ?? '—'}
         </span>
       ),
-      meta: { hideBelow: 'md', className: 'max-w-64' }
+      meta: { hideBelow: 'lg', className: 'max-w-64' }
     },
     {
       id: 'designatedFund',
@@ -67,9 +71,7 @@ export function ExpenseReportTab({ month }: Props) {
       id: 'amount',
       header: 'Valor',
       cell: (info) => (
-        <span className="font-mono tabular-nums text-money-out">
-          R$ {formatMoney(info.row.original.amount)}
-        </span>
+        <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.amount)}</span>
       ),
       meta: { align: 'right' }
     },
@@ -77,7 +79,7 @@ export function ExpenseReportTab({ month }: Props) {
       id: 'paymentMethod',
       header: 'Forma de Pag.',
       cell: (info) => info.row.original.paymentMethodName,
-      meta: { hideBelow: 'lg' }
+      meta: { hideBelow: 'xl' }
     },
     {
       id: 'installment',
@@ -86,13 +88,13 @@ export function ExpenseReportTab({ month }: Props) {
         info.row.original.totalInstallments > 1
           ? `${info.row.original.installment}/${info.row.original.totalInstallments}`
           : '—',
-      meta: { hideBelow: 'lg', align: 'center' }
+      meta: { hideBelow: 'xl', align: 'center' }
     },
     {
       id: 'status',
       header: 'Status',
       cell: (info) => <StatusBadge status={info.row.original.status} />,
-      meta: { hideBelow: 'md' }
+      meta: { hideBelow: 'lg', filter: { options: ENTRY_STATUS_FILTER_OPTIONS } }
     },
     {
       id: 'receipt',
@@ -131,9 +133,7 @@ export function ExpenseReportTab({ month }: Props) {
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
         <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
-        <span className="font-mono tabular-nums font-semibold text-money-out">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -171,9 +171,7 @@ export function ExpenseReportTab({ month }: Props) {
     {
       label: 'Valor',
       value: (
-        <span className="font-mono tabular-nums font-semibold text-money-out">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       )
     },
     { label: 'Forma de Pag.', value: row.paymentMethodName },
@@ -203,13 +201,21 @@ export function ExpenseReportTab({ month }: Props) {
         getRowKey={(row) => row.id}
         mobileRow={renderMobileRow}
         mobileOnRowClick={setDetail}
+        searchable={isEmbedded ? false : { placeholder: 'Buscar saídas...' }}
+        columnToggle
+        tableId={isEmbedded ? 'expense-report-embedded' : 'expense-report'}
+        filters={filters}
+        onFilterChange={(columnId, value) => {
+          setFilters((prev) => ({ ...prev, [columnId]: value }));
+          setPage(1);
+        }}
       />
       {data && (
         <div className="flex justify-end border-t px-4 py-2">
           <Pagination currentPage={page} totalPages={data.totalPages} onPageChange={setPage} />
         </div>
       )}
-      <MobileRowDetailSheet
+      <RowDetailPanel
         open={detail !== null}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes da saída"

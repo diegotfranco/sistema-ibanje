@@ -12,7 +12,8 @@ import {
   RejectMonthlyClosingRequestSchema,
   ReproveClosingRequestSchema,
   MonthlyClosingResponseSchema,
-  MonthlyClosingListResponseSchema
+  MonthlyClosingListResponseSchema,
+  MonthlyClosingYearsResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -32,6 +33,22 @@ export async function monthlyClosingsRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.MonthlyClosings, Action.View)]
     },
     controller.list
+  );
+
+  app.get(
+    '/monthly-closings/years',
+    {
+      schema: {
+        tags: ['Monthly Closings'],
+        response: {
+          200: MonthlyClosingYearsResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MonthlyClosings, Action.View)]
+    },
+    controller.listYears
   );
 
   app.get(

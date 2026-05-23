@@ -5,8 +5,8 @@ import type { PaginationQuery } from '../../../lib/pagination.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as PaginationQuery;
-  return reply.send(await service.listDesignatedFunds(req.session.userId!, page, limit));
+  const { page, limit, status } = req.query as PaginationQuery & { status?: 'ativo' | 'inativo' };
+  return reply.send(await service.listDesignatedFunds(req.session.userId!, page, limit, status));
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {

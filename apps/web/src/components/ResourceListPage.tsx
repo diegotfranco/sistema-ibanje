@@ -4,12 +4,13 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
+import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 
 export interface ResourceColumn<T> {
   header: string;
   cell: (row: T) => ReactNode;
   className?: string;
+  hideBelow?: 'md' | 'lg' | 'xl';
 }
 
 export interface CustomAction<T> {
@@ -40,6 +41,11 @@ interface ResourceListPageProps<T> {
   mobileRow?: (row: T) => ReactNode;
   mobileDetailFields?: (row: T) => RowDetailField[];
   mobileDetailTitle?: (row: T) => string;
+  // Optional enhancements: column visibility toggle, toolbar filters, pagination
+  columnToggle?: boolean;
+  tableId?: string;
+  toolbarRight?: ReactNode;
+  pagination?: ReactNode;
 }
 
 export function ResourceListPage<T>({
@@ -58,19 +64,28 @@ export function ResourceListPage<T>({
   rowKey,
   mobileRow,
   mobileDetailFields,
-  mobileDetailTitle
+  mobileDetailTitle,
+  columnToggle,
+  tableId,
+  toolbarRight,
+  pagination
 }: ResourceListPageProps<T>) {
   const [detailRow, setDetailRow] = useState<T | null>(null);
 
   const showActions =
     (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
 
-  const tableColumns: ColumnDef<T, unknown>[] = columns.map((col, i) => ({
-    id: `col-${i}`,
-    header: col.header,
-    cell: ({ row }) => col.cell(row.original),
-    meta: col.className ? { className: col.className } : undefined
-  }));
+  const tableColumns: ColumnDef<T, unknown>[] = columns.map((col, i) => {
+    const meta: { className?: string; hideBelow?: 'md' | 'lg' | 'xl' } = {};
+    if (col.className) meta.className = col.className;
+    if (col.hideBelow) meta.hideBelow = col.hideBelow;
+    return {
+      id: `col-${i}`,
+      header: col.header,
+      cell: ({ row }) => col.cell(row.original),
+      meta: Object.keys(meta).length ? meta : undefined
+    };
+  });
 
   if (showActions) {
     tableColumns.push({
@@ -162,7 +177,7 @@ export function ResourceListPage<T>({
     <>
       <Card>
         <CardHeaderRow>
-          <CardTitle className="text-xl">{title}</CardTitle>
+          <CardTitle>{title}</CardTitle>
           {canCreate && onCreate && (
             <Button onClick={onCreate} size="sm">
               <Plus className="h-4 w-4" />
@@ -179,11 +194,15 @@ export function ResourceListPage<T>({
             getRowKey={(row) => rowKey(row)}
             mobileRow={mobileRow}
             mobileOnRowClick={mobileDetailFields ? (row) => setDetailRow(row) : undefined}
+            columnToggle={columnToggle}
+            tableId={tableId}
+            toolbarRight={toolbarRight}
           />
         </CardContent>
       </Card>
+      {pagination && <div className="mt-4">{pagination}</div>}
       {mobileDetailFields && detailRow && (
-        <MobileRowDetailSheet
+        <RowDetailPanel
           open={detailRow !== null}
           onOpenChange={(o) => !o && setDetailRow(null)}
           title={mobileDetailTitle?.(detailRow) ?? title}

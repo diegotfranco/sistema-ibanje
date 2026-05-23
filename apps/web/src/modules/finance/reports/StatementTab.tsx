@@ -7,7 +7,7 @@ import { DataTable } from '@/components/DataTable';
 import { formatDate } from '@/lib/datetime';
 import { useFinancialStatement, useDetailedStatement, usePdfDownload } from './useReports';
 import { FinancialStatementDocument } from './FinancialStatementDocument';
-import { IncomePivotView } from './IncomePivotView';
+import { IncomeBreakdown } from './IncomeBreakdown';
 
 interface Props {
   month: string;
@@ -163,7 +163,7 @@ export function StatementTab({ month }: Props) {
                   <CardTitle className="text-base">Entradas</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <IncomePivotView pivot={detailed.data.incomePivot} />
+                  <IncomeBreakdown pivot={detailed.data.incomePivot} />
                 </CardContent>
               </Card>
 
@@ -171,7 +171,7 @@ export function StatementTab({ month }: Props) {
                 <CardHeader>
                   <CardTitle className="text-base">Saídas</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-0">
                   <DataTable
                     columns={detailedExpenseColumns}
                     data={detailed.data.expenseEntries}

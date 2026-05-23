@@ -11,10 +11,20 @@ import type {
   FundDetailResponse
 } from './schema';
 
-function buildParams(month: string, page?: number, limit?: number) {
+function buildParams(
+  month: string,
+  page?: number,
+  limit?: number,
+  extra?: Record<string, string | undefined>
+) {
   const p = new URLSearchParams({ month });
   if (page !== undefined) p.set('page', String(page));
   if (limit !== undefined) p.set('limit', String(limit));
+  if (extra) {
+    for (const [k, v] of Object.entries(extra)) {
+      if (v !== undefined && v !== '') p.set(k, v);
+    }
+  }
   return p.toString();
 }
 
@@ -28,19 +38,32 @@ function buildParamsOptional(month: string | undefined, page?: number, limit?: n
 
 const enabled = (month: string) => month.length > 0;
 
-export function useIncomeReport(month: string, page = 1) {
+export function useIncomeReport(
+  month: string,
+  page = 1,
+  limit = 30,
+  filters: Record<string, string | undefined> = {}
+) {
   return useQuery({
-    queryKey: ['reports', 'income', month, page],
-    queryFn: () => api.get<IncomeReportResponse>(`/reports/income?${buildParams(month, page, 15)}`),
+    queryKey: ['reports', 'income', month, page, limit, filters],
+    queryFn: () =>
+      api.get<IncomeReportResponse>(`/reports/income?${buildParams(month, page, limit, filters)}`),
     enabled: enabled(month)
   });
 }
 
-export function useExpenseReport(month: string, page = 1) {
+export function useExpenseReport(
+  month: string,
+  page = 1,
+  limit = 30,
+  filters: Record<string, string | undefined> = {}
+) {
   return useQuery({
-    queryKey: ['reports', 'expenses', month, page],
+    queryKey: ['reports', 'expenses', month, page, limit, filters],
     queryFn: () =>
-      api.get<ExpenseReportResponse>(`/reports/expenses?${buildParams(month, page, 15)}`),
+      api.get<ExpenseReportResponse>(
+        `/reports/expenses?${buildParams(month, page, limit, filters)}`
+      ),
     enabled: enabled(month)
   });
 }

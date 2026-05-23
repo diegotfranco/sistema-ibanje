@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Edit, Trash2, ArrowRight } from 'lucide-react';
+import { Edit, Eye, Trash2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
-import { MobileRowDetailSheet, type RowDetailField } from '@/components/MobileRowDetailSheet';
+import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 import { formatDate, formatMoney } from '../entries-utils';
 import type { IncomeEntryResponse } from './schema';
 import type { ColumnDef } from '@tanstack/react-table';
 
-const LATEST_LIMIT = 10;
+const LATEST_LIMIT = 15;
 
 interface Props {
   data: IncomeEntryResponse[];
@@ -115,6 +115,14 @@ export function IncomeEntriesTable({
         const row = info.row.original;
         return (
           <div className="flex justify-end gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setDetail(row)}
+              title="Ver detalhes"
+              aria-label="Ver detalhes">
+              <Eye size={16} />
+            </Button>
             {canEdit && (
               <Button
                 variant="ghost"
@@ -138,7 +146,7 @@ export function IncomeEntriesTable({
           </div>
         );
       },
-      meta: { align: 'right' }
+      meta: { align: 'right', canHide: false }
     }
   ];
 
@@ -150,9 +158,7 @@ export function IncomeEntriesTable({
             {formatDate(row.depositDate)} - {formatDate(row.referenceDate)}
           </span>
         </div>
-        <span className="font-mono tabular-nums font-semibold text-money-in">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -188,9 +194,7 @@ export function IncomeEntriesTable({
     {
       label: 'Valor',
       value: (
-        <span className="font-mono tabular-nums font-semibold text-money-in">
-          R$ {formatMoney(row.amount)}
-        </span>
+        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
       )
     },
     { label: 'Forma de Pag.', value: row.paymentMethodName },
@@ -222,10 +226,12 @@ export function IncomeEntriesTable({
             getRowKey={(row) => row.id}
             mobileRow={renderMobileRow}
             mobileOnRowClick={setDetail}
+            columnToggle
+            tableId="income-entries"
           />
         </CardContent>
       </Card>
-      <MobileRowDetailSheet
+      <RowDetailPanel
         open={detail !== null}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes do lançamento"

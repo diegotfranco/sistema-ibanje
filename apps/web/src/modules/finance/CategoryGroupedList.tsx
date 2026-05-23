@@ -1,11 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ChevronRight, Edit, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronRight, Edit, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -328,20 +327,6 @@ export function CategoryGroupedList<T extends CategoryLike>({
         )}
       </CardHeaderRow>
       <CardContent className="p-0">
-        <div className="border-b px-3 py-2">
-          <div className="relative w-full sm:max-w-xs">
-            <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="h-8 pl-8"
-            />
-            {isSearching && (
-              <Loader2 className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
-        </div>
         <DataTable
           columns={columns}
           data={flatRows}
@@ -351,6 +336,10 @@ export function CategoryGroupedList<T extends CategoryLike>({
           renderSectionHeader={renderSectionHeader}
           getRowKey={flatRowKey}
           mobileRow={renderMobileRow}
+          disableZebra
+          searchable={{ placeholder: 'Buscar...', loading: isSearching }}
+          globalFilter={searchQuery}
+          onGlobalFilterChange={onSearchChange}
         />
         <div className="border-t px-3 py-2 flex justify-end">
           <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />

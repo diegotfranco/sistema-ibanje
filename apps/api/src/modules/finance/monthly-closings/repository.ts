@@ -1,4 +1,4 @@
-import { eq, gte, lt, sum, count, and, or, desc, isNotNull, ne } from 'drizzle-orm';
+import { eq, gte, lt, sum, count, and, or, desc, isNotNull, ne, sql } from 'drizzle-orm';
 import { db } from '../../../db/index.js';
 import {
   monthlyClosings,
@@ -17,16 +17,26 @@ export function periodEnd(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-01`;
 }
 
-export async function listMonthlyClosings(offset: number, limit: number) {
+export async function listMonthlyClosings(offset: number, limit: number, year?: number) {
+  const condition = year ? eq(monthlyClosings.periodYear, year) : undefined;
   const rows = await db
     .select()
     .from(monthlyClosings)
+    .where(condition)
     .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
     .offset(offset)
     .limit(limit);
 
-  const countResult = await db.select({ count: count() }).from(monthlyClosings);
+  const countResult = await db.select({ count: count() }).from(monthlyClosings).where(condition);
   return { rows, total: countResult[0]?.count ?? 0 };
+}
+
+export async function listMonthlyClosingYears(): Promise<number[]> {
+  const rows = await db
+    .selectDistinct({ year: monthlyClosings.periodYear })
+    .from(monthlyClosings)
+    .orderBy(sql`${monthlyClosings.periodYear} DESC`);
+  return rows.map((r) => r.year);
 }
 
 export async function findMonthlyClosingById(id: number): Promise<MonthlyClosing | null> {

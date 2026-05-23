@@ -102,16 +102,17 @@ export async function getIncomeReport(
   callerId: number,
   month: string,
   page: number,
-  limit: number
+  limit: number,
+  status?: 'pendente' | 'paga' | 'cancelada'
 ): Promise<IncomeReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
   const { from, to } = monthToRange(month);
 
   const offset = (page - 1) * limit;
   const [rows, rowCount, totalIncome] = await Promise.all([
-    repo.getIncomeReportRows(from, to, offset, limit),
-    repo.countIncomeReportRows(from, to),
-    repo.sumIncomeForRange(from, to)
+    repo.getIncomeReportRows(from, to, offset, limit, status),
+    repo.countIncomeReportRows(from, to, status),
+    repo.sumIncomeForRange(from, to, status)
   ]);
 
   const totalPages = Math.ceil(rowCount / limit) || 1;
@@ -130,16 +131,17 @@ export async function getExpenseReport(
   callerId: number,
   month: string,
   page: number,
-  limit: number
+  limit: number,
+  status?: 'pendente' | 'paga' | 'cancelada'
 ): Promise<ExpenseReportResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
   const { from, to } = monthToRange(month);
 
   const offset = (page - 1) * limit;
   const [rows, rowCount, totalExpenses] = await Promise.all([
-    repo.getExpenseReportRows(from, to, offset, limit),
-    repo.countExpenseReportRows(from, to),
-    repo.sumExpensesForRange(from, to)
+    repo.getExpenseReportRows(from, to, offset, limit, status),
+    repo.countExpenseReportRows(from, to, status),
+    repo.sumExpensesForRange(from, to, status)
   ]);
 
   const totalPages = Math.ceil(rowCount / limit) || 1;

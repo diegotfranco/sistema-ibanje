@@ -12,15 +12,22 @@ const selectFields = {
   createdAt: designatedFunds.createdAt
 };
 
-export async function listDesignatedFunds(offset: number, limit: number) {
+export async function listDesignatedFunds(
+  offset: number,
+  limit: number,
+  status?: 'ativo' | 'inativo'
+) {
+  const condition = status ? eq(designatedFunds.status, status) : undefined;
+
   const rows = await db
     .select(selectFields)
     .from(designatedFunds)
+    .where(condition)
     .orderBy(designatedFunds.id)
     .offset(offset)
     .limit(limit);
 
-  const countResult = await db.select({ count: count() }).from(designatedFunds);
+  const countResult = await db.select({ count: count() }).from(designatedFunds).where(condition);
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 

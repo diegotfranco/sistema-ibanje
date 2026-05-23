@@ -3,7 +3,12 @@ import { paginatedSchema } from '../../../lib/http-schemas.js';
 
 export const ListMonthlyClosingsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20)
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  year: z.coerce.number().int().min(2000).max(2100).optional()
+});
+
+export const MonthlyClosingYearsResponseSchema = z.object({
+  years: z.array(z.number().int())
 });
 
 export const CreateMonthlyClosingRequestSchema = z.object({
@@ -57,3 +62,4 @@ export type ApproveMonthlyClosingRequest = z.infer<typeof ApproveMonthlyClosingR
 export type RejectMonthlyClosingRequest = z.infer<typeof RejectMonthlyClosingRequestSchema>;
 export type ReproveClosingRequest = z.infer<typeof ReproveClosingRequestSchema>;
 export type MonthlyClosingResponse = z.infer<typeof MonthlyClosingResponseSchema>;
+export type MonthlyClosingYearsResponse = z.infer<typeof MonthlyClosingYearsResponseSchema>;

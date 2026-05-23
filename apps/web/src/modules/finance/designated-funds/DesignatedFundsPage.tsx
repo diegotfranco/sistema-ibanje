@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage } from '@/components/ResourceListPage';
+import { Pagination } from '@/components/Pagination';
+import { TableFilter } from '@/components/TableFilter';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
 import { DesignatedFundForm } from './DesignatedFundForm';
@@ -18,14 +20,36 @@ export default function DesignatedFundsPage() {
   const canEdit = hasPermission(perms, Module.DesignatedFunds, Action.Update);
   const canDelete = hasPermission(perms, Module.DesignatedFunds, Action.Delete);
 
-  const list = useDesignatedFunds();
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<'ativo' | 'inativo' | undefined>(undefined);
+
+  const list = useDesignatedFunds({ page, status });
   const { create, update, remove } = useDesignatedFundMutations();
 
   const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
-  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
+  const items = list.data?.data;
+  const totalPages = list.data?.totalPages ?? 1;
+
+  const statusFilterUI = (
+    <TableFilter
+      value={status}
+      onChange={(v) => {
+        setStatus(v as 'ativo' | 'inativo' | undefined);
+        setPage(1);
+      }}
+      options={[
+        { value: 'ativo', label: 'Ativos' },
+        { value: 'inativo', label: 'Inativos' }
+      ]}
+    />
+  );
+
+  const paginationUI = (
+    <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+  );
 
   return (
     <>
@@ -35,19 +59,27 @@ export default function DesignatedFundsPage() {
           columns={[
             {
               header: 'Nome',
-              cell: (row) => row.name
+              cell: (row) => row.name,
+              className: 'w-full'
             },
             {
               header: 'Descrição',
-              cell: (row) => row.description || '—'
+              cell: (row) => row.description || '—',
+              hideBelow: 'xl'
+            },
+            {
+              header: 'Status',
+              cell: (row) => <StatusBadge status={row.status} />
             },
             {
               header: 'Meta',
-              cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—')
+              cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—'),
+              hideBelow: 'md'
             },
             {
               header: 'Encerra em',
-              cell: (row) => formatDate(row.targetDate)
+              cell: (row) => formatDate(row.targetDate),
+              hideBelow: 'lg'
             }
           ]}
           data={items}
@@ -62,7 +94,10 @@ export default function DesignatedFundsPage() {
           mobileRow={(row) => (
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="font-medium truncate">{row.name}</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="font-medium truncate">{row.name}</p>
+                  <StatusBadge status={row.status} className="shrink-0" />
+                </div>
                 {row.description && (
                   <p className="text-xs text-muted-foreground truncate">{row.description}</p>
                 )}
@@ -82,13 +117,26 @@ export default function DesignatedFundsPage() {
           mobileDetailTitle={(row) => row.name}
           mobileDetailFields={(row) => [
             { label: 'Nome', value: row.name },
-            { label: 'Descrição', value: row.description || '—', hideEmpty: false },
+            {
+              label: 'Status',
+              value: row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : '—',
+              hideEmpty: false
+            },
+            {
+              label: 'Descrição',
+              value: row.description || '—',
+              hideEmpty: false
+            },
             {
               label: 'Meta',
               value: row.targetAmount ? `R$ ${row.targetAmount}` : '—'
             },
             { label: 'Encerra em', value: formatDate(row.targetDate) }
           ]}
+          columnToggle={true}
+          tableId="designated-funds"
+          toolbarRight={statusFilterUI}
+          pagination={paginationUI}
         />
       </PageContainer>
 

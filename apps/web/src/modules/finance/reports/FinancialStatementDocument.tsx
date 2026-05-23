@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/Card';
 import type { FinancialStatementResponse } from './schema';
 
@@ -51,6 +53,15 @@ interface SectionProps {
 }
 
 function StatementSection({ title, groups, total, totalColor }: SectionProps) {
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set(groups.map((g) => g.name)));
+  const toggle = (name: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+
   return (
     <section aria-labelledby={`statement-${title.toLowerCase()}`} className="space-y-3">
       <h3
@@ -61,28 +72,45 @@ function StatementSection({ title, groups, total, totalColor }: SectionProps) {
       {groups.length === 0 ? (
         <p className="text-sm text-muted-foreground italic px-2">Sem lançamentos no período.</p>
       ) : (
-        <div className="space-y-3">
-          {groups.map((group) => (
-            <div key={group.name} className="space-y-1">
-              <h4 className="text-sm font-medium">{group.name}</h4>
-              <dl className="space-y-0.5">
-                {group.children.map((child) => (
-                  <div
-                    key={child.categoryName}
-                    className="flex items-baseline justify-between gap-3 pl-4 text-sm">
-                    <dt className="min-w-0 truncate text-muted-foreground">{child.categoryName}</dt>
-                    <dd className="font-mono tabular-nums shrink-0">{formatMoney(child.total)}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="flex items-baseline justify-between gap-3 border-t pt-1 pl-4 text-sm">
-                <span className="min-w-0 text-muted-foreground">Subtotal</span>
-                <span className="font-mono tabular-nums whitespace-nowrap shrink-0 text-muted-foreground">
-                  {fmt(group.subtotal)}
-                </span>
+        <div className="space-y-2">
+          {groups.map((group) => {
+            const isExpanded = expanded.has(group.name);
+            return (
+              <div key={group.name} className="space-y-1">
+                <button
+                  type="button"
+                  onClick={() => toggle(group.name)}
+                  aria-expanded={isExpanded}
+                  className="flex w-full items-baseline justify-between gap-3 rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring/50 cursor-pointer">
+                  <span className="inline-flex items-center gap-1 text-sm font-medium">
+                    {isExpanded ? (
+                      <ChevronDown className="size-3" />
+                    ) : (
+                      <ChevronRight className="size-3" />
+                    )}
+                    {group.name}
+                  </span>
+                  <span className="font-mono tabular-nums whitespace-nowrap shrink-0 text-sm font-medium">
+                    {fmt(group.subtotal)}
+                  </span>
+                </button>
+                {isExpanded && (
+                  <dl className="space-y-0.5">
+                    {group.children.map((child) => (
+                      <div
+                        key={child.categoryName}
+                        className="flex items-baseline justify-between gap-3 pl-5 text-sm text-muted-foreground">
+                        <dt className="min-w-0 truncate">{child.categoryName}</dt>
+                        <dd className="font-mono tabular-nums shrink-0">
+                          {formatMoney(child.total)}
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
       <div className="flex items-baseline justify-between gap-3 border-t-2 pt-2 text-sm font-semibold">
@@ -131,28 +159,6 @@ export function FinancialStatementDocument({ data }: Props) {
           </div>
         </CardContent>
       </Card>
-
-      {data.incomeByFund.length > 0 && (
-        <Card>
-          <CardContent className="space-y-2 py-4">
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-primary-soft">
-              Entradas por Fundo
-            </h3>
-            <dl className="space-y-0.5">
-              {data.incomeByFund.map((fund) => (
-                <div
-                  key={fund.fundId}
-                  className="flex items-baseline justify-between gap-3 text-sm">
-                  <dt className="min-w-0 truncate">{fund.fundName}</dt>
-                  <dd className="font-mono tabular-nums whitespace-nowrap shrink-0 text-money-in">
-                    {formatMoney(fund.total)}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

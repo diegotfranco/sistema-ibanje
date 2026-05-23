@@ -3,7 +3,8 @@ import { paginatedSchema } from '../../../lib/http-schemas.js';
 
 export const ListDesignatedFundsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20)
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(['ativo', 'inativo']).optional()
 });
 
 export const CreateDesignatedFundRequestSchema = z.object({

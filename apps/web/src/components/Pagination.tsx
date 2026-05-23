@@ -1,12 +1,7 @@
 // Project wrapper around shadcn's Pagination primitives.
 //
-// Why this exists: callers want a simple controlled pager — currentPage,
-// totalPages, onPageChange — with pt-BR labels. The shadcn primitives compose a
-// link-style pager; this wrapper renders Previous/Next as proper Buttons (so
-// onClick + disabled work natively) inside the Pagination nav structure, so
-// future `shadcn add pagination` re-syncs are mechanical.
-//
-// Always import from '@/components/Pagination' (not '@/components/ui/pagination').
+// Compact ghost-icon pager: chevrons + "X / Y" label. Native onClick + disabled
+// via Button. Always import from '@/components/Pagination' (not '@/components/ui/pagination').
 import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react';
 import { Button } from '@/components/Button';
 import {
@@ -27,30 +22,32 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
 
   return (
     <PaginationRoot>
-      <PaginationContent>
+      <PaginationContent className="gap-1">
         <PaginationItem>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             onClick={() => onPageChange(currentPage - 1)}
-            disabled={!canGoPrev}>
-            <ChevronLeftIcon data-icon="inline-start" />
-            <span className="hidden sm:inline">Anterior</span>
+            disabled={!canGoPrev}
+            aria-label="Página anterior">
+            <ChevronLeftIcon className="h-4 w-4" />
           </Button>
         </PaginationItem>
         <PaginationItem>
-          <span className="whitespace-nowrap px-3 text-sm text-muted-foreground">
-            Página {currentPage} de {totalPages}
+          <span className="px-2 text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+            {currentPage} / {totalPages}
           </span>
         </PaginationItem>
         <PaginationItem>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             onClick={() => onPageChange(currentPage + 1)}
-            disabled={!canGoNext}>
-            <span className="hidden sm:inline">Próxima</span>
-            <ChevronRightIcon data-icon="inline-end" />
+            disabled={!canGoNext}
+            aria-label="Próxima página">
+            <ChevronRightIcon className="h-4 w-4" />
           </Button>
         </PaginationItem>
       </PaginationContent>

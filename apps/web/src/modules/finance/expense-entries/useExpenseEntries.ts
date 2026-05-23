@@ -17,7 +17,7 @@ function describeError(err: unknown, fallback: string) {
 }
 
 export function useExpenseEntries() {
-  return useResourceList<ExpenseEntryResponse>(BASE, KEY);
+  return useResourceList<ExpenseEntryResponse>(BASE, KEY, { limit: 15 });
 }
 
 export function useExpenseEntryMutations() {
