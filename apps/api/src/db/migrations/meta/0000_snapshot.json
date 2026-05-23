@@ -917,8 +917,8 @@
           "primaryKey": false,
           "notNull": false
         },
-        "reference_date": {
-          "name": "reference_date",
+        "date": {
+          "name": "date",
           "type": "date",
           "primaryKey": false,
           "notNull": true
@@ -1021,11 +1021,11 @@
         }
       },
       "indexes": {
-        "expense_entries_reference_date_idx": {
-          "name": "expense_entries_reference_date_idx",
+        "expense_entries_date_idx": {
+          "name": "expense_entries_date_idx",
           "columns": [
             {
-              "expression": "reference_date",
+              "expression": "date",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1362,17 +1362,17 @@
           "primaryKey": true,
           "notNull": true
         },
+        "deposit_date": {
+          "name": "deposit_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
         "reference_date": {
           "name": "reference_date",
           "type": "date",
           "primaryKey": false,
           "notNull": true
-        },
-        "deposit_date": {
-          "name": "deposit_date",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
         },
         "attribution_month": {
           "name": "attribution_month",
@@ -1446,6 +1446,21 @@
         }
       },
       "indexes": {
+        "income_entries_deposit_date_idx": {
+          "name": "income_entries_deposit_date_idx",
+          "columns": [
+            {
+              "expression": "deposit_date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "income_entries_reference_date_idx": {
           "name": "income_entries_reference_date_idx",
           "columns": [

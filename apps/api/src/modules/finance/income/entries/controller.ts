@@ -1,5 +1,9 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type { CreateIncomeEntryRequest, UpdateIncomeEntryRequest } from './schema.js';
+import type {
+  CreateIncomeEntryRequest,
+  UpdateIncomeEntryRequest,
+  IncomeSummaryQuery
+} from './schema.js';
 import type { IdParam } from '../../../../lib/validation.js';
 import type { PaginationQuery } from '../../../../lib/pagination.js';
 import * as service from './service.js';
@@ -34,4 +38,9 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const result = await service.cancelIncomeEntry(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Income entry not found' });
   return reply.code(204).send();
+}
+
+export async function summary(req: FastifyRequest, reply: FastifyReply) {
+  const query = req.query as IncomeSummaryQuery;
+  return reply.send(await service.summarizeIncome(req.session.userId!, query));
 }

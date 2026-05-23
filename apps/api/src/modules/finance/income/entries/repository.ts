@@ -1,4 +1,5 @@
-import { eq, count, desc } from 'drizzle-orm';
+import { eq, count, desc, and, gte, lte, sum, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../../db/index.js';
 import {
   incomeEntries,
@@ -8,14 +9,18 @@ import {
   designatedFunds
 } from '../../../../db/schema.js';
 
+const parentIncomeCategories = alias(incomeCategories, 'parent_income_categories');
+
 const selectFields = {
   id: incomeEntries.id,
-  referenceDate: incomeEntries.referenceDate,
   depositDate: incomeEntries.depositDate,
+  referenceDate: incomeEntries.referenceDate,
   attributionMonth: incomeEntries.attributionMonth,
   amount: incomeEntries.amount,
   categoryId: incomeEntries.categoryId,
   categoryName: incomeCategories.name,
+  parentCategoryId: parentIncomeCategories.id,
+  parentCategoryName: parentIncomeCategories.name,
   attenderId: incomeEntries.attenderId,
   attenderName: attenders.name,
   paymentMethodId: incomeEntries.paymentMethodId,
@@ -34,6 +39,7 @@ function baseQuery() {
     .select(selectFields)
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(parentIncomeCategories, eq(parentIncomeCategories.id, incomeCategories.parentId))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id));
@@ -71,8 +77,8 @@ export async function findIncomeEntryById(id: number) {
 }
 
 export async function insertIncomeEntry(data: {
+  depositDate: string;
   referenceDate: string;
-  depositDate?: string;
   attributionMonth?: string;
   amount: number;
   categoryId: number;
@@ -100,8 +106,8 @@ export async function updateIncomeEntry(
   data: Partial<
     Pick<
       typeof incomeEntries.$inferInsert,
-      | 'referenceDate'
       | 'depositDate'
+      | 'referenceDate'
       | 'attributionMonth'
       | 'amount'
       | 'categoryId'
@@ -126,4 +132,35 @@ export async function cancelIncomeEntry(id: number) {
     .update(incomeEntries)
     .set({ status: 'cancelada', updatedAt: new Date() })
     .where(eq(incomeEntries.id, id));
+}
+
+export async function summarizeIncomeByTopLevelCategory(
+  from: string,
+  to: string
+): Promise<{ categoryId: number; categoryName: string; total: string }[]> {
+  const parentCategories = alias(incomeCategories, 'parent_income_categories');
+
+  const rows = await db
+    .select({
+      categoryId: sql<number>`coalesce(${incomeCategories.parentId}, ${incomeCategories.id})`,
+      categoryName: sql<string>`coalesce(${parentCategories.name}, ${incomeCategories.name})`,
+      total: sum(incomeEntries.amount).mapWith(String)
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(parentCategories, eq(parentCategories.id, incomeCategories.parentId))
+    .where(
+      and(
+        eq(incomeEntries.status, 'paga'),
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to)
+      )
+    )
+    .groupBy(
+      sql`coalesce(${incomeCategories.parentId}, ${incomeCategories.id})`,
+      sql`coalesce(${parentCategories.name}, ${incomeCategories.name})`
+    )
+    .orderBy(sql`coalesce(${parentCategories.name}, ${incomeCategories.name})`);
+
+  return rows;
 }

@@ -1,16 +1,19 @@
 import * as repo from './repository.js';
+import { sumExpensesForRange } from '../../reports/repository.js';
 import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
-import { assertPeriodEditable } from '../../../../lib/finance.js';
+import { assertPeriodEditable, deriveReferenceDateFromDeposit } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
 import type {
   CreateIncomeEntryRequest,
   UpdateIncomeEntryRequest,
-  IncomeEntryResponse
+  IncomeEntryResponse,
+  IncomeSummaryQuery,
+  IncomeSummaryResponse
 } from './schema.js';
 
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
@@ -88,16 +91,18 @@ export async function createIncomeEntry(
   body: CreateIncomeEntryRequest
 ): Promise<IncomeEntryResponse> {
   await assertPermission(callerId, Module.IncomeEntries, Action.Create);
-  await assertPeriodEditable(body.referenceDate);
+  const referenceDate = deriveReferenceDateFromDeposit(body.depositDate);
+  await assertPeriodEditable(referenceDate);
   await validateEntry({
     categoryId: body.categoryId,
     attenderId: body.attenderId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
-    referenceDate: body.referenceDate
+    referenceDate
   });
   const created = await repo.insertIncomeEntry({
     ...body,
+    referenceDate,
     userId: callerId
   });
   if (!created) throw new Error('Failed to create income entry');
@@ -113,7 +118,9 @@ export async function updateIncomeEntry(
   const entry = await repo.findIncomeEntryById(targetId);
   if (!entry) return null;
 
-  const referenceDate = body.referenceDate ?? entry.referenceDate;
+  const referenceDate = body.depositDate
+    ? deriveReferenceDateFromDeposit(body.depositDate)
+    : entry.referenceDate;
   await assertPeriodEditable(referenceDate);
 
   const mergedValues = {
@@ -127,6 +134,7 @@ export async function updateIncomeEntry(
 
   const updateData: Parameters<typeof repo.updateIncomeEntry>[1] = {
     ...body,
+    ...(body.depositDate ? { referenceDate } : {}),
     amount: body.amount !== undefined ? body.amount.toString() : undefined
   };
 
@@ -141,4 +149,20 @@ export async function cancelIncomeEntry(callerId: number, targetId: number): Pro
   if (!entry) return null;
   await assertPeriodEditable(entry.referenceDate);
   await repo.cancelIncomeEntry(targetId);
+}
+
+export async function summarizeIncome(
+  callerId: number,
+  query: IncomeSummaryQuery
+): Promise<IncomeSummaryResponse> {
+  await assertPermission(callerId, Module.IncomeEntries, Action.View);
+
+  const [rows, totalExpense] = await Promise.all([
+    repo.summarizeIncomeByTopLevelCategory(query.from, query.to),
+    sumExpensesForRange(query.from, query.to)
+  ]);
+
+  const total = rows.reduce((sum, row) => sum + Number.parseFloat(row.total), 0).toFixed(2);
+
+  return { rows, total, totalExpense };
 }

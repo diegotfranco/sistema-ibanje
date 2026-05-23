@@ -63,8 +63,8 @@ export const incomeEntries = pgTable(
   'income_entries',
   {
     id: serial('id').primaryKey(),
+    depositDate: date('deposit_date').notNull(),
     referenceDate: date('reference_date').notNull(),
-    depositDate: date('deposit_date'),
     attributionMonth: date('attribution_month'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     categoryId: integer('category_id')
@@ -85,6 +85,7 @@ export const incomeEntries = pgTable(
   },
   (table) => [
     check('chk_income_amount_positive', sql`${table.amount} > 0`),
+    index('income_entries_deposit_date_idx').on(table.depositDate),
     index('income_entries_reference_date_idx').on(table.referenceDate),
     index('income_entries_status_idx').on(table.status),
     index('income_entries_category_id_idx').on(table.categoryId),
@@ -109,7 +110,7 @@ export const expenseEntries = pgTable(
   {
     id: serial('id').primaryKey(),
     parentId: integer('parent_id').references((): AnyPgColumn => expenseEntries.id),
-    referenceDate: date('reference_date').notNull(),
+    date: date('date').notNull(),
     description: varchar('description', { length: 256 }).notNull(),
     total: numeric('total', { precision: 12, scale: 2 }).notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
@@ -139,7 +140,7 @@ export const expenseEntries = pgTable(
       'chk_expense_installments_valid',
       sql`${table.installment} > 0 AND ${table.totalInstallments} > 0 AND ${table.installment} <= ${table.totalInstallments}`
     ),
-    index('expense_entries_reference_date_idx').on(table.referenceDate),
+    index('expense_entries_date_idx').on(table.date),
     index('expense_entries_status_idx').on(table.status),
     index('expense_entries_category_id_idx').on(table.categoryId),
     index('expense_entries_attender_id_idx').on(table.attenderId),

@@ -14,7 +14,7 @@ const parentExpenseCategories = alias(expenseCategories, 'parent_expense_categor
 const selectFields = {
   id: expenseEntries.id,
   parentId: expenseEntries.parentId,
-  referenceDate: expenseEntries.referenceDate,
+  date: expenseEntries.date,
   description: expenseEntries.description,
   total: expenseEntries.total,
   amount: expenseEntries.amount,
@@ -63,7 +63,7 @@ export async function findExpenseEntryById(id: number) {
 }
 
 export async function insertExpenseEntry(data: {
-  referenceDate: string;
+  date: string;
   description: string;
   total: number;
   amount: number;
@@ -97,7 +97,7 @@ export async function updateExpenseEntry(
   data: Partial<
     Pick<
       typeof expenseEntries.$inferInsert,
-      | 'referenceDate'
+      | 'date'
       | 'description'
       | 'total'
       | 'amount'
@@ -162,8 +162,8 @@ export async function summarizeExpensesByTopLevelCategory(
     .where(
       and(
         eq(expenseEntries.status, 'paga'),
-        gte(expenseEntries.referenceDate, from),
-        lte(expenseEntries.referenceDate, to)
+        gte(expenseEntries.date, from),
+        lte(expenseEntries.date, to)
       )
     )
     .groupBy(

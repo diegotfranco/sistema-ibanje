@@ -112,7 +112,9 @@ export async function seedProd() {
 
     const insertedICParents = await tx
       .insert(incomeCategories)
-      .values(SEED_INCOME_CATEGORY_PARENTS.map((name) => ({ name })))
+      .values(
+        SEED_INCOME_CATEGORY_PARENTS.map((p) => ({ name: p.name, description: p.description }))
+      )
       .returning();
     const icParentByName = Object.fromEntries(insertedICParents.map((c) => [c.name, c]));
     await tx.insert(incomeCategories).values(buildIncomeCategoryChildren(icParentByName));

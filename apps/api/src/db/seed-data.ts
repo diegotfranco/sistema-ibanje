@@ -75,7 +75,7 @@ export const SEED_MODULES = [
   { name: 'Categorias de Saídas', description: 'Gerencia os tipos de saídas financeiras' },
   { name: 'Lançamentos de Saídas', description: 'Gerencia o registro de saídas financeiras' },
   { name: 'Formas de Pagamento', description: 'Gerencia as formas de pagamento disponíveis' },
-  { name: 'Fundos Designados', description: 'Gerencia os fundos designados da igreja' },
+  { name: 'Campanhas', description: 'Gerencia as campanhas da igreja' },
   { name: 'Painel', description: 'Painel com informações e estatísticas do sistema' },
   {
     name: 'Relatórios',
@@ -136,67 +136,260 @@ export const SEED_DESIGNATED_FUNDS: {
  * The WHERE-it's-earmarked dimension lives in designated_funds (e.g. missionary offering =
  * Oferta + Fundo Missionário; campaign contribution = Oferta + the specific Campanha X fund).
  */
-export const SEED_INCOME_CATEGORY_PARENTS = ['Contribuições', 'Outras Receitas'] as const;
+export const SEED_INCOME_CATEGORY_PARENTS = [
+  {
+    name: 'Contribuições',
+    description: 'Receitas vindas dos próprios membros e visitantes da igreja.'
+  },
+  {
+    name: 'Outras Receitas',
+    description: 'Receitas que não vêm de contribuições diretas dos membros.'
+  }
+] as const;
 
 export function buildIncomeCategoryChildren(parentByName: Record<string, { id: number }>) {
   return [
-    { name: 'Dízimo', parentId: parentByName['Contribuições'].id, requiresMember: true },
-    { name: 'Oferta', parentId: parentByName['Contribuições'].id },
-    { name: 'Doação', parentId: parentByName['Contribuições'].id },
-    { name: 'Eventos', parentId: parentByName['Outras Receitas'].id },
-    { name: 'Rendimentos Financeiros', parentId: parentByName['Outras Receitas'].id },
-    { name: 'Aluguel de Espaço', parentId: parentByName['Outras Receitas'].id },
-    { name: 'Venda de Material', parentId: parentByName['Outras Receitas'].id }
+    {
+      name: 'Dízimo',
+      parentId: parentByName['Contribuições'].id,
+      requiresMember: true,
+      description: 'Contribuição regular de 10% praticada pelos membros.'
+    },
+    {
+      name: 'Oferta',
+      parentId: parentByName['Contribuições'].id,
+      description: 'Contribuição voluntária dada durante cultos e atividades.'
+    },
+    {
+      name: 'Doação',
+      parentId: parentByName['Contribuições'].id,
+      description: 'Valor entregue à igreja fora do contexto de culto, por membros ou terceiros.'
+    },
+    {
+      name: 'Eventos',
+      parentId: parentByName['Outras Receitas'].id,
+      description: 'Arrecadação proveniente de eventos promovidos pela igreja.'
+    },
+    {
+      name: 'Rendimentos Financeiros',
+      parentId: parentByName['Outras Receitas'].id,
+      description: 'Juros e rendimentos de aplicações financeiras da igreja.'
+    },
+    {
+      name: 'Aluguel de Espaço',
+      parentId: parentByName['Outras Receitas'].id,
+      description: 'Receita de cessão temporária de salões, quadras ou outros espaços da igreja.'
+    },
+    {
+      name: 'Venda de Material',
+      parentId: parentByName['Outras Receitas'].id,
+      description: 'Venda de livros, materiais didáticos, lanches e demais itens pela igreja.'
+    }
   ];
 }
 
 export const SEED_EXPENSE_CATEGORY_PARENTS = [
-  { name: 'Pessoal' },
-  { name: 'Administrativo' },
-  { name: 'Operacional' },
-  { name: 'Manutenção' },
-  { name: 'Equipamentos' },
-  { name: 'Eventos / Programas' },
-  { name: 'Missões' },
-  { name: 'Contribuições Eclesiásticas' },
-  { name: 'Auxílios' },
-  { name: 'Diversos' }
+  { name: 'Pessoal', description: 'Despesas relacionadas a pessoas que trabalham para a igreja.' },
+  {
+    name: 'Administrativo',
+    description: 'Despesas com a gestão burocrática e contábil da igreja.'
+  },
+  {
+    name: 'Operacional',
+    description: 'Despesas recorrentes para manter o funcionamento do imóvel.'
+  },
+  {
+    name: 'Manutenção',
+    description: 'Reparos e conservação da estrutura física da igreja.'
+  },
+  {
+    name: 'Equipamentos',
+    description: 'Aquisição e reposição de bens duráveis usados pela igreja.'
+  },
+  {
+    name: 'Eventos / Programas',
+    description: 'Despesas com cultos especiais, retiros, conferências e demais programas.'
+  },
+  {
+    name: 'Missões',
+    description: 'Repasses e auxílios para o trabalho missionário dentro e fora do país.'
+  },
+  {
+    name: 'Contribuições Eclesiásticas',
+    description: 'Contribuições obrigatórias pagas a entidades denominacionais.'
+  },
+  {
+    name: 'Auxílios',
+    description: 'Auxílios concedidos a membros e cooperadores no exercício do ministério.'
+  },
+  {
+    name: 'Diversos',
+    description: 'Despesas que não se encaixam nas demais categorias.'
+  }
 ];
 
 export function buildExpenseCategoryChildren(parentByName: Record<string, { id: number }>) {
   return [
-    { name: 'Honorários Pastorais', parentId: parentByName['Pessoal'].id },
-    { name: 'FGTM', parentId: parentByName['Pessoal'].id },
-    { name: 'Encargos', parentId: parentByName['Pessoal'].id },
-    { name: 'Treinamento / Desenvolvimento', parentId: parentByName['Pessoal'].id },
-    { name: 'Contador', parentId: parentByName['Administrativo'].id },
-    { name: 'Material de Expediente', parentId: parentByName['Administrativo'].id },
-    { name: 'Cartório / Registros', parentId: parentByName['Administrativo'].id },
-    { name: 'Assinaturas / Software', parentId: parentByName['Administrativo'].id },
-    { name: 'Tarifa Bancária', parentId: parentByName['Administrativo'].id },
-    { name: 'Água', parentId: parentByName['Operacional'].id },
-    { name: 'Energia', parentId: parentByName['Operacional'].id },
-    { name: 'Internet / Telefone', parentId: parentByName['Operacional'].id },
-    { name: 'Vigilância Patrimonial', parentId: parentByName['Operacional'].id },
-    { name: 'Material de Limpeza', parentId: parentByName['Operacional'].id },
-    { name: 'Seguros', parentId: parentByName['Operacional'].id },
-    { name: 'Manutenção Predial', parentId: parentByName['Manutenção'].id },
-    { name: 'Reparo Hidráulico', parentId: parentByName['Manutenção'].id },
-    { name: 'Reparo Elétrico', parentId: parentByName['Manutenção'].id },
-    { name: 'Compra de Equipamentos', parentId: parentByName['Equipamentos'].id },
-    { name: 'Despesas com Eventos', parentId: parentByName['Eventos / Programas'].id },
-    { name: 'Material Didático', parentId: parentByName['Eventos / Programas'].id },
-    { name: 'Gratificações', parentId: parentByName['Eventos / Programas'].id },
-    { name: 'Missões Nacionais', parentId: parentByName['Missões'].id },
-    { name: 'Missões Mundiais', parentId: parentByName['Missões'].id },
-    { name: 'PAM', parentId: parentByName['Missões'].id },
-    { name: 'Auxílio a Seminarista', parentId: parentByName['Missões'].id },
-    { name: 'Auxílio a Pastor em Formação', parentId: parentByName['Missões'].id },
-    { name: 'Plano Cooperativo', parentId: parentByName['Contribuições Eclesiásticas'].id },
-    { name: 'Acibams', parentId: parentByName['Contribuições Eclesiásticas'].id },
-    { name: 'Auxílio Combustível', parentId: parentByName['Auxílios'].id },
-    { name: 'Transporte / Deslocamento', parentId: parentByName['Auxílios'].id },
-    { name: 'Outras Despesas', parentId: parentByName['Diversos'].id }
+    {
+      name: 'Honorários Pastorais',
+      parentId: parentByName['Pessoal'].id,
+      description: 'Remuneração mensal dos pastores.'
+    },
+    {
+      name: 'FGTM',
+      parentId: parentByName['Pessoal'].id,
+      description: 'Fundo de Garantia para o Tempo de Ministério.'
+    },
+    {
+      name: 'Encargos',
+      parentId: parentByName['Pessoal'].id,
+      description: 'Encargos sociais e tributários sobre a folha de pessoal.'
+    },
+    {
+      name: 'Treinamento / Desenvolvimento',
+      parentId: parentByName['Pessoal'].id,
+      description: 'Cursos, congressos e capacitação dos colaboradores e ministros.'
+    },
+    {
+      name: 'Contador',
+      parentId: parentByName['Administrativo'].id,
+      description: 'Honorários do serviço contábil da igreja.'
+    },
+    {
+      name: 'Material de Expediente',
+      parentId: parentByName['Administrativo'].id,
+      description: 'Suprimentos de papelaria e escritório usados na rotina administrativa.'
+    },
+    {
+      name: 'Cartório / Registros',
+      parentId: parentByName['Administrativo'].id,
+      description: 'Taxas cartoriais, certidões e registros legais.'
+    },
+    {
+      name: 'Assinaturas / Software',
+      parentId: parentByName['Administrativo'].id,
+      description: 'Mensalidades de softwares e assinaturas digitais utilizadas pela igreja.'
+    },
+    {
+      name: 'Tarifa Bancária',
+      parentId: parentByName['Administrativo'].id,
+      description: 'Tarifas e taxas cobradas pelo banco da igreja.'
+    },
+    {
+      name: 'Água',
+      parentId: parentByName['Operacional'].id,
+      description: 'Conta mensal de fornecimento de água.'
+    },
+    {
+      name: 'Energia',
+      parentId: parentByName['Operacional'].id,
+      description: 'Conta mensal de fornecimento de energia elétrica.'
+    },
+    {
+      name: 'Internet / Telefone',
+      parentId: parentByName['Operacional'].id,
+      description: 'Serviços de internet e telefonia da igreja.'
+    },
+    {
+      name: 'Vigilância Patrimonial',
+      parentId: parentByName['Operacional'].id,
+      description: 'Monitoramento e segurança do imóvel.'
+    },
+    {
+      name: 'Material de Limpeza',
+      parentId: parentByName['Operacional'].id,
+      description: 'Produtos e insumos usados na limpeza do templo e demais espaços.'
+    },
+    {
+      name: 'Seguros',
+      parentId: parentByName['Operacional'].id,
+      description: 'Apólices de seguro do imóvel e dos bens da igreja.'
+    },
+    {
+      name: 'Manutenção Predial',
+      parentId: parentByName['Manutenção'].id,
+      description: 'Reparos gerais de pintura, alvenaria e conservação do prédio.'
+    },
+    {
+      name: 'Reparo Hidráulico',
+      parentId: parentByName['Manutenção'].id,
+      description: 'Conserto de encanamentos, torneiras e instalações hidráulicas.'
+    },
+    {
+      name: 'Reparo Elétrico',
+      parentId: parentByName['Manutenção'].id,
+      description: 'Conserto de fiação, tomadas e instalações elétricas.'
+    },
+    {
+      name: 'Compra de Equipamentos',
+      parentId: parentByName['Equipamentos'].id,
+      description: 'Aquisição de equipamentos de som, vídeo, mobiliário ou eletrônicos.'
+    },
+    {
+      name: 'Despesas com Eventos',
+      parentId: parentByName['Eventos / Programas'].id,
+      description: 'Custos diretos de realização de eventos da igreja.'
+    },
+    {
+      name: 'Material Didático',
+      parentId: parentByName['Eventos / Programas'].id,
+      description: 'Apostilas, livros e materiais usados nas atividades de ensino.'
+    },
+    {
+      name: 'Gratificações',
+      parentId: parentByName['Eventos / Programas'].id,
+      description: 'Gratificações pagas a preletores e colaboradores convidados.'
+    },
+    {
+      name: 'Missões Nacionais',
+      parentId: parentByName['Missões'].id,
+      description: 'Repasses para o trabalho missionário dentro do Brasil.'
+    },
+    {
+      name: 'Missões Mundiais',
+      parentId: parentByName['Missões'].id,
+      description: 'Repasses para missionários e projetos no exterior.'
+    },
+    {
+      name: 'PAM',
+      parentId: parentByName['Missões'].id,
+      description: 'Plano de Auxílio Missionário.'
+    },
+    {
+      name: 'Auxílio a Seminarista',
+      parentId: parentByName['Missões'].id,
+      description: 'Apoio financeiro a estudantes de seminário.'
+    },
+    {
+      name: 'Auxílio a Pastor em Formação',
+      parentId: parentByName['Missões'].id,
+      description: 'Apoio financeiro a pastores em processo de formação ministerial.'
+    },
+    {
+      name: 'Plano Cooperativo',
+      parentId: parentByName['Contribuições Eclesiásticas'].id,
+      description: 'Contribuição denominacional para o Plano Cooperativo.'
+    },
+    {
+      name: 'Acibams',
+      parentId: parentByName['Contribuições Eclesiásticas'].id,
+      description: 'Contribuição à associação regional de igrejas (Acibams).'
+    },
+    {
+      name: 'Auxílio Combustível',
+      parentId: parentByName['Auxílios'].id,
+      description: 'Reembolso de combustível para deslocamentos a serviço da igreja.'
+    },
+    {
+      name: 'Transporte / Deslocamento',
+      parentId: parentByName['Auxílios'].id,
+      description: 'Passagens, locação de veículos e demais despesas de deslocamento.'
+    },
+    {
+      name: 'Outras Despesas',
+      parentId: parentByName['Diversos'].id,
+      description: 'Despesas pontuais que não se encaixam nas demais categorias.'
+    }
   ];
 }
 
@@ -225,7 +418,7 @@ export function buildRoleModulePermissions(
     'Categorias de Saídas',
     'Lançamentos de Saídas',
     'Formas de Pagamento',
-    'Fundos Designados'
+    'Campanhas'
   ];
   const adminMods = ['Painel', 'Congregados', 'Atas'];
   const closingFullIds = ['Acessar', 'Cadastrar', 'Revisar', 'Editar', 'Remover'].map(

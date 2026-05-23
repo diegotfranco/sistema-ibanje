@@ -407,7 +407,7 @@ export const EDGE_CASE_CLOSINGS: EdgeCaseClosing[] = [
     status: 'rejeitado',
     closingBalance: '9876.10',
     treasurerNotes: 'Saldo conferido com extrato bancário.',
-    accountantNotes: '[REVISAR] Divergência de R$ 120,00 entre extrato e lançamentos do dia 25.',
+    accountantNotes: 'Divergência de R$ 120,00 entre extrato e lançamentos do dia 25.',
     submittedByUserEmail: 'tesoureiro.resp@email.com'
   },
   // Approved — ready for presidente to close.
@@ -437,8 +437,8 @@ export const EDGE_CASE_CLOSINGS: EdgeCaseClosing[] = [
 // finance entries — installments, large amount, closed-period block, negative balance
 // ---------------------------------------------------------------------------
 export type EdgeCaseIncome = {
+  depositDate: string;
   referenceDate: string;
-  depositDate?: string;
   amount: string;
   categoryName: string;
   attenderName?: string | null;
@@ -452,7 +452,8 @@ export const EDGE_CASE_INCOME: EdgeCaseIncome[] = [
   // Entry on the LAST DAY of the closed period (2026-01) — verifies the
   // assertPeriodEditable block kicks in when someone tries to edit.
   {
-    referenceDate: '2026-01-31',
+    depositDate: '2026-01-31',
+    referenceDate: '2026-01-25',
     amount: '500.00',
     categoryName: 'Dízimo',
     attenderName: "Conceição d'Ávila",
@@ -463,7 +464,8 @@ export const EDGE_CASE_INCOME: EdgeCaseIncome[] = [
   },
   // Designated-fund inflow.
   {
-    referenceDate: '2026-02-14',
+    depositDate: '2026-02-14',
+    referenceDate: '2026-02-15',
     amount: '350.00',
     categoryName: 'Oferta',
     attenderName: 'João da Silva',
@@ -473,7 +475,8 @@ export const EDGE_CASE_INCOME: EdgeCaseIncome[] = [
   },
   // Income for a campanha fund (proves the campanha fan-out is wired up).
   {
-    referenceDate: '2026-04-07',
+    depositDate: '2026-04-07',
+    referenceDate: '2026-04-12',
     amount: '200.00',
     categoryName: 'Oferta',
     attenderName: 'André Pereira',
@@ -484,7 +487,7 @@ export const EDGE_CASE_INCOME: EdgeCaseIncome[] = [
 ];
 
 export type EdgeCaseExpense = {
-  referenceDate: string;
+  date: string;
   description: string;
   total: string;
   amount: string;
@@ -505,7 +508,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
   // 5-installment plan — 1 parent + 5 children spanning month boundaries.
   // Total R$ 5.000,00, R$ 1.000,00 per installment.
   {
-    referenceDate: '2026-02-10',
+    date: '2026-02-10',
     description: 'Compra de projetor multimídia (parcelado em 5x)',
     total: '5000.00',
     amount: '1000.00',
@@ -518,7 +521,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
-    referenceDate: '2026-03-10',
+    date: '2026-03-10',
     description: 'Compra de projetor multimídia (parcela 2/5)',
     total: '5000.00',
     amount: '1000.00',
@@ -530,7 +533,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
-    referenceDate: '2026-04-10',
+    date: '2026-04-10',
     description: 'Compra de projetor multimídia (parcela 3/5)',
     total: '5000.00',
     amount: '1000.00',
@@ -542,7 +545,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
-    referenceDate: '2026-05-10',
+    date: '2026-05-10',
     description: 'Compra de projetor multimídia (parcela 4/5)',
     total: '5000.00',
     amount: '1000.00',
@@ -554,7 +557,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
-    referenceDate: '2026-06-10',
+    date: '2026-06-10',
     description: 'Compra de projetor multimídia (parcela 5/5)',
     total: '5000.00',
     amount: '1000.00',
@@ -567,7 +570,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
   },
   // Very large amount — covers the upper bound of numeric(12,2) formatting.
   {
-    referenceDate: '2026-04-20',
+    date: '2026-04-20',
     description: 'Reforma estrutural do templo (parcela única)',
     total: '999999.99',
     amount: '999999.99',
@@ -581,7 +584,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
   // Negative-balance scenario on the "Desafio Construção" fund: a single
   // R$ 3.000 outflow against R$ 200 inflow in the same period.
   {
-    referenceDate: '2026-04-15',
+    date: '2026-04-15',
     description: 'Pagamento de empreiteira — Desafio Construção',
     total: '3000.00',
     amount: '3000.00',

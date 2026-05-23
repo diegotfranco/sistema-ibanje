@@ -138,8 +138,8 @@ export async function sumExpensesForPeriod(year: number, month: number): Promise
     .from(expenseEntries)
     .where(
       and(
-        gte(expenseEntries.referenceDate, periodStart(year, month)),
-        lt(expenseEntries.referenceDate, periodEnd(year, month)),
+        gte(expenseEntries.date, periodStart(year, month)),
+        lt(expenseEntries.date, periodEnd(year, month)),
         eq(expenseEntries.status, 'paga')
       )
     );
@@ -167,8 +167,8 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
       .from(expenseEntries)
       .where(
         and(
-          gte(expenseEntries.referenceDate, start),
-          lt(expenseEntries.referenceDate, end),
+          gte(expenseEntries.date, start),
+          lt(expenseEntries.date, end),
           eq(expenseEntries.status, 'paga'),
           isNotNull(expenseEntries.designatedFundId)
         )
@@ -197,8 +197,8 @@ export async function sumNetForDateRange(startDate: string, endDate: string): Pr
       .from(expenseEntries)
       .where(
         and(
-          gte(expenseEntries.referenceDate, startDate),
-          lt(expenseEntries.referenceDate, endDate),
+          gte(expenseEntries.date, startDate),
+          lt(expenseEntries.date, endDate),
           eq(expenseEntries.status, 'paga')
         )
       )

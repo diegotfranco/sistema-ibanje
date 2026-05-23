@@ -107,8 +107,8 @@ type AttenderFixture = {
 };
 type DesignatedFundFixture = { name: string; description?: string | null };
 type IncomeEntryFixture = {
-  referenceDate: string;
   depositDate: string;
+  referenceDate: string;
   amount: string;
   categoryName: string;
   attenderName: string | null;
@@ -117,7 +117,7 @@ type IncomeEntryFixture = {
   notes: string | null;
 };
 type ExpenseEntryFixture = {
-  referenceDate: string;
+  date: string;
   description: string;
   total: string;
   amount: string;
@@ -272,7 +272,9 @@ export async function seed() {
     // --- Income / Expense categories -----------------------------------------
     const insertedICParents = await tx
       .insert(incomeCategories)
-      .values(SEED_INCOME_CATEGORY_PARENTS.map((name) => ({ name })))
+      .values(
+        SEED_INCOME_CATEGORY_PARENTS.map((p) => ({ name: p.name, description: p.description }))
+      )
       .returning();
     const icParentByName = Object.fromEntries(insertedICParents.map((c) => [c.name, c]));
     const insertedICs = await tx
@@ -395,7 +397,7 @@ export async function seed() {
       if (!pm) throw new Error(`Unknown payment method "${e.paymentMethodName}"`);
       const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
       return {
-        referenceDate: e.referenceDate,
+        date: e.date,
         description: e.description,
         total: e.total,
         amount: e.amount,
@@ -545,7 +547,7 @@ export async function seed() {
             if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
             const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
             return {
-              referenceDate: e.referenceDate,
+              date: e.date,
               description: e.description,
               total: e.total,
               amount: e.amount,
@@ -577,7 +579,7 @@ export async function seed() {
           if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
           return {
-            referenceDate: e.referenceDate,
+            date: e.date,
             description: e.description,
             total: e.total,
             amount: e.amount,

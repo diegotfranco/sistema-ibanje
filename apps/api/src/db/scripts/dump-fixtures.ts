@@ -385,7 +385,7 @@ type IncomeEntryFixture = {
   notes: string | null;
 };
 type ExpenseEntryFixture = {
-  referenceDate: string;
+  date: string;
   description: string;
   total: string;
   amount: string;
@@ -519,18 +519,12 @@ function main() {
     const paymentMethodName = mapForma(e.forma_pagamento);
     const match = matchAttender(e.nome);
     const attenderName = match.matchedName;
-    const noteParts: string[] = [];
-    if (match.kind === 'fuzzy') {
-      noteParts.push(
-        `[REVISAR] Vínculo automático (${match.reason}): nome legado "${e.nome ?? ''}" → "${match.matchedName ?? ''}"`
-      );
-      if (fuzzyMatchedSamples.length < 30) {
-        fuzzyMatchedSamples.push({
-          legacy: e.nome ?? '',
-          matched: match.matchedName ?? '',
-          reason: match.reason ?? ''
-        });
-      }
+    if (match.kind === 'fuzzy' && fuzzyMatchedSamples.length < 30) {
+      fuzzyMatchedSamples.push({
+        legacy: e.nome ?? '',
+        matched: match.matchedName ?? '',
+        reason: match.reason ?? ''
+      });
     } else if (match.kind === 'none' && e.nome) {
       const norm = normalizeName(e.nome);
       if (
@@ -539,11 +533,10 @@ function main() {
           norm
         )
       ) {
-        noteParts.push(`[REVISAR] Nome legado não vinculado: "${e.nome}"`);
         unmatchedNameCounts.set(e.nome, (unmatchedNameCounts.get(e.nome) ?? 0) + 1);
       }
     }
-    const baseNote = noteParts.join(' | ') || null;
+    const baseNote = null;
 
     const dizimo = parseAmount(e.dizimo);
     const terenos = parseAmount(e.doacao_terenos);
@@ -648,12 +641,8 @@ function main() {
     }
     const amount = fmtMoney(s.valor);
     const description = destino.length > 256 ? destino.slice(0, 256) : destino;
-    const notes =
-      categoryName === FALLBACK_EXPENSE_CATEGORY
-        ? `[REVISAR] Destino legado não mapeado: "${destino}"`
-        : null;
     expenseFixture.push({
-      referenceDate: refDate!,
+      date: refDate!,
       description,
       total: amount,
       amount,
@@ -662,11 +651,11 @@ function main() {
       categoryName,
       paymentMethodName: 'Transferência Bancária',
       designatedFundName: null,
-      notes
+      notes: null
     });
   }
   expenseFixture.sort((a, b) => {
-    if (a.referenceDate !== b.referenceDate) return a.referenceDate.localeCompare(b.referenceDate);
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
     return a.description.localeCompare(b.description, 'pt-BR');
   });
 
