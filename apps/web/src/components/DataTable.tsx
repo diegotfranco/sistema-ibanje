@@ -153,7 +153,7 @@ export function DataTable<TData>({
                 <button
                   type="button"
                   onClick={() => mobileOnRowClick(row.original)}
-                  className="block w-full text-left px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none">
+                  className="block w-full text-left px-4 py-3 hover:bg-muted/50 focus-visible:bg-muted/50 outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset">
                   {mobileRow!(row.original)}
                 </button>
               ) : (
@@ -178,7 +178,10 @@ export function DataTable<TData>({
               const alignClass =
                 align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left';
               return (
-                <TableHead key={header.id} className={cn(HEAD_CELL, alignClass, extraClass)}>
+                <TableHead
+                  key={header.id}
+                  scope="col"
+                  className={cn(HEAD_CELL, alignClass, extraClass)}>
                   {header.isPlaceholder
                     ? null
                     : flexRender(header.column.columnDef.header, header.getContext())}
