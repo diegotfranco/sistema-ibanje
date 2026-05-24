@@ -53,13 +53,13 @@ export function ExpenseEntryFields({ control, errors }: Props) {
   return (
     <div className="space-y-4">
       <Controller
-        name="referenceDate"
+        name="date"
         control={control}
         render={({ field }) => (
           <Field>
-            <FieldLabel htmlFor="referenceDate">Data</FieldLabel>
-            <DateInput id="referenceDate" value={field.value} onChange={field.onChange} />
-            {errors.referenceDate && <FieldError>{errors.referenceDate.message}</FieldError>}
+            <FieldLabel htmlFor="date">Data</FieldLabel>
+            <DateInput id="date" value={field.value} onChange={field.onChange} />
+            {errors.date && <FieldError>{errors.date.message}</FieldError>}
           </Field>
         )}
       />

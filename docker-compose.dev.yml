@@ -9,7 +9,7 @@ services:
     ports:
       - '127.0.0.1:5432:5432'
     volumes:
-      - /opt/sistema-ibanje/postgres-data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test:
         ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-sistema_ibanje}']
@@ -23,7 +23,7 @@ services:
     ports:
       - '127.0.0.1:6379:6379'
     volumes:
-      - /opt/sistema-ibanje/redis-data:/data
+      - redis_data:/data
     healthcheck:
       test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
@@ -41,7 +41,7 @@ services:
       - '127.0.0.1:9000:9000'
       - '127.0.0.1:9001:9001'
     volumes:
-      - /opt/sistema-ibanje/minio-data:/data
+      - minio_data:/data
     healthcheck:
       test: ['CMD-SHELL', 'curl -f http://localhost:9000/minio/health/live || exit 1']
       interval: 5s
@@ -51,6 +51,7 @@ services:
   backup:
     image: postgres:18-alpine
     restart: unless-stopped
+    profiles: ['backup']
     depends_on:
       postgres:
         condition: service_healthy
@@ -80,3 +81,8 @@ services:
         touch /var/log/backup.log
         crond -b -L /var/log/crond.log
         tail -F /var/log/backup.log /var/log/crond.log
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

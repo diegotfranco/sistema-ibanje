@@ -7,8 +7,7 @@ export const ListIncomeEntriesRequestSchema = z.object({
 });
 
 export const CreateIncomeEntryRequestSchema = z.object({
-  referenceDate: z.string().date(),
-  depositDate: z.string().date().optional(),
+  depositDate: z.iso.date(),
   attributionMonth: z
     .string()
     .regex(/^\d{4}-\d{2}-01$/, 'attributionMonth must be the first day of a month (YYYY-MM-01)')
@@ -27,12 +26,14 @@ export const UpdateIncomeEntryRequestSchema = CreateIncomeEntryRequestSchema.par
 
 export const IncomeEntryResponseSchema = z.object({
   id: z.number().int().positive(),
-  referenceDate: z.string(),
-  depositDate: z.string().nullable(),
-  attributionMonth: z.string().nullable(),
+  depositDate: z.iso.date(),
+  referenceDate: z.iso.date(),
+  attributionMonth: z.iso.date().nullable(),
   amount: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
+  parentCategoryId: z.number().int().positive().nullable(),
+  parentCategoryName: z.string().nullable(),
   attenderId: z.number().int().positive().nullable(),
   attenderName: z.string().nullable(),
   paymentMethodId: z.number().int().positive(),
@@ -48,6 +49,25 @@ export const IncomeEntryResponseSchema = z.object({
 
 export const IncomeEntryListResponseSchema = paginatedSchema(IncomeEntryResponseSchema);
 
+export const IncomeSummaryQuerySchema = z.object({
+  from: z.iso.date(),
+  to: z.iso.date()
+});
+
+export const IncomeSummaryRowSchema = z.object({
+  categoryId: z.number().int().positive(),
+  categoryName: z.string(),
+  total: z.string()
+});
+
+export const IncomeSummaryResponseSchema = z.object({
+  rows: z.array(IncomeSummaryRowSchema),
+  total: z.string(),
+  totalExpense: z.string()
+});
+
 export type CreateIncomeEntryRequest = z.infer<typeof CreateIncomeEntryRequestSchema>;
 export type UpdateIncomeEntryRequest = z.infer<typeof UpdateIncomeEntryRequestSchema>;
 export type IncomeEntryResponse = z.infer<typeof IncomeEntryResponseSchema>;
+export type IncomeSummaryQuery = z.infer<typeof IncomeSummaryQuerySchema>;
+export type IncomeSummaryResponse = z.infer<typeof IncomeSummaryResponseSchema>;

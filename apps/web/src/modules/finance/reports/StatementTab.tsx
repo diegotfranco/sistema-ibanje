@@ -1,18 +1,13 @@
 import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
 import { FileDown } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/DataTable';
 import { formatDate } from '@/lib/datetime';
 import { useFinancialStatement, useDetailedStatement, usePdfDownload } from './useReports';
-import { IncomePivotTable } from './IncomePivotTable';
+import { FinancialStatementDocument } from './FinancialStatementDocument';
+import { IncomeBreakdown } from './IncomeBreakdown';
 
 interface Props {
   month: string;
@@ -28,6 +23,57 @@ export function StatementTab({ month }: Props) {
   const pdfDownload = usePdfDownload();
 
   const params = new URLSearchParams({ month }).toString();
+
+  const detailedExpenseColumns: ColumnDef<
+    NonNullable<typeof detailed.data>['expenseEntries'][number],
+    unknown
+  >[] = [
+    {
+      id: 'date',
+      header: 'Data',
+      cell: (info) => formatDate(info.row.original.date)
+    },
+    {
+      id: 'description',
+      header: 'Descrição',
+      cell: (info) => (
+        <span className="block max-w-48 truncate" title={info.row.original.description}>
+          {info.row.original.description}
+        </span>
+      )
+    },
+    {
+      id: 'category',
+      header: 'Categoria',
+      cell: (info) => info.row.original.categoryName,
+      meta: { className: 'w-full' }
+    },
+    {
+      id: 'amount',
+      header: 'Valor',
+      meta: { align: 'right' },
+      cell: (info) => <span className="font-mono">{formatMoney(info.row.original.amount)}</span>
+    }
+  ];
+
+  const renderDetailedExpenseMobile = (
+    row: NonNullable<typeof detailed.data>['expenseEntries'][number]
+  ) => (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-sm tabular-nums text-muted-foreground">{formatDate(row.date)}</span>
+        <span className="font-mono tabular-nums text-sm font-semibold text-money-out">
+          {formatMoney(row.amount)}
+        </span>
+      </div>
+      <div className="text-sm font-medium">{row.categoryName}</div>
+      {row.description && (
+        <p className="text-xs text-muted-foreground line-clamp-2" title={row.description}>
+          {row.description}
+        </p>
+      )}
+    </div>
+  );
 
   return (
     <div className="space-y-4 p-4">
@@ -70,7 +116,7 @@ export function StatementTab({ month }: Props) {
           {simple.data && (
             <>
               {/* Summary */}
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {[
                   { label: 'Saldo Inicial', value: simple.data.openingBalance, color: '' },
                   {
@@ -86,13 +132,13 @@ export function StatementTab({ month }: Props) {
                   { label: 'Saldo Atual', value: simple.data.currentBalance, color: '' }
                 ].map((card) => (
                   <Card key={card.label}>
-                    <CardHeader className="pb-2">
+                    <CardHeader compact>
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         {card.label}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <p className={`text-lg font-mono font-semibold ${card.color}`}>
+                    <CardContent className="pt-0 pb-4">
+                      <p className={`text-lg font-mono font-semibold tabular-nums ${card.color}`}>
                         {formatMoney(card.value)}
                       </p>
                     </CardContent>
@@ -100,92 +146,7 @@ export function StatementTab({ month }: Props) {
                 ))}
               </div>
 
-              {/* Entradas por categoria */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Entradas por Categoria</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Grupo</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {simple.data.incomeByCategory.map((row) => (
-                        <TableRow key={`category-${row.categoryName}`}>
-                          <TableCell>{row.parentCategoryName ?? '—'}</TableCell>
-                          <TableCell>{row.categoryName}</TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatMoney(row.total)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-
-              {/* Entradas por fundo */}
-              {simple.data.incomeByFund.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Entradas por Fundo</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Fundo</TableHead>
-                          <TableHead className="text-right">Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {simple.data.incomeByFund.map((row) => (
-                          <TableRow key={row.fundId}>
-                            <TableCell>{row.fundName}</TableCell>
-                            <TableCell className="text-right font-mono">
-                              {formatMoney(row.total)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Saídas por categoria */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Saídas por Categoria</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Grupo</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Total</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {simple.data.expensesByCategory.map((row) => (
-                        <TableRow key={`expense-${row.categoryName}`}>
-                          <TableCell>{row.parentCategoryName ?? '—'}</TableCell>
-                          <TableCell>{row.categoryName}</TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatMoney(row.total)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
+              <FinancialStatementDocument data={simple.data} />
             </>
           )}
         </>
@@ -199,10 +160,10 @@ export function StatementTab({ month }: Props) {
             <>
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">Entradas (Pivot)</CardTitle>
+                  <CardTitle className="text-base">Entradas</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <IncomePivotTable pivot={detailed.data.incomePivot} />
+                <CardContent className="p-0">
+                  <IncomeBreakdown pivot={detailed.data.incomePivot} />
                 </CardContent>
               </Card>
 
@@ -210,36 +171,14 @@ export function StatementTab({ month }: Props) {
                 <CardHeader>
                   <CardTitle className="text-base">Saídas</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {detailed.data.expenseEntries.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={4} className="text-center text-muted-foreground">
-                            Nenhuma saída no período.
-                          </TableCell>
-                        </TableRow>
-                      )}
-                      {detailed.data.expenseEntries.map((row) => (
-                        <TableRow key={row.id}>
-                          <TableCell>{formatDate(row.referenceDate)}</TableCell>
-                          <TableCell className="max-w-48 truncate">{row.description}</TableCell>
-                          <TableCell>{row.categoryName}</TableCell>
-                          <TableCell className="text-right font-mono">
-                            {formatMoney(row.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <CardContent className="p-0">
+                  <DataTable
+                    columns={detailedExpenseColumns}
+                    data={detailed.data.expenseEntries}
+                    emptyMessage="Nenhuma saída no período."
+                    getRowKey={(row) => row.id}
+                    mobileRow={renderDetailedExpenseMobile}
+                  />
                 </CardContent>
               </Card>
             </>

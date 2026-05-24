@@ -9,7 +9,9 @@ import {
   CreateIncomeEntryRequestSchema,
   UpdateIncomeEntryRequestSchema,
   IncomeEntryResponseSchema,
-  IncomeEntryListResponseSchema
+  IncomeEntryListResponseSchema,
+  IncomeSummaryQuerySchema,
+  IncomeSummaryResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -29,6 +31,23 @@ export async function incomeEntriesRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.View)]
     },
     controller.list
+  );
+
+  app.get(
+    '/income-entries/summary',
+    {
+      schema: {
+        tags: ['Income Entries'],
+        querystring: IncomeSummaryQuerySchema,
+        response: {
+          200: IncomeSummaryResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.IncomeEntries, Action.View)]
+    },
+    controller.summary
   );
 
   app.get(

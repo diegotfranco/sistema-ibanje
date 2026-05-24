@@ -61,7 +61,7 @@ export default function PautasPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Assembleias</CardTitle>
+            <CardTitle>Assembleias</CardTitle>
             {canCreate && (
               <Button
                 onClick={() => {

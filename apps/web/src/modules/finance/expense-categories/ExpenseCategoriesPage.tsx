@@ -7,6 +7,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { PageContainer } from '@/components/PageContainer';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -49,7 +50,7 @@ export default function ExpenseCategoriesPage() {
   };
 
   return (
-    <div className="space-y-6 p-8">
+    <PageContainer>
       <CategoryGroupedList
         title="Categorias de saídas"
         items={items}
@@ -105,6 +106,6 @@ export default function ExpenseCategoriesPage() {
         }
         isPending={remove.isPending}
       />
-    </div>
+    </PageContainer>
   );
 }

@@ -21,7 +21,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
-      referenceDate: new Date().toISOString().slice(0, 10),
+      date: new Date().toISOString().slice(0, 10),
       description: '',
       amount: '',
       total: '',
@@ -39,7 +39,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
 
   const onSubmit = (values: ExpenseEntryFormValues) => {
     const body = {
-      referenceDate: values.referenceDate,
+      date: values.date,
       description: values.description,
       amount: Number.parseFloat(values.amount),
       total: Number.parseFloat(values.total),
@@ -56,9 +56,9 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
 
     create.mutate(body, {
       onSuccess: () => {
-        const currentDate = getValues('referenceDate');
+        const currentDate = getValues('date');
         reset({
-          referenceDate: currentDate,
+          date: currentDate,
           description: '',
           amount: '',
           total: '',

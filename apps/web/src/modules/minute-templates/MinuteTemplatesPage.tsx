@@ -73,7 +73,7 @@ export default function MinuteTemplatesPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Modelos de Ata</CardTitle>
+            <CardTitle>Modelos de Ata</CardTitle>
             {canCreate && (
               <Button
                 onClick={() => {

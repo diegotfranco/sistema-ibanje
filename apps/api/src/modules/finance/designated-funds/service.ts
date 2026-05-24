@@ -8,10 +8,15 @@ import type {
   DesignatedFundResponse
 } from './schema.js';
 
-export async function listDesignatedFunds(callerId: number, page: number, limit: number) {
+export async function listDesignatedFunds(
+  callerId: number,
+  page: number,
+  limit: number,
+  status?: 'ativo' | 'inativo'
+) {
   await assertPermission(callerId, Module.DesignatedFunds, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listDesignatedFunds(offset, limit);
+  const { rows, total } = await repo.listDesignatedFunds(offset, limit, status);
   return paginate(
     rows.map((r): DesignatedFundResponse => r),
     total,

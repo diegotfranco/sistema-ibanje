@@ -7,7 +7,7 @@ export const ListExpenseEntriesRequestSchema = z.object({
 });
 
 export const CreateExpenseEntryRequestSchema = z.object({
-  referenceDate: z.string().date(),
+  date: z.iso.date(),
   description: z.string().min(1).max(256),
   total: z.number().nonnegative(),
   amount: z.number().positive(),
@@ -22,7 +22,7 @@ export const CreateExpenseEntryRequestSchema = z.object({
 });
 
 export const UpdateExpenseEntryRequestSchema = z.object({
-  referenceDate: z.string().date().optional(),
+  date: z.iso.date().optional(),
   description: z.string().min(1).max(256).optional(),
   total: z.number().nonnegative().optional(),
   amount: z.number().positive().optional(),
@@ -40,7 +40,7 @@ export const UpdateExpenseEntryRequestSchema = z.object({
 export const ExpenseEntryResponseSchema = z.object({
   id: z.number().int().positive(),
   parentId: z.number().int().positive().nullable(),
-  referenceDate: z.string(),
+  date: z.string(),
   description: z.string(),
   total: z.string(),
   amount: z.string(),

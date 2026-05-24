@@ -1,19 +1,27 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
-import type {
-  CreateMonthlyClosingRequest,
-  SubmitMonthlyClosingRequest,
-  ApproveMonthlyClosingRequest,
-  RejectMonthlyClosingRequest,
-  ReproveClosingRequest
+import type { z } from 'zod';
+import {
+  ListMonthlyClosingsRequestSchema,
+  type CreateMonthlyClosingRequest,
+  type SubmitMonthlyClosingRequest,
+  type ApproveMonthlyClosingRequest,
+  type RejectMonthlyClosingRequest,
+  type ReproveClosingRequest
 } from './schema.js';
 import type { IdParam } from '../../../lib/validation.js';
-import type { PaginationQuery } from '../../../lib/pagination.js';
 import { logAudit } from '../../../lib/audit.js';
 import * as service from './service.js';
 
+type ListMonthlyClosingsQuery = z.infer<typeof ListMonthlyClosingsRequestSchema>;
+
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as PaginationQuery;
-  return reply.send(await service.listMonthlyClosings(req.session.userId!, page, limit));
+  const { page, limit, year } = req.query as ListMonthlyClosingsQuery;
+  return reply.send(await service.listMonthlyClosings(req.session.userId!, page, limit, year));
+}
+
+export async function listYears(req: FastifyRequest, reply: FastifyReply) {
+  const years = await service.listMonthlyClosingYears(req.session.userId!);
+  return reply.send({ years });
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {

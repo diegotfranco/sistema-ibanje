@@ -13,13 +13,15 @@ type MonthQuery = z.infer<typeof MonthQueryRequestSchema>;
 type OptionalMonthQuery = z.infer<typeof OptionalMonthQueryRequestSchema>;
 
 export async function incomeReport(req: FastifyRequest, reply: FastifyReply) {
-  const { month, page, limit } = req.query as PaginatedMonthQuery;
-  return reply.send(await service.getIncomeReport(req.session.userId!, month, page, limit));
+  const { month, page, limit, status } = req.query as PaginatedMonthQuery;
+  return reply.send(await service.getIncomeReport(req.session.userId!, month, page, limit, status));
 }
 
 export async function expenseReport(req: FastifyRequest, reply: FastifyReply) {
-  const { month, page, limit } = req.query as PaginatedMonthQuery;
-  return reply.send(await service.getExpenseReport(req.session.userId!, month, page, limit));
+  const { month, page, limit, status } = req.query as PaginatedMonthQuery;
+  return reply.send(
+    await service.getExpenseReport(req.session.userId!, month, page, limit, status)
+  );
 }
 
 export async function financialStatement(req: FastifyRequest, reply: FastifyReply) {

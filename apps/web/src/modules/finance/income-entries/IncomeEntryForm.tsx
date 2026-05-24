@@ -1,8 +1,7 @@
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
-import { Textarea } from '@/components/ui/textarea';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -10,15 +9,10 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import DateInput from '@/components/DateInput';
-import MoneyInput from '../components/MoneyInput';
-import EntityPicker from '@/components/EntityPicker';
 import { zodResolver } from '@/lib/zodResolver';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
-import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
-import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
-import { useAttenders } from '@/modules/attenders/useAttenders';
+import { IncomeEntryFields } from './IncomeEntryFields';
 import {
   IncomeEntryFormSchema,
   type IncomeEntryFormValues,
@@ -32,39 +26,17 @@ interface Props {
   onCancel: () => void;
 }
 
-const NONE = '__none__';
-
 export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }: Props) {
   const incomeCategories = useIncomeCategories();
-  const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds();
-  const attenders = useAttenders();
-
   const allCats = incomeCategories.data?.data ?? [];
   const parentIds = new Set(allCats.filter((c) => c.parentId !== null).map((c) => c.parentId!));
   const leafCategories = allCats.filter(
     (c) => c.status === ActiveStatus.Active && !parentIds.has(c.id)
   );
 
-  const inflowMethods = (paymentMethods.data?.data ?? []).filter(
-    (m) => m.status === ActiveStatus.Active && m.allowsInflow
-  );
-  const activeFunds = (designatedFunds.data?.data ?? []).filter(
-    (f) => f.status === ActiveStatus.Active
-  );
-  const activeAttenders = (attenders.data?.data ?? []).filter(
-    (a) => a.status === ActiveStatus.Active
-  );
-
-  const getCategoryLabel = (cat: { id: number; name: string; parentId: number | null }) => {
-    const parent = allCats.find((c) => c.id === cat.parentId);
-    return parent ? `${parent.name} / ${cat.name}` : cat.name;
-  };
-
   const form = useForm<IncomeEntryFormValues>({
     resolver: zodResolver(IncomeEntryFormSchema),
     defaultValues: {
-      referenceDate: initialValues?.referenceDate ?? '',
       depositDate: initialValues?.depositDate ?? '',
       amount: initialValues?.amount ?? '',
       categoryId: initialValues?.categoryId ?? undefined,
@@ -92,182 +64,31 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
-      <FieldGroup>
-        <div className="grid grid-cols-2 gap-4">
-          <Controller
-            name="referenceDate"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Data de Referência</FieldLabel>
-                <DateInput {...field} aria-invalid={fieldState.invalid} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-          <Controller
-            name="depositDate"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Data de Depósito</FieldLabel>
-                <DateInput {...field} aria-invalid={fieldState.invalid} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-        </div>
+      <IncomeEntryFields control={form.control} errors={form.formState.errors} />
 
+      {isEditing && (
         <Controller
-          name="amount"
+          name="status"
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Valor (R$)</FieldLabel>
-              <MoneyInput
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                aria-invalid={fieldState.invalid}
-                placeholder="0.00"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="categoryId"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Categoria</FieldLabel>
-              <EntityPicker
-                items={leafCategories}
-                value={field.value ?? null}
-                onChange={(v) => field.onChange(v ?? undefined)}
-                getValue={(c) => c.id}
-                getLabel={getCategoryLabel}
-                placeholder="Selecionar categoria..."
-                emptyMessage="Nenhuma categoria encontrada."
-                isLoading={incomeCategories.isLoading}
-                className="w-full"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="paymentMethodId"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Forma de Pagamento</FieldLabel>
+              <FieldLabel>Status</FieldLabel>
               <Select
-                value={field.value !== undefined ? String(field.value) : ''}
-                onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger className="w-full" aria-invalid={fieldState.invalid}>
-                  <SelectValue placeholder="Selecionar..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {inflowMethods.map((m) => (
-                    <SelectItem key={m.id} value={String(m.id)}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="attenderId"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Congregado{requiresMember ? ' *' : ' (opcional)'}</FieldLabel>
-              <EntityPicker
-                items={activeAttenders}
-                value={field.value ?? null}
-                onChange={(v) => field.onChange(v ?? undefined)}
-                getValue={(a) => a.id}
-                getLabel={(a) => a.name}
-                placeholder="Selecionar congregado..."
-                emptyMessage="Nenhum congregado encontrado."
-                isLoading={attenders.isLoading}
-                allowClear
-                className="w-full"
-              />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-
-        <Controller
-          name="designatedFundId"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Fundo Designado (opcional)</FieldLabel>
-              <Select
-                value={field.value !== undefined ? String(field.value) : NONE}
-                onValueChange={(v) => field.onChange(v === NONE ? undefined : Number.parseInt(v))}>
+                value={field.value ?? EntryStatus.Pending}
+                onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Sem fundo" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Sem fundo</SelectItem>
-                  {activeFunds.map((f) => (
-                    <SelectItem key={f.id} value={String(f.id)}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                  <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
                 </SelectContent>
               </Select>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
             </Field>
           )}
         />
-
-        {isEditing && (
-          <Controller
-            name="status"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Status</FieldLabel>
-                <Select
-                  value={field.value ?? EntryStatus.Pending}
-                  onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                    <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-                  </SelectContent>
-                </Select>
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-        )}
-
-        <Controller
-          name="notes"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Observações (opcional)</FieldLabel>
-              <Textarea {...field} aria-invalid={fieldState.invalid} rows={2} />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-      </FieldGroup>
+      )}
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

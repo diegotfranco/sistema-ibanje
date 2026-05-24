@@ -52,7 +52,7 @@ export default function RolesPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-xl">Cargos</CardTitle>
+            <CardTitle>Cargos</CardTitle>
             {canCreate && (
               <Button size="sm" onClick={() => setEditing('new')}>
                 <Plus className="h-4 w-4" />

@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { AlertTriangle, ArrowLeft } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import { Separator } from '@/components/ui/separator';
+import { Card, CardContent, CardHeader, CardHeaderRow, CardTitle } from '@/components/Card';
+import { PageContainer } from '@/components/PageContainer';
 import StatusBadge from '@/components/StatusBadge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -11,6 +11,8 @@ import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useMonthlyClosingById, useRemoveMonthlyClosing } from './useMonthlyClosings';
 import { ClosingTransitionDialog } from './ClosingTransitionDialog';
+import { IncomeReportTab } from '../reports/IncomeReportTab';
+import { ExpenseReportTab } from '../reports/ExpenseReportTab';
 
 const MONTHS = [
   'Janeiro',
@@ -29,10 +31,40 @@ const MONTHS = [
 
 const formatPeriod = (year: number, month: number) => `${MONTHS[month - 1]} ${year}`;
 
+const monthParam = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
+
 const formatMoney = (s: string) =>
   `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 type TransitionAction = 'submit' | 'approve' | 'reject' | 'close';
+
+interface SummaryTileProps {
+  label: string;
+  value: string;
+  valueClassName?: string;
+  hint?: string;
+}
+
+function SummaryTile({ label, value, valueClassName, hint }: SummaryTileProps) {
+  return (
+    <Card>
+      <CardHeader compact>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0 pb-4">
+        <p className={`text-lg font-mono font-semibold tabular-nums ${valueClassName ?? ''}`}>
+          {value}
+        </p>
+        {hint && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-amber-600">
+            <AlertTriangle className="h-3 w-3" />
+            {hint}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function MonthlyClosingDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -44,6 +76,7 @@ export default function MonthlyClosingDetailPage() {
   const canEdit = hasPermission(perms, Module.MonthlyClosings, Action.Update);
   const canDelete = hasPermission(perms, Module.MonthlyClosings, Action.Delete);
   const canReview = hasPermission(perms, Module.MonthlyClosings, Action.Review);
+  const canViewReports = hasPermission(perms, Module.Reports, Action.Report);
 
   const { data: closing, isLoading } = useMonthlyClosingById(Number(id));
   const remove = useRemoveMonthlyClosing();
@@ -52,155 +85,158 @@ export default function MonthlyClosingDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   if (isLoading) {
-    return <div className="p-8 text-center text-muted-foreground">Carregando...</div>;
+    return (
+      <PageContainer>
+        <div className="text-center text-muted-foreground">Carregando...</div>
+      </PageContainer>
+    );
   }
 
   if (!closing) {
-    return <div className="p-8 text-center text-muted-foreground">Fechamento não encontrado.</div>;
+    return (
+      <PageContainer>
+        <div className="text-center text-muted-foreground">Fechamento não encontrado.</div>
+      </PageContainer>
+    );
   }
+
+  const month = monthParam(closing.periodYear, closing.periodMonth);
+
+  const hasActions =
+    closing.status !== ClosingStatus.Closed &&
+    ((closing.status === ClosingStatus.Open && (canCreate || canDelete)) ||
+      (closing.status === ClosingStatus.InReview && canReview) ||
+      (closing.status === ClosingStatus.Approved && canEdit));
 
   return (
     <>
-      <div className="p-8 space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/monthly-closings')}>
+      <PageContainer>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/monthly-closings')}
+            aria-label="Voltar">
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <span className="text-base font-medium text-muted-foreground">
+          <h1 className="text-lg font-semibold">
             {formatPeriod(closing.periodYear, closing.periodMonth)}
-          </span>
+          </h1>
           <StatusBadge status={closing.status} />
         </div>
 
-        {/* Summary cards */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Saldo Inicial
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-mono font-semibold">
-                {formatMoney(closing.openingBalance)}
-              </p>
-              {closing.openingBalancePending && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-amber-600">
-                  <AlertTriangle className="h-3 w-3" />
-                  Estimado
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Entradas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-mono font-semibold text-money-in">
-                {formatMoney(closing.totalIncome)}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total de Saídas
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-mono font-semibold text-money-out">
-                {formatMoney(closing.totalExpenses)}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Saldo Final
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-mono font-semibold">
-                {formatMoney(closing.closingBalance)}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <SummaryTile
+            label="Saldo Inicial"
+            value={formatMoney(closing.openingBalance)}
+            hint={closing.openingBalancePending ? 'Estimado' : undefined}
+          />
+          <SummaryTile label="Saldo Final" value={formatMoney(closing.closingBalance)} />
+          <SummaryTile
+            label="Total de Entradas"
+            value={formatMoney(closing.totalIncome)}
+            valueClassName="text-money-in"
+          />
+          <SummaryTile
+            label="Total de Saídas"
+            value={formatMoney(closing.totalExpenses)}
+            valueClassName="text-money-out"
+          />
         </div>
 
-        {/* Reserved funds */}
-        {closing.totalReservedFunds !== undefined && (
+        {(closing.treasurerNotes || closing.accountantNotes || hasActions) && (
           <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Fundos Reservados
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-lg font-mono font-semibold">
-                {formatMoney(closing.totalReservedFunds)}
-              </p>
+            <CardContent className="space-y-4 pt-6 pb-4">
+              {(closing.treasurerNotes || closing.accountantNotes) && (
+                <section>
+                  <h2 className="mb-3 text-sm font-medium text-primary-soft">Observações</h2>
+                  <dl className="grid gap-3 sm:grid-cols-2">
+                    {closing.treasurerNotes && (
+                      <div className="border-l-2 border-primary-soft/40 pl-3">
+                        <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Tesoureiro
+                        </dt>
+                        <dd className="mt-1 text-sm whitespace-pre-line">
+                          {closing.treasurerNotes}
+                        </dd>
+                      </div>
+                    )}
+                    {closing.accountantNotes && (
+                      <div className="border-l-2 border-primary-soft/40 pl-3">
+                        <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Contador
+                        </dt>
+                        <dd className="mt-1 text-sm whitespace-pre-line">
+                          {closing.accountantNotes}
+                        </dd>
+                      </div>
+                    )}
+                  </dl>
+                </section>
+              )}
+
+              {(closing.treasurerNotes || closing.accountantNotes) && hasActions && (
+                <div className="border-t" />
+              )}
+
+              {hasActions && (
+                <section
+                  className={
+                    closing.treasurerNotes || closing.accountantNotes ? 'pt-1' : undefined
+                  }>
+                  <h2 className="mb-3 text-sm font-medium text-primary-soft">Ações</h2>
+                  <div className="flex flex-wrap gap-2">
+                    {closing.status === ClosingStatus.Open && canCreate && (
+                      <Button onClick={() => setTransitionAction('submit')}>
+                        Submeter para Revisão
+                      </Button>
+                    )}
+                    {closing.status === ClosingStatus.InReview && canReview && (
+                      <>
+                        <Button onClick={() => setTransitionAction('approve')}>Aprovar</Button>
+                        <Button variant="destructive" onClick={() => setTransitionAction('reject')}>
+                          Rejeitar
+                        </Button>
+                      </>
+                    )}
+                    {closing.status === ClosingStatus.Approved && canEdit && (
+                      <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
+                    )}
+                    {closing.status === ClosingStatus.Open && canDelete && (
+                      <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
+                        <Trash2 size={16} className="mr-1" />
+                        Excluir
+                      </Button>
+                    )}
+                  </div>
+                </section>
+              )}
             </CardContent>
           </Card>
         )}
 
-        {/* Notes */}
-        {(closing.treasurerNotes || closing.accountantNotes) && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Observações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {closing.treasurerNotes && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Tesoureiro</p>
-                  <p className="mt-1 text-sm">{closing.treasurerNotes}</p>
-                </div>
-              )}
-              {closing.treasurerNotes && closing.accountantNotes && <Separator />}
-              {closing.accountantNotes && (
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Contador</p>
-                  <p className="mt-1 text-sm">{closing.accountantNotes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
+        {canViewReports && (
+          <>
+            <Card className="relative gap-0 py-0">
+              <CardHeaderRow className="border-b py-4">
+                <CardTitle>Entradas do período</CardTitle>
+              </CardHeaderRow>
+              <CardContent className="p-0">
+                <IncomeReportTab month={month} mode="embedded" />
+              </CardContent>
+            </Card>
 
-        {/* Action buttons */}
-        {closing.status !== ClosingStatus.Closed && (
-          <div className="flex flex-wrap gap-2">
-            {closing.status === ClosingStatus.Open && canCreate && (
-              <Button onClick={() => setTransitionAction('submit')}>Submeter para Revisão</Button>
-            )}
-            {closing.status === ClosingStatus.InReview && canReview && (
-              <>
-                <Button onClick={() => setTransitionAction('approve')}>Aprovar</Button>
-                <Button variant="outline" onClick={() => setTransitionAction('reject')}>
-                  Rejeitar
-                </Button>
-              </>
-            )}
-            {closing.status === ClosingStatus.Approved && canEdit && (
-              <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
-            )}
-            {closing.status === ClosingStatus.Open && canDelete && (
-              <Button
-                variant="outline"
-                className="text-destructive hover:text-destructive/80 border-destructive/30"
-                onClick={() => setDeleteOpen(true)}>
-                Excluir
-              </Button>
-            )}
-          </div>
+            <Card className="relative gap-0 py-0">
+              <CardHeaderRow className="border-b py-4">
+                <CardTitle>Saídas do período</CardTitle>
+              </CardHeaderRow>
+              <CardContent className="p-0">
+                <ExpenseReportTab month={month} mode="embedded" />
+              </CardContent>
+            </Card>
+          </>
         )}
-      </div>
+      </PageContainer>
 
       {transitionAction && (
         <ClosingTransitionDialog

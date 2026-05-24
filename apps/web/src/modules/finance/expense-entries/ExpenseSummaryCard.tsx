@@ -1,5 +1,5 @@
 import { Wallet } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/Card';
+import { Card, CardContent, CardDescription, CardHeaderRow, CardTitle } from '@/components/Card';
 import { formatMoney } from '../entries-utils';
 import { useExpenseSummary } from './useExpenseSummary';
 
@@ -52,7 +52,7 @@ export function ExpenseSummaryCard() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeaderRow>
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 text-primary-soft rounded-md p-2">
             <Wallet size={20} />
@@ -62,13 +62,13 @@ export function ExpenseSummaryCard() {
             <CardDescription>{label}</CardDescription>
           </div>
         </div>
-        <div className="text-right text-sm">
+        <div className="text-sm sm:text-right">
           <p className="text-muted-foreground">Entradas</p>
           <p className="font-mono tabular-nums text-money-in">
             R$ {formatMoney(data?.totalIncome ?? '0')}
           </p>
         </div>
-      </CardHeader>
+      </CardHeaderRow>
       <CardContent className="mt-3">
         <div>
           {isLoading ? (

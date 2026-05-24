@@ -5,7 +5,7 @@ const BASE = '/income-entries';
 const KEY = ['income-entries'] as const;
 
 export function useIncomeEntries() {
-  return useResourceList<IncomeEntryResponse>(BASE, KEY);
+  return useResourceList<IncomeEntryResponse>(BASE, KEY, { limit: 15 });
 }
 
 export function useIncomeEntryMutations() {

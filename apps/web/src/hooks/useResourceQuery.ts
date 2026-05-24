@@ -20,7 +20,7 @@ export function useResourceList<T>(
   queryKey: readonly unknown[],
   params?: ListParams
 ) {
-  const merged: ListParams = { limit: 100, ...params };
+  const merged: ListParams = { limit: 30, ...params };
   const qs = buildQueryString(merged);
   return useQuery({
     queryKey: [basePath, ...queryKey, qs],

@@ -195,6 +195,36 @@ Email sends must happen **after** the transaction commits. Capture tokens via ca
 
 ---
 
+## Mobile-first frontend
+
+Pages target 375px (iPhone SE / mobile M) up. Approach is **mobile-first responsive with intent**, not reactive `overflow-x-auto` patches: each viewport gets a layout designed for it, using shared primitives.
+
+**Layout primitives:**
+
+- `src/components/PageContainer.tsx` — wrap every top-level route page; never hardcode `p-8`. Applies `p-4 sm:p-6 lg:p-8` + `space-y-4 sm:space-y-6`.
+- `src/components/Card.tsx` exports `CardHeaderRow` — use it for card headers with a right-side action/metric (title + button, title + total, etc.). Stacks on mobile, becomes a justified row at `sm+`. Bare `<CardHeader className="flex flex-row...">` is the anti-pattern it replaces.
+
+**Tables → cards under `md`:**
+
+- `DataTable` accepts `mobileRow?: (row) => ReactNode`. When supplied AND viewport is below `md`, it renders a `<ul className="divide-y">` of `<li className="px-4 py-3">` cards instead of a table. Loading and empty states are handled by DataTable; caller only designs the inner row content.
+- Each `mobileRow` should surface the 2–3 fields that matter at a glance — typically a date + amount row on top (amount colored `text-money-in` / `text-money-out`), the primary name below, then small muted meta (group, payment method, etc.).
+- Section headers in mobile mode reuse `isSectionHeader` + `renderSectionHeader`; pass `mobileSectionHeader` only when the mobile treatment must differ.
+- The **only** acceptable horizontal-scroll fallback is for genuine pivot / cross-tab data where there's no semantic way to vertically flatten the rows. Don't reach for `overflow-x-auto` on standard tables.
+
+**Nesting rule:** mobile row lists go inside `<CardContent className="p-0">` and use border-separator style (`divide-y`). **Never** wrap each row in another bordered/shadowed mini-card — that produces Russian-doll nesting and triple-pads horizontally (page `p-4` + card `px-4` + inner card `p-3` ≈ no usable width on 375px). iOS Settings / GitHub mobile is the reference.
+
+**Row detail sheet (mobile):** when the mobile card hides fields users may need, wire `DataTable.mobileOnRowClick` to a `<MobileRowDetailSheet>` (from `src/components/MobileRowDetailSheet.tsx`). The sheet renders every field of the row as label/value pairs; per-row action buttons (Edit/Delete) move from the card body into the sheet footer — don't duplicate them on the card. Read-only tables (reports) open a sheet too, just without action buttons.
+
+**P&L / statement layout:** for financial-statement surfaces (the Demonstrativo tab is the reference), prefer a vertical document layout over multiple stacked tables. Use semantic `<section>` / `<h3>` / `<dl>` markup with parent-group subtotals and a bold grand total. See `src/modules/finance/reports/FinancialStatementDocument.tsx`.
+
+**Truncation in flex Buttons:** in a flex row, children default to `min-width: auto` (their content width), so a `Button` with a long label inside a tight container can push its trailing icon past the border. The fix is `min-w-0` on the Button + `<span className="truncate">…</span>` around the label. The `EntityPicker` Button is the canonical example.
+
+**Tailwind ordering:** start with the mobile classes, add `sm:` / `md:` / `lg:` upward. Avoid desktop-first classes with mobile overrides.
+
+**Reference influences:** Stripe Dashboard, Linear, Tailwind UI table-to-card pattern.
+
+---
+
 ## Known gaps / deferred
 
 - `members.addressNumber` is `INTEGER` — may need `VARCHAR` for addresses like "123A".

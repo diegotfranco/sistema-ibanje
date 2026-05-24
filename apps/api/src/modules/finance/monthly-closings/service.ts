@@ -101,12 +101,22 @@ async function buildResponse(
   };
 }
 
-export async function listMonthlyClosings(callerId: number, page: number, limit: number) {
+export async function listMonthlyClosings(
+  callerId: number,
+  page: number,
+  limit: number,
+  year?: number
+) {
   await assertPermission(callerId, Module.MonthlyClosings, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listMonthlyClosings(offset, limit);
+  const { rows, total } = await repo.listMonthlyClosings(offset, limit, year);
   const data = await Promise.all(rows.map((r) => buildResponse(r, false)));
   return paginate(data, total, page, limit);
+}
+
+export async function listMonthlyClosingYears(callerId: number): Promise<number[]> {
+  await assertPermission(callerId, Module.MonthlyClosings, Action.View);
+  return repo.listMonthlyClosingYears();
 }
 
 export async function getMonthlyClosingById(id: number): Promise<MonthlyClosingResponse | null> {

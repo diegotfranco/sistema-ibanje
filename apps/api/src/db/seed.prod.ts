@@ -1,17 +1,16 @@
 /**
  * Production seed — runs once on first deploy.
  *
- * Inserts structural data (roles, permissions, modules, role-module-permissions,
- * payment methods, income/expense categories, finance settings) and migrates
- * members from the legacy SQLite DB at LEGACY_SQLITE_PATH.
+ * Inserts structural data only: roles, permissions, modules, role-module-
+ * permissions, payment methods, base designated funds, income/expense
+ * categories, finance settings, church settings, minute templates.
  *
- * Skips: users, financial entries, designated funds, board meetings, minutes,
- * monthly closings. Those start fresh.
+ * Real data (users, attenders, financial entries, meetings, minutes, monthly
+ * closings, membership letters) starts empty in production and is added
+ * through the app.
  *
  * Safety: refuses to run if any of the target tables already have rows.
  */
-import { DatabaseSync } from 'node:sqlite';
-import path from 'node:path';
 import { sql as drizzleSql } from 'drizzle-orm';
 import { db, sql } from './index.js';
 import {
@@ -20,11 +19,12 @@ import {
   modules,
   roleModulePermissions,
   paymentMethods,
+  designatedFunds,
   incomeCategories,
   expenseCategories,
-  attenders,
   financeSettings,
-  churchSettings
+  churchSettings,
+  minuteTemplates
 } from './schema.js';
 import {
   SEED_ROLES,
@@ -33,79 +33,18 @@ import {
   SEED_MODULES,
   EXPECTED_MODULE_ORDER,
   SEED_PAYMENT_METHODS,
+  SEED_DESIGNATED_FUNDS,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
   buildExpenseCategoryChildren,
-  buildRoleModulePermissions
+  buildRoleModulePermissions,
+  SEED_CHURCH_SETTINGS
 } from './seed-data.js';
-
-const LEGACY_SQLITE_PATH =
-  process.env.LEGACY_SQLITE_PATH ?? path.resolve(process.cwd(), 'ibanje.db');
-
-type LegacyAttender = {
-  nome: string | null;
-  data_nascimento: string | null;
-  endereco: string | null;
-  numero: number | null;
-  complemento: string | null;
-  bairro: string | null;
-  uf: string | null;
-  cidade: string | null;
-  cep: string | null;
-  email: string | null;
-  celular: string | null;
-};
-
-function clean(v: unknown): string | null {
-  if (v === null || v === undefined) return null;
-  const s = String(v).trim();
-  return s === '' ? null : s;
-}
-
-function cleanCep(v: unknown): string | null {
-  const s = clean(v);
-  if (!s) return null;
-  const digits = s.replace(/\D/g, '');
-  return digits.length === 8 ? digits : null;
-}
-
-function cleanUf(v: unknown): string | null {
-  const s = clean(v);
-  if (!s) return null;
-  const up = s.toUpperCase();
-  return up.length === 2 ? up : null;
-}
-
-function cleanPhone(v: unknown): string | null {
-  const s = clean(v);
-  if (!s) return null;
-  return s.length > 16 ? s.slice(0, 16) : s;
-}
-function cleanBirthDate(v: unknown): string | null {
-  const s = clean(v);
-  if (!s) return null;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
-  const year = Number(s.slice(0, 4));
-  if (year < 1900 || year > 2026) return null;
-  return s;
-}
-
-function readLegacyAttenders(): LegacyAttender[] {
-  const legacy = new DatabaseSync(LEGACY_SQLITE_PATH, { readOnly: true });
-  try {
-    return legacy.prepare('SELECT * FROM membros').all() as unknown as LegacyAttender[];
-  } finally {
-    legacy.close();
-  }
-}
+import { SEED_MINUTE_TEMPLATES } from './seed-templates.js';
 
 export async function seedProd() {
   console.log('Production seed starting...');
-  console.log(`Reading legacy SQLite from: ${LEGACY_SQLITE_PATH}`);
-
-  const legacyAttenders = readLegacyAttenders();
-  console.log(`Found ${legacyAttenders.length} legacy attenders.`);
 
   await db.transaction(async (tx) => {
     // Refuse to run if structural data already exists. Production seed is one-shot.
@@ -113,11 +52,12 @@ export async function seedProd() {
       (SELECT COUNT(*) FROM roles) AS roles,
       (SELECT COUNT(*) FROM modules) AS modules,
       (SELECT COUNT(*) FROM permissions) AS permissions,
-      (SELECT COUNT(*) FROM attenders) AS attenders,
       (SELECT COUNT(*) FROM payment_methods) AS payment_methods,
       (SELECT COUNT(*) FROM income_categories) AS income_categories,
       (SELECT COUNT(*) FROM expense_categories) AS expense_categories,
-      (SELECT COUNT(*) FROM finance_settings) AS finance_settings`);
+      (SELECT COUNT(*) FROM finance_settings) AS finance_settings,
+      (SELECT COUNT(*) FROM designated_funds) AS designated_funds,
+      (SELECT COUNT(*) FROM minute_templates) AS minute_templates`);
     const counts = existing[0] as Record<string, number | string>;
     const nonEmpty = Object.entries(counts).filter(([, v]) => Number(v) > 0);
     if (nonEmpty.length > 0) {
@@ -132,7 +72,6 @@ export async function seedProd() {
     const insertedRoles = await tx.insert(roles).values(SEED_ROLES).returning();
     const roleByName = Object.fromEntries(insertedRoles.map((r) => [r.name, r]));
 
-    // ORDER MATTERS — IDs referenced by packages/shared/src/index.ts (Action enum). APPEND ONLY.
     const insertedPerms = await tx.insert(permissions).values(SEED_PERMISSIONS).returning();
     const permByName = Object.fromEntries(insertedPerms.map((p) => [p.name, p]));
     for (let i = 0; i < EXPECTED_PERMISSION_ORDER.length; i++) {
@@ -143,7 +82,6 @@ export async function seedProd() {
       }
     }
 
-    // ORDER MATTERS — IDs referenced by packages/shared/src/index.ts (Module enum). APPEND ONLY.
     const insertedMods = await tx.insert(modules).values(SEED_MODULES).returning();
     const modByName = Object.fromEntries(insertedMods.map((m) => [m.name, m]));
     for (let i = 0; i < EXPECTED_MODULE_ORDER.length; i++) {
@@ -154,7 +92,6 @@ export async function seedProd() {
       }
     }
 
-    // --- Role-Module-Permissions ---
     const rmpRows = buildRoleModulePermissions(
       roleByName,
       modByName,
@@ -163,18 +100,25 @@ export async function seedProd() {
     );
     await tx.insert(roleModulePermissions).values(rmpRows);
 
-    // --- Payment Methods ---
     await tx.insert(paymentMethods).values(SEED_PAYMENT_METHODS);
 
-    // --- Income Categories (2-level chart of accounts) ---
+    await tx.insert(designatedFunds).values(
+      SEED_DESIGNATED_FUNDS.map((f) => ({
+        name: f.name,
+        description: f.description ?? null,
+        targetAmount: f.targetAmount ?? null
+      }))
+    );
+
     const insertedICParents = await tx
       .insert(incomeCategories)
-      .values(SEED_INCOME_CATEGORY_PARENTS.map((name) => ({ name })))
+      .values(
+        SEED_INCOME_CATEGORY_PARENTS.map((p) => ({ name: p.name, description: p.description }))
+      )
       .returning();
     const icParentByName = Object.fromEntries(insertedICParents.map((c) => [c.name, c]));
     await tx.insert(incomeCategories).values(buildIncomeCategoryChildren(icParentByName));
 
-    // --- Expense Categories (2-level chart of accounts) ---
     const insertedECParents = await tx
       .insert(expenseCategories)
       .values(SEED_EXPENSE_CATEGORY_PARENTS)
@@ -182,55 +126,18 @@ export async function seedProd() {
     const ecParentByName = Object.fromEntries(insertedECParents.map((c) => [c.name, c]));
     await tx.insert(expenseCategories).values(buildExpenseCategoryChildren(ecParentByName));
 
-    // --- Finance Settings (singleton) ---
     await tx.insert(financeSettings).values({ openingBalance: '0.00' });
+    await tx.insert(churchSettings).values(SEED_CHURCH_SETTINGS);
 
-    // --- Church Settings (singleton) ---
-    await tx.insert(churchSettings).values({
-      id: 1,
-      name: 'Igreja Batista Nova Jerusalém',
-      cnpj: '15.556.152/0001-42',
-      addressStreet: 'Rua Santo Amaro',
-      addressNumber: '286',
-      addressDistrict: 'Vila Carrão',
-      addressCity: 'São Paulo',
-      addressState: 'SP',
-      postalCode: '03446000',
-      phone: '(11) 2741-4262',
-      email: null,
-      websiteUrl: null,
-      currentPresidentName: 'Pr. Deucir Araújo de Almeida',
-      currentPresidentTitle: 'Presidente',
-      currentSecretaryName: 'Secretário Responsável da Silva',
-      currentSecretaryTitle: '1º Secretário(a)'
-    });
-
-    // --- Attenders (migrated from legacy SQLite) ---
-    const attenderRows = legacyAttenders
-      .map((m) => {
-        const name = clean(m.nome);
-        if (!name) return null;
-        return {
-          name,
-          birthDate: cleanBirthDate(m.data_nascimento),
-          addressStreet: clean(m.endereco),
-          addressNumber:
-            typeof m.numero === 'number' && Number.isFinite(m.numero) ? m.numero : null,
-          addressComplement: clean(m.complemento),
-          addressDistrict: clean(m.bairro),
-          state: cleanUf(m.uf),
-          city: clean(m.cidade),
-          postalCode: cleanCep(m.cep),
-          email: clean(m.email),
-          phone: cleanPhone(m.celular)
-        };
-      })
-      .filter((m): m is NonNullable<typeof m> => m !== null);
-
-    if (attenderRows.length > 0) {
-      await tx.insert(attenders).values(attenderRows);
-    }
-    console.log(`Inserted ${attenderRows.length} attenders.`);
+    await tx.insert(minuteTemplates).values(
+      SEED_MINUTE_TEMPLATES.map((t) => ({
+        meetingType: t.meetingType,
+        name: t.name,
+        isDefault: t.isDefault,
+        content: t.content,
+        defaultAgendaItems: t.defaultAgendaItems
+      }))
+    );
   });
 
   console.log('Production seed complete.');

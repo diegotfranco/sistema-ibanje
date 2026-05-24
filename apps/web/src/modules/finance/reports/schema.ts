@@ -8,14 +8,21 @@ export const ReportFilterSchema = z.object({
 export type ReportFilterValues = z.infer<typeof ReportFilterSchema>;
 
 export type IncomeReportRow = {
+  id: number;
+  depositDate: string;
   referenceDate: string;
+  amount: string;
   categoryId: number;
   categoryName: string;
   parentCategoryId: number | null;
   parentCategoryName: string | null;
   fundId: number | null;
   fundName: string | null;
-  total: string;
+  attenderId: number | null;
+  attenderName: string | null;
+  paymentMethodName: string;
+  notes: string | null;
+  status: 'pendente' | 'paga';
 };
 
 export type IncomeReportResponse = {
@@ -30,7 +37,7 @@ export type IncomeReportResponse = {
 
 export type ExpenseReportRow = {
   id: number;
-  referenceDate: string;
+  date: string;
   description: string;
   categoryId: number;
   categoryName: string;
@@ -38,7 +45,15 @@ export type ExpenseReportRow = {
   parentCategoryName: string | null;
   fundId: number | null;
   fundName: string | null;
+  attenderId: number | null;
+  attenderName: string | null;
+  paymentMethodName: string;
+  installment: number;
+  totalInstallments: number;
+  hasReceipt: boolean;
+  notes: string | null;
   amount: string;
+  status: 'pendente' | 'paga';
 };
 
 export type ExpenseReportResponse = {
@@ -87,8 +102,10 @@ export type FinancialStatementResponse = {
 export type IncomePivotColumn = {
   key: string;
   label: string;
-  kind: 'category' | 'fund';
-  refId: number;
+  groupKey: string;
+  groupLabel: string;
+  parentGroupKey: 'contribuicoes' | 'outras-receitas';
+  parentGroupLabel: string;
   total: string;
 };
 
@@ -111,6 +128,7 @@ export type DetailedFinancialStatementResponse = {
   totalExpenses: string;
   currentBalance: string;
   incomePivot: IncomePivot;
+  incomeEntries: IncomeReportRow[];
   expenseEntries: ExpenseReportRow[];
 };
 
@@ -145,7 +163,7 @@ export type FundIncomeEntry = {
 
 export type FundExpenseEntry = {
   id: number;
-  referenceDate: string;
+  date: string;
   description: string;
   amount: string;
   categoryName: string;

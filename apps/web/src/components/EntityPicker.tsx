@@ -57,8 +57,8 @@ function EntityPickerInner<T>(
           aria-expanded={open}
           disabled={disabled}
           data-input-trigger=""
-          className={cn('justify-between', className)}>
-          {selectedLabel}
+          className={cn('w-full justify-between min-w-0', className)}>
+          <span className="truncate">{selectedLabel}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

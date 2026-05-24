@@ -16,7 +16,8 @@ export const PaginatedDateRangeQueryRequestSchema = DateRangeQueryRequestSchema.
 
 export const PaginatedMonthQueryRequestSchema = MonthQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20)
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
 export const OptionalMonthQueryRequestSchema = z.object({
@@ -35,14 +36,21 @@ const PeriodSchema = z.object({
 });
 
 const IncomeReportRowSchema = z.object({
+  id: z.number().int().positive(),
   referenceDate: z.string(),
+  depositDate: z.string().nullable(),
+  amount: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
   parentCategoryId: z.number().int().positive().nullable(),
   parentCategoryName: z.string().nullable(),
   fundId: z.number().int().positive().nullable(),
   fundName: z.string().nullable(),
-  total: z.string()
+  attenderId: z.number().int().positive().nullable(),
+  attenderName: z.string().nullable(),
+  paymentMethodName: z.string(),
+  notes: z.string().nullable(),
+  status: z.enum(['pendente', 'paga', 'cancelada'])
 });
 
 export const IncomeReportResponseSchema = z.object({
@@ -57,7 +65,7 @@ export const IncomeReportResponseSchema = z.object({
 
 const ExpenseReportRowSchema = z.object({
   id: z.number().int().positive(),
-  referenceDate: z.string(),
+  date: z.string(),
   description: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
@@ -65,7 +73,15 @@ const ExpenseReportRowSchema = z.object({
   parentCategoryName: z.string().nullable(),
   fundId: z.number().int().positive().nullable(),
   fundName: z.string().nullable(),
-  amount: z.string()
+  attenderId: z.number().int().positive().nullable(),
+  attenderName: z.string().nullable(),
+  paymentMethodName: z.string(),
+  installment: z.number().int(),
+  totalInstallments: z.number().int(),
+  hasReceipt: z.boolean(),
+  notes: z.string().nullable(),
+  amount: z.string(),
+  status: z.enum(['pendente', 'paga', 'cancelada'])
 });
 
 export const ExpenseReportResponseSchema = z.object({
@@ -100,22 +116,16 @@ const IncomeByFundRowSchema = z.object({
   total: z.string()
 });
 
-export const FinancialStatementResponseSchema = z.object({
-  period: PeriodSchema,
-  openingBalance: z.string(),
-  totalIncome: z.string(),
-  totalExpenses: z.string(),
-  currentBalance: z.string(),
-  incomeByCategory: z.array(IncomeByCategoryRowSchema),
-  incomeByFund: z.array(IncomeByFundRowSchema),
-  expensesByCategory: z.array(ExpenseByCategoryRowSchema)
-});
+// IncomeAggregateRow comes from the repository, not a schema
+// It's not validated through Zod, so we don't have a schema for it
 
 const IncomePivotColumnSchema = z.object({
   key: z.string(),
   label: z.string(),
-  kind: z.enum(['category', 'fund']),
-  refId: z.number().int().positive(),
+  groupKey: z.string(),
+  groupLabel: z.string(),
+  parentGroupKey: z.enum(['contribuicoes', 'outras-receitas']),
+  parentGroupLabel: z.string(),
   total: z.string()
 });
 
@@ -131,6 +141,17 @@ const IncomePivotSchema = z.object({
   grandTotal: z.string()
 });
 
+export const FinancialStatementResponseSchema = z.object({
+  period: PeriodSchema,
+  openingBalance: z.string(),
+  totalIncome: z.string(),
+  totalExpenses: z.string(),
+  currentBalance: z.string(),
+  incomeByCategory: z.array(IncomeByCategoryRowSchema),
+  incomeByFund: z.array(IncomeByFundRowSchema),
+  expensesByCategory: z.array(ExpenseByCategoryRowSchema)
+});
+
 export const DetailedFinancialStatementResponseSchema = z.object({
   period: PeriodSchema,
   openingBalance: z.string(),
@@ -138,6 +159,7 @@ export const DetailedFinancialStatementResponseSchema = z.object({
   totalExpenses: z.string(),
   currentBalance: z.string(),
   incomePivot: IncomePivotSchema,
+  incomeEntries: z.array(IncomeReportRowSchema),
   expenseEntries: z.array(ExpenseReportRowSchema)
 });
 
@@ -181,7 +203,7 @@ const FundIncomeEntrySchema = z.object({
 
 const FundExpenseEntrySchema = z.object({
   id: z.number().int().positive(),
-  referenceDate: z.string(),
+  date: z.string(),
   description: z.string(),
   amount: z.string(),
   categoryName: z.string(),
@@ -195,22 +217,25 @@ export const FundDetailResponseSchema = FundSummarySchema.extend({
 });
 
 export type IncomeReportRow = z.infer<typeof IncomeReportRowSchema>;
-export type IncomeAggregateRow = {
-  referenceDate: string;
-  columnKind: 'category' | 'fund';
-  columnRefId: number;
-  columnLabel: string;
-  total: string;
-};
-export type IncomePivotColumn = z.infer<typeof IncomePivotColumnSchema>;
-export type IncomePivotRow = z.infer<typeof IncomePivotRowSchema>;
-export type IncomePivot = z.infer<typeof IncomePivotSchema>;
 export type IncomeReportResponse = z.infer<typeof IncomeReportResponseSchema>;
 export type ExpenseReportRow = z.infer<typeof ExpenseReportRowSchema>;
 export type ExpenseReportResponse = z.infer<typeof ExpenseReportResponseSchema>;
 export type IncomeByCategoryRow = z.infer<typeof IncomeByCategoryRowSchema>;
 export type ExpenseByCategoryRow = z.infer<typeof ExpenseByCategoryRowSchema>;
 export type IncomeByFundRow = z.infer<typeof IncomeByFundRowSchema>;
+export type IncomeAggregateRow = {
+  referenceDate: string;
+  categoryId: number;
+  categoryName: string;
+  parentCategoryId: number | null;
+  parentCategoryName: string | null;
+  fundId: number | null;
+  fundName: string | null;
+  total: string;
+};
+export type IncomePivotColumn = z.infer<typeof IncomePivotColumnSchema>;
+export type IncomePivotRow = z.infer<typeof IncomePivotRowSchema>;
+export type IncomePivot = z.infer<typeof IncomePivotSchema>;
 export type FinancialStatementResponse = z.infer<typeof FinancialStatementResponseSchema>;
 export type DetailedFinancialStatementResponse = z.infer<
   typeof DetailedFinancialStatementResponseSchema

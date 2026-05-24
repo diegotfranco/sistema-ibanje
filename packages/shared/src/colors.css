@@ -1,0 +1,6 @@
+:root {
+  --brand-primary: oklch(0.44 0.11 240.79);
+  --brand-primary-soft-light: oklch(0.44 0.11 240.79);
+  --brand-primary-soft-dark: oklch(0.707 0.165 254.624);
+  --brand-primary-foreground: oklch(0.97 0.014 254.604);
+}

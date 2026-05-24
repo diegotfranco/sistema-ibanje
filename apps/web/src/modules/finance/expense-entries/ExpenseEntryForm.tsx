@@ -40,7 +40,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
-      referenceDate: initialValues?.referenceDate ?? '',
+      date: initialValues?.date ?? '',
       description: initialValues?.description ?? '',
       amount: initialValues?.amount ?? '',
       total: initialValues?.total ?? '',

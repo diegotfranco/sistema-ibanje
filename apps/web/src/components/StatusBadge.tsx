@@ -12,7 +12,7 @@ import {
 } from '@sistema-ibanje/shared';
 
 type Props = {
-  status: string;
+  status: string | null | undefined;
   className?: string;
 };
 
@@ -60,6 +60,13 @@ function getStatusClass(status: string): string {
 }
 
 export default function StatusBadge({ status, className }: Props) {
+  if (!status) {
+    return (
+      <Badge variant="outline" className={cn('text-muted-foreground', className)}>
+        —
+      </Badge>
+    );
+  }
   const label = status.charAt(0).toUpperCase() + status.slice(1);
 
   return (

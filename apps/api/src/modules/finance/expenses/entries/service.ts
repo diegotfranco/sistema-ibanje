@@ -63,9 +63,9 @@ async function validateEntry(data: {
   }
 }
 
-function buildReceiptKey(referenceDate: string, ext: string): string {
-  const year = referenceDate.substring(0, 4);
-  const month = referenceDate.substring(5, 7);
+function buildReceiptKey(date: string, ext: string): string {
+  const year = date.substring(0, 4);
+  const month = date.substring(5, 7);
   return `receipts/${year}/${month}/${randomUUID()}.${ext}`;
 }
 
@@ -94,7 +94,7 @@ export async function createExpenseEntry(
   body: CreateExpenseEntryRequest
 ): Promise<ExpenseEntryResponse> {
   await assertPermission(callerId, Module.ExpenseEntries, Action.Create);
-  await assertPeriodEditable(body.referenceDate);
+  await assertPeriodEditable(body.date);
   await validateEntry({
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
@@ -117,7 +117,7 @@ export async function updateExpenseEntry(
   const entry = await repo.findExpenseEntryById(targetId);
   if (!entry) return null;
 
-  await assertPeriodEditable(body.referenceDate ?? entry.referenceDate);
+  await assertPeriodEditable(body.date ?? entry.date);
 
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
@@ -140,7 +140,7 @@ export async function cancelExpenseEntry(callerId: number, targetId: number): Pr
   await assertPermission(callerId, Module.ExpenseEntries, Action.Delete);
   const entry = await repo.findExpenseEntryById(targetId);
   if (!entry) return null;
-  await assertPeriodEditable(entry.referenceDate);
+  await assertPeriodEditable(entry.date);
   await repo.cancelExpenseEntry(targetId);
 }
 
@@ -164,7 +164,7 @@ export async function uploadExpenseReceipt(
 
   if (entry.receipt) await deleteFile(entry.receipt);
 
-  const key = buildReceiptKey(entry.referenceDate, ext);
+  const key = buildReceiptKey(entry.date, ext);
   await uploadFile(key, buffer, mimetype);
   await repo.updateReceiptKey(entryId, key);
 

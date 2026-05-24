@@ -1,11 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ChevronRight, Edit, Loader2, Pencil, Plus, Search, Trash2 } from 'lucide-react';
+import { ChevronRight, Edit, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
-import { Input } from '@/components/ui/input';
 import { Pagination } from '@/components/Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -196,6 +195,49 @@ export function CategoryGroupedList<T extends CategoryLike>({
     [canEdit, canDelete, onEdit, onDelete, renderRowMeta]
   );
 
+  const renderMobileRow = (r: FlatRow<T>) => {
+    if (r._kind !== 'item') return null;
+    const meta = renderRowMeta?.(r.row);
+    return (
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className={cn('text-sm font-medium truncate', r.isOrphan && 'text-destructive')}>
+            {r.row.name}
+          </div>
+          {meta && (
+            <div
+              className={cn(
+                'text-xs text-muted-foreground truncate',
+                r.isOrphan && 'text-destructive'
+              )}>
+              {r.isOrphan ? <>⚠ {meta}</> : meta}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onEdit(r.row)}
+              aria-label={`Editar ${r.row.name}`}>
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDelete(r.row)}
+              aria-label={`Remover ${r.row.name}`}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderSectionHeader = (row: FlatRow<T>) => {
     if (row._kind !== 'section') return null;
     const isCollapsed = collapsed[row.parentId] ?? false;
@@ -275,32 +317,16 @@ export function CategoryGroupedList<T extends CategoryLike>({
 
   return (
     <Card className="pb-0">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>{title}</span>
-          {canCreate && (
-            <Button onClick={onCreate} size="sm">
-              <Plus className="mr-1 h-4 w-4" />
-              {createLabel}
-            </Button>
-          )}
-        </CardTitle>
-      </CardHeader>
+      <CardHeaderRow>
+        <CardTitle>{title}</CardTitle>
+        {canCreate && (
+          <Button onClick={onCreate} size="sm">
+            <Plus className="mr-1 h-4 w-4" />
+            {createLabel}
+          </Button>
+        )}
+      </CardHeaderRow>
       <CardContent className="p-0">
-        <div className="border-b px-3 py-2">
-          <div className="relative w-full max-w-xs">
-            <Search className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="h-8 pl-8"
-            />
-            {isSearching && (
-              <Loader2 className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-            )}
-          </div>
-        </div>
         <DataTable
           columns={columns}
           data={flatRows}
@@ -309,6 +335,11 @@ export function CategoryGroupedList<T extends CategoryLike>({
           isSectionHeader={(r) => r._kind === 'section'}
           renderSectionHeader={renderSectionHeader}
           getRowKey={flatRowKey}
+          mobileRow={renderMobileRow}
+          disableZebra
+          searchable={{ placeholder: 'Buscar...', loading: isSearching }}
+          globalFilter={searchQuery}
+          onGlobalFilterChange={onSearchChange}
         />
         <div className="border-t px-3 py-2 flex justify-end">
           <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />

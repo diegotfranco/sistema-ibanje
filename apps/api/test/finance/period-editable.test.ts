@@ -2,11 +2,12 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { assertPeriodEditable } from '../../src/lib/finance.js';
 import { db } from '../../src/db/index.js';
 import { monthlyClosings } from '../../src/db/schema.js';
-import { reseedDb } from '../helpers/db.js';
+import { reseedDb, clearMonthlyClosings } from '../helpers/db.js';
 
 describe('assertPeriodEditable', () => {
-  beforeAll(() => {
+  beforeAll(async () => {
     reseedDb();
+    await clearMonthlyClosings();
   });
 
   it('passes when no closing exists for the period', async () => {
