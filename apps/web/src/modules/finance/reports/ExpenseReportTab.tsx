@@ -149,9 +149,9 @@ export function ExpenseReportTab({ month, mode = 'full' }: Props) {
           </>
         )}
       </div>
-      {row.description && (
-        <p className="text-xs text-muted-foreground line-clamp-1" title={row.description}>
-          {row.description}
+      {row.notes && (
+        <p className="text-xs text-muted-foreground line-clamp-1" title={row.notes}>
+          {row.notes}
         </p>
       )}
       <div className="mt-1">
@@ -164,7 +164,6 @@ export function ExpenseReportTab({ month, mode = 'full' }: Props) {
     { label: 'Data', value: formatDate(row.date) },
     { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
     { label: 'Categoria', value: row.categoryName },
-    { label: 'Descrição', value: row.description },
     { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
     { label: 'Campanha', value: row.fundName ?? '—', hideEmpty: true },
     { label: 'Patrocinador', value: row.attenderName ?? '—', hideEmpty: true },

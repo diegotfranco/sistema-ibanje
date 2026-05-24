@@ -8,7 +8,6 @@ export const ListExpenseEntriesRequestSchema = z.object({
 
 export const CreateExpenseEntryRequestSchema = z.object({
   date: z.iso.date(),
-  description: z.string().min(1).max(256),
   total: z.number().nonnegative(),
   amount: z.number().positive(),
   installment: z.number().int().positive().default(1),
@@ -18,12 +17,12 @@ export const CreateExpenseEntryRequestSchema = z.object({
   designatedFundId: z.number().int().positive().optional(),
   attenderId: z.number().int().positive().optional(),
   parentId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional()
+  notes: z.string().max(1000).optional(),
+  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
 export const UpdateExpenseEntryRequestSchema = z.object({
   date: z.iso.date().optional(),
-  description: z.string().min(1).max(256).optional(),
   total: z.number().nonnegative().optional(),
   amount: z.number().positive().optional(),
   installment: z.number().int().positive().optional(),
@@ -41,7 +40,6 @@ export const ExpenseEntryResponseSchema = z.object({
   id: z.number().int().positive(),
   parentId: z.number().int().positive().nullable(),
   date: z.string(),
-  description: z.string(),
   total: z.string(),
   amount: z.string(),
   installment: z.number().int(),

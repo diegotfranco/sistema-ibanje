@@ -17,7 +17,8 @@ export const CreateIncomeEntryRequestSchema = z.object({
   attenderId: z.number().int().positive().optional(),
   paymentMethodId: z.number().int().positive(),
   designatedFundId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional()
+  notes: z.string().max(1000).optional(),
+  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
 });
 
 export const UpdateIncomeEntryRequestSchema = CreateIncomeEntryRequestSchema.partial().extend({

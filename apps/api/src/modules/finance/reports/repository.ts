@@ -148,7 +148,6 @@ export async function getExpenseReportRows(
     .select({
       id: expenseEntries.id,
       date: expenseEntries.date,
-      description: expenseEntries.description,
       categoryId: expenseCategories.id,
       categoryName: expenseCategories.name,
       parentCategoryId: parentExpenseCat.id,
@@ -185,7 +184,6 @@ export async function getExpenseReportRows(
   return rows.map((r) => ({
     id: r.id,
     date: r.date,
-    description: r.description,
     categoryId: r.categoryId,
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
@@ -404,7 +402,6 @@ export async function getAllExpenseReportRows(
     .select({
       id: expenseEntries.id,
       date: expenseEntries.date,
-      description: expenseEntries.description,
       categoryId: expenseCategories.id,
       categoryName: expenseCategories.name,
       parentCategoryId: parentExpenseCat.id,
@@ -439,7 +436,6 @@ export async function getAllExpenseReportRows(
   return rows.map((r) => ({
     id: r.id,
     date: r.date,
-    description: r.description,
     categoryId: r.categoryId,
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
@@ -648,7 +644,6 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
     .select({
       id: expenseEntries.id,
       date: expenseEntries.date,
-      description: expenseEntries.description,
       amount: expenseEntries.amount,
       categoryName: expenseCategories.name,
       notes: expenseEntries.notes
@@ -661,7 +656,6 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
   return rows.map((r) => ({
     id: r.id,
     date: r.date,
-    description: r.description,
     amount: r.amount,
     categoryName: r.categoryName,
     notes: r.notes ?? null
@@ -714,7 +708,6 @@ export async function getFundExpenseEntriesForRange(
     .select({
       id: expenseEntries.id,
       date: expenseEntries.date,
-      description: expenseEntries.description,
       amount: expenseEntries.amount,
       categoryName: expenseCategories.name,
       notes: expenseEntries.notes
@@ -734,7 +727,6 @@ export async function getFundExpenseEntriesForRange(
   return rows.map((r) => ({
     id: r.id,
     date: r.date,
-    description: r.description,
     amount: r.amount,
     categoryName: r.categoryName,
     notes: r.notes ?? null

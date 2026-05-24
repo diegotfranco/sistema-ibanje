@@ -111,7 +111,6 @@ export const expenseEntries = pgTable(
     id: serial('id').primaryKey(),
     parentId: integer('parent_id').references((): AnyPgColumn => expenseEntries.id),
     date: date('date').notNull(),
-    description: varchar('description', { length: 256 }).notNull(),
     total: numeric('total', { precision: 12, scale: 2 }).notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     installment: integer('installment').default(1).notNull(),

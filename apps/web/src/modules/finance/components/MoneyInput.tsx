@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { NumericFormat } from 'react-number-format';
 import { Input } from '@/components/ui/input';
 
 type Props = Omit<React.ComponentPropsWithoutRef<typeof Input>, 'value' | 'onChange'> & {
@@ -8,38 +9,18 @@ type Props = Omit<React.ComponentPropsWithoutRef<typeof Input>, 'value' | 'onCha
 
 export default React.forwardRef<HTMLInputElement, Props>(
   ({ value, onChange, onBlur, ...props }, ref) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      let input = e.target.value;
-      input = input.replace(/[^\d.]/g, '');
-      const parts = input.split('.');
-      if (parts.length > 2) {
-        input = parts[0] + '.' + parts.slice(1).join('');
-      }
-      if (input.includes('.')) {
-        const [whole, decimal] = input.split('.');
-        input = whole + '.' + decimal.slice(0, 2);
-      }
-      onChange(input);
-    };
-
-    const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-      if (value && value !== '') {
-        const num = Number.parseFloat(value);
-        if (!Number.isNaN(num)) {
-          onChange(num.toFixed(2));
-        }
-      }
-      onBlur?.(e);
-    };
-
     return (
-      <Input
-        ref={ref}
-        type="text"
+      <NumericFormat
+        getInputRef={ref}
+        customInput={Input}
+        thousandSeparator="."
+        decimalSeparator=","
+        decimalScale={2}
+        allowNegative={false}
         inputMode="decimal"
         value={value}
-        onChange={handleChange}
-        onBlur={handleBlur}
+        onValueChange={({ value: raw }) => onChange(raw)}
+        onBlur={onBlur}
         {...props}
       />
     );

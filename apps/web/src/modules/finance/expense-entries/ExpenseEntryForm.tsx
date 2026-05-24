@@ -40,8 +40,8 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
+      isInstallment: initialValues ? initialValues.totalInstallments > 1 : false,
       date: initialValues?.date ?? '',
-      description: initialValues?.description ?? '',
       amount: initialValues?.amount ?? '',
       total: initialValues?.total ?? '',
       installment: initialValues?.installment ?? 1,
@@ -51,7 +51,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       designatedFundId: initialValues?.designatedFundId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       notes: initialValues?.notes ?? '',
-      status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? undefined
+      status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? EntryStatus.Paid
     }
   });
 
@@ -82,42 +82,40 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
         detailsDefaultOpen={detailsDefaultOpen}
       />
 
-      {initialValues !== undefined && (
-        <>
-          <Controller
-            name="status"
-            control={control}
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="status">Status</FieldLabel>
-                <Select
-                  value={field.value !== undefined ? String(field.value) : ''}
-                  onValueChange={(v) => field.onChange(v)}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione um status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                    <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.status && <FieldError>{errors.status.message}</FieldError>}
-              </Field>
-            )}
-          />
-
+      <Controller
+        name="status"
+        control={control}
+        render={({ field }) => (
           <Field>
-            <FieldLabel>Comprovante</FieldLabel>
-            <ReceiptField
-              entryId={initialValues.id}
-              hasReceipt={initialValues.hasReceipt}
-              stagedFile={stagedFile}
-              stagedRemoval={stagedRemoval}
-              onStage={handleStage}
-              onStageRemoval={handleStageRemoval}
-            />
+            <FieldLabel htmlFor="status">Status</FieldLabel>
+            <Select
+              value={field.value !== undefined ? String(field.value) : EntryStatus.Paid}
+              onValueChange={(v) => field.onChange(v)}>
+              <SelectTrigger id="status">
+                <SelectValue placeholder="Selecione um status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.status && <FieldError>{errors.status.message}</FieldError>}
           </Field>
-        </>
+        )}
+      />
+
+      {initialValues !== undefined && (
+        <Field>
+          <FieldLabel>Comprovante</FieldLabel>
+          <ReceiptField
+            entryId={initialValues.id}
+            hasReceipt={initialValues.hasReceipt}
+            stagedFile={stagedFile}
+            stagedRemoval={stagedRemoval}
+            onStage={handleStage}
+            onStageRemoval={handleStageRemoval}
+          />
+        </Field>
       )}
 
       <DialogFooter>

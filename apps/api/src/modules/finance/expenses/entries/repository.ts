@@ -1,4 +1,4 @@
-import { eq, count, and, gte, lte, sum, sql } from 'drizzle-orm';
+import { eq, count, desc, and, gte, lte, sum, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../../db/index.js';
 import {
@@ -15,7 +15,6 @@ const selectFields = {
   id: expenseEntries.id,
   parentId: expenseEntries.parentId,
   date: expenseEntries.date,
-  description: expenseEntries.description,
   total: expenseEntries.total,
   amount: expenseEntries.amount,
   installment: expenseEntries.installment,
@@ -50,7 +49,10 @@ function baseQuery() {
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
-  const rows = await baseQuery().orderBy(expenseEntries.id).offset(offset).limit(limit);
+  const rows = await baseQuery()
+    .orderBy(desc(expenseEntries.date), desc(expenseEntries.id))
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(expenseEntries);
   return { rows, total: countResult[0]?.count ?? 0 };
@@ -64,7 +66,6 @@ export async function findExpenseEntryById(id: number) {
 
 export async function insertExpenseEntry(data: {
   date: string;
-  description: string;
   total: number;
   amount: number;
   installment?: number;
@@ -77,6 +78,7 @@ export async function insertExpenseEntry(data: {
   receipt?: string;
   notes?: string;
   userId: number;
+  status?: 'pendente' | 'paga' | 'cancelada';
 }) {
   const insertData = {
     ...data,
@@ -98,7 +100,6 @@ export async function updateExpenseEntry(
     Pick<
       typeof expenseEntries.$inferInsert,
       | 'date'
-      | 'description'
       | 'total'
       | 'amount'
       | 'installment'

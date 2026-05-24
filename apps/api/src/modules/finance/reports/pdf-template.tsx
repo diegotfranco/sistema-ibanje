@@ -463,11 +463,8 @@ function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
       <View style={tw('flex-row bg-gray-100 border-b border-gray-200')}>
         <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: 0.9 }]}>Data</Text>
         <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: 2 }]}>Grupo</Text>
-        <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: 3 }]}>
+        <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: 7 }]}>
           Categoria
-        </Text>
-        <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium'), { flex: 4 }]}>
-          Descrição
         </Text>
         <Text style={[tw('px-2 py-1.5 text-xs font-roboto font-medium text-right'), { flex: 1.1 }]}>
           Valor
@@ -487,11 +484,8 @@ function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
             <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 2 }]}>
               {r.parentCategoryName ?? '—'}
             </Text>
-            <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 3 }]}>
+            <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 7 }]}>
               {r.categoryName}
-            </Text>
-            <Text style={[tw('px-2 py-1.5 text-xs text-slate-700'), { flex: 4 }]}>
-              {r.description}
             </Text>
             <Text style={[tw('px-2 py-1.5 text-xs text-slate-700 text-right'), { flex: 1.1 }]}>
               {fmtCurrency(r.amount)}

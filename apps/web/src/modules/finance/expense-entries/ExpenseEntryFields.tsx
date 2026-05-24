@@ -1,7 +1,8 @@
-import { Controller, type Control, type FieldErrors } from 'react-hook-form';
+import { Controller, useWatch, type Control, type FieldErrors } from 'react-hook-form';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ interface Props {
 }
 
 export function ExpenseEntryFields({ control, errors }: Props) {
+  const isInstallment = useWatch({ control, name: 'isInstallment' });
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
   const designatedFunds = useDesignatedFunds();
@@ -65,80 +67,99 @@ export function ExpenseEntryFields({ control, errors }: Props) {
       />
 
       <Controller
-        name="description"
+        name="isInstallment"
         control={control}
         render={({ field }) => (
-          <Field>
-            <FieldLabel htmlFor="description">Descrição</FieldLabel>
-            <Input id="description" placeholder="Descrição da despesa" maxLength={256} {...field} />
-            {errors.description && <FieldError>{errors.description.message}</FieldError>}
-          </Field>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <Checkbox
+              id="isInstallment"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+            />
+            Esta despesa é parcelada?
+          </label>
         )}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {isInstallment ? (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="amount">Valor da Parcela (R$)</FieldLabel>
+                  <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
+                  {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
+                </Field>
+              )}
+            />
+            <Controller
+              name="total"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="total">Valor Total (R$)</FieldLabel>
+                  <MoneyInput id="total" value={field.value ?? ''} onChange={field.onChange} />
+                  {errors.total && <FieldError>{errors.total.message}</FieldError>}
+                </Field>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Controller
+              name="installment"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="installment">Parcela Nº</FieldLabel>
+                  <Input
+                    id="installment"
+                    type="number"
+                    min="1"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {errors.installment && <FieldError>{errors.installment.message}</FieldError>}
+                </Field>
+              )}
+            />
+            <Controller
+              name="totalInstallments"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="totalInstallments">Total de Parcelas</FieldLabel>
+                  <Input
+                    id="totalInstallments"
+                    type="number"
+                    min="1"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {errors.totalInstallments && (
+                    <FieldError>{errors.totalInstallments.message}</FieldError>
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+        </>
+      ) : (
         <Controller
           name="amount"
           control={control}
           render={({ field }) => (
             <Field>
-              <FieldLabel htmlFor="amount">Valor da Parcela (R$)</FieldLabel>
+              <FieldLabel htmlFor="amount">Valor (R$)</FieldLabel>
               <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
               {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
             </Field>
           )}
         />
-        <Controller
-          name="total"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="total">Valor Total (R$)</FieldLabel>
-              <MoneyInput id="total" value={field.value} onChange={field.onChange} />
-              {errors.total && <FieldError>{errors.total.message}</FieldError>}
-            </Field>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Controller
-          name="installment"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="installment">Parcela Nº</FieldLabel>
-              <Input
-                id="installment"
-                type="number"
-                min="1"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.valueAsNumber)}
-              />
-              {errors.installment && <FieldError>{errors.installment.message}</FieldError>}
-            </Field>
-          )}
-        />
-        <Controller
-          name="totalInstallments"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="totalInstallments">Total de Parcelas</FieldLabel>
-              <Input
-                id="totalInstallments"
-                type="number"
-                min="1"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.valueAsNumber)}
-              />
-              {errors.totalInstallments && (
-                <FieldError>{errors.totalInstallments.message}</FieldError>
-              )}
-            </Field>
-          )}
-        />
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Controller

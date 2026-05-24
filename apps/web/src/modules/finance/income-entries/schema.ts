@@ -25,6 +25,7 @@ export type IncomeEntryCreateBody = {
   paymentMethodId: number;
   designatedFundId?: number;
   notes?: string;
+  status?: string;
 };
 
 export type IncomeEntryUpdateBody = Partial<IncomeEntryCreateBody> & {

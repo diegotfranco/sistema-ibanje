@@ -44,7 +44,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
       notes: initialValues?.notes ?? '',
-      status: (initialValues?.status as IncomeEntryFormValues['status']) ?? undefined
+      status: (initialValues?.status as IncomeEntryFormValues['status']) ?? EntryStatus.Paid
     }
   });
 
@@ -60,35 +60,31 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
     onSubmit(values);
   };
 
-  const isEditing = initialValues !== undefined;
-
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
       <IncomeEntryFields control={form.control} errors={form.formState.errors} />
 
-      {isEditing && (
-        <Controller
-          name="status"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Status</FieldLabel>
-              <Select
-                value={field.value ?? EntryStatus.Pending}
-                onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                  <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-                </SelectContent>
-              </Select>
-              {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
-            </Field>
-          )}
-        />
-      )}
+      <Controller
+        name="status"
+        control={form.control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Status</FieldLabel>
+            <Select
+              value={field.value ?? EntryStatus.Paid}
+              onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
+              </SelectContent>
+            </Select>
+            {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
+          </Field>
+        )}
+      />
 
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

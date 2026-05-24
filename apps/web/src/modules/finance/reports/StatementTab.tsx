@@ -34,15 +34,6 @@ export function StatementTab({ month }: Props) {
       cell: (info) => formatDate(info.row.original.date)
     },
     {
-      id: 'description',
-      header: 'Descrição',
-      cell: (info) => (
-        <span className="block max-w-48 truncate" title={info.row.original.description}>
-          {info.row.original.description}
-        </span>
-      )
-    },
-    {
       id: 'category',
       header: 'Categoria',
       cell: (info) => info.row.original.categoryName,
@@ -67,9 +58,9 @@ export function StatementTab({ month }: Props) {
         </span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
-      {row.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2" title={row.description}>
-          {row.description}
+      {row.notes && (
+        <p className="text-xs text-muted-foreground line-clamp-2" title={row.notes}>
+          {row.notes}
         </p>
       )}
     </div>

@@ -488,7 +488,6 @@ export const EDGE_CASE_INCOME: EdgeCaseIncome[] = [
 
 export type EdgeCaseExpense = {
   date: string;
-  description: string;
   total: string;
   amount: string;
   installment: number;
@@ -509,83 +508,81 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
   // Total R$ 5.000,00, R$ 1.000,00 per installment.
   {
     date: '2026-02-10',
-    description: 'Compra de projetor multimídia (parcelado em 5x)',
     total: '5000.00',
     amount: '1000.00',
     installment: 1,
     totalInstallments: 5,
     categoryName: 'Compra de Equipamentos',
     paymentMethodName: 'Cartão de Crédito',
+    notes: 'Compra de projetor multimídia (parcelado em 5x)',
     installmentGroupId: INSTALLMENT_GROUP,
     isInstallmentParent: true,
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
     date: '2026-03-10',
-    description: 'Compra de projetor multimídia (parcela 2/5)',
     total: '5000.00',
     amount: '1000.00',
     installment: 2,
     totalInstallments: 5,
     categoryName: 'Compra de Equipamentos',
     paymentMethodName: 'Cartão de Crédito',
+    notes: 'Compra de projetor multimídia (parcela 2/5)',
     installmentGroupId: INSTALLMENT_GROUP,
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
     date: '2026-04-10',
-    description: 'Compra de projetor multimídia (parcela 3/5)',
     total: '5000.00',
     amount: '1000.00',
     installment: 3,
     totalInstallments: 5,
     categoryName: 'Compra de Equipamentos',
     paymentMethodName: 'Cartão de Crédito',
+    notes: 'Compra de projetor multimídia (parcela 3/5)',
     installmentGroupId: INSTALLMENT_GROUP,
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
     date: '2026-05-10',
-    description: 'Compra de projetor multimídia (parcela 4/5)',
     total: '5000.00',
     amount: '1000.00',
     installment: 4,
     totalInstallments: 5,
     categoryName: 'Compra de Equipamentos',
     paymentMethodName: 'Cartão de Crédito',
+    notes: 'Compra de projetor multimídia (parcela 4/5)',
     installmentGroupId: INSTALLMENT_GROUP,
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   {
     date: '2026-06-10',
-    description: 'Compra de projetor multimídia (parcela 5/5)',
     total: '5000.00',
     amount: '1000.00',
     installment: 5,
     totalInstallments: 5,
     categoryName: 'Compra de Equipamentos',
     paymentMethodName: 'Cartão de Crédito',
+    notes: 'Compra de projetor multimídia (parcela 5/5)',
     installmentGroupId: INSTALLMENT_GROUP,
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   // Very large amount — covers the upper bound of numeric(12,2) formatting.
   {
     date: '2026-04-20',
-    description: 'Reforma estrutural do templo (parcela única)',
     total: '999999.99',
     amount: '999999.99',
     installment: 1,
     totalInstallments: 1,
     categoryName: 'Manutenção Predial',
     paymentMethodName: 'Transferência Bancária',
-    notes: 'Caso-limite: valor próximo ao máximo de numeric(12,2).',
+    notes: 'Reforma estrutural do templo — caso-limite: valor próximo ao máximo de numeric(12,2).',
     createdByUserEmail: 'tesoureiro.resp@email.com'
   },
   // Negative-balance scenario on the "Desafio Construção" fund: a single
   // R$ 3.000 outflow against R$ 200 inflow in the same period.
   {
     date: '2026-04-15',
-    description: 'Pagamento de empreiteira — Desafio Construção',
     total: '3000.00',
     amount: '3000.00',
     installment: 1,
@@ -593,7 +590,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     categoryName: 'Manutenção Predial',
     paymentMethodName: 'Transferência Bancária',
     designatedFundName: 'Desafio Construção',
-    notes: 'Caso-limite: saldo do fundo fica negativo no mês.',
+    notes: 'Pagamento de empreiteira — caso-limite: saldo do fundo fica negativo no mês.',
     createdByUserEmail: 'tesoureiro.resp@email.com'
   }
 ];

@@ -46,7 +46,10 @@ function baseQuery() {
 }
 
 export async function listIncomeEntries(offset: number, limit: number) {
-  const rows = await baseQuery().orderBy(incomeEntries.id).offset(offset).limit(limit);
+  const rows = await baseQuery()
+    .orderBy(desc(incomeEntries.depositDate), desc(incomeEntries.id))
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(incomeEntries);
   return { rows, total: countResult[0]?.count ?? 0 };
@@ -87,6 +90,7 @@ export async function insertIncomeEntry(data: {
   designatedFundId?: number;
   notes?: string;
   userId: number;
+  status?: 'pendente' | 'paga' | 'cancelada';
 }) {
   const insertData = {
     ...data,

@@ -118,7 +118,6 @@ type IncomeEntryFixture = {
 };
 type ExpenseEntryFixture = {
   date: string;
-  description: string;
   total: string;
   amount: string;
   installment: number;
@@ -400,7 +399,6 @@ export async function seed() {
       const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
       return {
         date: e.date,
-        description: e.description,
         total: e.total,
         amount: e.amount,
         installment: e.installment,
@@ -550,7 +548,6 @@ export async function seed() {
             const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
             return {
               date: e.date,
-              description: e.description,
               total: e.total,
               amount: e.amount,
               installment: e.installment,
@@ -582,7 +579,6 @@ export async function seed() {
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
           return {
             date: e.date,
-            description: e.description,
             total: e.total,
             amount: e.amount,
             installment: e.installment,
