@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { getTestApp } from './helpers/app.js';
 import { loginAs, type AuthCookies } from './helpers/auth.js';
-import { reseedDb } from './helpers/db.js';
+import { reseedDb, clearMonthlyClosings } from './helpers/db.js';
 import { db } from '../src/db/index.js';
 import { incomeCategories, paymentMethods } from '../src/db/schema.js';
 import { eq } from 'drizzle-orm';
@@ -13,16 +13,17 @@ describe('smoke: login → create income entry → close month', () => {
 
   beforeAll(async () => {
     reseedDb();
+    await clearMonthlyClosings();
     app = await getTestApp();
     auth = await loginAs(app, 'admin@email.com', 'admin123');
   });
 
   it('runs through the critical path', async () => {
-    // Look up a leaf income category (Dízimo requires member; pick "Oferta de Culto" instead)
+    // Look up a leaf income category (Dízimo requires member; pick "Oferta" instead)
     const categoryResults = await db
       .select()
       .from(incomeCategories)
-      .where(eq(incomeCategories.name, 'Oferta de Culto'));
+      .where(eq(incomeCategories.name, 'Oferta'));
     const category = categoryResults[0];
     expect(category).toBeDefined();
 
@@ -30,7 +31,7 @@ describe('smoke: login → create income entry → close month', () => {
     const pm = pmResults[0];
     expect(pm).toBeDefined();
 
-    const referenceDate = '2097-01-15';
+    const depositDate = '2097-01-15';
 
     const createEntry = await app.inject({
       method: 'POST',
@@ -40,7 +41,7 @@ describe('smoke: login → create income entry → close month', () => {
         categoryId: category.id,
         paymentMethodId: pm.id,
         amount: 100.0,
-        referenceDate
+        depositDate
       }
     });
     expect(createEntry.statusCode).toBe(201);

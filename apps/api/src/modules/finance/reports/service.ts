@@ -202,7 +202,7 @@ export async function getAttendersReport(
 
   const [titheIds, offeringIds] = await Promise.all([
     repo.findIncomeCategoryIdsByNames(['Dízimo']),
-    repo.findIncomeCategoryIdsByNames(['Oferta de Culto', 'Oferta Missionária', 'Doação'])
+    repo.findIncomeCategoryIdsByNames(['Oferta', 'Doação'])
   ]);
 
   const [totalActiveAttenders, tithePayers, offeringPayers] = await Promise.all([
