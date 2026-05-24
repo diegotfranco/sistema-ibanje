@@ -14,7 +14,7 @@ import { zodResolver } from '@/lib/zodResolver';
 import { TransitionNotesSchema, type TransitionNotesFormValues } from './schema';
 import { useClosingTransition } from './useMonthlyClosings';
 
-type TransitionAction = 'submit' | 'approve' | 'reject' | 'close';
+type TransitionAction = 'submit' | 'approve' | 'reject' | 'close' | 'reopen' | 'resubmit';
 
 interface Props {
   open: boolean;
@@ -50,6 +50,17 @@ const ACTION_CONFIG: Record<
     title: 'Fechar Período',
     description: 'O período será permanentemente fechado. Esta ação não pode ser desfeita.',
     confirmLabel: 'Fechar Período'
+  },
+  reopen: {
+    title: 'Reabrir Fechamento',
+    description: 'O fechamento voltará ao status "aberto" para correções.',
+    confirmLabel: 'Reabrir'
+  },
+  resubmit: {
+    title: 'Submeter para revisão novamente',
+    description: 'O fechamento voltará ao status "em revisão" para nova análise.',
+    notesLabel: 'Observações do Tesoureiro (opcional)',
+    confirmLabel: 'Submeter novamente'
   }
 };
 

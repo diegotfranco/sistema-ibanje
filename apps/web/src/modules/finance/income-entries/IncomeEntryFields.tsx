@@ -28,7 +28,7 @@ interface Props {
 export function IncomeEntryFields({ control, errors }: Props) {
   const incomeCategories = useIncomeCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds();
+  const designatedFunds = useDesignatedFunds({ limit: 200 });
   const attenders = useAttenders();
 
   const allCats = incomeCategories.data?.data ?? [];

@@ -10,6 +10,7 @@ import type {
   SubmitMonthlyClosingRequest,
   ApproveMonthlyClosingRequest,
   RejectMonthlyClosingRequest,
+  ResubmitMonthlyClosingRequest,
   MonthlyClosingResponse
 } from './schema.js';
 import type { MonthlyClosing } from '../../../db/schema.js';
@@ -203,6 +204,60 @@ export async function rejectMonthlyClosing(
   return buildResponse(updated!);
 }
 
+export async function reopenMonthlyClosing(
+  callerId: number,
+  id: number
+): Promise<MonthlyClosingResponse> {
+  // The treasurer who submitted the closing should be able to reopen it.
+  // Action.Create mirrors the `submit` permission since the same actor
+  // initiates both flows.
+  await assertPermission(callerId, Module.MonthlyClosings, Action.Create);
+
+  const closing = await repo.findMonthlyClosingById(id);
+  if (!closing) throw httpError(404, 'Monthly closing not found');
+  if (closing.status !== ClosingStatus.Approved && closing.status !== ClosingStatus.Rejected) {
+    throw httpError(409, 'Only approved or rejected closings can be reopened');
+  }
+
+  // Reopening from `aprovado` is a head-treasurer-only override (the role
+  // that owns the closing workflow end-to-end).
+  if (closing.status === ClosingStatus.Approved) {
+    const user = await authRepo.findUserById(callerId);
+    if (!user || user.roleName !== 'Tesoureiro Responsável') {
+      throw httpError(403, 'Only the head treasurer can reopen an approved closing');
+    }
+  }
+
+  const updated = await repo.updateMonthlyClosing(id, {
+    status: ClosingStatus.Open,
+    reviewedAt: null
+  });
+  return buildResponse(updated!);
+}
+
+export async function resubmitRejectedClosing(
+  callerId: number,
+  id: number,
+  body: ResubmitMonthlyClosingRequest
+): Promise<MonthlyClosingResponse> {
+  await assertPermission(callerId, Module.MonthlyClosings, Action.Create);
+
+  const closing = await repo.findMonthlyClosingById(id);
+  if (!closing) throw httpError(404, 'Monthly closing not found');
+  if (closing.status !== ClosingStatus.Rejected) {
+    throw httpError(409, 'Only rejected closings can be resubmitted');
+  }
+
+  const updated = await repo.updateMonthlyClosing(id, {
+    status: ClosingStatus.InReview,
+    ...(body.treasurerNotes !== undefined && { treasurerNotes: body.treasurerNotes }),
+    submittedByUserId: callerId,
+    submittedAt: new Date(),
+    reviewedAt: null
+  });
+  return buildResponse(updated!);
+}
+
 export async function reproveApprovedClosing(
   callerId: number,
   id: number
@@ -210,8 +265,8 @@ export async function reproveApprovedClosing(
   await assertPermission(callerId, Module.MonthlyClosings, Action.Review);
 
   const user = await authRepo.findUserById(callerId);
-  if (!user || user.roleName !== 'Secretário Responsável') {
-    throw httpError(403, 'Only the head secretary can reprove an approved closing');
+  if (!user || user.roleName !== 'Tesoureiro Responsável') {
+    throw httpError(403, 'Only the head treasurer can reprove an approved closing');
   }
 
   const closing = await repo.findMonthlyClosingById(id);

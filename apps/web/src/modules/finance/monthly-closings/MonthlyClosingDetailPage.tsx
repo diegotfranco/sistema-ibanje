@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardHeaderRow, CardTitle } from '@/components/Card';
 import { PageContainer } from '@/components/PageContainer';
 import StatusBadge from '@/components/StatusBadge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -13,6 +15,19 @@ import { useMonthlyClosingById, useRemoveMonthlyClosing } from './useMonthlyClos
 import { ClosingTransitionDialog } from './ClosingTransitionDialog';
 import { IncomeReportTab } from '../reports/IncomeReportTab';
 import { ExpenseReportTab } from '../reports/ExpenseReportTab';
+import {
+  useExpenseEntryById,
+  useExpenseEntryMutations,
+  useUploadReceipt,
+  useDeleteReceipt
+} from '../expense-entries/useExpenseEntries';
+import { ExpenseEntryForm } from '../expense-entries/ExpenseEntryForm';
+import { useIncomeEntryById, useIncomeEntryMutations } from '../income-entries/useIncomeEntries';
+import { IncomeEntryForm } from '../income-entries/IncomeEntryForm';
+import type { ExpenseEntryFormValues } from '../expense-entries/schema';
+import type { IncomeEntryFormValues } from '../income-entries/schema';
+import type { ExpenseReportRow, IncomeReportRow } from '../reports/schema';
+import { formatMoney as formatAmount } from '../entries-utils';
 
 const MONTHS = [
   'Janeiro',
@@ -36,7 +51,7 @@ const monthParam = (year: number, month: number) => `${year}-${String(month).pad
 const formatMoney = (s: string) =>
   `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-type TransitionAction = 'submit' | 'approve' | 'reject' | 'close';
+type TransitionAction = 'submit' | 'approve' | 'reject' | 'close' | 'reopen' | 'resubmit';
 
 interface SummaryTileProps {
   label: string;
@@ -69,6 +84,7 @@ function SummaryTile({ label, value, valueClassName, hint }: SummaryTileProps) {
 export default function MonthlyClosingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
 
@@ -83,6 +99,21 @@ export default function MonthlyClosingDetailPage() {
 
   const [transitionAction, setTransitionAction] = useState<TransitionAction | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // Inline edit/delete state for embedded income/expense rows
+  const [editingExpenseId, setEditingExpenseId] = useState<number | null>(null);
+  const [deletingExpense, setDeletingExpense] = useState<ExpenseReportRow | null>(null);
+  const [editingIncomeId, setEditingIncomeId] = useState<number | null>(null);
+  const [deletingIncome, setDeletingIncome] = useState<IncomeReportRow | null>(null);
+
+  const expenseEntry = useExpenseEntryById(editingExpenseId);
+  const incomeEntry = useIncomeEntryById(editingIncomeId);
+  const expenseMutations = useExpenseEntryMutations();
+  const incomeMutations = useIncomeEntryMutations();
+  const uploadReceipt = useUploadReceipt();
+  const deleteReceipt = useDeleteReceipt();
+
+  const invalidateReports = () => qc.invalidateQueries({ queryKey: ['reports'] });
 
   if (isLoading) {
     return (
@@ -102,11 +133,69 @@ export default function MonthlyClosingDetailPage() {
 
   const month = monthParam(closing.periodYear, closing.periodMonth);
 
+  const isOpen = closing.status === ClosingStatus.Open;
+  const canEditExpense = isOpen && hasPermission(perms, Module.ExpenseEntries, Action.Update);
+  const canDeleteExpense = isOpen && hasPermission(perms, Module.ExpenseEntries, Action.Delete);
+  const canEditIncome = isOpen && hasPermission(perms, Module.IncomeEntries, Action.Update);
+  const canDeleteIncome = isOpen && hasPermission(perms, Module.IncomeEntries, Action.Delete);
+
+  const expenseRowActions =
+    canEditExpense || canDeleteExpense
+      ? {
+          canEdit: canEditExpense,
+          canDelete: canDeleteExpense,
+          onEdit: (entryId: number) => setEditingExpenseId(entryId),
+          onDelete: (row: ExpenseReportRow) => setDeletingExpense(row)
+        }
+      : undefined;
+
+  const incomeRowActions =
+    canEditIncome || canDeleteIncome
+      ? {
+          canEdit: canEditIncome,
+          canDelete: canDeleteIncome,
+          onEdit: (entryId: number) => setEditingIncomeId(entryId),
+          onDelete: (row: IncomeReportRow) => setDeletingIncome(row)
+        }
+      : undefined;
+
+  const isHeadTreasurer = user?.role === 'Tesoureiro Responsável';
+
   const hasActions =
     closing.status !== ClosingStatus.Closed &&
     ((closing.status === ClosingStatus.Open && (canCreate || canDelete)) ||
       (closing.status === ClosingStatus.InReview && canReview) ||
-      (closing.status === ClosingStatus.Approved && canEdit));
+      (closing.status === ClosingStatus.Approved && (canEdit || isHeadTreasurer)) ||
+      (closing.status === ClosingStatus.Rejected && canCreate));
+
+  const toExpenseCreateBody = (values: ExpenseEntryFormValues) => {
+    const amountNum = Number.parseFloat(values.amount);
+    return {
+      date: values.date,
+      amount: amountNum,
+      total: values.isInstallment ? Number.parseFloat(values.total!) : amountNum,
+      installment: values.isInstallment ? values.installment! : 1,
+      totalInstallments: values.isInstallment ? values.totalInstallments! : 1,
+      categoryId: values.categoryId!,
+      paymentMethodId: values.paymentMethodId!,
+      ...(values.designatedFundId !== undefined
+        ? { designatedFundId: values.designatedFundId }
+        : {}),
+      ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
+      ...(values.notes ? { notes: values.notes } : {})
+    };
+  };
+
+  const toIncomeUpdateBody = (values: IncomeEntryFormValues) => ({
+    depositDate: values.depositDate,
+    amount: Number.parseFloat(values.amount),
+    categoryId: values.categoryId!,
+    paymentMethodId: values.paymentMethodId!,
+    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
+    ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
+    ...(values.notes ? { notes: values.notes } : {}),
+    ...(values.status ? { status: values.status } : {})
+  });
 
   return (
     <>
@@ -199,8 +288,23 @@ export default function MonthlyClosingDetailPage() {
                         </Button>
                       </>
                     )}
+                    {closing.status === ClosingStatus.Rejected && canCreate && (
+                      <>
+                        <Button onClick={() => setTransitionAction('resubmit')}>
+                          Submeter para revisão novamente
+                        </Button>
+                        <Button variant="outline" onClick={() => setTransitionAction('reopen')}>
+                          Reabrir
+                        </Button>
+                      </>
+                    )}
                     {closing.status === ClosingStatus.Approved && canEdit && (
                       <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
+                    )}
+                    {closing.status === ClosingStatus.Approved && isHeadTreasurer && (
+                      <Button variant="outline" onClick={() => setTransitionAction('reopen')}>
+                        Reabrir
+                      </Button>
                     )}
                     {closing.status === ClosingStatus.Open && canDelete && (
                       <Button variant="destructive" onClick={() => setDeleteOpen(true)}>
@@ -222,7 +326,7 @@ export default function MonthlyClosingDetailPage() {
                 <CardTitle>Entradas do período</CardTitle>
               </CardHeaderRow>
               <CardContent className="p-0">
-                <IncomeReportTab month={month} mode="embedded" />
+                <IncomeReportTab month={month} mode="embedded" rowActions={incomeRowActions} />
               </CardContent>
             </Card>
 
@@ -231,7 +335,7 @@ export default function MonthlyClosingDetailPage() {
                 <CardTitle>Saídas do período</CardTitle>
               </CardHeaderRow>
               <CardContent className="p-0">
-                <ExpenseReportTab month={month} mode="embedded" />
+                <ExpenseReportTab month={month} mode="embedded" rowActions={expenseRowActions} />
               </CardContent>
             </Card>
           </>
@@ -257,6 +361,114 @@ export default function MonthlyClosingDetailPage() {
           })
         }
         isPending={remove.isPending}
+      />
+
+      <Dialog
+        open={editingExpenseId !== null}
+        onOpenChange={(v) => !v && setEditingExpenseId(null)}>
+        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar lançamento de saída</DialogTitle>
+          </DialogHeader>
+          {expenseEntry.data && (
+            <ExpenseEntryForm
+              initialValues={expenseEntry.data}
+              isPending={
+                expenseMutations.update.isPending ||
+                uploadReceipt.isPending ||
+                deleteReceipt.isPending
+              }
+              onSubmit={(values, receipt) => {
+                const body = toExpenseCreateBody(values);
+                const updateBody = {
+                  ...body,
+                  ...(values.status ? { status: values.status } : {})
+                };
+                const entryId = expenseEntry.data!.id;
+                expenseMutations.update.mutate(
+                  { id: entryId, body: updateBody },
+                  {
+                    onSuccess: async () => {
+                      try {
+                        if (receipt.stagedRemoval) {
+                          await deleteReceipt.mutateAsync(entryId);
+                        } else if (receipt.stagedFile) {
+                          await uploadReceipt.mutateAsync({
+                            id: entryId,
+                            file: receipt.stagedFile
+                          });
+                        }
+                        invalidateReports();
+                        setEditingExpenseId(null);
+                      } catch {
+                        // mutation hooks already toasted; keep dialog open
+                      }
+                    }
+                  }
+                );
+              }}
+              onCancel={() => setEditingExpenseId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deletingExpense !== null}
+        onOpenChange={(v) => !v && setDeletingExpense(null)}
+        description={`Tem certeza que deseja remover o lançamento "${deletingExpense?.categoryName ?? ''}"?`}
+        onConfirm={() =>
+          deletingExpense &&
+          expenseMutations.remove.mutate(deletingExpense.id, {
+            onSuccess: () => {
+              invalidateReports();
+              setDeletingExpense(null);
+            }
+          })
+        }
+        isPending={expenseMutations.remove.isPending}
+      />
+
+      <Dialog open={editingIncomeId !== null} onOpenChange={(v) => !v && setEditingIncomeId(null)}>
+        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar lançamento de entrada</DialogTitle>
+          </DialogHeader>
+          {incomeEntry.data && (
+            <IncomeEntryForm
+              initialValues={incomeEntry.data}
+              isPending={incomeMutations.update.isPending}
+              onSubmit={(values) => {
+                incomeMutations.update.mutate(
+                  { id: incomeEntry.data!.id, body: toIncomeUpdateBody(values) },
+                  {
+                    onSuccess: () => {
+                      invalidateReports();
+                      setEditingIncomeId(null);
+                    }
+                  }
+                );
+              }}
+              onCancel={() => setEditingIncomeId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDeleteDialog
+        open={deletingIncome !== null}
+        onOpenChange={(v) => !v && setDeletingIncome(null)}
+        description={`Tem certeza que deseja remover este lançamento de R$ ${deletingIncome ? formatAmount(deletingIncome.amount) : ''}?`}
+        onConfirm={() =>
+          deletingIncome &&
+          incomeMutations.remove.mutate(deletingIncome.id, {
+            onSuccess: () => {
+              invalidateReports();
+              setDeletingIncome(null);
+            }
+          })
+        }
+        isPending={incomeMutations.remove.isPending}
       />
     </>
   );

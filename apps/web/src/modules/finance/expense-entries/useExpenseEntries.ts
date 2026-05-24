@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
 import { api, ApiError } from '@/lib/api';
@@ -18,6 +18,14 @@ function describeError(err: unknown, fallback: string) {
 
 export function useExpenseEntries() {
   return useResourceList<ExpenseEntryResponse>(BASE, KEY, { limit: 15 });
+}
+
+export function useExpenseEntryById(id: number | null) {
+  return useQuery({
+    queryKey: [...KEY, id],
+    queryFn: () => api.get<ExpenseEntryResponse>(`${BASE}/${id}`),
+    enabled: id !== null && id > 0
+  });
 }
 
 export function useExpenseEntryMutations() {

@@ -127,17 +127,19 @@ export function DataTable<TData>({
   filters,
   onFilterChange
 }: DataTableProps<TData>) {
-  // Call all four breakpoints unconditionally (rules of hooks)
+  // Call all breakpoints unconditionally (rules of hooks)
   const isAboveSm = useIsAbove('sm');
   const isAboveMd = useIsAbove('md');
   const isAboveLg = useIsAbove('lg');
   const isAboveXl = useIsAbove('xl');
+  const isAbove2xl = useIsAbove('2xl');
 
   const breakpointMap: Record<Breakpoint, boolean> = {
     sm: isAboveSm,
     md: isAboveMd,
     lg: isAboveLg,
-    xl: isAboveXl
+    xl: isAboveXl,
+    '2xl': isAbove2xl
   };
 
   // Auto visibility from `meta.hideBelow`. User overrides (from the column-toggle

@@ -3,7 +3,7 @@ import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
 export const ListIncomeCategoriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
+  limit: z.coerce.number().int().positive().max(500).default(20),
   q: z.string().trim().min(1).max(64).optional()
 });
 

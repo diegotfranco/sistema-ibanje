@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Edit, Eye, Trash2, Receipt, ArrowRight } from 'lucide-react';
+import { Edit, Eye, Trash2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
@@ -70,13 +70,13 @@ export function ExpenseEntriesTable({
       id: 'designatedFund',
       header: 'Campanha',
       cell: (info) => info.row.original.designatedFundName ?? '—',
-      meta: { hideBelow: 'xl' }
+      meta: { hideBelow: '2xl' }
     },
     {
       id: 'sponsor',
       header: 'Patrocinador',
       cell: (info) => info.row.original.attenderName ?? '—',
-      meta: { hideBelow: 'xl' }
+      meta: { hideBelow: '2xl' }
     },
     {
       id: 'amount',
@@ -99,44 +99,13 @@ export function ExpenseEntriesTable({
         info.row.original.totalInstallments > 1
           ? `${info.row.original.installment}/${info.row.original.totalInstallments}`
           : '—',
-      meta: { hideBelow: 'xl', align: 'center' }
+      meta: { hideBelow: '2xl', align: 'center' }
     },
     {
       id: 'status',
       header: 'Status',
       cell: (info) => <StatusBadge status={info.row.original.status} />,
       meta: { hideBelow: 'lg' }
-    },
-    {
-      id: 'receipt',
-      header: 'Comprovante',
-      cell: (info) => {
-        const row = info.row.original;
-        return (
-          <div className="flex justify-center">
-            {row.hasReceipt ? (
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href={`${import.meta.env.VITE_API_URL || '/api'}/expense-entries/${row.id}/receipt`}
-                title="Ver comprovante"
-                aria-label="Ver comprovante"
-                className="text-primary hover:text-primary-soft inline-flex">
-                <Receipt size={16} />
-              </a>
-            ) : (
-              <span
-                role="img"
-                aria-label="Sem comprovante"
-                title="Sem comprovante"
-                className="text-muted-foreground/40 inline-flex">
-                <Receipt size={16} />
-              </span>
-            )}
-          </div>
-        );
-      },
-      meta: { hideBelow: 'xl', align: 'center' }
     },
     {
       id: 'actions',

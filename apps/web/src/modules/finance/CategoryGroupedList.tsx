@@ -26,7 +26,6 @@ interface Props<T extends CategoryLike> {
   canEdit: boolean;
   canDelete: boolean;
   onCreate: () => void;
-  onCreateInGroup?: (parentId: number) => void;
   onEdit: (row: T) => void;
   onDelete: (row: T) => void;
   renderRowMeta?: (row: T) => ReactNode;
@@ -63,7 +62,6 @@ export function CategoryGroupedList<T extends CategoryLike>({
   canEdit,
   canDelete,
   onCreate,
-  onCreateInGroup,
   onEdit,
   onDelete,
   renderRowMeta,
@@ -275,16 +273,6 @@ export function CategoryGroupedList<T extends CategoryLike>({
         </button>
         {!destructive && row.parent && (
           <div className="flex items-center gap-0.5">
-            {canEdit && onCreateInGroup && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                onClick={() => onCreateInGroup(row.parent!.id)}
-                aria-label={`Adicionar item em ${row.label}`}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            )}
             {canEdit && (
               <Button
                 size="icon"

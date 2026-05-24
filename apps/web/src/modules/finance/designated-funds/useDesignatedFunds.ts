@@ -6,11 +6,12 @@ const KEY = ['designated-funds'] as const;
 
 export function useDesignatedFunds({
   page,
+  limit,
   status
-}: { page?: number; status?: 'ativo' | 'inativo' } = {}) {
+}: { page?: number; limit?: number; status?: 'ativo' | 'inativo' } = {}) {
   return useResourceList<DesignatedFundResponse>(BASE, KEY, {
     page: page ?? 1,
-    limit: 20,
+    limit: limit ?? 20,
     ...(status && { status })
   });
 }

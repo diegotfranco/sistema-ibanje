@@ -14,7 +14,6 @@ import {
 
 interface Props {
   initialValues?: ExpenseCategoryResponse;
-  defaultParentId?: number;
   categories: CategoryNode[];
   isPending: boolean;
   onSubmit: (values: ExpenseCategoryFormValues) => void;
@@ -23,7 +22,6 @@ interface Props {
 
 export function ExpenseCategoryForm({
   initialValues,
-  defaultParentId,
   categories,
   isPending,
   onSubmit,
@@ -34,7 +32,7 @@ export function ExpenseCategoryForm({
     defaultValues: {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
-      parentId: initialValues?.parentId ?? defaultParentId
+      parentId: initialValues?.parentId ?? undefined
     }
   });
 

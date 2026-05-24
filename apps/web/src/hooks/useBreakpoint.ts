@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 
-export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl';
+export type Breakpoint = 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 
 // Tailwind v4 defaults
 export const BREAKPOINT_PX: Record<Breakpoint, number> = {
   sm: 640,
   md: 768,
   lg: 1024,
-  xl: 1280
+  xl: 1280,
+  '2xl': 1536
 };
 
 /**

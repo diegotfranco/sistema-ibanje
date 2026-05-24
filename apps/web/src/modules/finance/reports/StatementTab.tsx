@@ -170,6 +170,12 @@ export function StatementTab({ month }: Props) {
                     getRowKey={(row) => row.id}
                     mobileRow={renderDetailedExpenseMobile}
                   />
+                  <div className="flex items-baseline justify-between gap-3 border-t-2 px-4 py-3 text-sm font-semibold">
+                    <span>Total Saídas</span>
+                    <span className="font-mono tabular-nums whitespace-nowrap text-money-out">
+                      {formatMoney(detailed.data.totalExpenses)}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             </>

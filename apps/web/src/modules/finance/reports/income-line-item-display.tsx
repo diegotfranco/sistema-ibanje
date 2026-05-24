@@ -1,11 +1,21 @@
 import type { ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
+import { Edit, Eye, Trash2 } from 'lucide-react';
+import { Button } from '@/components/Button';
 import { type RowDetailField } from '@/components/RowDetailPanel';
 import StatusBadge from '@/components/StatusBadge';
 import { formatDate, formatMoney, ENTRY_STATUS_FILTER_OPTIONS } from '../entries-utils';
 import type { IncomeReportRow } from './schema';
 
-export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
+export interface IncomeRowActions {
+  canEdit: boolean;
+  canDelete: boolean;
+  onView?: (row: IncomeReportRow) => void;
+  onEdit: (id: number) => void;
+  onDelete: (row: IncomeReportRow) => void;
+}
+
+const baseColumns: ColumnDef<IncomeReportRow, unknown>[] = [
   {
     id: 'depositDate',
     header: 'Data Dep.',
@@ -50,13 +60,13 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'designatedFund',
     header: 'Campanha',
     cell: (info) => info.row.original.fundName ?? '—',
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'attender',
     header: 'Congregado',
     cell: (info) => info.row.original.attenderName ?? '—',
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'amount',
@@ -70,7 +80,7 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'paymentMethod',
     header: 'Forma de Pag.',
     cell: (info) => info.row.original.paymentMethodName,
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'status',
@@ -79,6 +89,60 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     meta: { hideBelow: 'lg', filter: { options: ENTRY_STATUS_FILTER_OPTIONS } }
   }
 ];
+
+export function buildIncomeLineItemColumns(
+  rowActions?: IncomeRowActions
+): ColumnDef<IncomeReportRow, unknown>[] {
+  if (!rowActions) return baseColumns;
+  const { canEdit, canDelete, onView, onEdit, onDelete } = rowActions;
+  return [
+    ...baseColumns,
+    {
+      id: 'actions',
+      header: 'Ações',
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <div className="flex justify-end gap-2">
+            {onView && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onView(row)}
+                title="Ver detalhes"
+                aria-label="Ver detalhes">
+                <Eye size={16} />
+              </Button>
+            )}
+            {canEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(row.id)}
+                title="Editar"
+                aria-label="Editar">
+                <Edit size={16} />
+              </Button>
+            )}
+            {canDelete && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDelete(row)}
+                title="Remover"
+                aria-label="Remover">
+                <Trash2 size={16} />
+              </Button>
+            )}
+          </div>
+        );
+      },
+      meta: { align: 'right', canHide: false }
+    }
+  ];
+}
+
+export const incomeLineItemColumns = baseColumns;
 
 export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
   return (

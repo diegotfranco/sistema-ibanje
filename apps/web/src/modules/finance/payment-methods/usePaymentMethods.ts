@@ -5,7 +5,9 @@ const BASE = '/payment-methods';
 const KEY = ['payment-methods'] as const;
 
 export function usePaymentMethods() {
-  return useResourceList<PaymentMethodResponse>(BASE, KEY);
+  // No paginated UI consumes this list (page renders flat, entry pickers want
+  // every option), so fetch a large slab and avoid the >30 silent-cutoff trap.
+  return useResourceList<PaymentMethodResponse>(BASE, KEY, { limit: 200 });
 }
 
 export function usePaymentMethodMutations() {

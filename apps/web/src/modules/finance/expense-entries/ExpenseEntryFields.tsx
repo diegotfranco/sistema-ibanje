@@ -32,7 +32,7 @@ export function ExpenseEntryFields({ control, errors }: Props) {
   const isInstallment = useWatch({ control, name: 'isInstallment' });
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds();
+  const designatedFunds = useDesignatedFunds({ limit: 200 });
   const attenders = useAttenders();
 
   const allCats = expenseCategories.data?.data ?? [];
