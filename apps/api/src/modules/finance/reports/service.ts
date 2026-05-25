@@ -20,6 +20,9 @@ import type {
   FundListResponse,
   FundDetailResponse,
   FundSummary,
+  EventListResponse,
+  EventDetailResponse,
+  EventSummary,
   IncomePivot,
   IncomePivotColumn,
   IncomePivotRow,
@@ -310,6 +313,117 @@ export async function getFundDetail(
       totalExpenses
     );
 
+    return { ...summary, period: null, incomeEntries, expenseEntries };
+  }
+}
+
+function buildEventSummary(
+  eventId: number,
+  eventTitle: string,
+  startTime: Date,
+  endTime: Date,
+  raised: string,
+  spent: string
+): EventSummary {
+  const net = (Number.parseFloat(raised) - Number.parseFloat(spent)).toFixed(2);
+  return {
+    eventId,
+    eventTitle,
+    startTime: startTime.toISOString(),
+    endTime: endTime.toISOString(),
+    totalRaised: raised,
+    totalSpent: spent,
+    net
+  };
+}
+
+export async function getEventList(callerId: number, month?: string): Promise<EventListResponse> {
+  await assertPermission(callerId, Module.Reports, Action.Report);
+
+  if (month) {
+    const period = monthToRange(month);
+    const [evts, income, expenses] = await Promise.all([
+      repo.findAllActiveEvents(),
+      repo.sumIncomePerEventForRange(period.from, period.to),
+      repo.sumExpensesPerEventForRange(period.from, period.to)
+    ]);
+    return {
+      period,
+      events: evts.map((e) =>
+        buildEventSummary(
+          e.id,
+          e.title,
+          e.startTime,
+          e.endTime,
+          income.get(e.id) ?? '0.00',
+          expenses.get(e.id) ?? '0.00'
+        )
+      )
+    };
+  } else {
+    const [evts, income, expenses] = await Promise.all([
+      repo.findAllActiveEvents(),
+      repo.sumAllTimeIncomePerEvent(),
+      repo.sumAllTimeExpensesPerEvent()
+    ]);
+    return {
+      period: null,
+      events: evts.map((e) =>
+        buildEventSummary(
+          e.id,
+          e.title,
+          e.startTime,
+          e.endTime,
+          income.get(e.id) ?? '0.00',
+          expenses.get(e.id) ?? '0.00'
+        )
+      )
+    };
+  }
+}
+
+export async function getEventDetail(
+  callerId: number,
+  id: number,
+  month?: string
+): Promise<EventDetailResponse> {
+  await assertPermission(callerId, Module.Reports, Action.Report);
+
+  const evt = await repo.findEventByIdForReport(id);
+  if (!evt) throw httpError(404, 'Event not found');
+
+  if (month) {
+    const period = monthToRange(month);
+    const [incomeEntries, expenseEntries, totalRaised, totalSpent] = await Promise.all([
+      repo.getEventIncomeEntriesForRange(id, period.from, period.to),
+      repo.getEventExpenseEntriesForRange(id, period.from, period.to),
+      repo.sumIncomeForEventRange(id, period.from, period.to),
+      repo.sumExpensesForEventRange(id, period.from, period.to)
+    ]);
+    const summary = buildEventSummary(
+      evt.id,
+      evt.title,
+      evt.startTime,
+      evt.endTime,
+      totalRaised,
+      totalSpent
+    );
+    return { ...summary, period, incomeEntries, expenseEntries };
+  } else {
+    const [incomeEntries, expenseEntries, totalRaised, totalSpent] = await Promise.all([
+      repo.getEventIncomeEntries(id),
+      repo.getEventExpenseEntries(id),
+      repo.sumAllTimeIncomeForEvent(id),
+      repo.sumAllTimeExpensesForEvent(id)
+    ]);
+    const summary = buildEventSummary(
+      evt.id,
+      evt.title,
+      evt.startTime,
+      evt.endTime,
+      totalRaised,
+      totalSpent
+    );
     return { ...summary, period: null, incomeEntries, expenseEntries };
   }
 }

@@ -19,6 +19,7 @@ export const ExpenseEntryFormSchema = z
     categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
     paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
     designatedFundId: z.number().int().positive().optional(),
+    eventId: z.number().int().positive().optional(),
     attenderId: z.number().int().positive().optional(),
     notes: z.string().max(1000).optional().or(z.literal('')),
     status: z
@@ -26,6 +27,13 @@ export const ExpenseEntryFormSchema = z
       .optional()
   })
   .superRefine((data, ctx) => {
+    if (data.designatedFundId && data.eventId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['eventId'],
+        message: 'Selecione um fundo OU um evento, não ambos.'
+      });
+    }
     if (!data.isInstallment) return;
     if (!data.total || !/^\d+(\.\d{0,2})?$/.test(data.total)) {
       ctx.addIssue({
@@ -60,7 +68,8 @@ export type ExpenseEntryCreateBody = {
   totalInstallments: number;
   categoryId: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  designatedFundId?: number | null;
+  eventId?: number | null;
   attenderId?: number;
   notes?: string;
   status?: string;
@@ -86,6 +95,8 @@ export type ExpenseEntryResponse = {
   paymentMethodName: string;
   designatedFundId: number | null;
   designatedFundName: string | null;
+  eventId: number | null;
+  eventName: string | null;
   attenderId: number | null;
   attenderName: string | null;
   hasReceipt: boolean;

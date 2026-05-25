@@ -43,6 +43,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
       attenderId: initialValues?.attenderId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
+      eventId: initialValues?.eventId ?? undefined,
       notes: initialValues?.notes ?? '',
       status: (initialValues?.status as IncomeEntryFormValues['status']) ?? EntryStatus.Paid
     }
@@ -62,7 +63,11 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
 
   return (
     <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4" noValidate>
-      <IncomeEntryFields control={form.control} errors={form.formState.errors} />
+      <IncomeEntryFields
+        control={form.control}
+        errors={form.formState.errors}
+        setValue={form.setValue}
+      />
 
       <Controller
         name="status"

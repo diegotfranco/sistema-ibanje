@@ -14,7 +14,9 @@ import {
   DetailedFinancialStatementResponseSchema,
   AttendersReportResponseSchema,
   FundListResponseSchema,
-  FundDetailResponseSchema
+  FundDetailResponseSchema,
+  EventListResponseSchema,
+  EventDetailResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
@@ -187,5 +189,43 @@ export async function reportsRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
     },
     controller.fundDetail
+  );
+
+  app.get(
+    '/reports/events',
+    {
+      schema: {
+        tags: ['Reports'],
+        querystring: OptionalMonthQueryRequestSchema,
+        response: {
+          200: EventListResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
+    },
+    controller.eventList
+  );
+
+  app.get(
+    '/reports/events/:id',
+    {
+      schema: {
+        tags: ['Reports'],
+        params: IdParamSchema,
+        querystring: OptionalMonthQueryRequestSchema,
+        response: {
+          200: EventDetailResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
+    },
+    controller.eventDetail
   );
 }

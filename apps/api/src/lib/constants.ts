@@ -15,6 +15,7 @@ export const Module = {
   Dashboard: 'Painel',
   Reports: 'Relatórios',
   Agendas: 'Pautas',
+  Events: 'Eventos',
   Minutes: 'Atas',
   MinuteTemplates: 'Modelos de Ata',
   MembershipLetters: 'Cartas de Membro',

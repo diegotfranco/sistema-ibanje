@@ -17,6 +17,7 @@ import { sql } from 'drizzle-orm';
 import { activeStatus, transactionStatus, closingStatus } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
+import { events } from './events.js';
 
 export const paymentMethods = pgTable(
   'payment_methods',
@@ -75,6 +76,7 @@ export const incomeEntries = pgTable(
       .notNull()
       .references(() => paymentMethods.id),
     designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    eventId: integer('event_id').references(() => events.id),
     notes: text('notes'),
     userId: integer('user_id')
       .notNull()
@@ -85,13 +87,19 @@ export const incomeEntries = pgTable(
   },
   (table) => [
     check('chk_income_amount_positive', sql`${table.amount} > 0`),
+    check(
+      'chk_income_fund_or_event_exclusive',
+      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+    ),
     index('income_entries_deposit_date_idx').on(table.depositDate),
     index('income_entries_reference_date_idx').on(table.referenceDate),
     index('income_entries_status_idx').on(table.status),
     index('income_entries_category_id_idx').on(table.categoryId),
     index('income_entries_attender_id_idx').on(table.attenderId),
     index('income_entries_payment_method_id_idx').on(table.paymentMethodId),
-    index('income_entries_designated_fund_id_idx').on(table.designatedFundId)
+    index('income_entries_designated_fund_id_idx').on(table.designatedFundId),
+    index('income_entries_event_id_idx').on(table.eventId),
+    index('income_entries_user_id_idx').on(table.userId)
   ]
 );
 
@@ -123,6 +131,7 @@ export const expenseEntries = pgTable(
       .notNull()
       .references(() => paymentMethods.id),
     designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    eventId: integer('event_id').references(() => events.id),
     receipt: text('receipt'),
     notes: text('notes'),
     userId: integer('user_id')
@@ -139,13 +148,19 @@ export const expenseEntries = pgTable(
       'chk_expense_installments_valid',
       sql`${table.installment} > 0 AND ${table.totalInstallments} > 0 AND ${table.installment} <= ${table.totalInstallments}`
     ),
+    check(
+      'chk_expense_fund_or_event_exclusive',
+      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+    ),
     index('expense_entries_date_idx').on(table.date),
     index('expense_entries_status_idx').on(table.status),
     index('expense_entries_category_id_idx').on(table.categoryId),
     index('expense_entries_attender_id_idx').on(table.attenderId),
     index('expense_entries_payment_method_id_idx').on(table.paymentMethodId),
     index('expense_entries_designated_fund_id_idx').on(table.designatedFundId),
-    index('expense_entries_parent_id_idx').on(table.parentId)
+    index('expense_entries_event_id_idx').on(table.eventId),
+    index('expense_entries_parent_id_idx').on(table.parentId),
+    index('expense_entries_user_id_idx').on(table.userId)
   ]
 );
 

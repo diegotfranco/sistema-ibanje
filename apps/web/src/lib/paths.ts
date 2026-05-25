@@ -9,6 +9,7 @@ export const paths = {
   attenders: '/attenders',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
+  events: '/events',
   incomeCategories: '/income-categories',
   expenseCategories: '/expense-categories',
   incomeEntries: '/income-entries',

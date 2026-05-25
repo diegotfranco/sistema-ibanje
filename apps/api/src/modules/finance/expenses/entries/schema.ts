@@ -6,35 +6,47 @@ export const ListExpenseEntriesRequestSchema = z.object({
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const CreateExpenseEntryRequestSchema = z.object({
-  date: z.iso.date(),
-  total: z.number().nonnegative(),
-  amount: z.number().positive(),
-  installment: z.number().int().positive().default(1),
-  totalInstallments: z.number().int().positive().default(1),
-  categoryId: z.number().int().positive(),
-  paymentMethodId: z.number().int().positive(),
-  designatedFundId: z.number().int().positive().optional(),
-  attenderId: z.number().int().positive().optional(),
-  parentId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional(),
-  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
-});
+export const CreateExpenseEntryRequestSchema = z
+  .object({
+    date: z.iso.date(),
+    total: z.number().nonnegative(),
+    amount: z.number().positive(),
+    installment: z.number().int().positive().default(1),
+    totalInstallments: z.number().int().positive().default(1),
+    categoryId: z.number().int().positive(),
+    paymentMethodId: z.number().int().positive(),
+    designatedFundId: z.number().int().positive().optional(),
+    eventId: z.number().int().positive().optional(),
+    attenderId: z.number().int().positive().optional(),
+    parentId: z.number().int().positive().optional(),
+    notes: z.string().max(1000).optional(),
+    status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  })
+  .refine((d) => !(d.designatedFundId && d.eventId), {
+    message: 'Selecione um fundo OU um evento, não ambos.',
+    path: ['eventId']
+  });
 
-export const UpdateExpenseEntryRequestSchema = z.object({
-  date: z.iso.date().optional(),
-  total: z.number().nonnegative().optional(),
-  amount: z.number().positive().optional(),
-  installment: z.number().int().positive().optional(),
-  totalInstallments: z.number().int().positive().optional(),
-  categoryId: z.number().int().positive().optional(),
-  paymentMethodId: z.number().int().positive().optional(),
-  designatedFundId: z.number().int().positive().optional(),
-  attenderId: z.number().int().positive().optional(),
-  parentId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional(),
-  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
-});
+export const UpdateExpenseEntryRequestSchema = z
+  .object({
+    date: z.iso.date().optional(),
+    total: z.number().nonnegative().optional(),
+    amount: z.number().positive().optional(),
+    installment: z.number().int().positive().optional(),
+    totalInstallments: z.number().int().positive().optional(),
+    categoryId: z.number().int().positive().optional(),
+    paymentMethodId: z.number().int().positive().optional(),
+    designatedFundId: z.number().int().positive().nullable().optional(),
+    eventId: z.number().int().positive().nullable().optional(),
+    attenderId: z.number().int().positive().optional(),
+    parentId: z.number().int().positive().optional(),
+    notes: z.string().max(1000).optional(),
+    status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  })
+  .refine((d) => !(d.designatedFundId && d.eventId), {
+    message: 'Selecione um fundo OU um evento, não ambos.',
+    path: ['eventId']
+  });
 
 export const ExpenseEntryResponseSchema = z.object({
   id: z.number().int().positive(),
@@ -52,6 +64,8 @@ export const ExpenseEntryResponseSchema = z.object({
   paymentMethodName: z.string(),
   designatedFundId: z.number().int().positive().nullable(),
   designatedFundName: z.string().nullable(),
+  eventId: z.number().int().positive().nullable(),
+  eventName: z.string().nullable(),
   attenderId: z.number().int().positive().nullable(),
   attenderName: z.string().nullable(),
   hasReceipt: z.boolean(),

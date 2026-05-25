@@ -36,7 +36,8 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const {
     control,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
+    setValue
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
@@ -49,6 +50,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       categoryId: initialValues?.categoryId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
+      eventId: initialValues?.eventId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       notes: initialValues?.notes ?? '',
       status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? EntryStatus.Paid
@@ -59,7 +61,10 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const [stagedRemoval, setStagedRemoval] = useState(false);
 
   const detailsDefaultOpen = Boolean(
-    initialValues?.designatedFundId || initialValues?.attenderId || initialValues?.notes
+    initialValues?.designatedFundId ||
+    initialValues?.eventId ||
+    initialValues?.attenderId ||
+    initialValues?.notes
   );
 
   const handleStage = (file: File | null) => {
@@ -79,6 +84,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       <ExpenseEntryFields
         control={control}
         errors={errors}
+        setValue={setValue}
         detailsDefaultOpen={detailsDefaultOpen}
       />
 

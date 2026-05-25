@@ -27,6 +27,7 @@ const emptyDefaults: IncomeEntryFormValues = {
   attenderId: undefined,
   paymentMethodId: undefined as unknown as number,
   designatedFundId: undefined,
+  eventId: undefined,
   notes: '',
   status: EntryStatus.Paid
 };
@@ -39,7 +40,8 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
     reset,
     getValues,
     setError,
-    setFocus
+    setFocus,
+    setValue
   } = useForm<IncomeEntryFormValues>({
     resolver: zodResolver(IncomeEntryFormSchema),
     defaultValues: emptyDefaults
@@ -66,6 +68,7 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       ...(values.designatedFundId !== undefined
         ? { designatedFundId: values.designatedFundId }
         : {}),
+      ...(values.eventId !== undefined ? { eventId: values.eventId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
     };
 
@@ -86,7 +89,7 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       </CardHeader>
       <CardContent className="mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <IncomeEntryFields control={control} errors={errors} />
+          <IncomeEntryFields control={control} errors={errors} setValue={setValue} />
 
           <Controller
             name="status"

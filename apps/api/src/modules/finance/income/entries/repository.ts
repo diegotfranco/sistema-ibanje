@@ -6,7 +6,8 @@ import {
   incomeCategories,
   attenders,
   paymentMethods,
-  designatedFunds
+  designatedFunds,
+  events
 } from '../../../../db/schema.js';
 
 const parentIncomeCategories = alias(incomeCategories, 'parent_income_categories');
@@ -27,6 +28,8 @@ const selectFields = {
   paymentMethodName: paymentMethods.name,
   designatedFundId: incomeEntries.designatedFundId,
   designatedFundName: designatedFunds.name,
+  eventId: incomeEntries.eventId,
+  eventName: events.title,
   notes: incomeEntries.notes,
   userId: incomeEntries.userId,
   status: incomeEntries.status,
@@ -42,7 +45,8 @@ function baseQuery() {
     .leftJoin(parentIncomeCategories, eq(parentIncomeCategories.id, incomeCategories.parentId))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id));
+    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(events, eq(incomeEntries.eventId, events.id));
 }
 
 export async function listIncomeEntries(offset: number, limit: number) {
@@ -88,6 +92,7 @@ export async function insertIncomeEntry(data: {
   attenderId?: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  eventId?: number;
   notes?: string;
   userId: number;
   status?: 'pendente' | 'paga' | 'cancelada';
@@ -118,6 +123,7 @@ export async function updateIncomeEntry(
       | 'attenderId'
       | 'paymentMethodId'
       | 'designatedFundId'
+      | 'eventId'
       | 'notes'
       | 'status'
     >

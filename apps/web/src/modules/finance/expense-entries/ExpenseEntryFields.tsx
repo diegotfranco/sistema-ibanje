@@ -1,4 +1,10 @@
-import { Controller, useWatch, type Control, type FieldErrors } from 'react-hook-form';
+import {
+  Controller,
+  useWatch,
+  type Control,
+  type FieldErrors,
+  type UseFormSetValue
+} from 'react-hook-form';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,27 +18,31 @@ import {
 } from '@/components/ui/select';
 import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
+import { Button } from '@/components/Button';
 import MoneyInput from '../components/MoneyInput';
 import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
+import { useEvents } from '@/modules/finance/events/useEvents';
 import { useAttenders } from '@/modules/attenders/useAttenders';
 import type { ExpenseEntryFormValues } from './schema';
-
-const NONE = '__none__';
 
 interface Props {
   control: Control<ExpenseEntryFormValues>;
   errors: FieldErrors<ExpenseEntryFormValues>;
+  setValue: UseFormSetValue<ExpenseEntryFormValues>;
   detailsDefaultOpen?: boolean;
 }
 
-export function ExpenseEntryFields({ control, errors }: Props) {
+type LinkMode = 'none' | 'fund' | 'event';
+
+export function ExpenseEntryFields({ control, errors, setValue }: Props) {
   const isInstallment = useWatch({ control, name: 'isInstallment' });
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
   const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
   const allCats = expenseCategories.data?.data ?? [];
@@ -48,9 +58,19 @@ export function ExpenseEntryFields({ control, errors }: Props) {
 
   const paymentMethodsList = (paymentMethods.data?.data ?? []).filter((m) => m.allowsOutflow);
   const designatedFundsList = designatedFunds.data?.data ?? [];
+  const eventsListData = eventsList.data?.data ?? [];
   const attendersList = (attenders.data?.data ?? []).filter(
     (a) => a.status === ActiveStatus.Active
   );
+
+  const watchedFundId = useWatch({ control, name: 'designatedFundId' });
+  const watchedEventId = useWatch({ control, name: 'eventId' });
+  const linkMode: LinkMode = watchedEventId ? 'event' : watchedFundId ? 'fund' : 'none';
+
+  const setLinkMode = (mode: LinkMode) => {
+    if (mode !== 'fund') setValue('designatedFundId', undefined, { shouldDirty: true });
+    if (mode !== 'event') setValue('eventId', undefined, { shouldDirty: true });
+  };
 
   return (
     <div className="space-y-4">
@@ -211,35 +231,83 @@ export function ExpenseEntryFields({ control, errors }: Props) {
       </div>
 
       <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Controller
-            name="designatedFundId"
-            control={control}
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="designatedFundId">Campanha</FieldLabel>
-                <Select
-                  value={field.value !== undefined ? String(field.value) : NONE}
-                  onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
-                  <SelectTrigger id="designatedFundId" className="w-full">
-                    <SelectValue placeholder="Selecione uma campanha" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Sem fundo</SelectItem>
-                    {designatedFundsList.map((fund) => (
-                      <SelectItem key={fund.id} value={String(fund.id)}>
-                        {fund.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.designatedFundId && (
-                  <FieldError>{errors.designatedFundId.message}</FieldError>
-                )}
-              </Field>
-            )}
-          />
+        <Field>
+          <FieldLabel>Vincular a</FieldLabel>
+          <div role="radiogroup" className="inline-flex rounded-md border bg-background p-0.5">
+            {(
+              [
+                { mode: 'none', label: 'Sem vínculo' },
+                { mode: 'fund', label: 'Campanha' },
+                { mode: 'event', label: 'Evento' }
+              ] as const
+            ).map(({ mode, label }) => (
+              <Button
+                key={mode}
+                type="button"
+                size="sm"
+                variant={linkMode === mode ? 'default' : 'ghost'}
+                role="radio"
+                aria-checked={linkMode === mode}
+                onClick={() => setLinkMode(mode)}>
+                {label}
+              </Button>
+            ))}
+          </div>
+          {linkMode === 'fund' && (
+            <Controller
+              name="designatedFundId"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <Select
+                    value={field.value !== undefined ? String(field.value) : ''}
+                    onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}>
+                    <SelectTrigger id="designatedFundId" className="w-full mt-2">
+                      <SelectValue placeholder="Selecionar campanha..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {designatedFundsList.map((fund) => (
+                        <SelectItem key={fund.id} value={String(fund.id)}>
+                          {fund.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.designatedFundId && (
+                    <FieldError>{errors.designatedFundId.message}</FieldError>
+                  )}
+                </Field>
+              )}
+            />
+          )}
+          {linkMode === 'event' && (
+            <Controller
+              name="eventId"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <Select
+                    value={field.value !== undefined ? String(field.value) : ''}
+                    onValueChange={(v) => field.onChange(v ? Number(v) : undefined)}>
+                    <SelectTrigger id="eventId" className="w-full mt-2">
+                      <SelectValue placeholder="Selecionar evento..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {eventsListData.map((e) => (
+                        <SelectItem key={e.id} value={String(e.id)}>
+                          {e.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.eventId && <FieldError>{errors.eventId.message}</FieldError>}
+                </Field>
+              )}
+            />
+          )}
+        </Field>
 
+        <div className="grid grid-cols-1 gap-4">
           <Controller
             name="attenderId"
             control={control}

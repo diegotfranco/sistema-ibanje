@@ -73,3 +73,14 @@ export async function fundDetail(req: FastifyRequest, reply: FastifyReply) {
   const { month } = req.query as OptionalMonthQuery;
   return reply.send(await service.getFundDetail(req.session.userId!, id, month));
 }
+
+export async function eventList(req: FastifyRequest, reply: FastifyReply) {
+  const { month } = req.query as OptionalMonthQuery;
+  return reply.send(await service.getEventList(req.session.userId!, month));
+}
+
+export async function eventDetail(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const { month } = req.query as OptionalMonthQuery;
+  return reply.send(await service.getEventDetail(req.session.userId!, id, month));
+}

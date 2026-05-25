@@ -1,19 +1,27 @@
 import { z } from 'zod';
 import { EntryStatus } from '@sistema-ibanje/shared';
 
-export const IncomeEntryFormSchema = z.object({
-  depositDate: z.string().min(1, 'Data de depósito é obrigatória.'),
-  amount: z
-    .string()
-    .min(1, 'Valor é obrigatório.')
-    .regex(/^\d+(\.\d{1,2})?$/, 'Use formato decimal (ex.: 100.00).'),
-  categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
-  attenderId: z.number().int().positive().optional(),
-  paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
-  designatedFundId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional().or(z.literal('')),
-  status: z.enum([EntryStatus.Pending, EntryStatus.Paid, EntryStatus.Cancelled] as const).optional()
-});
+export const IncomeEntryFormSchema = z
+  .object({
+    depositDate: z.string().min(1, 'Data de depósito é obrigatória.'),
+    amount: z
+      .string()
+      .min(1, 'Valor é obrigatório.')
+      .regex(/^\d+(\.\d{1,2})?$/, 'Use formato decimal (ex.: 100.00).'),
+    categoryId: z.number({ error: 'Categoria é obrigatória.' }).int().positive(),
+    attenderId: z.number().int().positive().optional(),
+    paymentMethodId: z.number({ error: 'Forma de pagamento é obrigatória.' }).int().positive(),
+    designatedFundId: z.number().int().positive().optional(),
+    eventId: z.number().int().positive().optional(),
+    notes: z.string().max(1000).optional().or(z.literal('')),
+    status: z
+      .enum([EntryStatus.Pending, EntryStatus.Paid, EntryStatus.Cancelled] as const)
+      .optional()
+  })
+  .refine((d) => !(d.designatedFundId && d.eventId), {
+    message: 'Selecione um fundo OU um evento, não ambos.',
+    path: ['eventId']
+  });
 
 export type IncomeEntryFormValues = z.infer<typeof IncomeEntryFormSchema>;
 
@@ -23,7 +31,8 @@ export type IncomeEntryCreateBody = {
   categoryId: number;
   attenderId?: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  designatedFundId?: number | null;
+  eventId?: number | null;
   notes?: string;
   status?: string;
 };
@@ -47,6 +56,8 @@ export type IncomeEntryResponse = {
   paymentMethodName: string;
   designatedFundId: number | null;
   designatedFundName: string | null;
+  eventId: number | null;
+  eventName: string | null;
   notes: string | null;
   userId: number;
   status: string;

@@ -3,6 +3,7 @@ import { sumExpensesForRange } from '../../reports/repository.js';
 import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findEventById } from '../../../events/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
 import { assertPeriodEditable, deriveReferenceDateFromDeposit } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
@@ -26,9 +27,19 @@ async function validateEntry(data: {
   categoryId: number;
   attenderId?: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  designatedFundId?: number | null;
+  eventId?: number | null;
   referenceDate?: string;
 }) {
+  if (data.designatedFundId && data.eventId) {
+    throw httpError(400, 'Selecione um fundo OU um evento, não ambos.', {
+      fieldErrors: { eventId: 'Selecione um fundo OU um evento, não ambos.' }
+    });
+  }
+  if (data.eventId) {
+    const evt = await findEventById(data.eventId);
+    if (!evt) throw httpError(404, 'Event not found');
+  }
   const category = await findIncomeCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Income category not found');
 
@@ -98,6 +109,7 @@ export async function createIncomeEntry(
     attenderId: body.attenderId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
+    eventId: body.eventId,
     referenceDate
   });
   const created = await repo.insertIncomeEntry({
@@ -127,7 +139,11 @@ export async function updateIncomeEntry(
     categoryId: body.categoryId ?? entry.categoryId,
     attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
-    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
+    designatedFundId:
+      body.designatedFundId !== undefined
+        ? body.designatedFundId
+        : (entry.designatedFundId ?? undefined),
+    eventId: body.eventId !== undefined ? body.eventId : (entry.eventId ?? undefined),
     referenceDate
   };
   await validateEntry(mergedValues);

@@ -23,7 +23,8 @@ export const Module = {
   Minutes: 17,
   MembershipLetters: 18,
   MinuteTemplates: 19,
-  ChurchSettings: 20
+  ChurchSettings: 20,
+  Events: 21
 } as const;
 export type Module = (typeof Module)[keyof typeof Module];
 

@@ -8,7 +8,8 @@ import type {
   DetailedFinancialStatementResponse,
   AttendersReportResponse,
   FundListResponse,
-  FundDetailResponse
+  FundDetailResponse,
+  EventListResponse
 } from './schema';
 
 function buildParams(
@@ -110,6 +111,14 @@ export function useFundDetail(id: number, month?: string) {
     queryFn: () =>
       api.get<FundDetailResponse>(`/reports/funds/${id}?${buildParamsOptional(month)}`),
     enabled: id > 0
+  });
+}
+
+export function useEventsReport(month?: string) {
+  return useQuery({
+    queryKey: ['reports', 'events', month],
+    queryFn: () => api.get<EventListResponse>(`/reports/events?${buildParamsOptional(month)}`),
+    enabled: true
   });
 }
 

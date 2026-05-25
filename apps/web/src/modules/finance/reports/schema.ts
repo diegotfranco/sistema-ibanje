@@ -168,6 +168,21 @@ export type FundExpenseEntry = {
   notes: string | null;
 };
 
+export type EventSummary = {
+  eventId: number;
+  eventTitle: string;
+  startTime: string;
+  endTime: string;
+  totalRaised: string;
+  totalSpent: string;
+  net: string;
+};
+
+export type EventListResponse = {
+  period: { from: string; to: string } | null;
+  events: EventSummary[];
+};
+
 export type FundDetailResponse = FundSummary & {
   incomeEntries: FundIncomeEntry[];
   expenseEntries: FundExpenseEntry[];

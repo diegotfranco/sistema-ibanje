@@ -28,7 +28,8 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
     formState: { errors },
     reset,
     getValues,
-    setFocus
+    setFocus,
+    setValue
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
@@ -41,6 +42,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
       categoryId: undefined,
       paymentMethodId: undefined,
       designatedFundId: undefined,
+      eventId: undefined,
       attenderId: undefined,
       notes: '',
       status: EntryStatus.Paid
@@ -65,6 +67,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
       ...(values.designatedFundId !== undefined
         ? { designatedFundId: values.designatedFundId }
         : {}),
+      ...(values.eventId !== undefined ? { eventId: values.eventId } : {}),
       ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
     };
@@ -107,7 +110,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
       </CardHeader>
       <CardContent className="mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <ExpenseEntryFields control={control} errors={errors} />
+          <ExpenseEntryFields control={control} errors={errors} setValue={setValue} />
 
           <Controller
             name="status"

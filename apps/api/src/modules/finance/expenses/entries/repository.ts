@@ -6,7 +6,8 @@ import {
   expenseCategories,
   paymentMethods,
   designatedFunds,
-  attenders
+  attenders,
+  events
 } from '../../../../db/schema.js';
 
 const parentExpenseCategories = alias(expenseCategories, 'parent_expense_categories');
@@ -27,6 +28,8 @@ const selectFields = {
   paymentMethodName: paymentMethods.name,
   designatedFundId: expenseEntries.designatedFundId,
   designatedFundName: designatedFunds.name,
+  eventId: expenseEntries.eventId,
+  eventName: events.title,
   attenderId: expenseEntries.attenderId,
   attenderName: attenders.name,
   receipt: expenseEntries.receipt,
@@ -45,6 +48,7 @@ function baseQuery() {
     .leftJoin(parentExpenseCategories, eq(parentExpenseCategories.id, expenseCategories.parentId))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(events, eq(expenseEntries.eventId, events.id))
     .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id));
 }
 
@@ -73,6 +77,7 @@ export async function insertExpenseEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  eventId?: number;
   attenderId?: number;
   parentId?: number;
   receipt?: string;
@@ -107,6 +112,7 @@ export async function updateExpenseEntry(
       | 'categoryId'
       | 'paymentMethodId'
       | 'designatedFundId'
+      | 'eventId'
       | 'attenderId'
       | 'parentId'
       | 'receipt'

@@ -8,7 +8,8 @@ import {
   expenseCategories,
   designatedFunds,
   paymentMethods,
-  attenders
+  attenders,
+  events
 } from '../../../db/schema.js';
 import type {
   IncomeReportRow,
@@ -18,6 +19,8 @@ import type {
   IncomeByFundRow,
   FundIncomeEntry,
   FundExpenseEntry,
+  EventIncomeEntry,
+  EventExpenseEntry,
   IncomeAggregateRow
 } from './schema.js';
 
@@ -769,6 +772,269 @@ export async function sumExpensesForFundRange(
       )
     );
   return result[0]?.total ?? '0.00';
+}
+
+// ---------------------------------------------------------------------------
+// Event report helpers — mirror the fund helpers above, but keyed on event_id.
+// ---------------------------------------------------------------------------
+
+export async function findAllActiveEvents() {
+  return db.select().from(events).where(eq(events.status, 'ativo'));
+}
+
+export async function findEventByIdForReport(id: number) {
+  const result = await db.select().from(events).where(eq(events.id, id)).limit(1);
+  return result[0] ?? null;
+}
+
+export async function sumAllTimeIncomePerEvent(): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ eventId: incomeEntries.eventId, total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(and(eq(incomeEntries.status, 'paga'), isNotNull(incomeEntries.eventId)))
+    .groupBy(incomeEntries.eventId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.eventId !== null) map.set(r.eventId, r.total ?? '0.00');
+  }
+  return map;
+}
+
+export async function sumAllTimeExpensesPerEvent(): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ eventId: expenseEntries.eventId, total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(and(eq(expenseEntries.status, 'paga'), isNotNull(expenseEntries.eventId)))
+    .groupBy(expenseEntries.eventId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.eventId !== null) map.set(r.eventId, r.total ?? '0.00');
+  }
+  return map;
+}
+
+export async function sumIncomePerEventForRange(
+  from: string,
+  to: string
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ eventId: incomeEntries.eventId, total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(
+      and(
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga'),
+        isNotNull(incomeEntries.eventId)
+      )
+    )
+    .groupBy(incomeEntries.eventId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.eventId !== null) map.set(r.eventId, r.total ?? '0.00');
+  }
+  return map;
+}
+
+export async function sumExpensesPerEventForRange(
+  from: string,
+  to: string
+): Promise<Map<number, string>> {
+  const rows = await db
+    .select({ eventId: expenseEntries.eventId, total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(
+      and(
+        gte(expenseEntries.date, from),
+        lte(expenseEntries.date, to),
+        eq(expenseEntries.status, 'paga'),
+        isNotNull(expenseEntries.eventId)
+      )
+    )
+    .groupBy(expenseEntries.eventId);
+
+  const map = new Map<number, string>();
+  for (const r of rows) {
+    if (r.eventId !== null) map.set(r.eventId, r.total ?? '0.00');
+  }
+  return map;
+}
+
+export async function sumAllTimeIncomeForEvent(eventId: number): Promise<string> {
+  const result = await db
+    .select({ total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(and(eq(incomeEntries.status, 'paga'), eq(incomeEntries.eventId, eventId)));
+  return result[0]?.total ?? '0.00';
+}
+
+export async function sumAllTimeExpensesForEvent(eventId: number): Promise<string> {
+  const result = await db
+    .select({ total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(and(eq(expenseEntries.status, 'paga'), eq(expenseEntries.eventId, eventId)));
+  return result[0]?.total ?? '0.00';
+}
+
+export async function sumIncomeForEventRange(
+  eventId: number,
+  from: string,
+  to: string
+): Promise<string> {
+  const result = await db
+    .select({ total: sum(incomeEntries.amount) })
+    .from(incomeEntries)
+    .where(
+      and(
+        eq(incomeEntries.eventId, eventId),
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga')
+      )
+    );
+  return result[0]?.total ?? '0.00';
+}
+
+export async function sumExpensesForEventRange(
+  eventId: number,
+  from: string,
+  to: string
+): Promise<string> {
+  const result = await db
+    .select({ total: sum(expenseEntries.amount) })
+    .from(expenseEntries)
+    .where(
+      and(
+        eq(expenseEntries.eventId, eventId),
+        gte(expenseEntries.date, from),
+        lte(expenseEntries.date, to),
+        eq(expenseEntries.status, 'paga')
+      )
+    );
+  return result[0]?.total ?? '0.00';
+}
+
+export async function getEventIncomeEntries(eventId: number): Promise<EventIncomeEntry[]> {
+  const rows = await db
+    .select({
+      id: incomeEntries.id,
+      referenceDate: incomeEntries.referenceDate,
+      amount: incomeEntries.amount,
+      categoryName: incomeCategories.name,
+      attenderName: attenders.name,
+      notes: incomeEntries.notes
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
+    .where(and(eq(incomeEntries.eventId, eventId), eq(incomeEntries.status, 'paga')))
+    .orderBy(asc(incomeEntries.referenceDate));
+
+  return rows.map((r) => ({
+    id: r.id,
+    referenceDate: r.referenceDate,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    attenderName: r.attenderName ?? null,
+    notes: r.notes ?? null
+  }));
+}
+
+export async function getEventExpenseEntries(eventId: number): Promise<EventExpenseEntry[]> {
+  const rows = await db
+    .select({
+      id: expenseEntries.id,
+      date: expenseEntries.date,
+      amount: expenseEntries.amount,
+      categoryName: expenseCategories.name,
+      notes: expenseEntries.notes
+    })
+    .from(expenseEntries)
+    .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
+    .where(and(eq(expenseEntries.eventId, eventId), eq(expenseEntries.status, 'paga')))
+    .orderBy(asc(expenseEntries.date));
+
+  return rows.map((r) => ({
+    id: r.id,
+    date: r.date,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    notes: r.notes ?? null
+  }));
+}
+
+export async function getEventIncomeEntriesForRange(
+  eventId: number,
+  from: string,
+  to: string
+): Promise<EventIncomeEntry[]> {
+  const rows = await db
+    .select({
+      id: incomeEntries.id,
+      referenceDate: incomeEntries.referenceDate,
+      amount: incomeEntries.amount,
+      categoryName: incomeCategories.name,
+      attenderName: attenders.name,
+      notes: incomeEntries.notes
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
+    .where(
+      and(
+        eq(incomeEntries.eventId, eventId),
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga')
+      )
+    )
+    .orderBy(asc(incomeEntries.referenceDate));
+
+  return rows.map((r) => ({
+    id: r.id,
+    referenceDate: r.referenceDate,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    attenderName: r.attenderName ?? null,
+    notes: r.notes ?? null
+  }));
+}
+
+export async function getEventExpenseEntriesForRange(
+  eventId: number,
+  from: string,
+  to: string
+): Promise<EventExpenseEntry[]> {
+  const rows = await db
+    .select({
+      id: expenseEntries.id,
+      date: expenseEntries.date,
+      amount: expenseEntries.amount,
+      categoryName: expenseCategories.name,
+      notes: expenseEntries.notes
+    })
+    .from(expenseEntries)
+    .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
+    .where(
+      and(
+        eq(expenseEntries.eventId, eventId),
+        gte(expenseEntries.date, from),
+        lte(expenseEntries.date, to),
+        eq(expenseEntries.status, 'paga')
+      )
+    )
+    .orderBy(asc(expenseEntries.date));
+
+  return rows.map((r) => ({
+    id: r.id,
+    date: r.date,
+    amount: r.amount,
+    categoryName: r.categoryName,
+    notes: r.notes ?? null
+  }));
 }
 
 export async function getIncomeAggregatesForRange(

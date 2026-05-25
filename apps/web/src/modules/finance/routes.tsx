@@ -16,6 +16,7 @@ import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosi
 import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
 import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
+import EventsPage from '@/modules/finance/events/EventsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
 import ExpenseCategoriesPage from '@/modules/finance/expense-categories/ExpenseCategoriesPage';
 import ReportsPage from '@/modules/finance/reports/ReportsPage';
@@ -84,12 +85,33 @@ export const financeRoutes: AppRoute[] = [
         ]
       },
       {
-        path: `${paths.reports}?tab=statement`,
         layout: 'app',
-        label: 'Relatórios',
-        icon: FileBarChart,
-        module: Module.Reports,
-        action: Action.Report
+        label: 'Campanhas e Eventos',
+        icon: PiggyBank,
+        children: [
+          {
+            path: paths.designatedFunds,
+            element: (
+              <RequirePermission module={Module.DesignatedFunds}>
+                <DesignatedFundsPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Campanhas',
+            module: Module.DesignatedFunds
+          },
+          {
+            path: paths.events,
+            element: (
+              <RequirePermission module={Module.Events}>
+                <EventsPage />
+              </RequirePermission>
+            ),
+            layout: 'app',
+            label: 'Eventos',
+            module: Module.Events
+          }
+        ]
       },
       {
         path: paths.monthlyClosings,
@@ -104,16 +126,12 @@ export const financeRoutes: AppRoute[] = [
         module: Module.MonthlyClosings
       },
       {
-        path: paths.designatedFunds,
-        element: (
-          <RequirePermission module={Module.DesignatedFunds}>
-            <DesignatedFundsPage />
-          </RequirePermission>
-        ),
+        path: `${paths.reports}?tab=statement`,
         layout: 'app',
-        label: 'Campanhas',
-        icon: PiggyBank,
-        module: Module.DesignatedFunds
+        label: 'Relatórios',
+        icon: FileBarChart,
+        module: Module.Reports,
+        action: Action.Report
       },
       {
         path: paths.paymentMethods,
