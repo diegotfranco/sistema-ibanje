@@ -4,7 +4,7 @@ export const UpdateMyProfileFormSchema = z.object({
   phone: z.string().max(16, 'Máximo de 16 caracteres').optional().or(z.literal('')),
   email: z.email('E-mail inválido').optional().or(z.literal('')),
   addressStreet: z.string().max(96).optional().or(z.literal('')),
-  addressNumber: z.number().int().positive('Deve ser um número positivo').optional(),
+  addressNumber: z.string().max(16, 'Máximo de 16 caracteres').optional().or(z.literal('')),
   addressComplement: z.string().max(64).optional().or(z.literal('')),
   addressDistrict: z.string().max(64).optional().or(z.literal('')),
   state: z.string().length(2, 'Estado deve ter 2 caracteres').optional().or(z.literal('')),
@@ -24,7 +24,7 @@ export type AttenderProfileResponse = {
   phone: string | null;
   email: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;

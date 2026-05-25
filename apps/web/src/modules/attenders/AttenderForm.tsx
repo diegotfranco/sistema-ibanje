@@ -272,10 +272,9 @@ export default function AttenderForm({
               <Label htmlFor="addressNumber">Número</Label>
               <Input
                 id="addressNumber"
-                type="number"
-                min={1}
+                maxLength={16}
                 {...register('addressNumber', {
-                  setValueAs: (v) => (v === '' || v === null ? null : Number(v))
+                  setValueAs: (v) => (v === '' || v === null ? null : String(v))
                 })}
               />
               {errors.addressNumber && (

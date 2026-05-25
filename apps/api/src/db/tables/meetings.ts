@@ -7,12 +7,10 @@ import {
   integer,
   text,
   timestamp,
-  check,
   index,
   primaryKey
 } from 'drizzle-orm/pg-core';
-import { sql } from 'drizzle-orm';
-import { activeStatus, meetingType, eventType, recurrenceType } from './enums.js';
+import { activeStatus, meetingType } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
 
@@ -68,31 +66,9 @@ export const meetingAttendersPresent = pgTable(
   ]
 );
 
-export const events = pgTable(
-  'events',
-  {
-    id: serial('id').primaryKey(),
-    title: varchar('title', { length: 128 }).notNull(),
-    description: text('description'),
-    location: varchar('location', { length: 128 }),
-    startTime: timestamp('start_time', { withTimezone: true }).notNull(),
-    endTime: timestamp('end_time', { withTimezone: true }).notNull(),
-    type: eventType('type').default('culto').notNull(),
-    recurrence: recurrenceType('recurrence').default('nenhuma').notNull(),
-    isPublic: boolean('is_public').default(false).notNull(),
-    createdByUserId: integer('created_by_user_id').references(() => users.id),
-    status: activeStatus('status').default('ativo').notNull(),
-    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-  },
-  (table) => [check('chk_event_end_after_start', sql`${table.endTime} > ${table.startTime}`)]
-);
-
 export type Meeting = typeof meetings.$inferSelect;
 export type NewMeeting = typeof meetings.$inferInsert;
 export type AgendaItem = typeof agendaItems.$inferSelect;
 export type NewAgendaItem = typeof agendaItems.$inferInsert;
 export type MeetingAttenderPresent = typeof meetingAttendersPresent.$inferSelect;
 export type NewMeetingAttenderPresent = typeof meetingAttendersPresent.$inferInsert;
-export type Event = typeof events.$inferSelect;
-export type NewEvent = typeof events.$inferInsert;

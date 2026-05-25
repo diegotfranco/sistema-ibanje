@@ -52,7 +52,7 @@ export const UpdateMyProfileRequestSchema = z
     phone: z.string().max(16).optional(),
     email: z.email().optional(),
     addressStreet: z.string().max(96).optional(),
-    addressNumber: z.number().int().positive().optional(),
+    addressNumber: z.string().max(16).optional(),
     addressComplement: z.string().max(64).optional(),
     addressDistrict: z.string().max(64).optional(),
     state: z.string().length(2).optional(),

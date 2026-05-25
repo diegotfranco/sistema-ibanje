@@ -11,6 +11,7 @@ import {
   timestamp,
   unique,
   index,
+  time,
   AnyPgColumn
 } from 'drizzle-orm/pg-core';
 import { meetingType, minuteVersionStatus, membershipLetterType } from './enums.js';
@@ -30,8 +31,8 @@ export const minutes = pgTable('minutes', {
   correctsMinuteId: integer('corrects_minute_id').references((): AnyPgColumn => minutes.id),
   presidingPastorName: varchar('presiding_pastor_name', { length: 96 }),
   secretaryName: varchar('secretary_name', { length: 96 }),
-  openingTime: varchar('opening_time', { length: 8 }),
-  closingTime: varchar('closing_time', { length: 8 }),
+  openingTime: time('opening_time'),
+  closingTime: time('closing_time'),
   signedDocumentPath: text('signed_document_path'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()

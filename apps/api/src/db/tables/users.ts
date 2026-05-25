@@ -106,7 +106,7 @@ export const attenders = pgTable(
     name: varchar('name', { length: 96 }).notNull(),
     birthDate: date('birth_date'),
     addressStreet: varchar('address_street', { length: 96 }),
-    addressNumber: integer('address_number'),
+    addressNumber: varchar('address_number', { length: 16 }),
     addressComplement: varchar('address_complement', { length: 64 }),
     addressDistrict: varchar('address_district', { length: 64 }),
     state: char('state', { length: 2 }),

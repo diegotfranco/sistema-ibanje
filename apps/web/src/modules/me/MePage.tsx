@@ -168,10 +168,10 @@ export default function MePage() {
                 <Label htmlFor="addressNumber">Número</Label>
                 <Input
                   id="addressNumber"
-                  type="number"
-                  placeholder={attender?.addressNumber?.toString() || '123'}
-                  defaultValue={attender?.addressNumber || ''}
-                  {...register('addressNumber', { valueAsNumber: true })}
+                  maxLength={16}
+                  placeholder={attender?.addressNumber ?? '123'}
+                  defaultValue={attender?.addressNumber ?? ''}
+                  {...register('addressNumber')}
                   className={errors.addressNumber ? 'border-destructive' : ''}
                 />
                 {errors.addressNumber && (

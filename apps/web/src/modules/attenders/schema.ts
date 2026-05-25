@@ -8,7 +8,7 @@ export const AttenderFormSchema = z.object({
   phone: z.string().max(16, 'Máximo de 16 caracteres').optional().nullable(),
   email: z.email().optional().nullable(),
   addressStreet: z.string().max(96).optional().nullable(),
-  addressNumber: z.number().int().positive().optional().nullable(),
+  addressNumber: z.string().max(16).optional().nullable(),
   addressComplement: z.string().max(64).optional().nullable(),
   addressDistrict: z.string().max(64).optional().nullable(),
   state: z.string().length(2).optional().nullable(),
@@ -46,7 +46,7 @@ export type AttenderResponse = {
   name: string;
   birthDate: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;

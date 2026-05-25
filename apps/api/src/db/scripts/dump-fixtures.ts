@@ -364,7 +364,7 @@ type AttenderFixture = {
   name: string;
   birthDate: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;
@@ -432,7 +432,8 @@ function main() {
         name,
         birthDate: cleanBirthDate(clean(m.data_nascimento)),
         addressStreet: clean(m.endereco),
-        addressNumber: typeof m.numero === 'number' && Number.isFinite(m.numero) ? m.numero : null,
+        addressNumber:
+          typeof m.numero === 'number' && Number.isFinite(m.numero) ? String(m.numero) : null,
         addressComplement: clean(m.complemento),
         addressDistrict: clean(m.bairro),
         state: cleanUf(m.uf),
