@@ -1,5 +1,4 @@
 import * as repo from './repository.js';
-import * as authRepo from '../../auth/repository.js';
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
 import { ClosingStatus } from '@sistema-ibanje/shared';
@@ -219,15 +218,6 @@ export async function reopenMonthlyClosing(
     throw httpError(409, 'Only approved or rejected closings can be reopened');
   }
 
-  // Reopening from `aprovado` is a head-treasurer-only override (the role
-  // that owns the closing workflow end-to-end).
-  if (closing.status === ClosingStatus.Approved) {
-    const user = await authRepo.findUserById(callerId);
-    if (!user || user.roleName !== 'Tesoureiro Responsável') {
-      throw httpError(403, 'Only the head treasurer can reopen an approved closing');
-    }
-  }
-
   const updated = await repo.updateMonthlyClosing(id, {
     status: ClosingStatus.Open,
     reviewedAt: null
@@ -263,11 +253,6 @@ export async function reproveApprovedClosing(
   id: number
 ): Promise<MonthlyClosingResponse> {
   await assertPermission(callerId, Module.MonthlyClosings, Action.Review);
-
-  const user = await authRepo.findUserById(callerId);
-  if (!user || user.roleName !== 'Tesoureiro Responsável') {
-    throw httpError(403, 'Only the head treasurer can reprove an approved closing');
-  }
 
   const closing = await repo.findMonthlyClosingById(id);
   if (!closing) throw httpError(404, 'Monthly closing not found');

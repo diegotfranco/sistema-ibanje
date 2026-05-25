@@ -159,13 +159,11 @@ export default function MonthlyClosingDetailPage() {
         }
       : undefined;
 
-  const isHeadTreasurer = user?.role === 'Tesoureiro Responsável';
-
   const hasActions =
     closing.status !== ClosingStatus.Closed &&
     ((closing.status === ClosingStatus.Open && (canCreate || canDelete)) ||
       (closing.status === ClosingStatus.InReview && canReview) ||
-      (closing.status === ClosingStatus.Approved && (canEdit || isHeadTreasurer)) ||
+      (closing.status === ClosingStatus.Approved && canEdit) ||
       (closing.status === ClosingStatus.Rejected && canCreate));
 
   const toExpenseCreateBody = (values: ExpenseEntryFormValues) => {
@@ -299,12 +297,12 @@ export default function MonthlyClosingDetailPage() {
                       </>
                     )}
                     {closing.status === ClosingStatus.Approved && canEdit && (
-                      <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
-                    )}
-                    {closing.status === ClosingStatus.Approved && isHeadTreasurer && (
-                      <Button variant="outline" onClick={() => setTransitionAction('reopen')}>
-                        Reabrir
-                      </Button>
+                      <>
+                        <Button onClick={() => setTransitionAction('close')}>Fechar Período</Button>
+                        <Button variant="outline" onClick={() => setTransitionAction('reopen')}>
+                          Reabrir
+                        </Button>
+                      </>
                     )}
                     {closing.status === ClosingStatus.Open && canDelete && (
                       <Button variant="destructive" onClick={() => setDeleteOpen(true)}>

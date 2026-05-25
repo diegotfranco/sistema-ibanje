@@ -19,7 +19,7 @@ async function countRows(depositDate: string, amount = '100.00') {
 describe('idempotency plugin', () => {
   let app: FastifyInstance;
   let tesAuth: AuthCookies;
-  let tesRespAuth: AuthCookies;
+  let adminAuth: AuthCookies;
   let categoryId: number;
   let paymentMethodId: number;
 
@@ -27,7 +27,7 @@ describe('idempotency plugin', () => {
     await clearMonthlyClosings();
     app = await getTestApp();
     tesAuth = await loginAs(app, 'tesoureiro@email.com', 'tesoureiro123');
-    tesRespAuth = await loginAs(app, 'tesoureiro.resp@email.com', 'tesresp123');
+    adminAuth = await loginAs(app, 'admin@email.com', 'admin123');
 
     const [cat] = await db
       .select()
@@ -152,8 +152,8 @@ describe('idempotency plugin', () => {
       method: 'POST',
       url: '/income-entries',
       headers: {
-        cookie: tesRespAuth.cookie,
-        'x-csrf-token': tesRespAuth.csrfToken,
+        cookie: adminAuth.cookie,
+        'x-csrf-token': adminAuth.csrfToken,
         'idempotency-key': key
       },
       payload: payload(depositDate)
