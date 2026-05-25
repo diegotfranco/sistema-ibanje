@@ -31,6 +31,7 @@ import {
   EXPECTED_MODULE_ORDER,
   SEED_PAYMENT_METHODS,
   SEED_DESIGNATED_FUNDS,
+  SEED_EVENTS,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
@@ -67,6 +68,7 @@ import {
   incomeEntries,
   expenseEntries,
   meetings,
+  events,
   minutes,
   minuteVersions,
   monthlyClosings,
@@ -96,7 +98,7 @@ type AttenderFixture = {
   name: string;
   birthDate: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;
@@ -105,7 +107,13 @@ type AttenderFixture = {
   email: string | null;
   phone: string | null;
 };
-type DesignatedFundFixture = { name: string; description?: string | null };
+type DesignatedFundFixture = {
+  name: string;
+  description?: string | null;
+  targetAmount?: string | null;
+  targetDate?: string | null;
+  createdAt?: string | null;
+};
 type IncomeEntryFixture = {
   depositDate: string;
   referenceDate: string;
@@ -257,18 +265,40 @@ export async function seed() {
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
-      status: 'ativo' as const
+      targetDate: f.targetDate ?? null,
+      status: 'ativo' as const,
+      ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
       description: f.description ?? null,
-      status: 'ativo' as const
+      targetAmount: f.targetAmount ?? null,
+      targetDate: f.targetDate ?? null,
+      status: 'ativo' as const,
+      ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const insertedFunds = await tx
       .insert(designatedFunds)
       .values([...baseFundRows, ...extraFundRows])
       .returning();
     const fundByName = new Map(insertedFunds.map((f) => [f.name, f]));
+
+    // --- Events --------------------------------------------------------------
+    const insertedEvents = SEED_EVENTS.length
+      ? await tx
+          .insert(events)
+          .values(
+            SEED_EVENTS.map((e) => ({
+              title: e.title,
+              description: e.description ?? null,
+              location: e.location ?? null,
+              startTime: new Date(e.startTime),
+              endTime: new Date(e.endTime)
+            }))
+          )
+          .returning()
+      : [];
+    const eventByTitle = new Map(insertedEvents.map((e) => [e.title, e]));
 
     // --- Income / Expense categories -----------------------------------------
     const insertedICParents = await tx
@@ -515,6 +545,7 @@ export async function seed() {
           if (!u) throw new Error(`Edge income references unknown user ${e.createdByUserEmail}`);
           const attender = e.attenderName ? attenderByName.get(e.attenderName) : null;
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             referenceDate: e.referenceDate,
             depositDate: e.depositDate ?? e.referenceDate,
@@ -523,6 +554,7 @@ export async function seed() {
             attenderId: attender?.id ?? null,
             paymentMethodId: pm.id,
             designatedFundId: fund?.id ?? null,
+            eventId: evt?.id ?? null,
             notes: e.notes ?? null,
             status: 'paga' as const,
             userId: u.id
@@ -546,6 +578,7 @@ export async function seed() {
             const u = userByEmail.get(e.createdByUserEmail);
             if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
             const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+            const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
             return {
               date: e.date,
               total: e.total,
@@ -555,6 +588,7 @@ export async function seed() {
               categoryId: category.id,
               paymentMethodId: pm.id,
               designatedFundId: fund?.id ?? null,
+              eventId: evt?.id ?? null,
               notes: e.notes ?? null,
               status: 'paga' as const,
               userId: u.id
@@ -577,6 +611,7 @@ export async function seed() {
           const u = userByEmail.get(e.createdByUserEmail);
           if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             date: e.date,
             total: e.total,
@@ -586,6 +621,7 @@ export async function seed() {
             categoryId: category.id,
             paymentMethodId: pm.id,
             designatedFundId: fund?.id ?? null,
+            eventId: evt?.id ?? null,
             parentId: e.installmentGroupId
               ? (parentIdByGroup.get(e.installmentGroupId) ?? null)
               : null,
