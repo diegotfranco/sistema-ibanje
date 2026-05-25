@@ -9,6 +9,7 @@ import { RequirePermission } from '@/components/RequirePermission';
 import { IncomeReportTab } from './IncomeReportTab';
 import { ExpenseReportTab } from './ExpenseReportTab';
 import { StatementTab } from './StatementTab';
+import { CampaignsReportTab } from './CampaignsReportTab';
 import { EventsReportTab } from './EventsReportTab';
 
 function defaultMonth() {
@@ -21,7 +22,7 @@ const DEFAULT_MONTH = defaultMonth();
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'income';
-  const validTab = ['income', 'expenses', 'statement', 'events'].includes(activeTab)
+  const validTab = ['income', 'expenses', 'statement', 'campanhas', 'events'].includes(activeTab)
     ? activeTab
     : 'income';
 
@@ -50,6 +51,7 @@ export default function ReportsPage() {
                   <TabsTrigger value="income">Entradas</TabsTrigger>
                   <TabsTrigger value="expenses">Saídas</TabsTrigger>
                   <TabsTrigger value="statement">Demonstrativo</TabsTrigger>
+                  <TabsTrigger value="campanhas">Campanhas</TabsTrigger>
                   <TabsTrigger value="events">Eventos</TabsTrigger>
                 </TabsList>
               </div>
@@ -62,6 +64,9 @@ export default function ReportsPage() {
               </TabsContent>
               <TabsContent value="statement">
                 <StatementTab month={month} />
+              </TabsContent>
+              <TabsContent value="campanhas">
+                <CampaignsReportTab month={month} />
               </TabsContent>
               <TabsContent value="events">
                 <EventsReportTab month={month} />

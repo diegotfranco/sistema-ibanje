@@ -3,6 +3,7 @@ import { MonthPicker } from '@/components/MonthPicker';
 import { DashboardClosingBanner } from './DashboardClosingBanner';
 import { AttenderStats } from './AttenderStats';
 import { FundsChart } from './FundsChart';
+import { EventsChart } from './EventsChart';
 import { getCurrentMonth } from './dashboard-utils';
 
 export default function DashboardPage() {
@@ -32,8 +33,14 @@ export default function DashboardPage() {
 
       {/* Funds Chart */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Campanhas (acumulado)</h2>
+        <h2 className="text-lg font-semibold text-foreground">Campanhas ativas</h2>
         <FundsChart />
+      </div>
+
+      {/* Events Chart */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-foreground">Eventos recentes (P&amp;L)</h2>
+        <EventsChart />
       </div>
     </div>
   );
