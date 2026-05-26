@@ -8,7 +8,7 @@ type Props = Omit<React.ComponentPropsWithoutRef<typeof Input>, 'value' | 'onCha
 };
 
 export default React.forwardRef<HTMLInputElement, Props>(
-  ({ value, onChange, onBlur, ...props }, ref) => {
+  ({ value, onChange, onBlur, type: _type, defaultValue: _defaultValue, ...props }, ref) => {
     return (
       <NumericFormat
         getInputRef={ref}

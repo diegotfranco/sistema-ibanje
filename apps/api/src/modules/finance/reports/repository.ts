@@ -1,4 +1,19 @@
-import { eq, ne, gte, lte, sum, count, and, isNotNull, asc, desc, inArray, sql } from 'drizzle-orm';
+import {
+  eq,
+  ne,
+  gte,
+  lte,
+  sum,
+  count,
+  and,
+  or,
+  isNull,
+  isNotNull,
+  asc,
+  desc,
+  inArray,
+  sql
+} from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../db/index.js';
 import {
@@ -516,7 +531,16 @@ export async function findIncomeCategoryIdsByNames(names: string[]): Promise<num
 }
 
 export async function findAllActiveFunds() {
-  return db.select().from(designatedFunds).where(eq(designatedFunds.status, 'ativo'));
+  const today = new Date().toISOString().slice(0, 10);
+  return db
+    .select()
+    .from(designatedFunds)
+    .where(
+      and(
+        eq(designatedFunds.status, 'ativo'),
+        or(isNull(designatedFunds.targetDate), gte(designatedFunds.targetDate, today))
+      )
+    );
 }
 
 export async function findFundById(id: number) {
@@ -1084,4 +1108,24 @@ export async function getIncomeAggregatesForRange(
     fundName: r.fundName,
     total: r.total ?? '0.00'
   }));
+}
+
+export async function countIncomeByCategories(
+  from: string,
+  to: string,
+  categoryNames: string[]
+): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .where(
+      and(
+        gte(incomeEntries.referenceDate, from),
+        lte(incomeEntries.referenceDate, to),
+        eq(incomeEntries.status, 'paga'),
+        inArray(incomeCategories.name, categoryNames)
+      )
+    );
+  return result[0]?.count ?? 0;
 }

@@ -22,7 +22,7 @@ function findTrail(routes: AppRoute[], pathname: string, trail: Crumb[] = []): C
 export function Breadcrumbs() {
   const { pathname } = useLocation();
   const trail = findTrail(appRoutes, pathname);
-  if (!trail || trail.length < 2) return null;
+  if (!trail || trail.length < 1) return null;
 
   return (
     <nav aria-label="breadcrumb" className="mb-6">
