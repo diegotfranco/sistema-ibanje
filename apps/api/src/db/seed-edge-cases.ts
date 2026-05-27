@@ -430,6 +430,158 @@ export const EDGE_CASE_CLOSINGS: EdgeCaseClosing[] = [
     accountantNotes: 'Aprovado.',
     submittedByUserEmail: 'tesoureiro@email.com',
     closedByUserEmail: 'presidente@email.com'
+  },
+  // 2025 — full year, all closed. Gives the year filter a prior year to show.
+  {
+    periodYear: 2025,
+    periodMonth: 12,
+    status: 'fechado',
+    closingBalance: '15320.80',
+    treasurerNotes: 'Encerramento do exercício de 2025.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 11,
+    status: 'fechado',
+    closingBalance: '14870.25',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 10,
+    status: 'fechado',
+    closingBalance: '13990.00',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 9,
+    status: 'fechado',
+    closingBalance: '12650.40',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado sem ressalvas.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 8,
+    status: 'fechado',
+    closingBalance: '11430.15',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 7,
+    status: 'fechado',
+    closingBalance: '10980.70',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 6,
+    status: 'fechado',
+    closingBalance: '9760.90',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 5,
+    status: 'fechado',
+    closingBalance: '8850.30',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 4,
+    status: 'fechado',
+    closingBalance: '8120.55',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 3,
+    status: 'fechado',
+    closingBalance: '7640.00',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 2,
+    status: 'fechado',
+    closingBalance: '6980.20',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2025,
+    periodMonth: 1,
+    status: 'fechado',
+    closingBalance: '6310.75',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  // Q4 2024 — adds a second prior year so pagination and sorting can be verified.
+  {
+    periodYear: 2024,
+    periodMonth: 12,
+    status: 'fechado',
+    closingBalance: '5890.60',
+    treasurerNotes: 'Encerramento do exercício de 2024.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2024,
+    periodMonth: 11,
+    status: 'fechado',
+    closingBalance: '5540.00',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
+  },
+  {
+    periodYear: 2024,
+    periodMonth: 10,
+    status: 'fechado',
+    closingBalance: '5120.45',
+    treasurerNotes: 'Fechamento mensal regular.',
+    accountantNotes: 'Aprovado.',
+    submittedByUserEmail: 'tesoureiro@email.com',
+    closedByUserEmail: 'presidente@email.com'
   }
 ];
 

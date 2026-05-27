@@ -104,42 +104,7 @@ export function StatementTab({ month }: Props) {
       {view === 'simple' && (
         <>
           {simple.isLoading && <p className="text-center text-muted-foreground">Carregando...</p>}
-          {simple.data && (
-            <>
-              {/* Summary */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { label: 'Saldo Inicial', value: simple.data.openingBalance, color: '' },
-                  {
-                    label: 'Total Entradas',
-                    value: simple.data.totalIncome,
-                    color: 'text-money-in'
-                  },
-                  {
-                    label: 'Total Saídas',
-                    value: simple.data.totalExpenses,
-                    color: 'text-money-out'
-                  },
-                  { label: 'Saldo Atual', value: simple.data.currentBalance, color: '' }
-                ].map((card) => (
-                  <Card key={card.label}>
-                    <CardHeader compact>
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        {card.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-4">
-                      <p className={`text-lg font-mono font-semibold tabular-nums ${card.color}`}>
-                        {formatMoney(card.value)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <FinancialStatementDocument data={simple.data} />
-            </>
-          )}
+          {simple.data && <FinancialStatementDocument data={simple.data} />}
         </>
       )}
 
@@ -170,7 +135,7 @@ export function StatementTab({ month }: Props) {
                     getRowKey={(row) => row.id}
                     mobileRow={renderDetailedExpenseMobile}
                   />
-                  <div className="flex items-baseline justify-between gap-3 border-t-2 px-4 py-3 text-sm font-semibold">
+                  <div className="flex items-baseline justify-between gap-3 border-t px-4 py-3 text-sm font-semibold">
                     <span>Total Saídas</span>
                     <span className="font-mono tabular-nums whitespace-nowrap text-money-out">
                       {formatMoney(detailed.data.totalExpenses)}
