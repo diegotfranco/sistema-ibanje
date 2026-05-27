@@ -49,7 +49,7 @@ export function IncomeReportTab({ month, mode = 'full', rowActions }: Props) {
   return (
     <>
       {data && (
-        <div className="pointer-events-none absolute top-3 right-4 hidden h-9 items-center text-sm md:flex">
+        <div className="pointer-events-none absolute top-1 right-4 hidden h-9 items-center text-sm md:flex">
           <span className="text-muted-foreground">Total:&nbsp;</span>
           <span className="font-mono font-semibold tabular-nums text-money-in">
             R$ {formatMoney(data.totalIncome)}

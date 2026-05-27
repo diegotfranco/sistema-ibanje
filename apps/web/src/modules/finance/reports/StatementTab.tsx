@@ -70,16 +70,18 @@ export function StatementTab({ month }: Props) {
     <div className="space-y-4 p-4">
       {/* Sub-toggle + PDF button */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex gap-2">
+        <div role="radiogroup" className="inline-flex rounded-md border bg-accent p-0.5">
           <Button
             size="sm"
-            variant={view === 'simple' ? 'default' : 'outline'}
+            role="radio"
+            variant={view === 'simple' ? 'default' : 'ghost'}
             onClick={() => setView('simple')}>
             Simplificado
           </Button>
           <Button
             size="sm"
-            variant={view === 'detailed' ? 'default' : 'outline'}
+            role="radio"
+            variant={view === 'detailed' ? 'default' : 'ghost'}
             onClick={() => setView('detailed')}>
             Detalhado
           </Button>
@@ -114,7 +116,7 @@ export function StatementTab({ month }: Props) {
           {detailed.isLoading && <p className="text-center text-muted-foreground">Carregando...</p>}
           {detailed.data && (
             <>
-              <Card>
+              <Card className="gap-0 py-0">
                 <CardHeader>
                   <CardTitle className="text-base">Entradas</CardTitle>
                 </CardHeader>
@@ -123,7 +125,7 @@ export function StatementTab({ month }: Props) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="gap-0 py-0">
                 <CardHeader>
                   <CardTitle className="text-base">Saídas</CardTitle>
                 </CardHeader>

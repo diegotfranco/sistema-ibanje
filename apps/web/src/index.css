@@ -23,7 +23,7 @@
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.963 0.002 197.1);
   --muted-foreground: oklch(0.535 0.021 213.5);
-  --accent: oklch(0.963 0.002 197.1);
+  --accent: oklch(0.963 0.002 220);
   --accent-foreground: oklch(0.218 0.008 223.9);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.971 0.013 17.38);
@@ -185,19 +185,27 @@
 }
 
 /* Light-mode input fills: lift inputs off pure-white card backgrounds.
-   Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment. */
+   Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment.
+   Selects/comboboxes only get the fill when closed — open state is handled
+   by aria-expanded:bg-muted on the trigger so it matches outline buttons. */
 :root:not(.dark) [data-slot='input'],
-:root:not(.dark) [data-slot="input-group"],
-:root:not(.dark) [data-slot='select-trigger'],
+:root:not(.dark) [data-slot='input-group'],
+:root:not(.dark) [data-slot='select-trigger'][aria-expanded='false'],
 :root:not(.dark) [data-slot='textarea'],
-:root:not(.dark) [data-input-trigger] {
+:root:not(.dark) [data-input-trigger][aria-expanded='false'] {
   background-color: color-mix(in oklch, var(--accent) 10%, transparent);
+}
+
+/* Open state: lift to muted so it matches the outline button open-state feedback. */
+:root:not(.dark) [data-slot='select-trigger'][aria-expanded='true'],
+:root:not(.dark) [data-input-trigger][aria-expanded='true'] {
+  background-color: var(--muted);
 }
 
 /* Auth pages sit on a translucent card over the glow background — the accent
    fill above muddies that, so opt out and let inputs read fully transparent. */
 :root:not(.dark) .auth-layout [data-slot='input'],
-:root:not(.dark) .auth-layout [data-slot="input-group"],
+:root:not(.dark) .auth-layout [data-slot='input-group'],
 :root:not(.dark) .auth-layout [data-slot='select-trigger'],
 :root:not(.dark) .auth-layout [data-slot='textarea'],
 :root:not(.dark) .auth-layout [data-input-trigger] {

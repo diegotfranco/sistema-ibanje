@@ -175,7 +175,7 @@ export function ResourceListPage<T>({
 
   return (
     <>
-      <Card>
+      <Card className="pb-0">
         <CardHeaderRow>
           <CardTitle>{title}</CardTitle>
           {canCreate && onCreate && (

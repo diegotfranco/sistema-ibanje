@@ -28,7 +28,7 @@ const columns: ColumnDef<EventSummary, unknown>[] = [
   },
   {
     id: 'when',
-    header: 'Quando',
+    header: 'Período',
     cell: (info) => formatDateRange(info.row.original.startTime, info.row.original.endTime),
     meta: { hideBelow: 'md' }
   },
@@ -36,7 +36,7 @@ const columns: ColumnDef<EventSummary, unknown>[] = [
     id: 'raised',
     header: 'Arrecadado',
     cell: (info) => (
-      <span className="font-mono tabular-nums text-money-in">
+      <span className="font-mono tabular-nums">
         R$ {formatMoney(info.row.original.totalRaised)}
       </span>
     ),
@@ -46,26 +46,18 @@ const columns: ColumnDef<EventSummary, unknown>[] = [
     id: 'spent',
     header: 'Gasto',
     cell: (info) => (
-      <span className="font-mono tabular-nums text-money-out">
-        R$ {formatMoney(info.row.original.totalSpent)}
-      </span>
+      <span className="font-mono tabular-nums">R$ {formatMoney(info.row.original.totalSpent)}</span>
     ),
     meta: { align: 'right', hideBelow: 'sm' }
   },
   {
     id: 'net',
     header: 'Saldo',
-    cell: (info) => {
-      const net = Number.parseFloat(info.row.original.net);
-      return (
-        <span
-          className={`font-mono tabular-nums font-medium ${
-            net >= 0 ? 'text-money-in' : 'text-money-out'
-          }`}>
-          R$ {formatMoney(info.row.original.net)}
-        </span>
-      );
-    },
+    cell: (info) => (
+      <span className="font-mono tabular-nums font-medium">
+        R$ {formatMoney(info.row.original.net)}
+      </span>
+    ),
     meta: { align: 'right' }
   }
 ];
@@ -89,15 +81,12 @@ export function EventsReportTab({ month }: Props) {
                 {formatDateRange(row.startTime, row.endTime)}
               </p>
               <p className="text-xs text-muted-foreground">
-                <span className="text-money-in">R$ {formatMoney(row.totalRaised)}</span>
+                R$ {formatMoney(row.totalRaised)}
                 {' − '}
-                <span className="text-money-out">R$ {formatMoney(row.totalSpent)}</span>
+                R$ {formatMoney(row.totalSpent)}
               </p>
             </div>
-            <span
-              className={`shrink-0 font-mono text-sm ${
-                Number.parseFloat(row.net) >= 0 ? 'text-money-in' : 'text-money-out'
-              }`}>
+            <span className="shrink-0 font-mono text-sm font-medium">
               R$ {formatMoney(row.net)}
             </span>
           </div>

@@ -158,7 +158,7 @@ function IncomeBreakdownTable({ pivot, buckets, collapsed, toggle }: ViewProps) 
       </TableBody>
       <tfoot>
         <TableRow className="border-t border-b-0 font-semibold">
-          <TableCell className="py-2 text-sm">Total Entradas</TableCell>
+          <TableCell className="px-4 py-3 text-sm">Total Entradas</TableCell>
           <TableCell className="text-right font-mono tabular-nums text-money-in py-2 text-sm whitespace-nowrap">
             R$ {formatMoney(pivot.grandTotal)}
           </TableCell>

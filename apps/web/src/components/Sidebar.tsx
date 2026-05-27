@@ -1,7 +1,6 @@
 import { useState, type ReactElement } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
@@ -12,8 +11,6 @@ import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/Button';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/Collapsible';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
 // Make sure to import these Dropdown components
 import {
   DropdownMenu,
@@ -22,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@/components/DropdownMenu';
 
 import {
   Sidebar as ShadcnSidebar,
@@ -262,8 +259,6 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { toggleSidebar, state } = useSidebar();
   const { state: subgroupState, setOpenState } = useSubgroupState();
-  const { theme } = useTheme();
-
   const isCollapsed = state === 'collapsed';
 
   // Filter routes recursively by permissions
@@ -339,23 +334,13 @@ export function Sidebar() {
                 <DropdownMenuLabel>Ações do Usuário</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate(paths.me)} className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
                   <span>Minha Conta</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="cursor-pointer focus:bg-transparent">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Tema</span>
-                        <ThemeSwitch />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>{theme === 'dark' ? 'Escuro' : 'Claro'}</TooltipContent>
-                  </Tooltip>
-                </DropdownMenuItem>
+                <div className="flex w-full items-center justify-between px-1.5 py-1">
+                  <span className="text-sm">Tema</span>
+                  <ThemeSwitch />
+                </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => logout()}

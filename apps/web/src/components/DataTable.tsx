@@ -25,7 +25,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@/components/DropdownMenu';
 import { TableFilter, type TableFilterOption } from '@/components/TableFilter';
 import { cn } from '@/lib/utils';
 
@@ -288,7 +288,7 @@ export function DataTable<TData>({
         {columnToggle && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" className="bg-transparent">
                 <SlidersHorizontal size={14} className="mr-1" />
                 Colunas
               </Button>
