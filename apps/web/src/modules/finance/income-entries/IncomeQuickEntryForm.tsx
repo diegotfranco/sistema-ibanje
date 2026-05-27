@@ -1,14 +1,6 @@
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { zodResolver } from '@/lib/zodResolver';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
@@ -90,28 +82,6 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       <CardContent className="mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <IncomeEntryFields control={control} errors={errors} setValue={setValue} />
-
-          <Controller
-            name="status"
-            control={control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Status</FieldLabel>
-                <Select
-                  value={field.value ?? EntryStatus.Paid}
-                  onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                    <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-                  </SelectContent>
-                </Select>
-                {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
-              </Field>
-            )}
-          />
 
           <div className="flex justify-end pt-2">
             <Button

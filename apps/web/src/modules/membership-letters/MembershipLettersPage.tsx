@@ -10,13 +10,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Button } from '@/components/Button';
 import EntityPicker from '@/components/EntityPicker';
 import { Module, Action, hasPermission } from '@/lib/permissions';

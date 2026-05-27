@@ -1,14 +1,6 @@
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { zodResolver } from '@/lib/zodResolver';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
@@ -67,28 +59,6 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
         control={form.control}
         errors={form.formState.errors}
         setValue={form.setValue}
-      />
-
-      <Controller
-        name="status"
-        control={form.control}
-        render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Status</FieldLabel>
-            <Select
-              value={field.value ?? EntryStatus.Paid}
-              onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-              </SelectContent>
-            </Select>
-            {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
-          </Field>
-        )}
       />
 
       <DialogFooter>

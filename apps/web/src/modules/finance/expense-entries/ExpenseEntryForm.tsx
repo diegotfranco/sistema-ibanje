@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';
 import { ExpenseEntryFields } from './ExpenseEntryFields';
@@ -86,28 +79,6 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
         errors={errors}
         setValue={setValue}
         detailsDefaultOpen={detailsDefaultOpen}
-      />
-
-      <Controller
-        name="status"
-        control={control}
-        render={({ field }) => (
-          <Field>
-            <FieldLabel htmlFor="status">Status</FieldLabel>
-            <Select
-              value={field.value !== undefined ? String(field.value) : EntryStatus.Paid}
-              onValueChange={(v) => field.onChange(v)}>
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Selecione um status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-              </SelectContent>
-            </Select>
-            {errors.status && <FieldError>{errors.status.message}</FieldError>}
-          </Field>
-        )}
       />
 
       {initialValues !== undefined && (

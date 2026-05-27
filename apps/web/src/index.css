@@ -169,6 +169,10 @@
   label {
     @apply font-heading;
   }
+  /* Combobox triggers styled as form inputs — matches Input/SelectTrigger bg */
+  button[data-input-trigger] {
+    @apply bg-transparent dark:bg-input/30;
+  }
 }
 
 /* Keep the root view-transition synced with ThemeSwitch's thumb/icon crossfade
@@ -187,7 +191,7 @@
 :root:not(.dark) [data-slot='select-trigger'],
 :root:not(.dark) [data-slot='textarea'],
 :root:not(.dark) [data-input-trigger] {
-  background-color: color-mix(in oklch, var(--accent) 40%, transparent);
+  background-color: color-mix(in oklch, var(--accent) 10%, transparent);
 }
 
 /* Auth pages sit on a translucent card over the glow background — the accent

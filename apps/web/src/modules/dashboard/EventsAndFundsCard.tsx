@@ -9,13 +9,7 @@ import {
   ChartTooltip,
   type ChartConfig
 } from '@/components/ui/chart';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
 import type { Events, FundSummary } from '@sistema-ibanje/shared';
