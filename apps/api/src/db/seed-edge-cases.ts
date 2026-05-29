@@ -18,6 +18,7 @@ export type EdgeCaseAttender = {
   name: string;
   linkToUserEmail?: string;
   birthDate?: string | null;
+  baptismDate?: string | null;
   addressStreet?: string | null;
   addressNumber?: string | null;
   addressDistrict?: string | null;
@@ -27,8 +28,10 @@ export type EdgeCaseAttender = {
   email?: string | null;
   phone?: string | null;
   isMember?: boolean;
-  memberSince?: string | null;
-  congregatingSinceYear?: number | null;
+  status?: 'ativo' | 'inativo';
+  // Month-granular values are stored as YYYYMM ints (e.g. April 2010 -> 201004).
+  memberSince?: number | null;
+  congregatingSince?: number | null;
   admissionMode?: 'aclamação' | 'batismo' | 'carta de transferência' | 'profissão de fé' | null;
 };
 
@@ -46,8 +49,9 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     email: 'joao.silva@email.com',
     phone: '11987654321',
     isMember: true,
-    memberSince: '2010-04-18',
-    congregatingSinceYear: 2008,
+    memberSince: 201004,
+    baptismDate: '2010-04-18',
+    congregatingSince: 200803,
     admissionMode: 'aclamação'
   },
   {
@@ -57,7 +61,8 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     city: 'São Paulo',
     state: 'SP',
     isMember: true,
-    memberSince: '2015-08-01',
+    memberSince: 201508,
+    baptismDate: '2015-08-09',
     admissionMode: 'batismo'
   },
   {
@@ -75,8 +80,21 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     city: 'Campinas',
     state: 'SP',
     isMember: true,
-    memberSince: '2020-12-13',
+    memberSince: 202012,
+    baptismDate: '2020-12-13',
     admissionMode: 'profissão de fé'
+  },
+  {
+    // inactive member — exercises the status filter and the inativo rendering path
+    name: 'Geraldo Afastado',
+    birthDate: '1968-07-22',
+    city: 'Santos',
+    state: 'SP',
+    isMember: true,
+    status: 'inativo',
+    memberSince: 200506,
+    baptismDate: '2005-06-12',
+    admissionMode: 'batismo'
   }
 ];
 

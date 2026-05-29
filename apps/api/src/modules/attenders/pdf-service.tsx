@@ -53,6 +53,11 @@ function formatDateBR(iso: string): string {
   return d && m && y ? `${d}/${m}/${y}` : iso;
 }
 
+// Month-granular columns are stored as YYYYMM ints (e.g. 202404 -> '04/2024').
+function formatMonthBR(yyyymm: number): string {
+  return `${String(yyyymm % 100).padStart(2, '0')}/${Math.trunc(yyyymm / 100)}`;
+}
+
 function groupLabel(
   categoryName: string,
   fundName: string | null,
@@ -240,12 +245,12 @@ const ROSTER_COLUMNS: Record<string, { label: string; value: (row: RosterRow) =>
   },
   memberSince: {
     label: 'Membro desde',
-    value: (r) => (r.memberSince ? formatDateBR(r.memberSince) : '—')
+    value: (r) => (r.memberSince != null ? formatMonthBR(r.memberSince) : '—')
   },
   admissionMode: { label: 'Modo de admissão', value: (r) => r.admissionMode ?? '—' },
-  congregatingSinceYear: {
+  congregatingSince: {
     label: 'Congregando desde',
-    value: (r) => (r.congregatingSinceYear != null ? String(r.congregatingSinceYear) : '—')
+    value: (r) => (r.congregatingSince != null ? formatMonthBR(r.congregatingSince) : '—')
   },
   birthDate: {
     label: 'Nascimento',

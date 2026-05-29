@@ -59,8 +59,13 @@ export async function listIncomeEntries(offset: number, limit: number) {
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
-// The period a donation belongs to is `attributionMonth` when set, else `referenceDate`.
-const donationPeriod = sql`coalesce(${incomeEntries.attributionMonth}, ${incomeEntries.referenceDate})`;
+// The period a donation belongs to is `attributionMonth` (a YYYYMM int) when set, else
+// derived from `referenceDate` (a full date) as a YYYYMM int — so both sides are comparable.
+const donationPeriod = sql<number>`coalesce(${incomeEntries.attributionMonth}, extract(year from ${incomeEntries.referenceDate})::int * 100 + extract(month from ${incomeEntries.referenceDate})::int)`;
+// `YYYY-MM` string from the YYYYMM int period.
+const donationMonthKey = sql<string>`(${donationPeriod} / 100)::text || '-' || lpad((${donationPeriod} % 100)::text, 2, '0')`;
+// `YYYY` string from the YYYYMM int period.
+const donationYearKey = sql<string>`(${donationPeriod} / 100)::text`;
 
 // Confirmed-only ('paga') donations for one attender in a given year, aggregated in SQL
 // per (month, leaf category, fund, event). Totals stay exact numeric — never summed as
@@ -69,11 +74,9 @@ const donationPeriod = sql`coalesce(${incomeEntries.attributionMonth}, ${incomeE
 // statement should show what was actually given (Dízimo, Oferta, Doação) rather
 // than collapsing everything under "Contribuições".
 export async function aggregateConfirmedDonationsByAttender(attenderId: number, year: number) {
-  const monthKey = sql<string>`to_char(${donationPeriod}, 'YYYY-MM')`;
-
   return db
     .select({
-      month: monthKey,
+      month: donationMonthKey,
       categoryName: incomeCategories.name,
       fundName: designatedFunds.name,
       eventName: events.title,
@@ -87,22 +90,21 @@ export async function aggregateConfirmedDonationsByAttender(attenderId: number, 
       and(
         eq(incomeEntries.attenderId, attenderId),
         eq(incomeEntries.status, 'paga'),
-        eq(sql`to_char(${donationPeriod}, 'YYYY')`, String(year))
+        eq(donationYearKey, String(year))
       )
     )
-    .groupBy(monthKey, incomeCategories.name, designatedFunds.name, events.title)
-    .orderBy(monthKey, incomeCategories.name);
+    .groupBy(donationMonthKey, incomeCategories.name, designatedFunds.name, events.title)
+    .orderBy(donationMonthKey, incomeCategories.name);
 }
 
 // Distinct years (desc) in which an attender has confirmed donations — drives the
 // statement's year picker so it only offers years that actually have giving.
 export async function listDonationYearsByAttender(attenderId: number): Promise<number[]> {
-  const yearKey = sql<string>`to_char(${donationPeriod}, 'YYYY')`;
   const rows = await db
-    .selectDistinct({ year: yearKey })
+    .selectDistinct({ year: donationYearKey })
     .from(incomeEntries)
     .where(and(eq(incomeEntries.attenderId, attenderId), eq(incomeEntries.status, 'paga')))
-    .orderBy(desc(yearKey));
+    .orderBy(desc(donationYearKey));
 
   return rows.map((r) => parseInt(r.year, 10));
 }
@@ -133,7 +135,7 @@ export async function listConfirmedDonationEntriesByAttenderMonth(
       and(
         eq(incomeEntries.attenderId, attenderId),
         eq(incomeEntries.status, 'paga'),
-        eq(sql`to_char(${donationPeriod}, 'YYYY-MM')`, month)
+        eq(donationMonthKey, month)
       )
     )
     .orderBy(incomeEntries.depositDate, incomeEntries.id);
@@ -148,7 +150,7 @@ export async function findIncomeEntryById(id: number) {
 export async function insertIncomeEntry(data: {
   depositDate: string;
   referenceDate: string;
-  attributionMonth?: string;
+  attributionMonth?: number;
   amount: number;
   categoryId: number;
   attenderId?: number;

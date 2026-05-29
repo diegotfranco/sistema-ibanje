@@ -12,10 +12,13 @@ import type {
   ResubmitMonthlyClosingRequest,
   MonthlyClosingResponse
 } from './schema.js';
-import type { MonthlyClosing } from '../../../db/schema.js';
+
+// The period is stored as a YYYYMM int but the repository decodes it back to (year, month);
+// infer the decoded row shape from the repo rather than the raw table type.
+type ClosingRow = NonNullable<Awaited<ReturnType<typeof repo.findMonthlyClosingById>>>;
 
 async function buildResponse(
-  closing: MonthlyClosing,
+  closing: ClosingRow,
   includeReservedFunds = true
 ): Promise<MonthlyClosingResponse> {
   const [totalIncome, totalExpenses, totalReservedFunds] = await Promise.all([

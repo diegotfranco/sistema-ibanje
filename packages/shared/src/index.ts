@@ -1,5 +1,7 @@
 export { brandColors, type BrandColorKey } from './colors.js';
 
+export { yyyymmToString, stringToYyyymm, isValidYyyymm } from './yearMonth.js';
+
 export type {
   DashboardResponse,
   KpiDelta,

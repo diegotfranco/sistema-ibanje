@@ -1,1 +1,0 @@
-ALTER TABLE "expense_entries" DROP COLUMN "description";

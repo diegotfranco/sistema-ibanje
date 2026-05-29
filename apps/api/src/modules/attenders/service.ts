@@ -20,6 +20,53 @@ import type { UpdateMyProfileRequest } from '../auth/schema.js';
 import { db } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
 import { users, attenders } from '../../db/schema.js';
+import { yyyymmToString, stringToYyyymm } from '@sistema-ibanje/shared';
+
+type AttenderRow = NonNullable<Awaited<ReturnType<typeof repo.findAttenderById>>>;
+
+// Single read-path mapping: DB rows -> API response. Month fields are stored as YYYYMM ints
+// and emitted as `YYYY-MM` strings.
+function toAttenderResponse(row: AttenderRow): AttenderResponse {
+  return {
+    id: row.id,
+    userId: row.userId,
+    name: row.name,
+    birthDate: row.birthDate,
+    baptismDate: row.baptismDate,
+    addressStreet: row.addressStreet,
+    addressNumber: row.addressNumber,
+    addressComplement: row.addressComplement,
+    addressDistrict: row.addressDistrict,
+    state: row.state,
+    city: row.city,
+    postalCode: row.postalCode,
+    email: row.email,
+    phone: row.phone,
+    status: row.status,
+    isMember: row.isMember,
+    memberSince: row.memberSince == null ? null : yyyymmToString(row.memberSince),
+    congregatingSince: row.congregatingSince == null ? null : yyyymmToString(row.congregatingSince),
+    admissionMode: row.admissionMode,
+    createdAt: row.createdAt
+  };
+}
+
+// Write-path conversion for the two month fields (`YYYY-MM` string -> YYYYMM int), preserving
+// the partial-update semantics: an omitted key stays omitted; an explicit null clears the column.
+function monthFieldsToInt(body: Pick<UpdateAttenderRequest, 'memberSince' | 'congregatingSince'>): {
+  memberSince?: number | null;
+  congregatingSince?: number | null;
+} {
+  const out: { memberSince?: number | null; congregatingSince?: number | null } = {};
+  if (body.memberSince !== undefined) {
+    out.memberSince = body.memberSince == null ? null : stringToYyyymm(body.memberSince);
+  }
+  if (body.congregatingSince !== undefined) {
+    out.congregatingSince =
+      body.congregatingSince == null ? null : stringToYyyymm(body.congregatingSince);
+  }
+  return out;
+}
 
 export async function listAttenders(
   callerId: number,
@@ -36,34 +83,7 @@ export async function listAttenders(
   const offset = (page - 1) * limit;
   const { rows, total } = await repo.listAttenders(offset, limit, filters);
 
-  return paginate(
-    rows.map(
-      (row): AttenderResponse => ({
-        id: row.id,
-        userId: row.userId,
-        name: row.name,
-        birthDate: row.birthDate,
-        addressStreet: row.addressStreet,
-        addressNumber: row.addressNumber,
-        addressComplement: row.addressComplement,
-        addressDistrict: row.addressDistrict,
-        state: row.state,
-        city: row.city,
-        postalCode: row.postalCode,
-        email: row.email,
-        phone: row.phone,
-        status: row.status,
-        isMember: row.isMember,
-        memberSince: row.memberSince,
-        congregatingSinceYear: row.congregatingSinceYear,
-        admissionMode: row.admissionMode,
-        createdAt: row.createdAt
-      })
-    ),
-    total,
-    page,
-    limit
-  );
+  return paginate(rows.map(toAttenderResponse), total, page, limit);
 }
 
 // Whole filtered roster for the PDF export. Same staff-only gate as the list.
@@ -87,27 +107,7 @@ export async function getAttenderById(
     return null;
   }
 
-  return {
-    id: attender.id,
-    userId: attender.userId,
-    name: attender.name,
-    birthDate: attender.birthDate,
-    addressStreet: attender.addressStreet,
-    addressNumber: attender.addressNumber,
-    addressComplement: attender.addressComplement,
-    addressDistrict: attender.addressDistrict,
-    state: attender.state,
-    city: attender.city,
-    postalCode: attender.postalCode,
-    email: attender.email,
-    phone: attender.phone,
-    status: attender.status,
-    isMember: attender.isMember,
-    memberSince: attender.memberSince,
-    congregatingSinceYear: attender.congregatingSinceYear,
-    admissionMode: attender.admissionMode,
-    createdAt: attender.createdAt
-  };
+  return toAttenderResponse(attender);
 }
 
 export async function createAttender(
@@ -144,6 +144,7 @@ export async function createAttender(
     userId: body.userId,
     name: body.name,
     birthDate: body.birthDate,
+    baptismDate: body.baptismDate,
     addressStreet: body.addressStreet,
     addressNumber: body.addressNumber,
     addressComplement: body.addressComplement,
@@ -154,36 +155,15 @@ export async function createAttender(
     email: body.email,
     phone: body.phone,
     isMember: body.isMember,
-    memberSince: body.memberSince,
-    congregatingSinceYear: body.congregatingSinceYear,
-    admissionMode: body.admissionMode
+    admissionMode: body.admissionMode,
+    ...monthFieldsToInt(body)
   });
 
   if (!created) {
     throw new Error('Failed to create attender');
   }
 
-  return {
-    id: created.id,
-    userId: created.userId,
-    name: created.name,
-    birthDate: created.birthDate,
-    addressStreet: created.addressStreet,
-    addressNumber: created.addressNumber,
-    addressComplement: created.addressComplement,
-    addressDistrict: created.addressDistrict,
-    state: created.state,
-    city: created.city,
-    postalCode: created.postalCode,
-    email: created.email,
-    phone: created.phone,
-    status: created.status,
-    isMember: created.isMember,
-    memberSince: created.memberSince,
-    congregatingSinceYear: created.congregatingSinceYear,
-    admissionMode: created.admissionMode,
-    createdAt: created.createdAt
-  };
+  return toAttenderResponse(created);
 }
 
 export async function updateAttender(
@@ -220,30 +200,15 @@ export async function updateAttender(
     }
   }
 
-  const updated = await repo.updateAttender(targetId, body);
+  // Spread `rest` (without the string month fields) and re-add them as YYYYMM ints.
+  const { memberSince, congregatingSince, ...rest } = body;
+  const updated = await repo.updateAttender(targetId, {
+    ...rest,
+    ...monthFieldsToInt({ memberSince, congregatingSince })
+  });
   if (!updated) return null;
 
-  return {
-    id: updated.id,
-    userId: updated.userId,
-    name: updated.name,
-    birthDate: updated.birthDate,
-    addressStreet: updated.addressStreet,
-    addressNumber: updated.addressNumber,
-    addressComplement: updated.addressComplement,
-    addressDistrict: updated.addressDistrict,
-    state: updated.state,
-    city: updated.city,
-    postalCode: updated.postalCode,
-    email: updated.email,
-    phone: updated.phone,
-    status: updated.status,
-    isMember: updated.isMember,
-    memberSince: updated.memberSince,
-    congregatingSinceYear: updated.congregatingSinceYear,
-    admissionMode: updated.admissionMode,
-    createdAt: updated.createdAt
-  };
+  return toAttenderResponse(updated);
 }
 
 export async function deactivateAttender(callerId: number, targetId: number): Promise<void | null> {
@@ -383,25 +348,5 @@ export async function updateAttenderProfile(
   const updated = await repo.updateAttender(attenderId, body);
   if (!updated) return null;
 
-  return {
-    id: updated.id,
-    userId: updated.userId,
-    name: updated.name,
-    birthDate: updated.birthDate,
-    addressStreet: updated.addressStreet,
-    addressNumber: updated.addressNumber,
-    addressComplement: updated.addressComplement,
-    addressDistrict: updated.addressDistrict,
-    state: updated.state,
-    city: updated.city,
-    postalCode: updated.postalCode,
-    email: updated.email,
-    phone: updated.phone,
-    status: updated.status,
-    isMember: updated.isMember,
-    memberSince: updated.memberSince,
-    congregatingSinceYear: updated.congregatingSinceYear,
-    admissionMode: updated.admissionMode,
-    createdAt: updated.createdAt
-  };
+  return toAttenderResponse(updated);
 }

@@ -1,5 +1,5 @@
 {
-  "id": "e8a184b5-52da-4aaa-a736-51a5e02002bf",
+  "id": "3ac5871f-46e0-4a70-8df3-aed658b45857",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -29,12 +29,12 @@
         },
         "member_since": {
           "name": "member_since",
-          "type": "date",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
-        "congregating_since_year": {
-          "name": "congregating_since_year",
+        "congregating_since": {
+          "name": "congregating_since",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -58,6 +58,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "baptism_date": {
+          "name": "baptism_date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
         "address_street": {
           "name": "address_street",
           "type": "varchar(96)",
@@ -66,7 +72,7 @@
         },
         "address_number": {
           "name": "address_number",
-          "type": "integer",
+          "type": "varchar(16)",
           "primaryKey": false,
           "notNull": false
         },
@@ -178,7 +184,16 @@
         }
       },
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "chk_member_since_yyyymm": {
+          "name": "chk_member_since_yyyymm",
+          "value": "\"attenders\".\"member_since\" IS NULL OR (\"attenders\".\"member_since\" BETWEEN 190001 AND 999912 AND \"attenders\".\"member_since\" % 100 BETWEEN 1 AND 12)"
+        },
+        "chk_congregating_since_yyyymm": {
+          "name": "chk_congregating_since_yyyymm",
+          "value": "\"attenders\".\"congregating_since\" IS NULL OR (\"attenders\".\"congregating_since\" BETWEEN 190001 AND 999912 AND \"attenders\".\"congregating_since\" % 100 BETWEEN 1 AND 12)"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.modules": {
@@ -923,12 +938,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "description": {
-          "name": "description",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": true
-        },
         "total": {
           "name": "total",
           "type": "numeric(12, 2)",
@@ -975,6 +984,12 @@
         },
         "designated_fund_id": {
           "name": "designated_fund_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_id": {
+          "name": "event_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -1111,11 +1126,41 @@
           "method": "btree",
           "with": {}
         },
+        "expense_entries_event_id_idx": {
+          "name": "expense_entries_event_id_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "expense_entries_parent_id_idx": {
           "name": "expense_entries_parent_id_idx",
           "columns": [
             {
               "expression": "parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "expense_entries_user_id_idx": {
+          "name": "expense_entries_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1193,6 +1238,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "expense_entries_event_id_events_id_fk": {
+          "name": "expense_entries_event_id_events_id_fk",
+          "tableFrom": "expense_entries",
+          "tableTo": "events",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "expense_entries_user_id_users_id_fk": {
           "name": "expense_entries_user_id_users_id_fk",
           "tableFrom": "expense_entries",
@@ -1222,6 +1280,10 @@
         "chk_expense_installments_valid": {
           "name": "chk_expense_installments_valid",
           "value": "\"expense_entries\".\"installment\" > 0 AND \"expense_entries\".\"total_installments\" > 0 AND \"expense_entries\".\"installment\" <= \"expense_entries\".\"total_installments\""
+        },
+        "chk_expense_fund_or_event_exclusive": {
+          "name": "chk_expense_fund_or_event_exclusive",
+          "value": "\"expense_entries\".\"designated_fund_id\" IS NULL OR \"expense_entries\".\"event_id\" IS NULL"
         }
       },
       "isRLSEnabled": false
@@ -1376,7 +1438,7 @@
         },
         "attribution_month": {
           "name": "attribution_month",
-          "type": "date",
+          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -1406,6 +1468,12 @@
         },
         "designated_fund_id": {
           "name": "designated_fund_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "event_id": {
+          "name": "event_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false
@@ -1550,6 +1618,36 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "income_entries_event_id_idx": {
+          "name": "income_entries_event_id_idx",
+          "columns": [
+            {
+              "expression": "event_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "income_entries_user_id_idx": {
+          "name": "income_entries_user_id_idx",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -1605,6 +1703,19 @@
           "onDelete": "no action",
           "onUpdate": "no action"
         },
+        "income_entries_event_id_events_id_fk": {
+          "name": "income_entries_event_id_events_id_fk",
+          "tableFrom": "income_entries",
+          "tableTo": "events",
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
         "income_entries_user_id_users_id_fk": {
           "name": "income_entries_user_id_users_id_fk",
           "tableFrom": "income_entries",
@@ -1626,6 +1737,14 @@
         "chk_income_amount_positive": {
           "name": "chk_income_amount_positive",
           "value": "\"income_entries\".\"amount\" > 0"
+        },
+        "chk_income_fund_or_event_exclusive": {
+          "name": "chk_income_fund_or_event_exclusive",
+          "value": "\"income_entries\".\"designated_fund_id\" IS NULL OR \"income_entries\".\"event_id\" IS NULL"
+        },
+        "chk_attribution_month_yyyymm": {
+          "name": "chk_attribution_month_yyyymm",
+          "value": "\"income_entries\".\"attribution_month\" IS NULL OR (\"income_entries\".\"attribution_month\" BETWEEN 190001 AND 999912 AND \"income_entries\".\"attribution_month\" % 100 BETWEEN 1 AND 12)"
         }
       },
       "isRLSEnabled": false
@@ -1640,14 +1759,8 @@
           "primaryKey": true,
           "notNull": true
         },
-        "period_year": {
-          "name": "period_year",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "period_month": {
-          "name": "period_month",
+        "period": {
+          "name": "period",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -1774,16 +1887,15 @@
           "name": "uq_monthly_closing_period",
           "nullsNotDistinct": false,
           "columns": [
-            "period_year",
-            "period_month"
+            "period"
           ]
         }
       },
       "policies": {},
       "checkConstraints": {
-        "chk_period_month_valid": {
-          "name": "chk_period_month_valid",
-          "value": "\"monthly_closings\".\"period_month\" BETWEEN 1 AND 12"
+        "chk_period_yyyymm": {
+          "name": "chk_period_yyyymm",
+          "value": "\"monthly_closings\".\"period\" BETWEEN 190001 AND 999912 AND \"monthly_closings\".\"period\" % 100 BETWEEN 1 AND 12"
         }
       },
       "isRLSEnabled": false
@@ -1976,125 +2088,6 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.events": {
-      "name": "events",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "serial",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "description": {
-          "name": "description",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "location": {
-          "name": "location",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "start_time": {
-          "name": "start_time",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "end_time": {
-          "name": "end_time",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "event_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'culto'"
-        },
-        "recurrence": {
-          "name": "recurrence",
-          "type": "recurrence_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'nenhuma'"
-        },
-        "is_public": {
-          "name": "is_public",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "active_status",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'ativo'"
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "events_created_by_user_id_users_id_fk": {
-          "name": "events_created_by_user_id_users_id_fk",
-          "tableFrom": "events",
-          "tableTo": "users",
-          "columnsFrom": [
-            "created_by_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "no action",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {
-        "chk_event_end_after_start": {
-          "name": "chk_event_end_after_start",
-          "value": "\"events\".\"end_time\" > \"events\".\"start_time\""
-        }
-      },
-      "isRLSEnabled": false
-    },
     "public.meeting_attenders_present": {
       "name": "meeting_attenders_present",
       "schema": "",
@@ -2249,6 +2242,203 @@
         },
         "meetings_status_idx": {
           "name": "meetings_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.events": {
+      "name": "events",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location": {
+          "name": "location",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "start_time": {
+          "name": "start_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "end_time": {
+          "name": "end_time",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "active_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ativo'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "events_start_time_idx": {
+          "name": "events_start_time_idx",
+          "columns": [
+            {
+              "expression": "start_time",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "events_status_idx": {
+          "name": "events_status_idx",
+          "columns": [
+            {
+              "expression": "status",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_event_end_after_start": {
+          "name": "chk_event_end_after_start",
+          "value": "\"events\".\"end_time\" > \"events\".\"start_time\""
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.calendar_entries": {
+      "name": "calendar_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notes": {
+          "name": "notes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "active_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'ativo'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "calendar_entries_date_idx": {
+          "name": "calendar_entries_date_idx",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "calendar_entries_status_idx": {
+          "name": "calendar_entries_status_idx",
           "columns": [
             {
               "expression": "status",
@@ -2741,13 +2931,13 @@
         },
         "opening_time": {
           "name": "opening_time",
-          "type": "varchar(8)",
+          "type": "time",
           "primaryKey": false,
           "notNull": false
         },
         "closing_time": {
           "name": "closing_time",
-          "type": "varchar(8)",
+          "type": "time",
           "primaryKey": false,
           "notNull": false
         },
@@ -3119,16 +3309,6 @@
         "fechado"
       ]
     },
-    "public.event_type": {
-      "name": "event_type",
-      "schema": "public",
-      "values": [
-        "culto",
-        "reunião",
-        "evento especial",
-        "outro"
-      ]
-    },
     "public.meeting_type": {
       "name": "meeting_type",
       "schema": "public",
@@ -3153,16 +3333,6 @@
         "aguardando aprovação",
         "aprovada",
         "substituída"
-      ]
-    },
-    "public.recurrence_type": {
-      "name": "recurrence_type",
-      "schema": "public",
-      "values": [
-        "nenhuma",
-        "semanal",
-        "quinzenal",
-        "mensal"
       ]
     },
     "public.transaction_status": {

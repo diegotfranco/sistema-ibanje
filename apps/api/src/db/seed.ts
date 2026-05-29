@@ -103,23 +103,29 @@ const ADMISSION_MODES = [
 
 function synthesizeMembership(i: number): {
   isMember: boolean;
-  memberSince: string | null;
+  memberSince: number | null;
   admissionMode: (typeof ADMISSION_MODES)[number] | null;
-  congregatingSinceYear: number;
+  congregatingSince: number;
+  status: 'ativo' | 'inativo';
 } {
-  const congregatingSinceYear = 2002 + (i % 21);
+  // Month-granular values are stored as YYYYMM ints (e.g. April 2024 -> 202404).
+  const month = (i % 12) + 1;
+  const congregatingSince = (2002 + (i % 21)) * 100 + month;
+  // ~12% inactive — people who transferred out, moved away, or stopped attending.
+  // Deterministic by index so `db:reset` stays reproducible; spans both members
+  // and non-members so the status filter has realistic data in either segment.
+  const status = i % 17 < 2 ? 'inativo' : 'ativo';
   const isMember = i % 20 < 13; // ~65%
   if (!isMember) {
-    return { isMember: false, memberSince: null, admissionMode: null, congregatingSinceYear };
+    return { isMember: false, memberSince: null, admissionMode: null, congregatingSince, status };
   }
-  const year = congregatingSinceYear + (i % 4);
-  const month = String((i % 12) + 1).padStart(2, '0');
-  const day = String((i % 27) + 1).padStart(2, '0');
+  const memberSince = (2002 + (i % 21) + (i % 4)) * 100 + month;
   return {
     isMember: true,
-    memberSince: `${year}-${month}-${day}`,
+    memberSince,
     admissionMode: ADMISSION_MODES[i % 4],
-    congregatingSinceYear
+    congregatingSince,
+    status
   };
 }
 
@@ -145,6 +151,7 @@ type DesignatedFundFixture = {
   targetAmount?: string | null;
   targetDate?: string | null;
   createdAt?: string | null;
+  status?: 'ativo' | 'inativo' | null;
 };
 type IncomeEntryFixture = {
   depositDate: string;
@@ -301,12 +308,15 @@ export async function seed() {
       status: 'ativo' as const,
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
+    // Historical campanhas are concluded — the fixture tags each with its real status
+    // (all currently `inativo`). Honor it so the seeded roster of funds is realistic:
+    // ongoing structural funds stay active, finished campaigns read as inactive.
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
       targetDate: f.targetDate ?? null,
-      status: 'ativo' as const,
+      status: f.status ?? 'ativo',
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const insertedFunds = await tx
@@ -405,6 +415,7 @@ export async function seed() {
       name: a.name,
       userId: a.linkToUserEmail ? (userByEmail.get(a.linkToUserEmail)?.id ?? null) : null,
       birthDate: a.birthDate ?? null,
+      baptismDate: a.baptismDate ?? null,
       addressStreet: a.addressStreet ?? null,
       addressNumber: a.addressNumber ?? null,
       addressDistrict: a.addressDistrict ?? null,
@@ -414,8 +425,9 @@ export async function seed() {
       email: a.email ?? null,
       phone: a.phone ?? null,
       isMember: a.isMember ?? false,
+      status: a.status ?? 'ativo',
       memberSince: a.memberSince ?? null,
-      congregatingSinceYear: a.congregatingSinceYear ?? null,
+      congregatingSince: a.congregatingSince ?? null,
       admissionMode: a.admissionMode ?? null
     }));
     const insertedEdgeAttenders = edgeAttenderRows.length
@@ -548,8 +560,8 @@ export async function seed() {
     if (EDGE_CASE_CLOSINGS.length) {
       await tx.insert(monthlyClosings).values(
         EDGE_CASE_CLOSINGS.map((c) => ({
-          periodYear: c.periodYear,
-          periodMonth: c.periodMonth,
+          // Stored as a single YYYYMM int (fixtures stay readable as year/month).
+          period: c.periodYear * 100 + c.periodMonth,
           status: c.status,
           closingBalance: c.closingBalance ?? null,
           treasurerNotes: c.treasurerNotes ?? null,

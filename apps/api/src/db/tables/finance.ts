@@ -66,7 +66,8 @@ export const incomeEntries = pgTable(
     id: serial('id').primaryKey(),
     depositDate: date('deposit_date').notNull(),
     referenceDate: date('reference_date').notNull(),
-    attributionMonth: date('attribution_month'),
+    // Month-granular value stored as a YYYYMM integer (e.g. 202404).
+    attributionMonth: integer('attribution_month'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     categoryId: integer('category_id')
       .notNull()
@@ -90,6 +91,10 @@ export const incomeEntries = pgTable(
     check(
       'chk_income_fund_or_event_exclusive',
       sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+    ),
+    check(
+      'chk_attribution_month_yyyymm',
+      sql`${table.attributionMonth} IS NULL OR (${table.attributionMonth} BETWEEN 190001 AND 999912 AND ${table.attributionMonth} % 100 BETWEEN 1 AND 12)`
     ),
     index('income_entries_deposit_date_idx').on(table.depositDate),
     index('income_entries_reference_date_idx').on(table.referenceDate),
@@ -179,8 +184,8 @@ export const monthlyClosings = pgTable(
   'monthly_closings',
   {
     id: serial('id').primaryKey(),
-    periodYear: integer('period_year').notNull(),
-    periodMonth: integer('period_month').notNull(),
+    // The closed period, stored as a YYYYMM integer (e.g. April 2024 -> 202404).
+    period: integer('period').notNull(),
     closingBalance: numeric('closing_balance', { precision: 12, scale: 2 }),
     treasurerNotes: text('treasurer_notes'),
     accountantNotes: text('accountant_notes'),
@@ -194,8 +199,11 @@ export const monthlyClosings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
-    check('chk_period_month_valid', sql`${table.periodMonth} BETWEEN 1 AND 12`),
-    unique('uq_monthly_closing_period').on(table.periodYear, table.periodMonth),
+    check(
+      'chk_period_yyyymm',
+      sql`${table.period} BETWEEN 190001 AND 999912 AND ${table.period} % 100 BETWEEN 1 AND 12`
+    ),
+    unique('uq_monthly_closing_period').on(table.period),
     index('monthly_closings_status_idx').on(table.status)
   ]
 );

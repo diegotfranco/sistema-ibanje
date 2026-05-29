@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
 
+// Month-granular fields use the human-readable `YYYY-MM` wire format; the service converts
+// to/from the DB's YYYYMM integer. Shared by the membership fields and the donation queries.
+const MonthStringSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: YYYY-MM');
+
 // Shared filter shape for the list and the roster export. `isMember` arrives as the literal
 // string "true"/"false" — `z.coerce.boolean()` is wrong here (it maps "false" → true).
 const attenderFilterShape = {
@@ -49,8 +53,9 @@ export const CreateAttenderRequestSchema = z.object({
   email: z.email().optional(),
   phone: z.string().max(16).optional(),
   isMember: z.boolean().optional().default(false),
-  memberSince: z.string().date().nullable().optional(),
-  congregatingSinceYear: z.number().int().min(1900).max(2100).nullable().optional(),
+  baptismDate: z.iso.date().nullable().optional(),
+  memberSince: MonthStringSchema.nullable().optional(),
+  congregatingSince: MonthStringSchema.nullable().optional(),
   admissionMode: z
     .enum(['aclamação', 'batismo', 'carta de transferência', 'profissão de fé'])
     .nullable()
@@ -75,15 +80,14 @@ export const AttenderResponseSchema = z.object({
   phone: z.string().nullable(),
   status: z.string(),
   isMember: z.boolean(),
+  baptismDate: z.string().nullable(),
   memberSince: z.string().nullable(),
-  congregatingSinceYear: z.number().int().nullable(),
+  congregatingSince: z.string().nullable(),
   admissionMode: z.string().nullable(),
   createdAt: z.date()
 });
 
 export const AttenderListResponseSchema = paginatedSchema(AttenderResponseSchema);
-
-const MonthStringSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: YYYY-MM');
 
 export const DonationsSummaryQuerySchema = z.object({
   year: z.coerce.number().int().min(2000).max(2100).optional()

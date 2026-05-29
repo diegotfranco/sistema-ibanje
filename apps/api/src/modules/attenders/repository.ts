@@ -8,6 +8,7 @@ const ATTENDER_COLUMNS = {
   userId: attenders.userId,
   name: attenders.name,
   birthDate: attenders.birthDate,
+  baptismDate: attenders.baptismDate,
   addressStreet: attenders.addressStreet,
   addressNumber: attenders.addressNumber,
   addressComplement: attenders.addressComplement,
@@ -20,7 +21,7 @@ const ATTENDER_COLUMNS = {
   status: attenders.status,
   isMember: attenders.isMember,
   memberSince: attenders.memberSince,
-  congregatingSinceYear: attenders.congregatingSinceYear,
+  congregatingSince: attenders.congregatingSince,
   admissionMode: attenders.admissionMode,
   createdAt: attenders.createdAt,
   updatedAt: attenders.updatedAt

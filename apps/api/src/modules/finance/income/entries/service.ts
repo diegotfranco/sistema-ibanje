@@ -9,6 +9,7 @@ import { assertPeriodEditable, deriveReferenceDateFromDeposit } from '../../../.
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
+import { yyyymmToString, stringToYyyymm } from '@sistema-ibanje/shared';
 import type {
   CreateIncomeEntryRequest,
   UpdateIncomeEntryRequest,
@@ -20,7 +21,11 @@ import type {
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
 
 function toResponse(row: Row): IncomeEntryResponse {
-  return row as unknown as IncomeEntryResponse;
+  // attributionMonth is stored as a YYYYMM int but emitted as a `YYYY-MM` string.
+  return {
+    ...row,
+    attributionMonth: row.attributionMonth == null ? null : yyyymmToString(row.attributionMonth)
+  } as unknown as IncomeEntryResponse;
 }
 
 async function validateEntry(data: {
@@ -99,6 +104,8 @@ export async function createIncomeEntry(
   });
   const created = await repo.insertIncomeEntry({
     ...body,
+    attributionMonth:
+      body.attributionMonth !== undefined ? stringToYyyymm(body.attributionMonth) : undefined,
     referenceDate,
     userId: callerId
   });
@@ -133,9 +140,13 @@ export async function updateIncomeEntry(
   };
   await validateEntry(mergedValues);
 
+  const { attributionMonth, ...restBody } = body;
   const updateData: Parameters<typeof repo.updateIncomeEntry>[1] = {
-    ...body,
+    ...restBody,
     ...(body.depositDate ? { referenceDate } : {}),
+    ...(attributionMonth !== undefined
+      ? { attributionMonth: stringToYyyymm(attributionMonth) }
+      : {}),
     amount: body.amount !== undefined ? body.amount.toString() : undefined
   };
 

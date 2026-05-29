@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
+// Month-granular wire format `YYYY-MM`; the service converts to/from the DB's YYYYMM integer.
+const MonthStringSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: YYYY-MM');
+
 export const ListIncomeEntriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
@@ -9,10 +12,7 @@ export const ListIncomeEntriesRequestSchema = z.object({
 export const CreateIncomeEntryRequestSchema = z
   .object({
     depositDate: z.iso.date(),
-    attributionMonth: z
-      .string()
-      .regex(/^\d{4}-\d{2}-01$/, 'attributionMonth must be the first day of a month (YYYY-MM-01)')
-      .optional(),
+    attributionMonth: MonthStringSchema.optional(),
     amount: z.number().positive(),
     categoryId: z.number().int().positive(),
     attenderId: z.number().int().positive().optional(),
@@ -30,10 +30,7 @@ export const CreateIncomeEntryRequestSchema = z
 export const UpdateIncomeEntryRequestSchema = z
   .object({
     depositDate: z.iso.date().optional(),
-    attributionMonth: z
-      .string()
-      .regex(/^\d{4}-\d{2}-01$/, 'attributionMonth must be the first day of a month (YYYY-MM-01)')
-      .optional(),
+    attributionMonth: MonthStringSchema.optional(),
     amount: z.number().positive().optional(),
     categoryId: z.number().int().positive().optional(),
     attenderId: z.number().int().positive().optional(),
@@ -52,7 +49,7 @@ export const IncomeEntryResponseSchema = z.object({
   id: z.number().int().positive(),
   depositDate: z.iso.date(),
   referenceDate: z.iso.date(),
-  attributionMonth: z.iso.date().nullable(),
+  attributionMonth: MonthStringSchema.nullable(),
   amount: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),

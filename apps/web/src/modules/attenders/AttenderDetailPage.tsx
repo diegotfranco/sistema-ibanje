@@ -8,7 +8,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
-import { formatDate } from '@/lib/datetime';
+import { formatDate, formatMonthYear } from '@/lib/datetime';
 import { useAttender } from './useAttenders';
 import AttenderDonationsDialog from './AttenderDonationsDialog';
 
@@ -109,17 +109,22 @@ export default function AttenderDetailPage() {
                 {attender.isMember && (
                   <Field
                     label="Membro desde"
-                    value={attender.memberSince ? formatDate(attender.memberSince) : null}
+                    value={attender.memberSince ? formatMonthYear(attender.memberSince) : null}
                   />
                 )}
                 {attender.isMember && attender.admissionMode && (
                   <Field label="Modo de admissão" value={attender.admissionMode} />
                 )}
-                {attender.congregatingSinceYear && (
-                  <Field label="Congregando desde" value={String(attender.congregatingSinceYear)} />
+                {attender.congregatingSince && (
+                  <Field
+                    label="Congregando desde"
+                    value={formatMonthYear(attender.congregatingSince)}
+                  />
                 )}
-                {/* Frontend-only placeholder: no backend column yet, so always "—" (see schema). */}
-                <Field label="Batismo" value={null} />
+                <Field
+                  label="Batismo"
+                  value={attender.baptismDate ? formatDate(attender.baptismDate) : null}
+                />
               </Section>
 
               <Section title="Contato">

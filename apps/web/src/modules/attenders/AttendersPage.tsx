@@ -11,7 +11,7 @@ import { Pagination } from '@/components/Pagination';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
 import { api } from '@/lib/api';
-import { formatDate } from '@/lib/datetime';
+import { formatDate, formatMonthYear } from '@/lib/datetime';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenders, useAttenderMutations } from './useAttenders';
@@ -32,7 +32,7 @@ const EXPORTABLE_COLUMNS = new Set([
   'status',
   'memberSince',
   'admissionMode',
-  'congregatingSinceYear',
+  'congregatingSince',
   'birthDate',
   'addressDistrict',
   'postalCode'
@@ -170,8 +170,9 @@ export default function AttendersPage() {
       city: attender.city,
       postalCode: attender.postalCode,
       isMember: attender.isMember,
+      baptismDate: attender.baptismDate,
       memberSince: attender.memberSince,
-      congregatingSinceYear: attender.congregatingSinceYear,
+      congregatingSince: attender.congregatingSince,
       admissionMode: attender.admissionMode as AttenderFormValues['admissionMode']
     };
   }
@@ -230,7 +231,7 @@ export default function AttendersPage() {
         header: 'Membro desde',
         label: 'Membro desde',
         defaultHidden: true,
-        cell: (row: AttenderResponse) => (row.memberSince ? formatDate(row.memberSince) : '—')
+        cell: (row: AttenderResponse) => (row.memberSince ? formatMonthYear(row.memberSince) : '—')
       },
       {
         id: 'admissionMode',
@@ -240,12 +241,12 @@ export default function AttendersPage() {
         cell: (row: AttenderResponse) => row.admissionMode ?? '—'
       },
       {
-        id: 'congregatingSinceYear',
+        id: 'congregatingSince',
         header: 'Congregando desde',
         label: 'Congregando desde',
         defaultHidden: true,
         cell: (row: AttenderResponse) =>
-          row.congregatingSinceYear != null ? String(row.congregatingSinceYear) : '—'
+          row.congregatingSince != null ? formatMonthYear(row.congregatingSince) : '—'
       },
       {
         id: 'birthDate',

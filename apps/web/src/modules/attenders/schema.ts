@@ -19,15 +19,16 @@ export const AttenderFormSchema = z.object({
     .optional()
     .nullable(),
   isMember: z.boolean().optional().default(false),
-  memberSince: z.string().optional().nullable(),
-  // Frontend-only for now: there's no backend column yet, so this is collected but not
-  // persisted (the API strips it). Persistence + an in-app calendar are follow-ups.
+  // Month-granular fields use the `YYYY-MM` wire format (DB stores them as YYYYMM ints).
+  memberSince: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, 'Formato esperado: MM/AAAA')
+    .optional()
+    .nullable(),
   baptismDate: z.string().optional().nullable(),
-  congregatingSinceYear: z
-    .number()
-    .int()
-    .min(1900, 'Ano inválido')
-    .max(2100, 'Ano inválido')
+  congregatingSince: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, 'Formato esperado: MM/AAAA')
     .optional()
     .nullable(),
   admissionMode: z
@@ -59,8 +60,9 @@ export type AttenderResponse = {
   phone: string | null;
   status: string;
   isMember: boolean;
+  baptismDate: string | null;
   memberSince: string | null;
-  congregatingSinceYear: number | null;
+  congregatingSince: string | null;
   admissionMode: string | null;
   createdAt: Date;
 };

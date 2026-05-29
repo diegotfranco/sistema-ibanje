@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { formatDate } from '@/lib/datetime';
+import { formatMonthYear } from '@/lib/datetime';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenderProfile, useUpdateMyProfile } from './useMyProfile';
 import { UpdateMyProfileFormSchema, type UpdateMyProfileFormValues } from './schema';
@@ -101,7 +101,7 @@ export default function MePage() {
                 {attender.isMember && attender.memberSince && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Membro desde</Label>
-                    <p className="text-sm font-medium">{formatDate(attender.memberSince)}</p>
+                    <p className="text-sm font-medium">{formatMonthYear(attender.memberSince)}</p>
                   </div>
                 )}
               </div>
