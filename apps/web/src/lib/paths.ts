@@ -7,6 +7,7 @@ export const paths = {
   roles: '/roles',
   users: '/users',
   attenders: '/attenders',
+  attenderDetail: '/attenders/:id',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
   events: '/events',

@@ -1,20 +1,42 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Gift } from 'lucide-react';
+import { Eye, FileDown } from 'lucide-react';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Button } from '@/components/Button';
+import { Pagination } from '@/components/Pagination';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
+import { api } from '@/lib/api';
+import { formatDate } from '@/lib/datetime';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenders, useAttenderMutations } from './useAttenders';
 import AttenderForm from './AttenderForm';
 import StatusBadge from '@/components/StatusBadge';
-import AttenderDonationsDialog from '@/modules/me/AttenderDonationsDialog';
+import type { RowDetailField } from '@/components/RowDetailPanel';
 import type { AttenderResponse, AttenderFormValues } from './schema';
 
 type AttenderFormInstance = ReturnType<typeof useForm<AttenderFormValues>>;
+
+// Column ids double as the backend export keys (see ROSTER_COLUMNS in the API pdf-service).
+const EXPORTABLE_COLUMNS = new Set([
+  'name',
+  'isMember',
+  'phone',
+  'email',
+  'city',
+  'status',
+  'memberSince',
+  'admissionMode',
+  'congregatingSinceYear',
+  'birthDate',
+  'addressDistrict',
+  'postalCode'
+]);
 
 function formatCityState(city: string | null, state: string | null): string {
   if (!city) return '—';
@@ -22,24 +44,86 @@ function formatCityState(city: string | null, state: string | null): string {
 }
 
 export default function AttendersPage() {
-  const { data: user } = useCurrentUser();
+  const navigate = useNavigate();
+  const { data: user, isLoading: userLoading } = useCurrentUser();
   const perms = user?.permissions;
   const canCreate = hasPermission(perms, Module.Attenders, Action.Create);
   const canEdit = hasPermission(perms, Module.Attenders, Action.Update);
   const canDelete = hasPermission(perms, Module.Attenders, Action.Delete);
+  // Staff (Relatórios on Congregados) see the full roster; everyone else is a self-service
+  // congregant and is sent to their own record. Mirrors the server's list/getById gate.
+  const canViewAll = hasPermission(perms, Module.Attenders, Action.Report);
 
-  const list = useAttenders();
+  useEffect(() => {
+    if (!userLoading && user && !canViewAll && user.attenderId) {
+      navigate(`/attenders/${user.attenderId}`, { replace: true });
+    }
+  }, [userLoading, user, canViewAll, navigate]);
+
+  const [page, setPage] = useState(1);
+  const [filters, setFilters] = useState<Record<string, string | undefined>>({});
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
+  const [visibleColumns, setVisibleColumns] = useState<string[]>([
+    'name',
+    'isMember',
+    'phone',
+    'email',
+    'city',
+    'status'
+  ]);
+  const [exporting, setExporting] = useState(false);
+
+  const isMember = filters.isMember as 'true' | 'false' | undefined;
+  const status = filters.status as 'ativo' | 'inativo' | undefined;
+
+  // Server-side search narrows the whole roster, so a new query must restart paging.
+  // Adjust during render (guarded) rather than in an effect — avoids a cascading render.
+  const [prevSearch, setPrevSearch] = useState(debouncedSearch);
+  if (prevSearch !== debouncedSearch) {
+    setPrevSearch(debouncedSearch);
+    setPage(1);
+  }
+
+  const list = useAttenders({ page, isMember, status, q: debouncedSearch || undefined });
   const mutations = useAttenderMutations();
+
+  const handleFilterChange = useCallback((columnId: string, value: string | undefined) => {
+    setFilters((prev) => ({ ...prev, [columnId]: value }));
+    setPage(1);
+  }, []);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AttenderResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AttenderResponse | null>(null);
-  const [donationsDialogOpen, setDonationsDialogOpen] = useState(false);
-  const [donationsAttender, setDonationsAttender] = useState<AttenderResponse | null>(null);
 
   const formRef = useRef<AttenderFormInstance | null>(null);
 
   const items = list.data?.data;
+  const totalPages = list.data?.totalPages ?? 1;
+
+  const handleColumnVisibility = useCallback((ids: string[]) => {
+    setVisibleColumns(ids.filter((id) => EXPORTABLE_COLUMNS.has(id)));
+  }, []);
+
+  async function handleExport() {
+    const qs = new URLSearchParams();
+    if (visibleColumns.length) qs.set('columns', visibleColumns.join(','));
+    if (isMember) qs.set('isMember', isMember);
+    if (status) qs.set('status', status);
+    if (debouncedSearch) qs.set('q', debouncedSearch);
+    setExporting(true);
+    try {
+      const blob = await api.getBlob(`/attenders/export/pdf?${qs.toString()}`);
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    } catch {
+      toast.error('Erro ao exportar PDF.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function handleSubmit(values: AttenderFormValues) {
     if (editing) {
@@ -94,47 +178,165 @@ export default function AttendersPage() {
 
   const columns = useMemo(
     () => [
+      { id: 'name', header: 'Nome', label: 'Nome', cell: (row: AttenderResponse) => row.name },
       {
-        header: 'Nome',
-        cell: (row: AttenderResponse) => row.name
-      },
-      {
+        id: 'isMember',
         header: 'Membro',
-        cell: (row: AttenderResponse) => (row.isMember ? 'Sim' : 'Não')
+        label: 'Membro',
+        cell: (row: AttenderResponse) => (row.isMember ? 'Sim' : 'Não'),
+        hideBelow: 'md' as const,
+        filter: {
+          options: [
+            { value: 'true', label: 'Membros' },
+            { value: 'false', label: 'Congregados' }
+          ]
+        }
       },
       {
+        id: 'phone',
         header: 'Telefone',
-        cell: (row: AttenderResponse) => row.phone ?? '—'
+        label: 'Telefone',
+        cell: (row: AttenderResponse) => row.phone ?? '—',
+        hideBelow: 'lg' as const
       },
       {
+        id: 'email',
         header: 'E-mail',
-        cell: (row: AttenderResponse) => row.email ?? '—'
+        label: 'E-mail',
+        cell: (row: AttenderResponse) => row.email ?? '—',
+        hideBelow: 'lg' as const
       },
       {
+        id: 'city',
         header: 'Cidade',
-        cell: (row: AttenderResponse) => formatCityState(row.city, row.state)
+        label: 'Cidade',
+        cell: (row: AttenderResponse) => formatCityState(row.city, row.state),
+        hideBelow: 'md' as const
       },
       {
+        id: 'status',
         header: 'Status',
-        cell: (row: AttenderResponse) => <StatusBadge status={row.status} />
+        label: 'Status',
+        cell: (row: AttenderResponse) => <StatusBadge status={row.status} />,
+        filter: {
+          options: [
+            { value: 'ativo', label: 'Ativos' },
+            { value: 'inativo', label: 'Inativos' }
+          ]
+        }
+      },
+      {
+        id: 'memberSince',
+        header: 'Membro desde',
+        label: 'Membro desde',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) => (row.memberSince ? formatDate(row.memberSince) : '—')
+      },
+      {
+        id: 'admissionMode',
+        header: 'Modo de admissão',
+        label: 'Modo de admissão',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) => row.admissionMode ?? '—'
+      },
+      {
+        id: 'congregatingSinceYear',
+        header: 'Congregando desde',
+        label: 'Congregando desde',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) =>
+          row.congregatingSinceYear != null ? String(row.congregatingSinceYear) : '—'
+      },
+      {
+        id: 'birthDate',
+        header: 'Nascimento',
+        label: 'Nascimento',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) => (row.birthDate ? formatDate(row.birthDate) : '—')
+      },
+      {
+        id: 'addressDistrict',
+        header: 'Bairro',
+        label: 'Bairro',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) => row.addressDistrict ?? '—'
+      },
+      {
+        id: 'postalCode',
+        header: 'CEP',
+        label: 'CEP',
+        defaultHidden: true,
+        cell: (row: AttenderResponse) => row.postalCode ?? '—'
       }
     ],
+    []
+  );
+
+  const mobileRow = useMemo(
+    () => (row: AttenderResponse) => {
+      const meta = [
+        row.isMember ? 'Membro' : 'Congregado',
+        row.phone,
+        formatCityState(row.city, row.state) === '—' ? null : formatCityState(row.city, row.state)
+      ].filter(Boolean);
+      return (
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium truncate">{row.name}</span>
+            <StatusBadge status={row.status} />
+          </div>
+          {meta.length > 0 && (
+            <span className="text-xs text-muted-foreground truncate">{meta.join(' · ')}</span>
+          )}
+        </div>
+      );
+    },
+    []
+  );
+
+  const mobileDetailFields = useMemo(
+    () =>
+      (row: AttenderResponse): RowDetailField[] => [
+        { label: 'Membro', value: row.isMember ? 'Sim' : 'Não' },
+        { label: 'Telefone', value: row.phone ?? '—', hideEmpty: true },
+        { label: 'E-mail', value: row.email ?? '—', hideEmpty: true },
+        { label: 'Cidade', value: formatCityState(row.city, row.state), hideEmpty: true },
+        { label: 'Status', value: <StatusBadge status={row.status} /> }
+      ],
     []
   );
 
   const customActions: CustomAction<AttenderResponse>[] = useMemo(
     () => [
       {
-        label: 'Contribuições',
-        icon: <Gift className="h-4 w-4" />,
-        onClick: (row) => {
-          setDonationsAttender(row);
-          setDonationsDialogOpen(true);
-        }
+        label: 'Detalhes',
+        icon: <Eye className="h-4 w-4" />,
+        onClick: (row) => navigate(`/attenders/${row.id}`)
       }
     ],
-    []
+    [navigate]
   );
+
+  const toolbarRight = (
+    <Button
+      variant="outline"
+      className="bg-transparent"
+      onClick={handleExport}
+      disabled={exporting}>
+      <FileDown className="h-4 w-4 mr-1" />
+      {exporting ? 'Exportando...' : 'Exportar PDF'}
+    </Button>
+  );
+
+  if (!userLoading && user && !canViewAll && !user.attenderId) {
+    return (
+      <PageContainer>
+        <p className="text-sm text-muted-foreground">
+          Você não está vinculado a nenhum cadastro de Congregado. Procure a secretaria.
+        </p>
+      </PageContainer>
+    );
+  }
 
   return (
     <>
@@ -166,7 +368,22 @@ export default function AttendersPage() {
           canEdit={canEdit}
           canDelete={canDelete}
           rowKey={(row) => row.id}
+          mobileRow={mobileRow}
+          mobileDetailFields={mobileDetailFields}
+          mobileDetailTitle={(row) => row.name}
           emptyMessage="Nenhum congregado encontrado."
+          columnToggle
+          tableId="attenders"
+          toolbarRight={toolbarRight}
+          onColumnVisibilityChange={handleColumnVisibility}
+          searchable={{ placeholder: 'Buscar congregado...', loading: list.isFetching }}
+          globalFilter={search}
+          onGlobalFilterChange={setSearch}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          pagination={
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          }
         />
       </PageContainer>
 
@@ -190,13 +407,6 @@ export default function AttendersPage() {
             mutations.remove.mutate(deleteTarget.id, { onSuccess: () => setDeleteTarget(null) });
         }}
         isPending={mutations.remove.isPending}
-      />
-
-      <AttenderDonationsDialog
-        attenderId={donationsAttender?.id ?? null}
-        attenderName={donationsAttender?.name ?? null}
-        open={donationsDialogOpen}
-        onOpenChange={setDonationsDialogOpen}
       />
     </>
   );

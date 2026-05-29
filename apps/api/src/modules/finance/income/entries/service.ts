@@ -76,21 +76,6 @@ export async function listIncomeEntries(callerId: number, page: number, limit: n
   return paginate(rows.map(toResponse), total, page, limit);
 }
 
-export async function listIncomeEntriesByAttender(
-  callerId: number,
-  attenderId: number,
-  page: number,
-  limit: number,
-  opts: { isSelfAccess: boolean }
-) {
-  if (!opts.isSelfAccess) {
-    await assertPermission(callerId, Module.IncomeEntries, Action.View);
-  }
-  const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listIncomeEntriesByAttender(attenderId, offset, limit);
-  return paginate(rows.map(toResponse), total, page, limit);
-}
-
 export async function getIncomeEntryById(id: number): Promise<IncomeEntryResponse | null> {
   const entry = await repo.findIncomeEntryById(id);
   if (!entry) return null;

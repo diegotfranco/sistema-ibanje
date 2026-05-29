@@ -1,45 +1,75 @@
 import { useQuery } from '@tanstack/react-query';
 import { api, ApiError } from '@/lib/api';
-import type { IncomeEntryResponse } from './donation.schema';
 
-const BASE = '/me/donations';
-const KEY = ['me', 'donations'] as const;
-
-interface DonationsResponse {
-  data: IncomeEntryResponse[];
-  total: number;
-  page: number;
-  limit: number;
+export interface DonationGroup {
+  categoryName: string;
+  fundName: string | null;
+  eventName: string | null;
+  total: string;
 }
 
-export function useMyDonations(page: number = 1, limit: number = 10) {
+export interface DonationMonth {
+  month: string;
+  label: string;
+  total: string;
+  groups: DonationGroup[];
+}
+
+export interface AttenderDonationsSummary {
+  year: number;
+  availableYears: number[];
+  months: DonationMonth[];
+  grandTotal: string;
+}
+
+export interface DonationEntry {
+  id: number;
+  depositDate: string;
+  categoryName: string;
+  fundName: string | null;
+  eventName: string | null;
+  paymentMethodName: string;
+  amount: string;
+}
+
+export interface AttenderDonationsEntries {
+  month: string;
+  label: string;
+  entries: DonationEntry[];
+  total: string;
+}
+
+function noRetryOnAuthOr404(failureCount: number, error: unknown): boolean {
+  if (error instanceof ApiError && (error.status === 404 || error.status === 403)) {
+    return false;
+  }
+  return failureCount < 3;
+}
+
+export function useAttenderDonationsSummary(attenderId: number | null, year?: number) {
   return useQuery({
-    queryKey: [...KEY, page, limit],
-    queryFn: () => api.get<DonationsResponse>(`${BASE}?page=${page}&limit=${limit}`),
-    retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status === 404) {
-        return false;
-      }
-      return failureCount < 3;
-    }
+    queryKey: ['attenders', attenderId, 'donations', 'summary', year ?? 'default'],
+    queryFn: () =>
+      api.get<AttenderDonationsSummary>(
+        `/attenders/${attenderId}/donations/summary${year ? `?year=${year}` : ''}`
+      ),
+    enabled: attenderId != null,
+    retry: noRetryOnAuthOr404
   });
 }
 
-export function useAttenderDonations(
+export function useAttenderDonationsEntries(
   attenderId: number | null,
-  page: number = 1,
-  limit: number = 20
+  month: string,
+  enabled = true
 ) {
   return useQuery({
-    queryKey: ['attenders', attenderId, 'donations', page, limit],
+    queryKey: ['attenders', attenderId, 'donations', 'entries', month],
     queryFn: () =>
-      api.get<DonationsResponse>(`/attenders/${attenderId}/donations?page=${page}&limit=${limit}`),
-    enabled: attenderId != null,
-    retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status === 404) {
-        return false;
-      }
-      return failureCount < 3;
-    }
+      api.get<AttenderDonationsEntries>(
+        `/attenders/${attenderId}/donations/entries?month=${month}`
+      ),
+    enabled: enabled && attenderId != null,
+    retry: noRetryOnAuthOr404
   });
 }

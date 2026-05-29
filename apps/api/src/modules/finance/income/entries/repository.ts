@@ -59,22 +59,84 @@ export async function listIncomeEntries(offset: number, limit: number) {
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
-export async function listIncomeEntriesByAttender(
-  attenderId: number,
-  offset: number,
-  limit: number
-) {
-  const rows = await baseQuery()
-    .where(eq(incomeEntries.attenderId, attenderId))
-    .orderBy(desc(incomeEntries.referenceDate))
-    .offset(offset)
-    .limit(limit);
+// The period a donation belongs to is `attributionMonth` when set, else `referenceDate`.
+const donationPeriod = sql`coalesce(${incomeEntries.attributionMonth}, ${incomeEntries.referenceDate})`;
 
-  const countResult = await db
-    .select({ count: count() })
+// Confirmed-only ('paga') donations for one attender in a given year, aggregated in SQL
+// per (month, leaf category, fund, event). Totals stay exact numeric — never summed as
+// JS floats — matching how the reports module aggregates money. Grouping is by the
+// leaf category (`income_categories.name`), not the parent: a printable giving
+// statement should show what was actually given (Dízimo, Oferta, Doação) rather
+// than collapsing everything under "Contribuições".
+export async function aggregateConfirmedDonationsByAttender(attenderId: number, year: number) {
+  const monthKey = sql<string>`to_char(${donationPeriod}, 'YYYY-MM')`;
+
+  return db
+    .select({
+      month: monthKey,
+      categoryName: incomeCategories.name,
+      fundName: designatedFunds.name,
+      eventName: events.title,
+      total: sum(incomeEntries.amount)
+    })
     .from(incomeEntries)
-    .where(eq(incomeEntries.attenderId, attenderId));
-  return { rows, total: countResult[0]?.count ?? 0 };
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(events, eq(incomeEntries.eventId, events.id))
+    .where(
+      and(
+        eq(incomeEntries.attenderId, attenderId),
+        eq(incomeEntries.status, 'paga'),
+        eq(sql`to_char(${donationPeriod}, 'YYYY')`, String(year))
+      )
+    )
+    .groupBy(monthKey, incomeCategories.name, designatedFunds.name, events.title)
+    .orderBy(monthKey, incomeCategories.name);
+}
+
+// Distinct years (desc) in which an attender has confirmed donations — drives the
+// statement's year picker so it only offers years that actually have giving.
+export async function listDonationYearsByAttender(attenderId: number): Promise<number[]> {
+  const yearKey = sql<string>`to_char(${donationPeriod}, 'YYYY')`;
+  const rows = await db
+    .selectDistinct({ year: yearKey })
+    .from(incomeEntries)
+    .where(and(eq(incomeEntries.attenderId, attenderId), eq(incomeEntries.status, 'paga')))
+    .orderBy(desc(yearKey));
+
+  return rows.map((r) => parseInt(r.year, 10));
+}
+
+// Per-transaction confirmed donations for one attender in a given month (YYYY-MM),
+// ordered by deposit date. Powers the statement's month drill-down — the receipt-style
+// detail the aggregate above intentionally collapses.
+export async function listConfirmedDonationEntriesByAttenderMonth(
+  attenderId: number,
+  month: string
+) {
+  return db
+    .select({
+      id: incomeEntries.id,
+      depositDate: incomeEntries.depositDate,
+      categoryName: incomeCategories.name,
+      fundName: designatedFunds.name,
+      eventName: events.title,
+      paymentMethodName: paymentMethods.name,
+      amount: incomeEntries.amount
+    })
+    .from(incomeEntries)
+    .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
+    .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
+    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(events, eq(incomeEntries.eventId, events.id))
+    .where(
+      and(
+        eq(incomeEntries.attenderId, attenderId),
+        eq(incomeEntries.status, 'paga'),
+        eq(sql`to_char(${donationPeriod}, 'YYYY-MM')`, month)
+      )
+    )
+    .orderBy(incomeEntries.depositDate, incomeEntries.id);
 }
 
 export async function findIncomeEntryById(id: number) {

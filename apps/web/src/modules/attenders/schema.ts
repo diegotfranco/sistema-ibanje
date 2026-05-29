@@ -20,6 +20,9 @@ export const AttenderFormSchema = z.object({
     .nullable(),
   isMember: z.boolean().optional().default(false),
   memberSince: z.string().optional().nullable(),
+  // Frontend-only for now: there's no backend column yet, so this is collected but not
+  // persisted (the API strips it). Persistence + an in-app calendar are follow-ups.
+  baptismDate: z.string().optional().nullable(),
   congregatingSinceYear: z
     .number()
     .int()

@@ -12,8 +12,7 @@ import {
   MeResponseSchema,
   UpdateMyProfileRequestSchema
 } from './schema.js';
-import { ListAttendersRequestSchema, AttenderResponseSchema } from '../attenders/schema.js';
-import { IncomeEntryListResponseSchema } from '../finance/income/entries/schema.js';
+import { AttenderResponseSchema } from '../attenders/schema.js';
 import * as controller from './controller.js';
 
 export async function authRoutes(app: FastifyInstance) {
@@ -113,23 +112,6 @@ export async function authRoutes(app: FastifyInstance) {
       config: { rateLimit: { max: 4, timeWindow: '1 hour' } }
     },
     controller.requestPasswordReset
-  );
-
-  app.get(
-    '/me/donations',
-    {
-      schema: {
-        tags: ['Me'],
-        querystring: ListAttendersRequestSchema,
-        response: {
-          200: IncomeEntryListResponseSchema,
-          401: ErrorResponseSchema,
-          404: ErrorResponseSchema
-        }
-      },
-      preHandler: [requireAuth]
-    },
-    controller.listMyDonations
   );
 
   app.patch(

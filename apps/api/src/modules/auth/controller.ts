@@ -6,7 +6,6 @@ import type {
   RegisterRequest,
   UpdateMyProfileRequest
 } from './schema.js';
-import type { PaginationQuery } from '../../lib/pagination.js';
 import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
 
@@ -84,11 +83,6 @@ export async function register(req: FastifyRequest, reply: FastifyReply) {
   return reply
     .code(201)
     .send({ message: 'Registration submitted. An admin will review your request.' });
-}
-
-export async function listMyDonations(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as PaginationQuery;
-  return reply.send(await service.listMyDonations(req.session.userId!, page, limit));
 }
 
 export async function updateMyProfile(req: FastifyRequest, reply: FastifyReply) {

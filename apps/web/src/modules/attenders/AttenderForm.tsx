@@ -42,6 +42,7 @@ const EMPTY: AttenderFormValues = {
   postalCode: null,
   isMember: false,
   memberSince: null,
+  baptismDate: null,
   congregatingSinceYear: null,
   admissionMode: null
 };
@@ -95,7 +96,7 @@ export default function AttenderForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Editar Congregado' : 'Novo Congregado'}</DialogTitle>
         </DialogHeader>
@@ -156,7 +157,7 @@ export default function AttenderForm({
             )}
           </div>
 
-          <p className="pt-2 text-sm font-medium text-muted-foreground">Membresia</p>
+          <p className="pt-2 text-sm font-medium text-muted-foreground">Vínculo</p>
           <Separator />
 
           <div className="flex items-center gap-2">
@@ -174,6 +175,23 @@ export default function AttenderForm({
             <Label htmlFor="isMember" className="cursor-pointer">
               É membro da igreja
             </Label>
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="baptismDate">Data de batismo</Label>
+            <Controller
+              control={control}
+              name="baptismDate"
+              render={({ field }) => (
+                <DateInput
+                  id="baptismDate"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+              )}
+            />
           </div>
 
           {isMember && (

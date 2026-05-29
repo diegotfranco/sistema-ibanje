@@ -91,6 +91,38 @@ async function hashPassword(password: string) {
   return argon2.hash(password + env.ARGON2_PEPPER, { type: argon2.argon2id });
 }
 
+// The legacy fixture dump carries no membership data, which left ~97% of seeded
+// congregados as non-members — unrealistic. Synthesize it deterministically by row
+// index so `db:reset` stays reproducible and the values survive re-dumps of the fixture.
+const ADMISSION_MODES = [
+  'aclamação',
+  'batismo',
+  'carta de transferência',
+  'profissão de fé'
+] as const;
+
+function synthesizeMembership(i: number): {
+  isMember: boolean;
+  memberSince: string | null;
+  admissionMode: (typeof ADMISSION_MODES)[number] | null;
+  congregatingSinceYear: number;
+} {
+  const congregatingSinceYear = 2002 + (i % 21);
+  const isMember = i % 20 < 13; // ~65%
+  if (!isMember) {
+    return { isMember: false, memberSince: null, admissionMode: null, congregatingSinceYear };
+  }
+  const year = congregatingSinceYear + (i % 4);
+  const month = String((i % 12) + 1).padStart(2, '0');
+  const day = String((i % 27) + 1).padStart(2, '0');
+  return {
+    isMember: true,
+    memberSince: `${year}-${month}-${day}`,
+    admissionMode: ADMISSION_MODES[i % 4],
+    congregatingSinceYear
+  };
+}
+
 // ---------------------------------------------------------------------------
 // fixture shapes (match dump-fixtures.ts output)
 // ---------------------------------------------------------------------------
@@ -346,7 +378,7 @@ export async function seed() {
     );
 
     // --- Attenders: dumped fixture + edge cases -------------------------------
-    const fixtureAttenderRows = attendersFixture.map((a) => ({
+    const fixtureAttenderRows = attendersFixture.map((a, i) => ({
       name: a.name,
       birthDate: a.birthDate,
       addressStreet: a.addressStreet,
@@ -357,7 +389,8 @@ export async function seed() {
       city: a.city,
       postalCode: a.postalCode,
       email: a.email,
-      phone: a.phone
+      phone: a.phone,
+      ...synthesizeMembership(i)
     }));
     const insertedFixtureAttenders = fixtureAttenderRows.length
       ? await tx.insert(attenders).values(fixtureAttenderRows).returning()

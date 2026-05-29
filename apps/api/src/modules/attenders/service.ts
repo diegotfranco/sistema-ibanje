@@ -1,20 +1,40 @@
 import * as repo from './repository.js';
-import * as incomeEntriesService from '../finance/income/entries/service.js';
-import { assertPermission } from '../../lib/permissions.js';
+import {
+  aggregateConfirmedDonationsByAttender,
+  listDonationYearsByAttender,
+  listConfirmedDonationEntriesByAttenderMonth
+} from '../finance/income/entries/repository.js';
+import { assertPermission, hasPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
-import type { CreateAttenderRequest, UpdateAttenderRequest, AttenderResponse } from './schema.js';
+import type {
+  CreateAttenderRequest,
+  UpdateAttenderRequest,
+  AttenderResponse,
+  AttenderDonationsSummaryResponse,
+  AttenderDonationsEntriesResponse,
+  AttenderFilters
+} from './schema.js';
 import type { UpdateMyProfileRequest } from '../auth/schema.js';
 import { db } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
 import { users, attenders } from '../../db/schema.js';
 
-export async function listAttenders(callerId: number, page: number, limit: number) {
-  await assertPermission(callerId, Module.Attenders, Action.View);
+export async function listAttenders(
+  callerId: number,
+  page: number,
+  limit: number,
+  filters?: AttenderFilters
+) {
+  // Listing every congregant is staff-only. `Acessar` can't gate this: the Congregado
+  // (member) role holds it for self-service, so it'd leak the whole roster. `Relatórios`
+  // is the common denominator of every staff role with Congregados access (Tesoureiro,
+  // Secretário, Presidente, Vice-Presidente) and members lack it.
+  await assertPermission(callerId, Module.Attenders, Action.Report);
 
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listAttenders(offset, limit);
+  const { rows, total } = await repo.listAttenders(offset, limit, filters);
 
   return paginate(
     rows.map(
@@ -46,9 +66,26 @@ export async function listAttenders(callerId: number, page: number, limit: numbe
   );
 }
 
-export async function getAttenderById(id: number): Promise<AttenderResponse | null> {
+// Whole filtered roster for the PDF export. Same staff-only gate as the list.
+export async function listAttendersForExport(callerId: number, filters?: AttenderFilters) {
+  await assertPermission(callerId, Module.Attenders, Action.Report);
+  return repo.listAttendersForExport(filters);
+}
+
+export async function getAttenderById(
+  callerId: number,
+  id: number
+): Promise<AttenderResponse | null> {
   const attender = await repo.findAttenderById(id);
   if (!attender) return null;
+
+  // A congregant may read only their own record; staff (Relatórios on Congregados) read any.
+  // Returning null for unauthorized callers maps to 404, so we don't confirm the id exists.
+  const link = await repo.findAttenderByUserId(callerId);
+  const isSelfAccess = link?.id === id;
+  if (!isSelfAccess && !(await hasPermission(callerId, Module.Attenders, Action.Report))) {
+    return null;
+  }
 
   return {
     id: attender.id,
@@ -218,21 +255,125 @@ export async function deactivateAttender(callerId: number, targetId: number): Pr
   await repo.deactivateAttender(targetId);
 }
 
-export async function listAttenderDonations(
+const PT_MONTHS = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro'
+];
+
+async function assertDonationsAccess(callerId: number, attenderId: number): Promise<void> {
+  const callerLink = await repo.findAttenderByUserId(callerId);
+  if (callerLink?.id === attenderId) return; // self-access
+  await assertPermission(callerId, Module.IncomeEntries, Action.View);
+}
+
+export async function getAttenderDonationsSummary(
   callerId: number,
   attenderId: number,
-  page: number,
-  limit: number
-) {
+  year?: number
+): Promise<AttenderDonationsSummaryResponse | null> {
   const attender = await repo.findAttenderById(attenderId);
-  if (!attender) throw httpError(404, 'Attender not found');
+  if (!attender) return null;
 
-  const link = await repo.findAttenderByUserId(callerId);
-  const isSelfAccess = link?.id === attenderId;
+  await assertDonationsAccess(callerId, attenderId);
 
-  return incomeEntriesService.listIncomeEntriesByAttender(callerId, attenderId, page, limit, {
-    isSelfAccess
+  // Offer only years with actual giving; default to the most recent (or this year if none).
+  const availableYears = await listDonationYearsByAttender(attenderId);
+  const resolvedYear = year ?? availableYears[0] ?? new Date().getFullYear();
+
+  // Rows arrive pre-grouped per (month, category, fund, event), exact SQL sums. We expand
+  // into a fixed Jan→Dez skeleton so the statement (and its PDF) never varies its shape:
+  // a month with no giving stays present with empty groups. Cents accumulate as integers
+  // so the printed totals never drift.
+  const rows = await aggregateConfirmedDonationsByAttender(attenderId, resolvedYear);
+
+  type MonthAcc = {
+    month: string;
+    label: string;
+    cents: number;
+    groups: AttenderDonationsSummaryResponse['months'][number]['groups'];
+  };
+  const monthMap = new Map<string, MonthAcc>();
+  for (let m = 1; m <= 12; m++) {
+    const key = `${resolvedYear}-${String(m).padStart(2, '0')}`;
+    monthMap.set(key, {
+      month: key,
+      label: `${PT_MONTHS[m - 1]} de ${resolvedYear}`,
+      cents: 0,
+      groups: []
+    });
+  }
+
+  let grandCents = 0;
+  for (const row of rows) {
+    const cents = Math.round(parseFloat(row.total ?? '0') * 100);
+    const entry = monthMap.get(row.month);
+    if (!entry) continue;
+    entry.groups.push({
+      categoryName: row.categoryName,
+      fundName: row.fundName,
+      eventName: row.eventName,
+      total: (cents / 100).toFixed(2)
+    });
+    entry.cents += cents;
+    grandCents += cents;
+  }
+
+  const months = Array.from(monthMap.values()).map(({ month, label, cents, groups }) => ({
+    month,
+    label,
+    total: (cents / 100).toFixed(2),
+    groups
+  }));
+
+  return {
+    year: resolvedYear,
+    availableYears,
+    months,
+    grandTotal: (grandCents / 100).toFixed(2)
+  };
+}
+
+export async function getAttenderDonationsEntries(
+  callerId: number,
+  attenderId: number,
+  month: string
+): Promise<AttenderDonationsEntriesResponse | null> {
+  const attender = await repo.findAttenderById(attenderId);
+  if (!attender) return null;
+
+  await assertDonationsAccess(callerId, attenderId);
+
+  const rows = await listConfirmedDonationEntriesByAttenderMonth(attenderId, month);
+
+  let totalCents = 0;
+  const entries = rows.map((row) => {
+    const cents = Math.round(parseFloat(row.amount ?? '0') * 100);
+    totalCents += cents;
+    return {
+      id: row.id,
+      depositDate: row.depositDate,
+      categoryName: row.categoryName,
+      fundName: row.fundName,
+      eventName: row.eventName,
+      paymentMethodName: row.paymentMethodName,
+      amount: (cents / 100).toFixed(2)
+    };
   });
+
+  const [year, m] = month.split('-');
+  const label = `${PT_MONTHS[parseInt(m, 10) - 1]} de ${year}`;
+
+  return { month, label, entries, total: (totalCents / 100).toFixed(2) };
 }
 
 export async function updateAttenderProfile(
