@@ -6,7 +6,7 @@ import {
   getFilteredRowModel,
   useReactTable
 } from '@tanstack/react-table';
-import { Loader2, Search, SlidersHorizontal } from 'lucide-react';
+import { ListFilter, Loader2, Search, SlidersHorizontal } from 'lucide-react';
 import { type Breakpoint, useIsAbove } from '@/hooks/useBreakpoint';
 import {
   Table,
@@ -23,11 +23,62 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/DropdownMenu';
-import { TableFilter, type TableFilterOption } from '@/components/TableFilter';
 import { cn } from '@/lib/utils';
+
+/** Option shape for a column's `meta.filter` dropdown. */
+export interface TableFilterOption {
+  value: string;
+  label: string;
+}
+
+const FILTER_ALL = '__all__';
+
+// Per-column filter control rendered in the header: a funnel icon that opens a
+// single-select radio menu (Todos + options). Filtering itself is server-side —
+// this only surfaces the choice via `onChange`; the page owns the query state.
+function ColumnFilterMenu({
+  options,
+  allLabel = 'Todos',
+  value,
+  onChange
+}: {
+  options: TableFilterOption[];
+  allLabel?: string;
+  value: string | undefined;
+  onChange: (value: string | undefined) => void;
+}) {
+  const active = value !== undefined;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          aria-label="Filtrar"
+          className={cn(active ? 'text-primary' : 'text-muted-foreground')}>
+          <ListFilter size={14} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="min-w-40">
+        <DropdownMenuRadioGroup
+          value={value ?? FILTER_ALL}
+          onValueChange={(v) => onChange(v === FILTER_ALL ? undefined : v)}>
+          <DropdownMenuRadioItem value={FILTER_ALL}>{allLabel}</DropdownMenuRadioItem>
+          {options.map((opt) => (
+            <DropdownMenuRadioItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 declare module '@tanstack/react-table' {
   // Generic params mirror the upstream signature so the augmentation merges; phantom field uses them.
@@ -37,6 +88,8 @@ declare module '@tanstack/react-table' {
     className?: string;
     label?: string;
     canHide?: boolean;
+    /** Hidden by default but still offered in the "Colunas" toggle. */
+    defaultHidden?: boolean;
     filter?: { options: TableFilterOption[]; label?: string; allLabel?: string };
     __augmentationPhantom?: [TData, TValue];
   }
@@ -81,13 +134,20 @@ export interface DataTableProps<TData> {
   toolbarRight?: ReactNode;
   /**
    * Current filter values keyed by column id. A column declares filterability
-   * via `meta.filter = { options: [...] }`; DataTable then renders a TableFilter
-   * for each, sourcing its current value from this map and emitting changes via
-   * `onFilterChange(columnId, value)`. Use `undefined` for the "all" state.
-   * Filters are applied server-side by the caller (page owns the query state).
+   * via `meta.filter = { options: [...] }`; DataTable then renders a funnel icon
+   * in that column's header that opens a single-select menu, sourcing its current
+   * value from this map and emitting changes via `onFilterChange(columnId, value)`.
+   * Use `undefined` for the "all" state. Filters are applied server-side by the
+   * caller (page owns the query state).
    */
   filters?: Record<string, string | undefined>;
   onFilterChange?: (columnId: string, value: string | undefined) => void;
+  /**
+   * Fired with the currently-visible leaf column ids whenever visibility changes.
+   * Lets the parent drive an export of exactly the columns on screen. Pass a stable
+   * (memoized) callback to avoid redundant updates.
+   */
+  onColumnVisibilityChange?: (visibleColumnIds: string[]) => void;
 }
 
 const COL_VISIBILITY_STORAGE_PREFIX = 'datatable:cols:';
@@ -125,7 +185,8 @@ export function DataTable<TData>({
   tableId,
   toolbarRight,
   filters,
-  onFilterChange
+  onFilterChange,
+  onColumnVisibilityChange
 }: DataTableProps<TData>) {
   // Call all breakpoints unconditionally (rules of hooks)
   const isAboveSm = useIsAbove('sm');
@@ -149,7 +210,7 @@ export function DataTable<TData>({
     const meta = (col.meta as unknown as Record<string, unknown>) || {};
     const hideBelow = meta.hideBelow as Breakpoint | undefined;
     const id = col.id || '';
-    autoVisibility[id] = hideBelow ? breakpointMap[hideBelow] : true;
+    autoVisibility[id] = meta.defaultHidden ? false : hideBelow ? breakpointMap[hideBelow] : true;
   });
 
   const [userVisibility, setUserVisibility] = useState<VisibilityState>(() =>
@@ -201,6 +262,13 @@ export function DataTable<TData>({
 
   const visibleColumns = table.getVisibleLeafColumns();
 
+  // Notify the parent of the on-screen columns (joined key keeps the effect from
+  // firing on every render). Used to drive exports of exactly the visible columns.
+  const visibleColumnIds = visibleColumns.map((c) => c.id).join(',');
+  useEffect(() => {
+    onColumnVisibilityChange?.(visibleColumnIds ? visibleColumnIds.split(',') : []);
+  }, [onColumnVisibilityChange, visibleColumnIds]);
+
   // Per-item index for zebra striping. Resets at each section header so the
   // first item under any section gets the light shade.
   const rowsForIndex = table.getRowModel().rows;
@@ -221,18 +289,7 @@ export function DataTable<TData>({
     typeof searchable === 'object' ? (searchable.placeholder ?? 'Buscar...') : 'Buscar...';
   const searchLoading = typeof searchable === 'object' ? !!searchable.loading : false;
 
-  // Columns that declare a filter via `meta.filter`. The parent opts in by
-  // passing `onFilterChange`; otherwise the column's filter declaration is
-  // silently ignored so pages that don't wire filter state stay clean.
-  const filterableColumns = onFilterChange
-    ? table.getAllLeafColumns().filter((col) => {
-        const meta = col.columnDef.meta as Record<string, unknown> | undefined;
-        return !!meta?.filter;
-      })
-    : [];
-
-  const toolbarVisible =
-    isAboveMd && (searchable || columnToggle || toolbarRight || filterableColumns.length > 0);
+  const toolbarVisible = isAboveMd && (searchable || columnToggle || toolbarRight);
 
   // Columns the user is allowed to toggle. Hard-coded exclusions: an "actions"
   // column with no header label, or an explicit `meta.canHide === false`.
@@ -266,23 +323,6 @@ export function DataTable<TData>({
             )}
           </div>
         )}
-        {filterableColumns.map((col) => {
-          const meta = col.columnDef.meta as Record<string, unknown> | undefined;
-          const config = meta?.filter as {
-            options: TableFilterOption[];
-            label?: string;
-            allLabel?: string;
-          };
-          return (
-            <TableFilter
-              key={col.id}
-              value={filters?.[col.id]}
-              onChange={(v) => onFilterChange?.(col.id, v)}
-              options={config.options}
-              allLabel={config.allLabel}
-            />
-          );
-        })}
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {columnToggle && (
@@ -391,14 +431,40 @@ export function DataTable<TData>({
                     : align === 'center'
                       ? 'text-center'
                       : 'text-left';
+                // Per-column filter funnel: only when the caller wired `onFilterChange`
+                // and the column declares `meta.filter`. Server-side, like before.
+                const filterConfig =
+                  onFilterChange && !header.isPlaceholder
+                    ? (meta?.filter as
+                        | { options: TableFilterOption[]; allLabel?: string }
+                        | undefined)
+                    : undefined;
+                const headerLabel = header.isPlaceholder
+                  ? null
+                  : flexRender(header.column.columnDef.header, header.getContext());
                 return (
                   <TableHead
                     key={header.id}
                     scope="col"
                     className={cn(HEAD_CELL, alignClass, extraClass)}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
+                    {filterConfig ? (
+                      <div
+                        className={cn(
+                          'flex items-center gap-1',
+                          align === 'right' && 'justify-end',
+                          align === 'center' && 'justify-center'
+                        )}>
+                        {headerLabel}
+                        <ColumnFilterMenu
+                          options={filterConfig.options}
+                          allLabel={filterConfig.allLabel}
+                          value={filters?.[header.column.id]}
+                          onChange={(v) => onFilterChange?.(header.column.id, v)}
+                        />
+                      </div>
+                    ) : (
+                      headerLabel
+                    )}
                   </TableHead>
                 );
               })}

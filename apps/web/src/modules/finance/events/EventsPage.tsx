@@ -3,7 +3,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { Pagination } from '@/components/Pagination';
-import { TableFilter } from '@/components/TableFilter';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -38,20 +37,6 @@ export default function EventsPage() {
   const items = list.data?.data;
   const totalPages = list.data?.totalPages ?? 1;
 
-  const statusFilterUI = (
-    <TableFilter
-      value={status}
-      onChange={(v) => {
-        setStatus(v as 'ativo' | 'inativo' | undefined);
-        setPage(1);
-      }}
-      options={[
-        { value: 'ativo', label: 'Ativos' },
-        { value: 'inativo', label: 'Inativos' }
-      ]}
-    />
-  );
-
   const paginationUI = (
     <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
   );
@@ -69,7 +54,17 @@ export default function EventsPage() {
               hideBelow: 'md'
             },
             { header: 'Local', cell: (row) => row.location || '—', hideBelow: 'lg' },
-            { header: 'Status', cell: (row) => <StatusBadge status={row.status} /> }
+            {
+              id: 'status',
+              header: 'Status',
+              cell: (row) => <StatusBadge status={row.status} />,
+              filter: {
+                options: [
+                  { value: 'ativo', label: 'Ativos' },
+                  { value: 'inativo', label: 'Inativos' }
+                ]
+              }
+            }
           ]}
           data={items}
           isLoading={list.isLoading}
@@ -108,7 +103,11 @@ export default function EventsPage() {
           ]}
           columnToggle={true}
           tableId="events"
-          toolbarRight={statusFilterUI}
+          filters={{ status }}
+          onFilterChange={(_, v) => {
+            setStatus(v as 'ativo' | 'inativo' | undefined);
+            setPage(1);
+          }}
           pagination={paginationUI}
         />
       </PageContainer>

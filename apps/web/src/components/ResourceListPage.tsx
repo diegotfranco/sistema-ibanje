@@ -3,7 +3,11 @@ import { Edit, Plus, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
-import { DataTable } from '@/components/DataTable';
+import {
+  DataTable,
+  type DataTableSearchable,
+  type TableFilterOption
+} from '@/components/DataTable';
 import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 
 export interface ResourceColumn<T> {
@@ -11,6 +15,15 @@ export interface ResourceColumn<T> {
   cell: (row: T) => ReactNode;
   className?: string;
   hideBelow?: 'md' | 'lg' | 'xl';
+  /** Stable column id (defaults to `col-{index}`). Set it to a meaningful key when the
+   *  parent needs to map visible columns back to fields (e.g. for exports). */
+  id?: string;
+  /** Label shown in the "Colunas" toggle menu (defaults to `header`). */
+  label?: string;
+  /** Hidden by default but still toggleable via the "Colunas" menu. */
+  defaultHidden?: boolean;
+  /** Renders a filter funnel in the header (server-side; wire `filters`/`onFilterChange`). */
+  filter?: { options: TableFilterOption[]; allLabel?: string };
 }
 
 export interface CustomAction<T> {
@@ -46,6 +59,13 @@ interface ResourceListPageProps<T> {
   tableId?: string;
   toolbarRight?: ReactNode;
   pagination?: ReactNode;
+  onColumnVisibilityChange?: (visibleColumnIds: string[]) => void;
+  // Search + per-column header filters (forwarded to DataTable; both server-side).
+  searchable?: DataTableSearchable;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+  filters?: Record<string, string | undefined>;
+  onFilterChange?: (columnId: string, value: string | undefined) => void;
 }
 
 export function ResourceListPage<T>({
@@ -68,7 +88,13 @@ export function ResourceListPage<T>({
   columnToggle,
   tableId,
   toolbarRight,
-  pagination
+  pagination,
+  onColumnVisibilityChange,
+  searchable,
+  globalFilter,
+  onGlobalFilterChange,
+  filters,
+  onFilterChange
 }: ResourceListPageProps<T>) {
   const [detailRow, setDetailRow] = useState<T | null>(null);
 
@@ -76,11 +102,20 @@ export function ResourceListPage<T>({
     (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
 
   const tableColumns: ColumnDef<T, unknown>[] = columns.map((col, i) => {
-    const meta: { className?: string; hideBelow?: 'md' | 'lg' | 'xl' } = {};
+    const meta: {
+      className?: string;
+      hideBelow?: 'md' | 'lg' | 'xl';
+      label?: string;
+      defaultHidden?: boolean;
+      filter?: { options: TableFilterOption[]; allLabel?: string };
+    } = {};
     if (col.className) meta.className = col.className;
     if (col.hideBelow) meta.hideBelow = col.hideBelow;
+    if (col.label) meta.label = col.label;
+    if (col.defaultHidden) meta.defaultHidden = col.defaultHidden;
+    if (col.filter) meta.filter = col.filter;
     return {
-      id: `col-${i}`,
+      id: col.id ?? `col-${i}`,
       header: col.header,
       cell: ({ row }) => col.cell(row.original),
       meta: Object.keys(meta).length ? meta : undefined
@@ -197,6 +232,12 @@ export function ResourceListPage<T>({
             columnToggle={columnToggle}
             tableId={tableId}
             toolbarRight={toolbarRight}
+            onColumnVisibilityChange={onColumnVisibilityChange}
+            searchable={searchable}
+            globalFilter={globalFilter}
+            onGlobalFilterChange={onGlobalFilterChange}
+            filters={filters}
+            onFilterChange={onFilterChange}
           />
         </CardContent>
       </Card>

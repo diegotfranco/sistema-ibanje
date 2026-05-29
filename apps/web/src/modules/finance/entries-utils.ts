@@ -9,8 +9,8 @@ export const STATUS_FILTERS = [
   { value: EntryStatus.Cancelled, label: 'Cancelada' }
 ] as const;
 
-// Same options in the shape `<TableFilter>` expects (no `all` sentinel — the
-// component renders the "Todos" entry itself when value is undefined).
+// Options for a column's `meta.filter` (no `all` sentinel — DataTable's header
+// filter menu adds the "Todos" entry itself, mapping it to `undefined`).
 export const ENTRY_STATUS_FILTER_OPTIONS = [
   { value: EntryStatus.Pending, label: 'Pendente' },
   { value: EntryStatus.Paid, label: 'Paga' },
