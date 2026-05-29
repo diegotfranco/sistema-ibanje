@@ -11,7 +11,7 @@ describe('permissions', () => {
 
   beforeAll(async () => {
     const admin = await db.select().from(users).where(eq(users.email, 'admin@email.com'));
-    const membro = await db.select().from(users).where(eq(users.email, 'membro@email.com'));
+    const membro = await db.select().from(users).where(eq(users.email, 'congregado@email.com'));
     adminId = admin[0].id;
     membroId = membro[0].id;
   });

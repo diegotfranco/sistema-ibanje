@@ -5,7 +5,7 @@ import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { hasPermission, Action, Module, type PermissionMap } from '@/lib/permissions';
+import type { PermissionMap } from '@/lib/permissions';
 import { filterRoutesByPermission, isRouteActive, hasActiveDescendant } from '@/lib/sidebar-utils';
 import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/Button';
@@ -196,16 +196,8 @@ function MenuItemRenderer({
   if (route.path && route.label) {
     const isActive = isRouteActive(route, location.pathname, searchParams);
 
-    // Início (dashboard) leaf: resolve to /me when the user lacks Dashboard:View
-    // so attenders land on their own portal from the same sidebar entry.
-    const resolvedPath =
-      route.path === paths.dashboard &&
-      !hasPermission(user?.permissions, Module.Dashboard, Action.View)
-        ? paths.me
-        : route.path;
-
     const navElement = (
-      <NavLink to={resolvedPath}>
+      <NavLink to={route.path}>
         {route.icon && <route.icon size={16} />}
         <span className="truncate">{route.label}</span>
       </NavLink>

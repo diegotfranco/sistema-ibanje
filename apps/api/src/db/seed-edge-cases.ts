@@ -35,7 +35,7 @@ export type EdgeCaseAttender = {
 export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
   {
     name: 'João da Silva',
-    linkToUserEmail: 'membro@email.com',
+    linkToUserEmail: 'congregado@email.com',
     birthDate: '1985-05-15',
     addressStreet: 'Rua das Flores',
     addressNumber: '123',
@@ -98,7 +98,7 @@ export const EDGE_CASE_USERS: EdgeCaseUser[] = [
     name: 'Pendente da Silva',
     email: 'pendente@email.com',
     password: 'pendente123',
-    roleName: 'Membro',
+    roleName: 'Congregado',
     status: 'pendente',
     skipPermissions: true
   },
@@ -106,7 +106,7 @@ export const EDGE_CASE_USERS: EdgeCaseUser[] = [
     name: 'Inativo da Silva',
     email: 'inativo@email.com',
     password: 'inativo123',
-    roleName: 'Membro',
+    roleName: 'Congregado',
     status: 'inativo'
   }
 ];
@@ -120,9 +120,9 @@ export const EDGE_CASE_USER_PERMISSION_OVERRIDES: {
   moduleName: string;
   permissionName: string;
 }[] = [
-  // membro@email.com is a regular Membro (Acessar on Atas/Congregados) — give
+  // congregado@email.com is a regular Congregado (Acessar on Atas/Congregados) — give
   // them Editar on Atas so the override is visible in the permissions UI.
-  { userEmail: 'membro@email.com', moduleName: 'Atas', permissionName: 'Editar' }
+  { userEmail: 'congregado@email.com', moduleName: 'Atas', permissionName: 'Editar' }
 ];
 
 // ---------------------------------------------------------------------------

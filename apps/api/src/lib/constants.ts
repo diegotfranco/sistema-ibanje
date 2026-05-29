@@ -1,4 +1,4 @@
-export const DEFAULT_ROLE_NAME = 'Membro';
+export const DEFAULT_ROLE_NAME = 'Congregado';
 
 export const Module = {
   Users: 'Usuários',

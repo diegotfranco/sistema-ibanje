@@ -30,7 +30,7 @@ export const SEED_ROLES = [
       'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
   },
   {
-    name: 'Membro',
+    name: 'Congregado',
     description: 'Acesso de visualização para transparência de atas e dados pessoais.'
   }
 ];
@@ -539,7 +539,11 @@ export function buildRoleModulePermissions(
       ['Fechamentos Mensais'],
       examCommissionClosingIds
     ),
-    ...cross(roleByName['Membro'].id, ['Atas', 'Congregados'], [permByName['Acessar'].id]),
+    ...cross(
+      roleByName['Congregado'].id,
+      ['Atas', 'Congregados', 'Painel'],
+      [permByName['Acessar'].id]
+    ),
     ...cross(roleByName['Tesoureiro'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Eventos'], fullPermIds),
@@ -600,10 +604,10 @@ export const SEED_DEMO_USERS: SeedDemoUser[] = [
     roleName: 'Comissão de Exame de Contas'
   },
   {
-    name: 'Membro da Silva',
-    email: 'membro@email.com',
-    password: 'membro123',
-    roleName: 'Membro'
+    name: 'Congregado da Silva',
+    email: 'congregado@email.com',
+    password: 'congregado123',
+    roleName: 'Congregado'
   }
 ];
 
