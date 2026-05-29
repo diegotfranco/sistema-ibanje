@@ -14,18 +14,72 @@ import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
 import type { Events, FundSummary } from '@sistema-ibanje/shared';
 
-type CardView = 'events' | 'funds';
+type CardView = 'funds' | 'events';
 
 const eventsChartConfig = {
   raised: { label: 'Arrecadado', color: 'var(--color-chart-1)' },
   spent: { label: 'Investido', color: 'var(--color-chart-2)' }
 } satisfies ChartConfig;
 
-interface EventsAndFundsCardProps {
-  events: Events | undefined;
+interface FundsAndEventsCardProps {
   funds: FundSummary[] | undefined;
+  events: Events | undefined;
   isLoading?: boolean;
   className?: string;
+}
+
+function FundsContent({ data }: { data: FundSummary[] }) {
+  if (data.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <p className="text-sm text-muted-foreground">Nenhuma campanha ativa</p>
+      </div>
+    );
+  }
+
+  const rows = data.map((f) => {
+    const raised = Number.parseFloat(f.totalRaised);
+    const target = f.targetAmount ? Number.parseFloat(f.targetAmount) : null;
+    const raisedPct =
+      target !== null && target > 0 ? Math.min((raised / target) * 100, 100) : raised > 0 ? 100 : 0;
+    return {
+      name: f.fundName,
+      raised,
+      target,
+      raisedPct,
+      progressLabel: target !== null && target > 0 ? `${raisedPct.toFixed(1)}%` : 'Sem meta',
+      amountLabel:
+        target !== null
+          ? `${formatMoney(f.totalRaised)} / ${formatMoney(target.toFixed(2))}`
+          : formatMoney(f.totalRaised)
+    };
+  });
+
+  return (
+    <ul className="space-y-4">
+      {rows.map((fund, idx) => (
+        <li key={idx} className="space-y-1.5">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="truncate text-sm font-medium text-foreground">{fund.name}</span>
+            <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+              {fund.amountLabel}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-2 overflow-hidden rounded-full bg-muted/40">
+              <div
+                className="h-full transition-all"
+                style={{ width: `${fund.raisedPct}%`, backgroundColor: 'var(--color-chart-3)' }}
+              />
+            </div>
+            <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
+              {fund.progressLabel}
+            </span>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
 }
 
 function EventsContent({ data }: { data: Events }) {
@@ -130,67 +184,13 @@ function EventsContent({ data }: { data: Events }) {
   );
 }
 
-function FundsContent({ data }: { data: FundSummary[] }) {
-  if (data.length === 0) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-muted-foreground">Nenhuma campanha ativa</p>
-      </div>
-    );
-  }
-
-  const rows = data.map((f) => {
-    const raised = Number.parseFloat(f.totalRaised);
-    const target = f.targetAmount ? Number.parseFloat(f.targetAmount) : null;
-    const raisedPct =
-      target !== null && target > 0 ? Math.min((raised / target) * 100, 100) : raised > 0 ? 100 : 0;
-    return {
-      name: f.fundName,
-      raised,
-      target,
-      raisedPct,
-      progressLabel: target !== null && target > 0 ? `${raisedPct.toFixed(1)}%` : 'Sem meta',
-      amountLabel:
-        target !== null
-          ? `${formatMoney(f.totalRaised)} / ${formatMoney(target.toFixed(2))}`
-          : formatMoney(f.totalRaised)
-    };
-  });
-
-  return (
-    <ul className="space-y-4">
-      {rows.map((fund, idx) => (
-        <li key={idx} className="space-y-1.5">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-sm font-medium text-foreground">{fund.name}</span>
-            <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-              {fund.amountLabel}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-2 overflow-hidden rounded-full bg-muted/40">
-              <div
-                className="h-full transition-all"
-                style={{ width: `${fund.raisedPct}%`, backgroundColor: 'var(--color-chart-1)' }}
-              />
-            </div>
-            <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
-              {fund.progressLabel}
-            </span>
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-export function EventsAndFundsCard({
+export function FundsAndEventsCard({
   events,
   funds,
   isLoading,
   className
-}: EventsAndFundsCardProps) {
-  const [view, setView] = useState<CardView>('events');
+}: FundsAndEventsCardProps) {
+  const [view, setView] = useState<CardView>('funds');
 
   const viewSelect = (
     <Select value={view} onValueChange={(v) => setView(v as CardView)}>
@@ -198,25 +198,27 @@ export function EventsAndFundsCard({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="events">Eventos recentes</SelectItem>
         <SelectItem value="funds">Campanhas ativas</SelectItem>
+        <SelectItem value="events">Eventos recentes</SelectItem>
       </SelectContent>
     </Select>
   );
 
   if (isLoading) {
     return (
-      <ChartCard title="Resultado por Evento" action={viewSelect} className={className}>
+      <ChartCard title="Campanhas ativas" action={viewSelect} className={className}>
         <Skeleton className="h-72 w-full" />
       </ChartCard>
     );
   }
 
-  const title = view === 'events' ? 'Resultado por Evento' : 'Campanhas ativas';
+  const title = view === 'funds' ? 'Campanhas ativas' : 'Resultado por Evento';
 
   return (
     <ChartCard title={title} action={viewSelect} className={className}>
-      {view === 'events' ? (
+      {view === 'funds' ? (
+        <FundsContent data={funds ?? []} />
+      ) : (
         <EventsContent
           data={
             events ?? {
@@ -225,8 +227,6 @@ export function EventsAndFundsCard({
             }
           }
         />
-      ) : (
-        <FundsContent data={funds ?? []} />
       )}
     </ChartCard>
   );

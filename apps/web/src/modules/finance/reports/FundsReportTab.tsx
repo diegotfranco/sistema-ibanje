@@ -98,7 +98,7 @@ export function FundsReportTab({ month }: Props) {
   const funds = data?.funds ?? [];
 
   return (
-    <div className="space-y-4 px-4 py-4 sm:px-6 bg-red-500">
+    <div className="space-y-4 px-4 py-4 sm:px-6">
       <div role="radiogroup" className="inline-flex rounded-md border bg-accent p-0.5">
         {[
           { mode: 'acumulado' as const, label: 'Total' },

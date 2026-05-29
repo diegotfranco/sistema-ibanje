@@ -10,7 +10,7 @@ import { ClosingStatusCard } from './ClosingStatusCard';
 import { TrendChart } from './TrendChart';
 import { ParticipationCard } from './ParticipationCard';
 import { ParticipationChart } from './ParticipationChart';
-import { EventsAndFundsCard } from './EventsAndFundsCard';
+import { FundsAndEventsCard } from './FundsAndEventsCard';
 
 export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
@@ -55,7 +55,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-          <EventsAndFundsCard
+          <FundsAndEventsCard
             className="lg:col-span-2"
             events={data?.events}
             funds={data?.funds}
