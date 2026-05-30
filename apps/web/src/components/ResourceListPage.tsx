@@ -31,6 +31,9 @@ export interface CustomAction<T> {
   icon?: ReactNode;
   onClick: (row: T) => void;
   className?: string;
+  /** When it returns true the action is omitted for that row (e.g. show
+   *  "Restaurar" only on inactive rows). Applies to both the table and the sheet. */
+  hidden?: (row: T) => boolean;
 }
 
 interface ResourceListPageProps<T> {
@@ -128,18 +131,20 @@ export function ResourceListPage<T>({
       header: 'Ações',
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          {customActions?.map((action) => (
-            <Button
-              key={action.label}
-              size="sm"
-              variant="ghost"
-              onClick={() => action.onClick(row.original)}
-              aria-label={action.label}
-              className={action.className}
-              title={action.label}>
-              {action.icon || action.label}
-            </Button>
-          ))}
+          {customActions
+            ?.filter((action) => !action.hidden?.(row.original))
+            .map((action) => (
+              <Button
+                key={action.label}
+                size="sm"
+                variant="ghost"
+                onClick={() => action.onClick(row.original)}
+                aria-label={action.label}
+                className={action.className}
+                title={action.label}>
+                {action.icon || action.label}
+              </Button>
+            ))}
           {canEdit && onEdit && (
             <Button
               size="sm"
@@ -168,19 +173,21 @@ export function ResourceListPage<T>({
 
   const sheetActions = detailRow && showActions && (
     <div className="flex flex-wrap gap-2">
-      {customActions?.map((action) => (
-        <Button
-          key={action.label}
-          variant="outline"
-          className={action.className}
-          onClick={() => {
-            action.onClick(detailRow);
-            setDetailRow(null);
-          }}>
-          {action.icon}
-          {action.label}
-        </Button>
-      ))}
+      {customActions
+        ?.filter((action) => !action.hidden?.(detailRow))
+        .map((action) => (
+          <Button
+            key={action.label}
+            variant="outline"
+            className={action.className}
+            onClick={() => {
+              action.onClick(detailRow);
+              setDetailRow(null);
+            }}>
+            {action.icon}
+            {action.label}
+          </Button>
+        ))}
       {canEdit && onEdit && (
         <Button
           variant="outline"

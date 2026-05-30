@@ -59,3 +59,15 @@ export async function deactivateDesignatedFund(
   if (!fund) return null;
   await repo.deactivateDesignatedFund(targetId);
 }
+
+// Reverses a soft-delete. Gated by the same Delete permission: whoever can
+// deactivate a fund can undo it.
+export async function reactivateDesignatedFund(
+  callerId: number,
+  targetId: number
+): Promise<DesignatedFundResponse | null> {
+  await assertPermission(callerId, Module.DesignatedFunds, Action.Delete);
+  const fund = await repo.findDesignatedFundById(targetId);
+  if (!fund) return null;
+  return repo.reactivateDesignatedFund(targetId);
+}

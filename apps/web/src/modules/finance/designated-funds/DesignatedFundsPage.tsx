@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import { RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageContainer } from '@/components/PageContainer';
-import { ResourceListPage } from '@/components/ResourceListPage';
+import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { Pagination } from '@/components/Pagination';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
@@ -23,11 +24,24 @@ export default function DesignatedFundsPage() {
   const [status, setStatus] = useState<'ativo' | 'inativo' | undefined>(undefined);
 
   const list = useDesignatedFunds({ page, status });
-  const { create, update, remove } = useDesignatedFundMutations();
+  const { create, update, remove, restore } = useDesignatedFundMutations();
 
   const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
+
+  // Reverse a soft-delete; only meaningful (and shown) on inactive funds. Gated by
+  // the same Delete permission as removal.
+  const restoreActions: CustomAction<DesignatedFundResponse>[] = canDelete
+    ? [
+        {
+          label: 'Restaurar',
+          icon: <RotateCcw size={16} />,
+          hidden: (row) => row.status !== 'inativo',
+          onClick: (row) => restore.mutate(row.id)
+        }
+      ]
+    : [];
 
   const items = list.data?.data;
   const totalPages = list.data?.totalPages ?? 1;
@@ -79,6 +93,7 @@ export default function DesignatedFundsPage() {
           onCreate={canCreate ? () => setEditing('new') : undefined}
           onEdit={canEdit ? (r) => setEditing(r) : undefined}
           onDelete={canDelete ? (r) => setDeleting(r) : undefined}
+          customActions={restoreActions}
           canCreate={canCreate}
           canEdit={canEdit}
           canDelete={canDelete}
