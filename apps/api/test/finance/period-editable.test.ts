@@ -16,8 +16,7 @@ describe('assertPeriodEditable', () => {
 
   it('passes when closing for the period is aberto', async () => {
     await db.insert(monthlyClosings).values({
-      periodYear: 2099,
-      periodMonth: 2,
+      period: 209902,
       status: 'aberto'
     });
     await expect(assertPeriodEditable('2099-02-10')).resolves.toBeUndefined();
@@ -25,8 +24,7 @@ describe('assertPeriodEditable', () => {
 
   it('throws 409 when the closing is not aberto', async () => {
     await db.insert(monthlyClosings).values({
-      periodYear: 2099,
-      periodMonth: 3,
+      period: 209903,
       status: 'em revisão'
     });
     await expect(assertPeriodEditable('2099-03-10')).rejects.toMatchObject({ statusCode: 409 });
@@ -35,8 +33,7 @@ describe('assertPeriodEditable', () => {
   describe('forward-month limit (non-aberto closings)', () => {
     it('allows entries up to one month after the latest non-aberto closing', async () => {
       await db.insert(monthlyClosings).values({
-        periodYear: 2100,
-        periodMonth: 4,
+        period: 210004,
         status: 'fechado'
       });
       // Latest non-aberto is April 2100, so May is allowed
@@ -45,8 +42,7 @@ describe('assertPeriodEditable', () => {
 
     it('blocks entries more than one month after the latest non-aberto closing', async () => {
       await db.insert(monthlyClosings).values({
-        periodYear: 2101,
-        periodMonth: 5,
+        period: 210105,
         status: 'fechado'
       });
       // Latest non-aberto is May 2101, so June is allowed but July is blocked
@@ -59,13 +55,11 @@ describe('assertPeriodEditable', () => {
     it('allows entries within the +1 month window when multiple non-aberto closings exist', async () => {
       await db.insert(monthlyClosings).values([
         {
-          periodYear: 2102,
-          periodMonth: 6,
+          period: 210206,
           status: 'fechado'
         },
         {
-          periodYear: 2102,
-          periodMonth: 7,
+          period: 210207,
           status: 'em revisão'
         }
       ]);
@@ -76,13 +70,11 @@ describe('assertPeriodEditable', () => {
     it('blocks entries beyond +1 month when multiple non-aberto closings exist', async () => {
       await db.insert(monthlyClosings).values([
         {
-          periodYear: 2103,
-          periodMonth: 8,
+          period: 210308,
           status: 'fechado'
         },
         {
-          periodYear: 2103,
-          periodMonth: 9,
+          period: 210309,
           status: 'em revisão'
         }
       ]);
@@ -95,8 +87,7 @@ describe('assertPeriodEditable', () => {
 
     it('handles December to January wrap correctly', async () => {
       await db.insert(monthlyClosings).values({
-        periodYear: 2104,
-        periodMonth: 12,
+        period: 210412,
         status: 'em revisão'
       });
       // Latest non-aberto is December 2104, so January 2105 is allowed
