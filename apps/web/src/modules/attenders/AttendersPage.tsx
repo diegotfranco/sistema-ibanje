@@ -10,7 +10,7 @@ import { Button } from '@/components/Button';
 import { Pagination } from '@/components/Pagination';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
-import { api } from '@/lib/api';
+import { openBlobInNewTab } from '@/lib/download';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -114,10 +114,7 @@ export default function AttendersPage() {
     if (debouncedSearch) qs.set('q', debouncedSearch);
     setExporting(true);
     try {
-      const blob = await api.getBlob(`/attenders/export/pdf?${qs.toString()}`);
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+      await openBlobInNewTab(`/attenders/export/pdf?${qs.toString()}`);
     } catch {
       toast.error('Erro ao exportar PDF.');
     } finally {

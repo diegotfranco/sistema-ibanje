@@ -1,4 +1,4 @@
-import type { AttenderDonationsSummary } from '@/modules/me/useDonations';
+import type { AttenderDonationsSummary } from './useDonations';
 
 function formatBRL(value: string): string {
   return Number.parseFloat(value).toLocaleString('pt-BR', {

@@ -1,19 +1,16 @@
 import { useState } from 'react';
 import { Download } from 'lucide-react';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/Button';
 import { YearPicker } from '@/components/YearPicker';
 import { MonthPicker } from '@/components/MonthPicker';
 import { getCurrentMonth } from '@/lib/datetime';
-import {
-  useAttenderDonationsSummary,
-  useAttenderDonationsEntries
-} from '@/modules/me/useDonations';
+import { openBlobInNewTab } from '@/lib/download';
+import { useAttenderDonationsSummary, useAttenderDonationsEntries } from './useDonations';
 import DonationsYearView from './DonationsYearView';
 import DonationsMonthView from './DonationsMonthView';
-
-const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 type Scope = 'ano' | 'mes';
 
@@ -33,6 +30,7 @@ export default function AttenderDonationsDialog({
   const [scope, setScope] = useState<Scope>('ano');
   const [year, setYear] = useState<number | undefined>(undefined);
   const [month, setMonth] = useState<string>(getCurrentMonth());
+  const [exporting, setExporting] = useState(false);
 
   const summary = useAttenderDonationsSummary(attenderId, year);
   const entries = useAttenderDonationsEntries(attenderId, month, open && scope === 'mes');
@@ -41,10 +39,21 @@ export default function AttenderDonationsDialog({
   const displayYear = year ?? summary.data?.year;
   const availableYears = summary.data?.availableYears ?? [];
 
-  const pdfHref =
+  const pdfPath =
     scope === 'mes'
-      ? `${API_URL}/attenders/${attenderId}/donations/pdf?month=${month}`
-      : `${API_URL}/attenders/${attenderId}/donations/pdf${displayYear ? `?year=${displayYear}` : ''}`;
+      ? `/attenders/${attenderId}/donations/pdf?month=${month}`
+      : `/attenders/${attenderId}/donations/pdf${displayYear ? `?year=${displayYear}` : ''}`;
+
+  async function handleExport() {
+    setExporting(true);
+    try {
+      await openBlobInNewTab(pdfPath);
+    } catch {
+      toast.error('Erro ao exportar PDF.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -52,11 +61,9 @@ export default function AttenderDonationsDialog({
         <DialogHeader className="flex-row items-center justify-between pr-8">
           <DialogTitle>Contribuições de {attenderName}</DialogTitle>
           {attenderId && (
-            <Button variant="outline" size="sm" asChild>
-              <a href={pdfHref} download target="_blank" rel="noreferrer">
-                <Download className="h-4 w-4 mr-2" />
-                Exportar PDF
-              </a>
+            <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+              <Download className="h-4 w-4 mr-2" />
+              Exportar PDF
             </Button>
           )}
         </DialogHeader>

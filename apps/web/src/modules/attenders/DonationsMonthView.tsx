@@ -1,5 +1,5 @@
 import { formatDate } from '@/lib/datetime';
-import type { AttenderDonationsEntries } from '@/modules/me/useDonations';
+import type { AttenderDonationsEntries } from './useDonations';
 
 function formatBRL(value: string): string {
   return Number.parseFloat(value).toLocaleString('pt-BR', {
