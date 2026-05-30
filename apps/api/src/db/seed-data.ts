@@ -79,7 +79,11 @@ export const SEED_MODULES = [
   { name: 'Cartas de Membros', description: 'Gerencia as cartas de transferência de membros' },
   { name: 'Modelos de Ata', description: 'Gerencia os modelos de ata para assembleias' },
   { name: 'Dados da Igreja', description: 'Gerencia os dados institucionais da igreja' },
-  { name: 'Eventos', description: 'Gerencia os eventos da igreja com vínculo financeiro' }
+  { name: 'Eventos', description: 'Gerencia os eventos da igreja com vínculo financeiro' },
+  {
+    name: 'Calendário',
+    description: 'Gerencia datas, feriados e lembretes do calendário da secretaria'
+  }
 ];
 
 export const EXPECTED_MODULE_ORDER = SEED_MODULES.map((m) => m.name);
@@ -215,6 +219,29 @@ export const SEED_EVENTS: {
     location: 'Sede',
     startTime: '2026-10-15T22:00:00Z',
     endTime: '2026-10-17T03:00:00Z'
+  }
+];
+
+// Manual calendar dates the secretary tracks (holidays, commemorative dates, reminders). One-off
+// dated rows — recurring birthdays/baptisms are derived from attenders, not stored here.
+export const SEED_CALENDAR_ENTRIES: {
+  title: string;
+  date: string;
+  notes?: string;
+}[] = [
+  {
+    title: 'Dia do Pastor',
+    date: '2026-06-14',
+    notes: 'Homenagem ao pastor durante o culto da noite.'
+  },
+  {
+    title: 'Feriado — Independência',
+    date: '2026-09-07',
+    notes: 'Não haverá expediente na secretaria.'
+  },
+  {
+    title: 'Aniversário da Igreja',
+    date: '2026-08-30'
   }
 ];
 
@@ -548,6 +575,9 @@ export function buildRoleModulePermissions(
     ...cross(roleByName['Presidente'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Secretário'].id, ['Eventos'], writePermIds),
+    ...cross(roleByName['Secretário'].id, ['Calendário'], fullPermIds),
+    ...cross(roleByName['Presidente'].id, ['Calendário'], fullPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Calendário'], fullPermIds),
     ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Dados da Igreja'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Dados da Igreja'], fullPermIds),

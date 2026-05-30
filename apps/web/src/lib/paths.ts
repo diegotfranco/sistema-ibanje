@@ -24,6 +24,7 @@ export const paths = {
   minuteTemplates: '/minute-templates',
   churchSettings: '/church-settings',
   membershipLetters: '/membership-letters',
+  calendar: '/calendar',
   me: '/me'
 } as const;
 

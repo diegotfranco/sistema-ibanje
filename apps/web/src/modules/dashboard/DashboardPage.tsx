@@ -11,6 +11,7 @@ import { TrendChart } from './TrendChart';
 import { ParticipationCard } from './ParticipationCard';
 import { ParticipationChart } from './ParticipationChart';
 import { FundsAndEventsCard } from './FundsAndEventsCard';
+import { DashboardCalendarCard } from './DashboardCalendarCard';
 
 export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
@@ -67,6 +68,8 @@ export default function DashboardPage() {
             isLoading={isLoading}
           />
         </div>
+
+        <DashboardCalendarCard />
       </PageContainer>
     </RequirePermission>
   );

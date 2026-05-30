@@ -1,0 +1,84 @@
+/* Map FullCalendar's CSS variables onto the shadcn neutral design tokens so the calendar inherits
+   the app's look instead of FullCalendar's default Bootstrap-ish styling. Scoped to .fc. */
+.fc {
+  --fc-border-color: var(--border);
+  --fc-page-bg-color: var(--card);
+  --fc-neutral-bg-color: var(--muted);
+  --fc-today-bg-color: color-mix(in oklch, var(--primary) 8%, transparent);
+  --fc-now-indicator-color: var(--primary);
+  --fc-event-text-color: #fff;
+  font-size: 0.875rem;
+}
+
+.fc .fc-toolbar-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.fc .fc-col-header-cell-cushion,
+.fc .fc-daygrid-day-number {
+  color: var(--muted-foreground);
+  text-decoration: none;
+  padding: 0.25rem 0.375rem;
+}
+
+/* Toolbar buttons → shadcn outline/ghost button look. */
+.fc .fc-button {
+  background-color: transparent;
+  border-color: var(--border);
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  box-shadow: none;
+  padding: 0.375rem 0.625rem;
+}
+
+.fc .fc-button:hover {
+  background-color: var(--muted);
+  border-color: var(--border);
+  color: var(--foreground);
+}
+
+.fc .fc-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 50%, transparent);
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active,
+.fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.fc .fc-button:disabled {
+  opacity: 0.5;
+}
+
+.fc .fc-event {
+  cursor: pointer;
+  border: none;
+  padding: 1px 4px;
+  font-size: 0.75rem;
+}
+
+.fc .fc-event-readonly {
+  cursor: default;
+}
+
+/* List (agenda) view rows. */
+.fc .fc-list-event:hover td {
+  background-color: var(--muted);
+}
+
+.fc .fc-list-day-cushion {
+  background-color: var(--muted);
+}
+
+.fc-theme-standard .fc-list,
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: var(--border);
+}

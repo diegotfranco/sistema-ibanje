@@ -1,6 +1,10 @@
 export { brandColors, type BrandColorKey } from './colors.js';
 
+export { APP_TZ } from './time.js';
+
 export { yyyymmToString, stringToYyyymm, isValidYyyymm } from './yearMonth.js';
+
+export type { CalendarFeedItem, CalendarFeedType, CalendarFeedResponse } from './calendar.js';
 
 export type {
   DashboardResponse,
@@ -41,7 +45,8 @@ export const Module = {
   MembershipLetters: 18,
   MinuteTemplates: 19,
   ChurchSettings: 20,
-  Events: 21
+  Events: 21,
+  SecretaryCalendar: 22
 } as const;
 export type Module = (typeof Module)[keyof typeof Module];
 

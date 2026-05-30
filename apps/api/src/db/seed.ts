@@ -32,6 +32,7 @@ import {
   SEED_PAYMENT_METHODS,
   SEED_DESIGNATED_FUNDS,
   SEED_EVENTS,
+  SEED_CALENDAR_ENTRIES,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
@@ -69,6 +70,7 @@ import {
   expenseEntries,
   meetings,
   events,
+  calendarEntries,
   minutes,
   minuteVersions,
   monthlyClosings,
@@ -341,6 +343,17 @@ export async function seed() {
           .returning()
       : [];
     const eventByTitle = new Map(insertedEvents.map((e) => [e.title, e]));
+
+    // --- Calendar entries ----------------------------------------------------
+    if (SEED_CALENDAR_ENTRIES.length) {
+      await tx.insert(calendarEntries).values(
+        SEED_CALENDAR_ENTRIES.map((c) => ({
+          title: c.title,
+          date: c.date,
+          notes: c.notes ?? null
+        }))
+      );
+    }
 
     // --- Income / Expense categories -----------------------------------------
     const insertedICParents = await tx
