@@ -1,11 +1,4 @@
-import {
-  CalendarCheck,
-  CreditCard,
-  FileBarChart,
-  PiggyBank,
-  TrendingDown,
-  TrendingUp
-} from 'lucide-react';
+import { CalendarCheck, FileBarChart, PiggyBank, TrendingDown, TrendingUp } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module, Action } from '@/lib/permissions';
@@ -14,7 +7,6 @@ import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPag
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
 import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosingsPage';
 import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
-import PaymentMethodsPage from '@/modules/finance/payment-methods/PaymentMethodsPage';
 import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
 import EventsPage from '@/modules/finance/events/EventsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
@@ -132,18 +124,6 @@ export const financeRoutes: AppRoute[] = [
         icon: FileBarChart,
         module: Module.Reports,
         action: Action.Report
-      },
-      {
-        path: paths.paymentMethods,
-        element: (
-          <RequirePermission module={Module.PaymentMethods}>
-            <PaymentMethodsPage />
-          </RequirePermission>
-        ),
-        layout: 'app',
-        label: 'Formas de Pagamento',
-        icon: CreditCard,
-        module: Module.PaymentMethods
       }
     ]
   },
