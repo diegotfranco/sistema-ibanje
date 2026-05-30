@@ -46,6 +46,10 @@ const typeBadgeVariant = {
   carta_de_transferência: 'default'
 } as const;
 
+// Radix Select forbids an empty-string item value; use a sentinel for the
+// "all" option and map it back to null (mirrors FILTER_ALL in DataTable).
+const ALL_TYPES = '__all__';
+
 export default function MembershipLettersPage() {
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
@@ -235,12 +239,14 @@ export default function MembershipLettersPage() {
           </div>
           <div className="flex-1">
             <label className="text-sm font-medium block mb-2">Tipo</label>
-            <Select value={selectedType ?? ''} onValueChange={(v) => setSelectedType(v || null)}>
+            <Select
+              value={selectedType ?? ALL_TYPES}
+              onValueChange={(v) => setSelectedType(v === ALL_TYPES ? null : v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value={ALL_TYPES}>Todos os tipos</SelectItem>
                 <SelectItem value="pedido_de_carta_de_transferência">Pedido</SelectItem>
                 <SelectItem value="carta_de_transferência">Carta</SelectItem>
               </SelectContent>
