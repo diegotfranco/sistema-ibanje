@@ -185,6 +185,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                 placeholder="Selecionar categoria..."
                 emptyMessage="Nenhuma categoria encontrada."
                 isLoading={expenseCategories.isLoading}
+                ariaLabel="Categoria"
                 className="w-full"
               />
               {errors.categoryId && <FieldError>{errors.categoryId.message}</FieldError>}
@@ -228,7 +229,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
               <Select
                 value={field.value ?? EntryStatus.Paid}
                 onValueChange={(v) => field.onChange(v as ExpenseEntryFormValues['status'])}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="w-full" aria-label="Status">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,6 +257,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                 placeholder="Selecionar congregado..."
                 emptyMessage="Nenhum congregado encontrado."
                 isLoading={attenders.isLoading}
+                ariaLabel="Congregado patrocinador"
                 allowClear
                 className="w-full"
               />
@@ -274,6 +276,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
             onChangeFund={(id) => setValue('designatedFundId', id, { shouldDirty: true })}
             onChangeEvent={(id) => setValue('eventId', id, { shouldDirty: true })}
             isLoading={designatedFunds.isLoading || eventsList.isLoading}
+            ariaLabel="Vincular a campanha ou evento"
             className="w-full"
           />
           {errors.designatedFundId && <FieldError>{errors.designatedFundId.message}</FieldError>}

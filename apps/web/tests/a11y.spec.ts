@@ -1,4 +1,4 @@
-import { test, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -51,6 +51,11 @@ type ViolationRow = {
 };
 
 const allViolations: ViolationRow[] = [];
+
+// --- CI gate -----------------------------------------------------------------------------------
+// The original 46 serious/critical WCAG-AA violations (baseline 2026-06-04) were fully remediated on
+// 2026-06-06. The gate is now a flat zero: any serious/critical violation fails CI.
+const isBlocking = (v: ViolationRow) => v.impact === 'serious' || v.impact === 'critical';
 
 async function applyTheme(page: Page, theme: 'light' | 'dark') {
   await page.evaluate((t) => {
@@ -112,6 +117,17 @@ test.describe.serial('WCAG 2.1 AA audit', () => {
         await auditRoute(page, route, theme);
       }
     }
+  });
+
+  test('has no serious/critical WCAG violations', () => {
+    const blocking = allViolations.filter(isBlocking);
+    const describe = (v: ViolationRow) => `${v.id} (${v.impact}) @ ${v.route} [${v.theme}]`;
+    expect(
+      blocking,
+      `Serious/critical WCAG violation(s) found (see a11y-report.md):\n${blocking
+        .map(describe)
+        .join('\n')}`
+    ).toHaveLength(0);
   });
 
   test.afterAll(async () => {

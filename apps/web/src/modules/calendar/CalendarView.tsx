@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import listPlugin from '@fullcalendar/list';
@@ -51,7 +51,25 @@ export function CalendarView({
   hideViewSwitch = false
 }: Props) {
   const [range, setRange] = useState<{ from: string; to: string }>();
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const { data } = useCalendarFeed(range?.from, range?.to);
+
+  // FullCalendar renders its prev/next chevrons as <span class="fc-icon" role="img"> with no alt
+  // text, tripping axe's role-img-alt. The parent buttons already carry localized aria-labels, so
+  // the icons are decorative. They're created by FullCalendar's own renderer (outside React) and
+  // not present synchronously, so a MutationObserver stamps aria-hidden whenever they appear.
+  useEffect(() => {
+    const root = wrapperRef.current;
+    if (!root) return;
+    const stamp = () =>
+      root
+        .querySelectorAll('.fc-icon[role="img"]:not([aria-hidden])')
+        .forEach((el) => el.setAttribute('aria-hidden', 'true'));
+    stamp();
+    const observer = new MutationObserver(stamp);
+    observer.observe(root, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   const events = useMemo<EventInput[]>(() => {
     if (!data) return [];
@@ -90,25 +108,27 @@ export function CalendarView({
   };
 
   return (
-    <FullCalendar
-      plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
-      initialView={initialView}
-      locale={ptBrLocale}
-      headerToolbar={{
-        left: 'prev,next today',
-        center: 'title',
-        right: hideViewSwitch ? '' : 'dayGridMonth,listMonth'
-      }}
-      buttonText={{ today: 'Hoje', month: 'Mês', list: 'Agenda' }}
-      events={events}
-      datesSet={handleDatesSet}
-      dateClick={handleDateClick}
-      eventClick={handleEventClick}
-      eventClassNames={(arg) => (arg.event.extendedProps.readonly ? ['fc-event-readonly'] : [])}
-      height={height}
-      firstDay={0}
-      dayMaxEvents={3}
-      noEventsText="Nenhuma data no período."
-    />
+    <div ref={wrapperRef}>
+      <FullCalendar
+        plugins={[dayGridPlugin, listPlugin, interactionPlugin]}
+        initialView={initialView}
+        locale={ptBrLocale}
+        headerToolbar={{
+          left: 'prev,next today',
+          center: 'title',
+          right: hideViewSwitch ? '' : 'dayGridMonth,listMonth'
+        }}
+        buttonText={{ today: 'Hoje', month: 'Mês', list: 'Agenda' }}
+        events={events}
+        datesSet={handleDatesSet}
+        dateClick={handleDateClick}
+        eventClick={handleEventClick}
+        eventClassNames={(arg) => (arg.event.extendedProps.readonly ? ['fc-event-readonly'] : [])}
+        height={height}
+        firstDay={0}
+        dayMaxEvents={3}
+        noEventsText="Nenhuma data no período."
+      />
+    </div>
   );
 }

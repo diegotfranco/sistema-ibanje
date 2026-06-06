@@ -151,7 +151,12 @@ export function ClosingStatusCard({ data, month, isLoading }: ClosingStatusCardP
           ) : (
             <span />
           )}
-          <Button size="sm" onClick={onCta} variant="ghost" className="h-7 w-7 p-0">
+          <Button
+            size="sm"
+            onClick={onCta}
+            variant="ghost"
+            aria-label={`Ver ${headline}`}
+            className="h-7 w-7 p-0">
             <ArrowRight className={cn('h-4 w-4', styles.icon)} />
           </Button>
         </div>

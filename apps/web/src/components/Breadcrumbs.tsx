@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import { Link, useLocation } from 'react-router';
 import { ChevronRight } from 'lucide-react';
 import { appRoutes, type AppRoute } from '@/routes';
@@ -30,12 +29,14 @@ export function Breadcrumbs() {
         {trail.map((crumb, i) => {
           const isLast = i === trail.length - 1;
           return (
-            <Fragment key={`${crumb.label}-${i}`}>
+            <li key={`${crumb.label}-${i}`} className="flex items-center gap-1.5">
               {i > 0 && (
                 <ChevronRight size={14} className="text-muted-foreground/60" aria-hidden="true" />
               )}
               {isLast ? (
-                <span className="font-medium text-foreground">{crumb.label}</span>
+                <span className="font-medium text-foreground" aria-current="page">
+                  {crumb.label}
+                </span>
               ) : crumb.path ? (
                 <Link to={crumb.path} className="text-muted-foreground hover:text-foreground">
                   {crumb.label}
@@ -43,7 +44,7 @@ export function Breadcrumbs() {
               ) : (
                 <span className="text-muted-foreground">{crumb.label}</span>
               )}
-            </Fragment>
+            </li>
           );
         })}
       </ol>

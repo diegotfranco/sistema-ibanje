@@ -124,7 +124,7 @@ export function ParticipationChart({ data, isLoading, className }: Participation
 
   const variationSelect = (
     <Select value={variation} onValueChange={(v) => setVariation(v as ChartVariation)}>
-      <SelectTrigger className="w-auto">
+      <SelectTrigger className="w-auto" aria-label="Tipo de variação do gráfico">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

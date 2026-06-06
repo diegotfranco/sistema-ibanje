@@ -234,6 +234,7 @@ export default function MembershipLettersPage() {
               emptyMessage="Nenhum congregado encontrado."
               isLoading={attenders.isLoading}
               className="w-full"
+              ariaLabel="Filtrar por congregado"
               allowClear
             />
           </div>
@@ -242,7 +243,7 @@ export default function MembershipLettersPage() {
             <Select
               value={selectedType ?? ALL_TYPES}
               onValueChange={(v) => setSelectedType(v === ALL_TYPES ? null : v)}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filtrar por tipo">
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent>

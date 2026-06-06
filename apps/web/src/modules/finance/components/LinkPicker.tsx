@@ -32,6 +32,8 @@ interface Props {
   onChangeEvent: (id: number | undefined) => void;
   isLoading?: boolean;
   className?: string;
+  /** Accessible name for the trigger when there is no programmatically associated <label>. */
+  ariaLabel?: string;
 }
 
 export function LinkPicker({
@@ -42,7 +44,8 @@ export function LinkPicker({
   onChangeFund,
   onChangeEvent,
   isLoading = false,
-  className
+  className,
+  ariaLabel
 }: Props) {
   const [open, setOpen] = React.useState(false);
 
@@ -78,6 +81,7 @@ export function LinkPicker({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           data-input-trigger=""
           className={cn('w-full justify-between min-w-0', className)}>
           <span className={cn('truncate', !selectedLabel && 'text-muted-foreground')}>

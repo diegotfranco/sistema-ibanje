@@ -194,7 +194,7 @@ export function FundsAndEventsCard({
 
   const viewSelect = (
     <Select value={view} onValueChange={(v) => setView(v as CardView)}>
-      <SelectTrigger className="w-auto">
+      <SelectTrigger className="w-auto" aria-label="Alternar entre campanhas e eventos">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
