@@ -135,4 +135,20 @@ describe('users self-service rules', () => {
       expect(res.statusCode).toBe(204);
     });
   });
+
+  // Regression: POST /users with an email that already exists must degrade to a 409 carrying
+  // fieldErrors.email — never a 500 (the unique-violation 23505 is caught and remapped in the service).
+  describe('duplicate email on create', () => {
+    it('returns 409 with fieldErrors.email, not 500', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/users',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: { name: 'Duplicado', email: 'admin@email.com', roleId: adminRoleId }
+      });
+      expect(res.statusCode).toBe(409);
+      const body = res.json<{ message: string; fieldErrors?: Record<string, string> }>();
+      expect(body.fieldErrors).toHaveProperty('email');
+    });
+  });
 });
