@@ -3,7 +3,10 @@ import { paginatedSchema } from '../../lib/http-schemas.js';
 
 export const ListEventsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20),
+  // Reference-data list used to populate "load-everything" pickers (income/expense entry forms request
+  // limit=200), so it shares the 500 cap of the other reference lists (funds, categories,
+  // payment-methods) rather than the 100 cap of transactional lists.
+  limit: z.coerce.number().int().positive().max(500).default(20),
   status: z.enum(['ativo', 'inativo']).optional()
 });
 

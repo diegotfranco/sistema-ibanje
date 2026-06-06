@@ -195,7 +195,7 @@ export async function editApprovedMinute(
       tx
     );
 
-    const versions = await repo.getVersionsForMinute(minuteId);
+    const versions = await repo.getVersionsForMinute(minuteId, tx);
     return buildMinuteResponseAsync(minute, versions);
   });
 }
@@ -355,8 +355,8 @@ export async function setMeetingAttendersPresent(
   return repo.setMeetingAttendersPresent(meetingId, attenderIds);
 }
 
-export async function listMinuteTemplates(): Promise<MinuteTemplateResponse[]> {
-  await assertPermission(0, Module.MinuteTemplates, Action.View);
+export async function listMinuteTemplates(callerId: number): Promise<MinuteTemplateResponse[]> {
+  await assertPermission(callerId, Module.MinuteTemplates, Action.View);
   const templates = await repo.listMinuteTemplates();
   return templates.map((t) => ({
     id: t.id,

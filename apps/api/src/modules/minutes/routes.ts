@@ -320,10 +320,7 @@ export async function minutesRoutes(app: FastifyInstance) {
       schema: {
         tags: ['Minute Templates'],
         response: {
-          200: {
-            type: 'array',
-            items: MinuteTemplateResponseSchema
-          },
+          200: z.array(MinuteTemplateResponseSchema),
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
         }

@@ -18,7 +18,7 @@ export const Module = {
   Events: 'Eventos',
   Minutes: 'Atas',
   MinuteTemplates: 'Modelos de Ata',
-  MembershipLetters: 'Cartas de Membro',
+  MembershipLetters: 'Cartas de Membros',
   SecretaryCalendar: 'Calendário',
   Permissions: 'Permissões',
   Areas: 'Áreas',

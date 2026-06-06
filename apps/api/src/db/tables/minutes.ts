@@ -10,10 +10,12 @@ import {
   jsonb,
   timestamp,
   unique,
+  uniqueIndex,
   index,
   time,
   AnyPgColumn
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { meetingType, minuteVersionStatus, membershipLetterType } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
@@ -78,7 +80,12 @@ export const minuteTemplates = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
-    unique('uq_default_template_per_type').on(table.meetingType, table.isDefault),
+    // Partial unique index: at most ONE default template per meeting type, while allowing
+    // unlimited non-default templates. A full UNIQUE(meeting_type, is_default) would cap each
+    // type at one default + one non-default (~2 rows) and block all further template creation.
+    uniqueIndex('uq_default_template_per_type')
+      .on(table.meetingType)
+      .where(sql`${table.isDefault}`),
     index('minute_templates_meeting_type_idx').on(table.meetingType)
   ]
 );

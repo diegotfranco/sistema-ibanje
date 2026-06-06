@@ -110,7 +110,7 @@ export async function updateMinute(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function listMinuteTemplates(req: FastifyRequest, reply: FastifyReply) {
-  const templates = await service.listMinuteTemplates();
+  const templates = await service.listMinuteTemplates(req.session.userId!);
   return reply.send(templates);
 }
 

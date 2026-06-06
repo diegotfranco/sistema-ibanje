@@ -1,0 +1,2 @@
+ALTER TABLE "minute_templates" DROP CONSTRAINT "uq_default_template_per_type";--> statement-breakpoint
+CREATE UNIQUE INDEX "uq_default_template_per_type" ON "minute_templates" USING btree ("meeting_type") WHERE "minute_templates"."is_default";

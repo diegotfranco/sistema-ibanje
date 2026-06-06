@@ -40,7 +40,6 @@ export async function authRoutes(app: FastifyInstance) {
           429: ErrorResponseSchema
         }
       },
-      preHandler: [app.csrfProtection],
       config: { rateLimit: { max: 8, timeWindow: '15 minutes' } }
     },
     controller.login
@@ -56,7 +55,7 @@ export async function authRoutes(app: FastifyInstance) {
           401: ErrorResponseSchema
         }
       },
-      preHandler: [app.csrfProtection, requireAuth]
+      preHandler: [requireAuth]
     },
     controller.logout
   );
@@ -90,7 +89,6 @@ export async function authRoutes(app: FastifyInstance) {
           429: ErrorResponseSchema
         }
       },
-      preHandler: [app.csrfProtection],
       config: { rateLimit: { max: 4, timeWindow: '1 hour' } }
     },
     controller.register
@@ -108,7 +106,6 @@ export async function authRoutes(app: FastifyInstance) {
           429: ErrorResponseSchema
         }
       },
-      preHandler: [app.csrfProtection],
       config: { rateLimit: { max: 4, timeWindow: '1 hour' } }
     },
     controller.requestPasswordReset
@@ -127,7 +124,7 @@ export async function authRoutes(app: FastifyInstance) {
           404: ErrorResponseSchema
         }
       },
-      preHandler: [app.csrfProtection, requireAuth]
+      preHandler: [requireAuth]
     },
     controller.updateMyProfile
   );
@@ -142,8 +139,7 @@ export async function authRoutes(app: FastifyInstance) {
           200: MessageResponseSchema,
           400: ErrorResponseSchema
         }
-      },
-      preHandler: [app.csrfProtection]
+      }
     },
     controller.confirmPasswordReset
   );
