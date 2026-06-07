@@ -66,7 +66,7 @@ describe('idempotency under concurrency', () => {
     // The invariant that matters: never two inserts.
     expect(await countRows(depositDate)).toBe(1);
 
-    const statuses = [a.statusCode, b.statusCode].sort();
+    const statuses = [a.statusCode, b.statusCode].sort((x, y) => x - y);
     // Exactly one request did the real work (201, no replay header).
     const created = [a, b].filter(
       (r) => r.statusCode === 201 && r.headers['idempotent-replay'] === undefined

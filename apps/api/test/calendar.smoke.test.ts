@@ -128,7 +128,7 @@ describe('calendar smoke: CRUD, merged feed, and access split', () => {
 
     // Ascending by date.
     const dates = feed.map((i) => i.date);
-    expect(dates).toEqual([...dates].sort());
+    expect(dates).toEqual([...dates].sort((a, b) => a.localeCompare(b)));
   });
 
   it('exposes the feed to any authenticated role but gates management', async () => {

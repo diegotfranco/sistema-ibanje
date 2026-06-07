@@ -158,7 +158,7 @@ test.describe.serial('WCAG 2.1 AA audit', () => {
       lines.push('\n## All routes pass WCAG 2.1 AA ✓\n');
     } else {
       lines.push('\n## Violations by route\n');
-      for (const [key, vs] of [...byRoute.entries()].sort()) {
+      for (const [key, vs] of [...byRoute.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
         lines.push(`\n### ${key}\n`);
         for (const v of vs) {
           lines.push(`- **${v.id}** (${v.impact}) — ${v.help} [docs](${v.helpUrl})`);

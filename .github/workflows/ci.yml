@@ -145,6 +145,23 @@ jobs:
       - name: Build packages
         run: pnpm --filter @sistema-ibanje/shared build
 
+      # MinIO can't run as a `services:` container (it needs the `server /data`
+      # command, which service containers can't override), so start it directly.
+      # The API calls initStorage() at boot and crashes if :9000 is unreachable.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio:RELEASE.2024-04-18T19-09-19Z server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live; then echo "MinIO ready"; exit 0; fi
+            sleep 2
+          done
+          echo "MinIO failed to become healthy" >&2
+          docker logs minio || true
+          exit 1
+
       - name: Migrate + seed database
         working-directory: apps/api
         run: pnpm db:migrate && pnpm db:seed
