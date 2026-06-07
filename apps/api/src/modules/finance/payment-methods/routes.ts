@@ -106,4 +106,22 @@ export async function paymentMethodsRoutes(app: FastifyInstance) {
     },
     controller.remove
   );
+
+  app.patch(
+    '/payment-methods/:id/restore',
+    {
+      schema: {
+        tags: ['Payment Methods'],
+        params: IdParamSchema,
+        response: {
+          200: PaymentMethodResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.PaymentMethods, Action.Delete)]
+    },
+    controller.restore
+  );
 }

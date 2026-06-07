@@ -11,10 +11,11 @@ import {
   check,
   AnyPgColumn,
   index,
+  uniqueIndex,
   unique
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { activeStatus, transactionStatus, closingStatus } from './enums.js';
+import { activeStatus, transactionStatus, closingStatus, fundStatus } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
 import { events } from './events.js';
@@ -23,10 +24,11 @@ export const paymentMethods = pgTable(
   'payment_methods',
   {
     id: serial('id').primaryKey(),
-    name: varchar('name', { length: 64 }).unique().notNull(),
+    name: varchar('name', { length: 64 }).notNull(),
     allowsInflow: boolean('allows_inflow').default(false).notNull(),
     allowsOutflow: boolean('allows_outflow').default(false).notNull(),
     status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
@@ -34,31 +36,46 @@ export const paymentMethods = pgTable(
     check(
       'chk_at_least_one_flow',
       sql`${table.allowsInflow} = true OR ${table.allowsOutflow} = true`
-    )
+    ),
+    // Partial unique: a soft-deleted payment method must not block re-creating one with the same name.
+    uniqueIndex('uq_payment_methods_name_active')
+      .on(table.name)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index('payment_methods_deleted_at_idx').on(table.deletedAt)
   ]
 );
 
-export const designatedFunds = pgTable('designated_funds', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 96 }).notNull(),
-  description: text('description'),
-  targetAmount: numeric('target_amount', { precision: 12, scale: 2 }),
-  targetDate: date('target_date'),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const designatedFunds = pgTable(
+  'designated_funds',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 96 }).notNull(),
+    description: text('description'),
+    targetAmount: numeric('target_amount', { precision: 12, scale: 2 }),
+    targetDate: date('target_date'),
+    status: fundStatus('status').default('ativa').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index('designated_funds_deleted_at_idx').on(table.deletedAt)]
+);
 
-export const incomeCategories = pgTable('income_categories', {
-  id: serial('id').primaryKey(),
-  parentId: integer('parent_id').references((): AnyPgColumn => incomeCategories.id),
-  name: varchar('name', { length: 64 }).notNull(),
-  description: varchar('description', { length: 256 }),
-  requiresMember: boolean('requires_member').default(false).notNull(),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const incomeCategories = pgTable(
+  'income_categories',
+  {
+    id: serial('id').primaryKey(),
+    parentId: integer('parent_id').references((): AnyPgColumn => incomeCategories.id),
+    name: varchar('name', { length: 64 }).notNull(),
+    description: varchar('description', { length: 256 }),
+    requiresMember: boolean('requires_member').default(false).notNull(),
+    status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index('income_categories_deleted_at_idx').on(table.deletedAt)]
+);
 
 export const incomeEntries = pgTable(
   'income_entries',
@@ -108,15 +125,20 @@ export const incomeEntries = pgTable(
   ]
 );
 
-export const expenseCategories = pgTable('expense_categories', {
-  id: serial('id').primaryKey(),
-  parentId: integer('parent_id').references((): AnyPgColumn => expenseCategories.id),
-  name: varchar('name', { length: 64 }).notNull(),
-  description: varchar('description', { length: 256 }),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const expenseCategories = pgTable(
+  'expense_categories',
+  {
+    id: serial('id').primaryKey(),
+    parentId: integer('parent_id').references((): AnyPgColumn => expenseCategories.id),
+    name: varchar('name', { length: 64 }).notNull(),
+    description: varchar('description', { length: 256 }),
+    status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [index('expense_categories_deleted_at_idx').on(table.deletedAt)]
+);
 
 export const expenseEntries = pgTable(
   'expense_entries',

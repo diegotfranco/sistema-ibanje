@@ -27,7 +27,7 @@ const mockAttenders = [
 ];
 
 const mockFunds = [
-  { id: 1, name: 'Reforma do Templo', status: 'ativo', description: 'Campanha de reforma' }
+  { id: 1, name: 'Reforma do Templo', status: 'ativa', description: 'Campanha de reforma' }
 ];
 
 const mockEvents = [{ id: 1, name: 'Evento 2024', status: 'ativo', startDate: '2024-07-01' }];

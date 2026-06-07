@@ -1,8 +1,10 @@
 import { useState } from 'react';
+import { RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageContainer } from '@/components/PageContainer';
-import { ResourceListPage } from '@/components/ResourceListPage';
+import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { TrashToggle } from '@/components/TrashToggle';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -18,20 +20,30 @@ export default function PaymentMethodsPage() {
   const canEdit = hasPermission(perms, Module.PaymentMethods, Action.Update);
   const canDelete = hasPermission(perms, Module.PaymentMethods, Action.Delete);
 
-  const list = usePaymentMethods();
-  const { create, update, remove } = usePaymentMethodMutations();
+  const [viewingTrash, setViewingTrash] = useState(false);
+  const list = usePaymentMethods({ deleted: viewingTrash ? 'only' : undefined });
+  const { create, update, remove, restore } = usePaymentMethodMutations();
 
   const [editing, setEditing] = useState<PaymentMethodResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<PaymentMethodResponse | null>(null);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
-  const items = list.data?.data.filter((r) => r.status === ActiveStatus.Active);
+  // Trash shows every soft-deleted row as-is; the live view hides retired (inativo) methods.
+  const items = viewingTrash
+    ? list.data?.data
+    : list.data?.data.filter((r) => r.status === ActiveStatus.Active);
+
+  const restoreAction: CustomAction<PaymentMethodResponse> = {
+    label: 'Restaurar',
+    icon: <RotateCcw size={16} />,
+    onClick: (r) => restore.mutate(r.id)
+  };
 
   return (
     <>
       <PageContainer>
         <ResourceListPage<PaymentMethodResponse>
-          title="Formas de Pagamento"
+          title={viewingTrash ? 'Formas de Pagamento — Lixeira' : 'Formas de Pagamento'}
           columns={[
             {
               header: 'Nome',
@@ -48,12 +60,19 @@ export default function PaymentMethodsPage() {
           ]}
           data={items}
           isLoading={list.isLoading}
-          onCreate={canCreate ? () => setEditing('new') : undefined}
-          onEdit={canEdit ? (r) => setEditing(r) : undefined}
-          onDelete={canDelete ? (r) => setDeleting(r) : undefined}
-          canCreate={canCreate}
-          canEdit={canEdit}
-          canDelete={canDelete}
+          emptyMessage={viewingTrash ? 'A lixeira está vazia.' : undefined}
+          toolbarRight={
+            canDelete ? (
+              <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
+            ) : undefined
+          }
+          onCreate={!viewingTrash && canCreate ? () => setEditing('new') : undefined}
+          onEdit={!viewingTrash && canEdit ? (r) => setEditing(r) : undefined}
+          onDelete={!viewingTrash && canDelete ? (r) => setDeleting(r) : undefined}
+          customActions={viewingTrash && canDelete ? [restoreAction] : undefined}
+          canCreate={!viewingTrash && canCreate}
+          canEdit={!viewingTrash && canEdit}
+          canDelete={!viewingTrash && canDelete}
           rowKey={(r) => r.id}
           mobileRow={(row) => (
             <div className="flex flex-col gap-1">

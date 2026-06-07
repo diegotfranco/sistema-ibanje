@@ -153,7 +153,7 @@ type DesignatedFundFixture = {
   targetAmount?: string | null;
   targetDate?: string | null;
   createdAt?: string | null;
-  status?: 'ativo' | 'inativo' | null;
+  status?: 'ativa' | 'encerrada' | null;
 };
 type IncomeEntryFixture = {
   depositDate: string;
@@ -307,18 +307,18 @@ export async function seed() {
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
       targetDate: f.targetDate ?? null,
-      status: 'ativo' as const,
+      status: 'ativa' as const,
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     // Historical campanhas are concluded — the fixture tags each with its real status
-    // (all currently `inativo`). Honor it so the seeded roster of funds is realistic:
-    // ongoing structural funds stay active, finished campaigns read as inactive.
+    // (all currently `encerrada`). Honor it so the seeded roster of funds is realistic:
+    // ongoing structural funds stay `ativa`, finished campaigns read as `encerrada`.
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
       targetDate: f.targetDate ?? null,
-      status: f.status ?? 'ativo',
+      status: f.status ?? 'ativa',
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const insertedFunds = await tx
@@ -439,6 +439,8 @@ export async function seed() {
       phone: a.phone ?? null,
       isMember: a.isMember ?? false,
       status: a.status ?? 'ativo',
+      exitDate: a.exitDate ?? null,
+      exitReason: a.exitReason ?? null,
       memberSince: a.memberSince ?? null,
       congregatingSince: a.congregatingSince ?? null,
       admissionMode: a.admissionMode ?? null

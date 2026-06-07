@@ -10,6 +10,7 @@ import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useEvents, useEventMutations } from './useEvents';
 import { EventForm } from './EventForm';
 import { makeSubmitHandler } from '../entries-utils';
+import { AVAILABILITY_STATUS_FILTER_OPTIONS, getStatusLabel } from '@/lib/status';
 import type { EventResponse } from './schema';
 
 function formatDateTime(iso: string): string {
@@ -59,10 +60,7 @@ export default function EventsPage() {
               header: 'Status',
               cell: (row) => <StatusBadge status={row.status} />,
               filter: {
-                options: [
-                  { value: 'ativo', label: 'Ativos' },
-                  { value: 'inativo', label: 'Inativos' }
-                ]
+                options: AVAILABILITY_STATUS_FILTER_OPTIONS
               }
             }
           ]}
@@ -96,10 +94,7 @@ export default function EventsPage() {
             { label: 'Término', value: formatDateTime(row.endTime) },
             { label: 'Local', value: row.location || '—' },
             { label: 'Descrição', value: row.description || '—' },
-            {
-              label: 'Status',
-              value: row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : '—'
-            }
+            { label: 'Status', value: row.status ? getStatusLabel(row.status) : '—' }
           ]}
           columnToggle={true}
           tableId="events"

@@ -38,6 +38,8 @@ import type {
   EventExpenseEntry,
   IncomeAggregateRow
 } from './schema.js';
+import { FundStatus } from '@sistema-ibanje/shared';
+import { notDeleted } from '../../../lib/softDelete.js';
 
 const parentIncomeCat = alias(incomeCategories, 'parent_income_cat');
 const parentExpenseCat = alias(expenseCategories, 'parent_expense_cat');
@@ -537,7 +539,8 @@ export async function findAllActiveFunds() {
     .from(designatedFunds)
     .where(
       and(
-        eq(designatedFunds.status, 'ativo'),
+        notDeleted(designatedFunds),
+        eq(designatedFunds.status, FundStatus.Active),
         or(isNull(designatedFunds.targetDate), gte(designatedFunds.targetDate, today))
       )
     );

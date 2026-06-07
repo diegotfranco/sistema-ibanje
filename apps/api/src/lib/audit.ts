@@ -1,7 +1,7 @@
 import { db } from '../db/index.js';
 import { auditLog } from '../db/schema.js';
 
-type AuditAction = 'create' | 'update' | 'delete' | 'state_change';
+type AuditAction = 'create' | 'update' | 'delete' | 'restore' | 'state_change';
 
 export function logAudit(
   userId: number | null,

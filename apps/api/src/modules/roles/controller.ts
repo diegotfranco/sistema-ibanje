@@ -2,12 +2,13 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import type { CreateRoleRequest, UpdateRoleRequest, SetRolePermissionsRequest } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
+import type { DeletedFilter } from '../../lib/softDelete.js';
 import { logAudit } from '../../lib/audit.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as PaginationQuery;
-  return reply.send(await service.listRoles(req.session.userId!, page, limit));
+  const { page, limit, deleted } = req.query as PaginationQuery & { deleted?: DeletedFilter };
+  return reply.send(await service.listRoles(req.session.userId!, page, limit, deleted));
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {
@@ -35,10 +36,18 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const result = await service.deactivateRole(req.session.userId!, id);
+  const result = await service.softDeleteRole(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Role not found' });
   logAudit(req.session.userId!, 'delete', 'role', id, { ipAddress: req.ip });
   return reply.code(204).send();
+}
+
+export async function restore(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const role = await service.restoreRole(req.session.userId!, id);
+  if (!role) return reply.code(404).send({ message: 'Role not found' });
+  logAudit(req.session.userId!, 'restore', 'role', id, { ipAddress: req.ip });
+  return reply.send(role);
 }
 
 export async function getPermissions(req: FastifyRequest, reply: FastifyReply) {

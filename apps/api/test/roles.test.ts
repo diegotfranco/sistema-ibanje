@@ -170,6 +170,47 @@ describe('roles module', () => {
     expect(res.statusCode).toBe(204);
   });
 
+  describe('trash & restore', () => {
+    it('lists the soft-deleted role only under ?deleted=only', async () => {
+      const live = await app.inject({
+        method: 'GET',
+        url: '/roles?limit=100',
+        headers: { cookie: admin.cookie }
+      });
+      expect(live.json<{ data: RoleRow[] }>().data.some((r) => r.id === createdRoleId)).toBe(false);
+
+      const trash = await app.inject({
+        method: 'GET',
+        url: '/roles?limit=100&deleted=only',
+        headers: { cookie: admin.cookie }
+      });
+      expect(trash.json<{ data: RoleRow[] }>().data.some((r) => r.id === createdRoleId)).toBe(true);
+    });
+
+    it('restores the role (200) and 404s an unknown id', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/roles/${createdRoleId}/restore`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(res.statusCode).toBe(200);
+
+      const live = await app.inject({
+        method: 'GET',
+        url: '/roles?limit=100',
+        headers: { cookie: admin.cookie }
+      });
+      expect(live.json<{ data: RoleRow[] }>().data.some((r) => r.id === createdRoleId)).toBe(true);
+
+      const missing = await app.inject({
+        method: 'PATCH',
+        url: '/roles/999999/restore',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(missing.statusCode).toBe(404);
+    });
+  });
+
   describe('route gating', () => {
     it('blocks a user without Roles permission from listing (403)', async () => {
       const res = await app.inject({

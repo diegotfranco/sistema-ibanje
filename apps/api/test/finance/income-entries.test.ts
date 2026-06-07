@@ -258,6 +258,54 @@ describe('income-entries module', () => {
     expect(res.statusCode).toBe(204);
   });
 
+  describe('status transition guard', () => {
+    async function createEntry(): Promise<number> {
+      const payload: Record<string, unknown> = {
+        depositDate: today,
+        amount: 75,
+        categoryId,
+        paymentMethodId
+      };
+      if (attenderId) payload.attenderId = attenderId;
+      const res = await app.inject({
+        method: 'POST',
+        url: '/income-entries',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload
+      });
+      expect(res.statusCode).toBe(201);
+      return res.json<IncomeEntryRow>().id;
+    }
+
+    function setStatus(id: number, status: string) {
+      return app.inject({
+        method: 'PATCH',
+        url: `/income-entries/${id}`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: { status }
+      });
+    }
+
+    it('confirms pendente → paga (200), then blocks paga → pendente (409)', async () => {
+      const id = await createEntry();
+      const confirm = await setStatus(id, 'paga');
+      expect(confirm.statusCode).toBe(200);
+      expect(confirm.json<IncomeEntryRow>().status).toBe('paga');
+
+      const revert = await setStatus(id, 'pendente');
+      expect(revert.statusCode).toBe(409);
+    });
+
+    it('blocks reviving a cancelada entry (cancelada → paga, 409)', async () => {
+      const id = await createEntry();
+      const cancel = await setStatus(id, 'cancelada');
+      expect(cancel.statusCode).toBe(200);
+
+      const revive = await setStatus(id, 'paga');
+      expect(revive.statusCode).toBe(409);
+    });
+  });
+
   describe('route gating', () => {
     it('blocks a congregant from listing (403)', async () => {
       const res = await app.inject({

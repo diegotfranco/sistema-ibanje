@@ -5,7 +5,7 @@
     "targetAmount": "6000.00",
     "targetDate": "2020-04-15",
     "createdAt": "2020-01-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Aluguel Social Casa Pastoral",
@@ -13,7 +13,7 @@
     "targetAmount": "12000.00",
     "targetDate": "2020-12-31",
     "createdAt": "2020-09-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Aniversário",
@@ -21,7 +21,7 @@
     "targetAmount": "3500.00",
     "targetDate": "2020-10-10",
     "createdAt": "2020-08-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Aniversário da Igreja",
@@ -29,7 +29,7 @@
     "targetAmount": "15000.00",
     "targetDate": "2020-09-15",
     "createdAt": "2020-06-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Auxílio Irmã Jane",
@@ -37,7 +37,7 @@
     "targetAmount": "3000.00",
     "targetDate": "2020-07-31",
     "createdAt": "2020-05-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Campanha Natal",
@@ -45,7 +45,7 @@
     "targetAmount": "1000.00",
     "targetDate": "2020-12-25",
     "createdAt": "2020-11-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Casamento Social",
@@ -53,7 +53,7 @@
     "targetAmount": "4000.00",
     "targetDate": "2021-02-28",
     "createdAt": "2021-01-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Compaixão e Graça",
@@ -61,7 +61,7 @@
     "targetAmount": "8500.00",
     "targetDate": "2021-06-30",
     "createdAt": "2021-04-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Confraternização Aniversario da Igreja",
@@ -69,7 +69,7 @@
     "targetAmount": "2500.00",
     "targetDate": "2021-09-30",
     "createdAt": "2021-08-05",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Confraternização das Mulheres",
@@ -77,7 +77,7 @@
     "targetAmount": "10000.00",
     "targetDate": "2021-05-31",
     "createdAt": "2021-03-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Construção",
@@ -85,7 +85,7 @@
     "targetAmount": "2000.00",
     "targetDate": "2021-11-30",
     "createdAt": "2021-09-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Contribuição Para Encontro da Juventude",
@@ -93,7 +93,7 @@
     "targetAmount": "7500.00",
     "targetDate": "2021-12-31",
     "createdAt": "2021-10-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Desafio Construção",
@@ -101,7 +101,7 @@
     "targetAmount": "45000.00",
     "targetDate": "2022-12-31",
     "createdAt": "2022-01-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Desafio Pulpito",
@@ -109,7 +109,7 @@
     "targetAmount": "3500.00",
     "targetDate": "2022-08-31",
     "createdAt": "2022-06-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Doação Luz",
@@ -117,7 +117,7 @@
     "targetAmount": "800.00",
     "targetDate": "2022-05-15",
     "createdAt": "2022-04-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Educação Cristã Missionaria",
@@ -125,7 +125,7 @@
     "targetAmount": "5500.00",
     "targetDate": "2022-10-31",
     "createdAt": "2022-08-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Encontro dos Homens",
@@ -133,7 +133,7 @@
     "targetAmount": "12000.00",
     "targetDate": "2022-11-30",
     "createdAt": "2022-09-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Intercambio dos Jovens",
@@ -141,7 +141,7 @@
     "targetAmount": "1500.00",
     "targetDate": "2022-07-31",
     "createdAt": "2022-06-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Limpeza do Templo",
@@ -149,7 +149,7 @@
     "targetAmount": "2000.00",
     "targetDate": "2023-03-31",
     "createdAt": "2023-02-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Literatura Ebd",
@@ -157,7 +157,7 @@
     "targetAmount": "11000.00",
     "targetDate": "2023-06-30",
     "createdAt": "2023-04-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Manutenção do Carro Pr",
@@ -165,7 +165,7 @@
     "targetAmount": "4000.00",
     "targetDate": "2023-05-31",
     "createdAt": "2023-03-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Missões Infantil",
@@ -173,7 +173,7 @@
     "targetAmount": "4500.00",
     "targetDate": "2023-10-31",
     "createdAt": "2023-08-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Oferta A Igreja Kairos",
@@ -181,7 +181,7 @@
     "targetAmount": "1200.00",
     "targetDate": "2023-09-30",
     "createdAt": "2023-08-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Oferta Compaixão e Graça",
@@ -189,7 +189,7 @@
     "targetAmount": "3000.00",
     "targetDate": "2023-12-31",
     "createdAt": "2023-10-20",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Oferta Energisa",
@@ -197,7 +197,7 @@
     "targetAmount": "1500.00",
     "targetDate": "2023-08-31",
     "createdAt": "2023-07-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Oferta Gideões",
@@ -205,7 +205,7 @@
     "targetAmount": "2000.00",
     "targetDate": "2023-11-30",
     "createdAt": "2023-09-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Oferta Panfletos",
@@ -213,7 +213,7 @@
     "targetAmount": "1000.00",
     "targetDate": "2023-07-31",
     "createdAt": "2023-06-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Partilhamento Tv Infantil",
@@ -221,7 +221,7 @@
     "targetAmount": "800.00",
     "targetDate": "2024-03-31",
     "createdAt": "2024-02-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Páscoa",
@@ -229,7 +229,7 @@
     "targetAmount": "2500.00",
     "targetDate": "2024-04-21",
     "createdAt": "2024-03-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Pulpito",
@@ -237,7 +237,7 @@
     "targetAmount": "1200.00",
     "targetDate": "2024-06-30",
     "createdAt": "2024-05-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Reforma e Construção",
@@ -245,7 +245,7 @@
     "targetAmount": "5000.00",
     "targetDate": "2024-10-31",
     "createdAt": "2024-08-15",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Retiro de Pascoa",
@@ -253,7 +253,7 @@
     "targetAmount": "28000.00",
     "targetDate": "2024-04-30",
     "createdAt": "2024-02-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Tv Infantil",
@@ -261,7 +261,7 @@
     "targetAmount": "6500.00",
     "targetDate": "2024-12-31",
     "createdAt": "2024-10-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Venda da Churrasqueira de Frango",
@@ -269,7 +269,7 @@
     "targetAmount": "1500.00",
     "targetDate": "2025-03-31",
     "createdAt": "2025-02-10",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Venda da Churrasqueira de Frango Segunda Parcela",
@@ -277,7 +277,7 @@
     "targetAmount": "1500.00",
     "targetDate": "2025-06-30",
     "createdAt": "2025-05-01",
-    "status": "inativo"
+    "status": "encerrada"
   },
   {
     "name": "Venda de Bateria",
@@ -285,6 +285,6 @@
     "targetAmount": "1000.00",
     "targetDate": "2025-12-31",
     "createdAt": "2025-10-15",
-    "status": "inativo"
+    "status": "encerrada"
   }
 ]

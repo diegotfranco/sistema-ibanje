@@ -124,4 +124,42 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
     },
     controller.restore
   );
+
+  app.patch(
+    '/designated-funds/:id/encerrar',
+    {
+      schema: {
+        tags: ['Designated Funds'],
+        params: IdParamSchema,
+        response: {
+          200: DesignatedFundResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
+    },
+    controller.encerrar
+  );
+
+  app.patch(
+    '/designated-funds/:id/reabrir',
+    {
+      schema: {
+        tags: ['Designated Funds'],
+        params: IdParamSchema,
+        response: {
+          200: DesignatedFundResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
+    },
+    controller.reabrir
+  );
 }

@@ -1,10 +1,13 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, and } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { roles, modules, permissions, roleModulePermissions, users } from '../../db/schema.js';
+import { notDeleted, deletedClause, type DeletedFilter } from '../../lib/softDelete.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export async function listRoles(offset: number, limit: number) {
+export async function listRoles(offset: number, limit: number, deleted?: DeletedFilter) {
+  const condition = deletedClause(roles, deleted);
+
   const rows = await db
     .select({
       id: roles.id,
@@ -14,11 +17,12 @@ export async function listRoles(offset: number, limit: number) {
       createdAt: roles.createdAt
     })
     .from(roles)
+    .where(condition)
     .orderBy(roles.id)
     .offset(offset)
     .limit(limit);
 
-  const countResult = await db.select({ count: count() }).from(roles);
+  const countResult = await db.select({ count: count() }).from(roles).where(condition);
   const total = countResult[0]?.count ?? 0;
 
   return { rows, total };
@@ -34,7 +38,7 @@ export async function findRoleById(id: number) {
       createdAt: roles.createdAt
     })
     .from(roles)
-    .where(eq(roles.id, id))
+    .where(and(eq(roles.id, id), notDeleted(roles)))
     .limit(1);
 
   return result[0] ?? null;
@@ -81,8 +85,27 @@ export async function updateRole(
   return result[0] ?? null;
 }
 
-export async function deactivateRole(id: number) {
-  await db.update(roles).set({ status: 'inativo', updatedAt: new Date() }).where(eq(roles.id, id));
+export async function softDeleteRole(id: number) {
+  await db
+    .update(roles)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(roles.id, id), notDeleted(roles)));
+}
+
+export async function restoreRole(id: number) {
+  const result = await db
+    .update(roles)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(roles.id, id))
+    .returning({
+      id: roles.id,
+      name: roles.name,
+      description: roles.description,
+      status: roles.status,
+      createdAt: roles.createdAt
+    });
+
+  return result[0] ?? null;
 }
 
 export async function getRolePermissions(roleId: number) {

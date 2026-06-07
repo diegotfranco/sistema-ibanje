@@ -8,10 +8,11 @@ import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
 import { findEventById } from '../../../events/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
-import { assertPeriodEditable } from '../../../../lib/finance.js';
+import { assertPeriodEditable, assertEntryTransition } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
+import { FundStatus } from '@sistema-ibanje/shared';
 import {
   uploadFile,
   deleteFile,
@@ -66,6 +67,12 @@ async function validateEntry(data: {
   if (data.designatedFundId) {
     const fund = await findDesignatedFundById(data.designatedFundId);
     if (!fund) throw httpError(404, 'Designated fund not found');
+
+    if (fund.status === FundStatus.Ended) {
+      throw httpError(400, `A campanha "${fund.name}" está encerrada.`, {
+        fieldErrors: { designatedFundId: 'Campanha encerrada.' }
+      });
+    }
   }
 
   if (data.parentId) {
@@ -130,6 +137,8 @@ export async function updateExpenseEntry(
   if (!entry) return null;
 
   await assertPeriodEditable(body.date ?? entry.date);
+
+  if (body.status !== undefined) assertEntryTransition(entry.status, body.status);
 
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,

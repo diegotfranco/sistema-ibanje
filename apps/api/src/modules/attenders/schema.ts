@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
 
 // Month-granular fields use the human-readable `YYYY-MM` wire format; the service converts
@@ -12,7 +13,7 @@ const attenderFilterShape = {
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
-  status: z.enum(['ativo', 'inativo']).optional(),
+  status: z.enum(ATTENDER_STATUS_VALUES).optional(),
   // Diacritic/case-insensitive name search (server-side LIKE), like the categories list.
   q: z.string().trim().min(1).max(64).optional()
 };
@@ -31,7 +32,7 @@ export const AttendersExportPdfQuerySchema = z.object({
 
 export type AttenderFilters = {
   isMember?: boolean;
-  status?: 'ativo' | 'inativo';
+  status?: (typeof ATTENDER_STATUS_VALUES)[number];
   q?: string;
 };
 export type ListAttendersRequest = z.infer<typeof ListAttendersRequestSchema>;
@@ -64,6 +65,16 @@ export const CreateAttenderRequestSchema = z.object({
 
 export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial();
 
+// Drives the single guarded lifecycle endpoint (PATCH /attenders/:id/status). The service
+// enforces the legal transitions and the per-state requiredness of `exitDate` (required when
+// entering a formal-exit state) and validates `exitLetterId` against the attender's letters.
+export const ChangeAttenderStatusRequestSchema = z.object({
+  status: z.enum(ATTENDER_STATUS_VALUES),
+  exitDate: z.iso.date().nullable().optional(),
+  exitReason: z.string().max(256).nullable().optional(),
+  exitLetterId: z.number().int().positive().nullable().optional()
+});
+
 export const AttenderResponseSchema = z.object({
   id: z.number().int().positive(),
   userId: z.number().int().positive().nullable(),
@@ -79,6 +90,9 @@ export const AttenderResponseSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   status: z.string(),
+  exitDate: z.string().nullable(),
+  exitReason: z.string().nullable(),
+  exitLetterId: z.number().int().positive().nullable(),
   isMember: z.boolean(),
   baptismDate: z.string().nullable(),
   memberSince: z.string().nullable(),
@@ -142,6 +156,7 @@ export const AttenderDonationsEntriesResponseSchema = z.object({
 
 export type CreateAttenderRequest = z.infer<typeof CreateAttenderRequestSchema>;
 export type UpdateAttenderRequest = z.infer<typeof UpdateAttenderRequestSchema>;
+export type ChangeAttenderStatusRequest = z.infer<typeof ChangeAttenderStatusRequestSchema>;
 export type AttenderResponse = z.infer<typeof AttenderResponseSchema>;
 export type AttenderDonationsSummaryResponse = z.infer<
   typeof AttenderDonationsSummaryResponseSchema

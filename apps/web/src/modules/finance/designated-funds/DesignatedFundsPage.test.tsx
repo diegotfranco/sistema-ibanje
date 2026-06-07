@@ -14,7 +14,7 @@ const mockFunds = [
     description: 'Renovação da estrutura',
     targetAmount: '10000.00',
     targetDate: '2024-12-31',
-    status: 'ativo' as const,
+    status: 'ativa' as const,
     createdAt: '2024-06-01T10:00:00Z',
     updatedAt: '2024-06-01T10:00:00Z'
   },
@@ -24,7 +24,7 @@ const mockFunds = [
     description: 'Fundo para auxílio',
     targetAmount: '5000.00',
     targetDate: '2024-09-30',
-    status: 'ativo' as const,
+    status: 'ativa' as const,
     createdAt: '2024-06-01T09:00:00Z',
     updatedAt: '2024-06-01T09:00:00Z'
   }
@@ -92,7 +92,7 @@ describe('DesignatedFundsPage', () => {
     renderWithProviders(<DesignatedFundsPage />);
 
     await waitFor(() => {
-      const badges = screen.getAllByText(/ativo/i);
+      const badges = screen.getAllByText(/ativa/i);
       expect(badges.length).toBeGreaterThan(0);
     });
   });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RotateCcw } from 'lucide-react';
+import { Archive, RotateCcw } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
@@ -7,6 +7,8 @@ import { Pagination } from '@/components/Pagination';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
+import { FundStatus, type FundStatusValue } from '@sistema-ibanje/shared';
+import { FUND_STATUS_FILTER_OPTIONS, FUND_STATUS_LABELS } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
 import { DesignatedFundForm } from './DesignatedFundForm';
@@ -21,24 +23,30 @@ export default function DesignatedFundsPage() {
   const canDelete = hasPermission(perms, Module.DesignatedFunds, Action.Delete);
 
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<'ativo' | 'inativo' | undefined>(undefined);
+  const [status, setStatus] = useState<FundStatusValue | undefined>(undefined);
 
   const list = useDesignatedFunds({ page, status });
-  const { create, update, remove, restore } = useDesignatedFundMutations();
+  const { create, update, remove, encerrar, reabrir } = useDesignatedFundMutations();
 
   const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
-  // Reverse a soft-delete; only meaningful (and shown) on inactive funds. Gated by
-  // the same Delete permission as removal.
-  const restoreActions: CustomAction<DesignatedFundResponse>[] = canDelete
+  // Campaign lifecycle — distinct from delete. Encerrar closes a running campaign; Reabrir
+  // reopens a closed one. Gated by Update; each is shown only in the relevant state.
+  const lifecycleActions: CustomAction<DesignatedFundResponse>[] = canEdit
     ? [
         {
-          label: 'Restaurar',
+          label: 'Encerrar',
+          icon: <Archive size={16} />,
+          hidden: (row) => row.status !== FundStatus.Active,
+          onClick: (row) => encerrar.mutate(row.id)
+        },
+        {
+          label: 'Reabrir',
           icon: <RotateCcw size={16} />,
-          hidden: (row) => row.status !== 'inativo',
-          onClick: (row) => restore.mutate(row.id)
+          hidden: (row) => row.status !== FundStatus.Ended,
+          onClick: (row) => reabrir.mutate(row.id)
         }
       ]
     : [];
@@ -70,12 +78,7 @@ export default function DesignatedFundsPage() {
               id: 'status',
               header: 'Status',
               cell: (row) => <StatusBadge status={row.status} />,
-              filter: {
-                options: [
-                  { value: 'ativo', label: 'Ativos' },
-                  { value: 'inativo', label: 'Inativos' }
-                ]
-              }
+              filter: { options: FUND_STATUS_FILTER_OPTIONS }
             },
             {
               header: 'Meta',
@@ -93,7 +96,7 @@ export default function DesignatedFundsPage() {
           onCreate={canCreate ? () => setEditing('new') : undefined}
           onEdit={canEdit ? (r) => setEditing(r) : undefined}
           onDelete={canDelete ? (r) => setDeleting(r) : undefined}
-          customActions={restoreActions}
+          customActions={lifecycleActions}
           canCreate={canCreate}
           canEdit={canEdit}
           canDelete={canDelete}
@@ -126,7 +129,7 @@ export default function DesignatedFundsPage() {
             { label: 'Nome', value: row.name },
             {
               label: 'Status',
-              value: row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : '—',
+              value: FUND_STATUS_LABELS[row.status as FundStatusValue] ?? row.status ?? '—',
               hideEmpty: false
             },
             {
@@ -144,7 +147,7 @@ export default function DesignatedFundsPage() {
           tableId="designated-funds"
           filters={{ status }}
           onFilterChange={(_, v) => {
-            setStatus(v as 'ativo' | 'inativo' | undefined);
+            setStatus(v as FundStatusValue | undefined);
             setPage(1);
           }}
           pagination={paginationUI}

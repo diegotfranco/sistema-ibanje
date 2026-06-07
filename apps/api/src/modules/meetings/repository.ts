@@ -1,13 +1,14 @@
-import { eq, ne, count, desc, asc } from 'drizzle-orm';
+import { eq, count, desc, asc, and } from 'drizzle-orm';
 import type { MeetingTypeValue } from '@sistema-ibanje/shared';
 import { db } from '../../db/index.js';
 import { meetings, minutes, agendaItems } from '../../db/schema.js';
+import { notDeleted } from '../../lib/softDelete.js';
 
 export async function listMeetings(offset: number, limit: number) {
   const rows = await db
     .select()
     .from(meetings)
-    .where(ne(meetings.status, 'inativo'))
+    .where(notDeleted(meetings))
     .orderBy(desc(meetings.meetingDate))
     .offset(offset)
     .limit(limit);
@@ -15,13 +16,17 @@ export async function listMeetings(offset: number, limit: number) {
   const countResult = await db
     .select({ count: count() })
     .from(meetings)
-    .where(ne(meetings.status, 'inativo'));
+    .where(notDeleted(meetings));
 
   return { rows, total: countResult[0]?.count ?? 0 };
 }
 
 export async function findMeetingById(id: number) {
-  const result = await db.select().from(meetings).where(eq(meetings.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(meetings)
+    .where(and(eq(meetings.id, id), notDeleted(meetings)))
+    .limit(1);
   return result[0] ?? null;
 }
 
@@ -47,7 +52,7 @@ export async function updateMeeting(
   const result = await db
     .update(meetings)
     .set({ ...data, updatedAt: new Date() })
-    .where(eq(meetings.id, id))
+    .where(and(eq(meetings.id, id), notDeleted(meetings)))
     .returning();
   return result[0] ?? null;
 }
@@ -56,7 +61,7 @@ export async function listAgendaItemsForMeeting(meetingId: number) {
   return await db
     .select()
     .from(agendaItems)
-    .where(eq(agendaItems.meetingId, meetingId))
+    .where(and(eq(agendaItems.meetingId, meetingId), notDeleted(agendaItems)))
     .orderBy(asc(agendaItems.order));
 }
 
@@ -94,11 +99,11 @@ export async function replaceAgendaItems(
   });
 }
 
-export async function deactivateMeeting(id: number) {
+export async function softDeleteMeeting(id: number) {
   await db
     .update(meetings)
-    .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(meetings.id, id));
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(meetings.id, id), notDeleted(meetings)));
 }
 
 export async function hasMinutes(meetingId: number): Promise<boolean> {

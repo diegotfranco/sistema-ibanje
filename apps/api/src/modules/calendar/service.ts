@@ -74,11 +74,11 @@ export async function updateCalendarEntry(
   return buildResponse(updated);
 }
 
-export async function deactivateCalendarEntry(callerId: number, id: number): Promise<void | null> {
+export async function softDeleteCalendarEntry(callerId: number, id: number): Promise<void | null> {
   await assertPermission(callerId, Module.SecretaryCalendar, Action.Delete);
   const existing = await repo.findCalendarEntryById(id);
   if (!existing) return null;
-  await repo.deactivateCalendarEntry(id);
+  await repo.softDeleteCalendarEntry(id);
 }
 
 // ---- Merged feed (auth-only; no module permission) ----

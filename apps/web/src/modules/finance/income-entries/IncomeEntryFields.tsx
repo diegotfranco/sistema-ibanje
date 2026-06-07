@@ -12,7 +12,7 @@ import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
 import MoneyInput from '../components/MoneyInput';
 import { LinkPicker } from '../components/LinkPicker';
-import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
+import { ActiveStatus, EntryStatus, FundStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
@@ -29,7 +29,7 @@ interface Props {
 export function IncomeEntryFields({ control, errors, setValue }: Props) {
   const incomeCategories = useIncomeCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const designatedFunds = useDesignatedFunds({ limit: 200, status: FundStatus.Active });
   const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
@@ -48,7 +48,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
     (m) => m.status === ActiveStatus.Active && m.allowsInflow
   );
   const activeFunds = (designatedFunds.data?.data ?? []).filter(
-    (f) => f.status === ActiveStatus.Active
+    (f) => f.status === FundStatus.Active
   );
   const activeEvents = eventsList.data?.data ?? [];
   const activeAttenders = (attenders.data?.data ?? []).filter(

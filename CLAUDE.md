@@ -147,6 +147,29 @@ Registered after session + CSRF so `req.session.userId` is populated.
 
 ---
 
+## Status & soft-delete
+
+Two orthogonal axes — never overload one column with both jobs (the original `active_status` mistake):
+
+**1. Soft delete = `deletedAt timestamp` (nullable).** Means "this row shouldn't exist (data-entry mistake) — hide it everywhere." Restore = set back to `NULL`.
+
+- Shared filter: `notDeleted(table)` and `deletedClause(table, mode)` in `src/lib/softDelete.ts`. `mode` is `undefined` (live only — the default), `'only'` (trash view), or `'include'` (both; returns `undefined` so it drops straight into `.where()`).
+- Every `remove` is a soft delete: set `{ deletedAt: new Date(), updatedAt }` and **return 204**. `find*ById` / `list*` compose `notDeleted`/`deletedClause` in their WHERE.
+- `restore<Entity>` clears `deletedAt`; it deliberately does **NOT** compose `notDeleted` (it must target the deleted row) → returns the row, or `null`/404 when the id is unknown. Route is `PATCH /<resource>/:id/restore`, gated by `Action.Delete` (whoever can delete can undo), returning 200 + resource.
+- Tables with a unique name (`payment_methods`, `roles`) use a **partial** unique index `WHERE deleted_at IS NULL`, so a deleted row doesn't block re-creation. `restore` there wraps the repo call and maps `isUniqueViolation` → 409 (name reclaimed by an active row).
+- Soft-delete set: attenders, roles, payment methods, income/expense categories, designated funds, events, calendar entries, meetings, agenda items. **Excluded:** users (DELETE = deactivate, status-based), finance entries (void = `cancelada`, never hard-deleted), monthlyClosings/minutes, system seed tables.
+
+**2. Domain status = per-entity enums with real vocabulary + guarded transitions.** Models lifecycle/availability, not deletion.
+
+- `attenderStatus` (`ativo|inativo|desligado|transferido|falecido`) + `exitDate`/`exitReason`/`exitLetterId`; FSM `assertAttenderTransition` behind one guarded endpoint `PATCH /attenders/:id/status`.
+- `fundStatus` (`ativa|encerrada`); `encerrar`/`reabrir` flips it (gated by `Update`, distinct from delete/restore).
+- Reference data keeps `ativo/inativo` = available/retired.
+- **Pre-existing FSMs are single-purpose, leave their enum members alone:** `transactionStatus` (`pendente→paga→cancelada`), `closingStatus`, `minuteVersionStatus`. Behavior is still fair game — `assertEntryTransition(from, to)` in `src/lib/finance.ts` guards entry status moves (forbids un-void `cancelada→*` and un-confirm `paga→pendente`).
+
+**Frontend:** all status labels, badge colors, and filter-option lists live in `apps/web/src/lib/status.ts` (consumed by `StatusBadge`, every filter dropdown, `ClosingStatusCard`). The shared `useResourceMutations` exposes `restore`; `<TrashToggle>` flips a reference-data list between live rows and its "Lixeira" (passes `deleted: 'only'`, swaps create/edit/delete for Restaurar).
+
+---
+
 ## Email (Resend SDK)
 
 `resend.emails.send()` does **NOT** throw — it returns `{ data, error }`. Always funnel through the `send()` helper in `src/lib/email.ts` which checks both `result.error` and the try/catch.

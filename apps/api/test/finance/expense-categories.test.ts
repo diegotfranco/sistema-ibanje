@@ -154,6 +154,42 @@ describe('expense-categories module', () => {
     expect(res.statusCode).toBe(204);
   });
 
+  describe('trash & restore', () => {
+    it('lists the soft-deleted category only under ?deleted=only, then restores it (200)', async () => {
+      const trash = await app.inject({
+        method: 'GET',
+        url: '/expense-categories?limit=200&deleted=only',
+        headers: { cookie: admin.cookie }
+      });
+      expect(
+        trash.json<{ data: ExpenseCategoryRow[] }>().data.some((r) => r.id === categoryId)
+      ).toBe(true);
+
+      const restore = await app.inject({
+        method: 'PATCH',
+        url: `/expense-categories/${categoryId}/restore`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(restore.statusCode).toBe(200);
+
+      const live = await app.inject({
+        method: 'GET',
+        url: '/expense-categories?limit=200',
+        headers: { cookie: admin.cookie }
+      });
+      expect(
+        live.json<{ data: ExpenseCategoryRow[] }>().data.some((r) => r.id === categoryId)
+      ).toBe(true);
+
+      const missing = await app.inject({
+        method: 'PATCH',
+        url: '/expense-categories/999999/restore',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(missing.statusCode).toBe(404);
+    });
+  });
+
   describe('route gating', () => {
     it('blocks a user without the permission from listing (403)', async () => {
       const res = await app.inject({

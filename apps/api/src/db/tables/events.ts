@@ -12,13 +12,15 @@ export const events = pgTable(
     startTime: timestamp('start_time', { withTimezone: true }).notNull(),
     endTime: timestamp('end_time', { withTimezone: true }).notNull(),
     status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
     check('chk_event_end_after_start', sql`${table.endTime} > ${table.startTime}`),
     index('events_start_time_idx').on(table.startTime),
-    index('events_status_idx').on(table.status)
+    index('events_status_idx').on(table.status),
+    index('events_deleted_at_idx').on(table.deletedAt)
   ]
 );
 

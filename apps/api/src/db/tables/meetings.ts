@@ -22,12 +22,14 @@ export const meetings = pgTable(
     type: meetingType('type').notNull(),
     isPublic: boolean('is_public').default(false).notNull(),
     status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
     index('meetings_meeting_date_idx').on(table.meetingDate),
-    index('meetings_status_idx').on(table.status)
+    index('meetings_status_idx').on(table.status),
+    index('meetings_deleted_at_idx').on(table.deletedAt)
   ]
 );
 
@@ -43,10 +45,14 @@ export const agendaItems = pgTable(
     description: text('description'),
     createdByUserId: integer('created_by_user_id').references(() => users.id),
     status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [index('agenda_items_meeting_id_idx').on(table.meetingId)]
+  (table) => [
+    index('agenda_items_meeting_id_idx').on(table.meetingId),
+    index('agenda_items_deleted_at_idx').on(table.deletedAt)
+  ]
 );
 
 export const meetingAttendersPresent = pgTable(

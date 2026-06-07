@@ -4,7 +4,8 @@ import { paginatedSchema } from '../../../../lib/http-schemas.js';
 export const ListExpenseCategoriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(500).default(20),
-  q: z.string().trim().min(1).max(64).optional()
+  q: z.string().trim().min(1).max(64).optional(),
+  deleted: z.enum(['only', 'include']).optional()
 });
 
 export type ListExpenseCategoriesRequest = z.infer<typeof ListExpenseCategoriesRequestSchema>;

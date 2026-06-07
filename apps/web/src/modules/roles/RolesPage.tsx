@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import { Pencil, Plus, RotateCcw, ShieldCheck, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { TrashToggle } from '@/components/TrashToggle';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
@@ -27,7 +28,8 @@ export default function RolesPage() {
   const canEdit = hasPermission(perms, Module.Roles, Action.Update);
   const canDelete = hasPermission(perms, Module.Roles, Action.Delete);
 
-  const list = useRoles();
+  const [viewingTrash, setViewingTrash] = useState(false);
+  const list = useRoles({ deleted: viewingTrash ? 'only' : undefined });
   const mutations = useRoleMutations();
 
   const [editing, setEditing] = useState<RoleResponse | null | 'new'>(null);
@@ -52,13 +54,16 @@ export default function RolesPage() {
       <div className="p-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Cargos</CardTitle>
-            {canCreate && (
-              <Button size="sm" onClick={() => setEditing('new')}>
-                <Plus className="h-4 w-4" />
-                Novo
-              </Button>
-            )}
+            <CardTitle>{viewingTrash ? 'Cargos — Lixeira' : 'Cargos'}</CardTitle>
+            <div className="flex items-center gap-2">
+              {canDelete && <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />}
+              {!viewingTrash && canCreate && (
+                <Button size="sm" onClick={() => setEditing('new')}>
+                  <Plus className="h-4 w-4" />
+                  Novo
+                </Button>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
@@ -83,7 +88,7 @@ export default function RolesPage() {
                 {!list.isLoading && data.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      Nenhum cargo encontrado.
+                      {viewingTrash ? 'A lixeira está vazia.' : 'Nenhum cargo encontrado.'}
                     </TableCell>
                   </TableRow>
                 )}
@@ -98,34 +103,49 @@ export default function RolesPage() {
                       {(canEdit || canDelete) && (
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
-                            {canEdit && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setEditing(row)}
-                                aria-label="Editar"
-                                className="text-warning hover:text-warning/80">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canEdit && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setPermissionsTarget(row)}
-                                aria-label="Permissões">
-                                <ShieldCheck className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canDelete && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setDeleting(row)}
-                                aria-label="Remover"
-                                className="text-destructive hover:text-destructive/80">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                            {viewingTrash ? (
+                              canDelete && (
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => mutations.restore.mutate(row.id)}
+                                  aria-label="Restaurar"
+                                  title="Restaurar">
+                                  <RotateCcw className="h-4 w-4" />
+                                </Button>
+                              )
+                            ) : (
+                              <>
+                                {canEdit && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => setEditing(row)}
+                                    aria-label="Editar"
+                                    className="text-warning hover:text-warning/80">
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canEdit && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => setPermissionsTarget(row)}
+                                    aria-label="Permissões">
+                                    <ShieldCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                {canDelete && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={() => setDeleting(row)}
+                                    aria-label="Remover"
+                                    className="text-destructive hover:text-destructive/80">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </>
                             )}
                           </div>
                         </TableCell>

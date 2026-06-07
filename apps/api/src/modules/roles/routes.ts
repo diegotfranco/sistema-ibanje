@@ -111,6 +111,24 @@ export async function rolesRoutes(app: FastifyInstance) {
     controller.remove
   );
 
+  app.patch(
+    '/roles/:id/restore',
+    {
+      schema: {
+        tags: ['Roles'],
+        params: IdParamSchema,
+        response: {
+          200: RoleResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Roles, Action.Delete)]
+    },
+    controller.restore
+  );
+
   app.get(
     '/roles/:id/permissions',
     {

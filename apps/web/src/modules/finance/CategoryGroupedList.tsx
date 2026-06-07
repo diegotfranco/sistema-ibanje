@@ -30,6 +30,8 @@ interface Props<T extends CategoryLike> {
   onDelete: (row: T) => void;
   renderRowMeta?: (row: T) => ReactNode;
   createLabel?: string;
+  /** Extra controls rendered in the card header, left of the create button (e.g. a TrashToggle). */
+  headerActions?: ReactNode;
 }
 
 type SectionKey = number | 'orphans';
@@ -65,7 +67,8 @@ export function CategoryGroupedList<T extends CategoryLike>({
   onEdit,
   onDelete,
   renderRowMeta,
-  createLabel = 'Adicionar'
+  createLabel = 'Adicionar',
+  headerActions
 }: Props<T>) {
   const { groups, orphans } = useMemo(() => groupCategoriesByParent(items), [items]);
   const [collapsed, setCollapsed] = useState<Partial<Record<SectionKey, boolean>>>({});
@@ -307,12 +310,15 @@ export function CategoryGroupedList<T extends CategoryLike>({
     <Card className="pb-0">
       <CardHeaderRow>
         <CardTitle>{title}</CardTitle>
-        {canCreate && (
-          <Button onClick={onCreate} size="sm">
-            <Plus className="mr-1 h-4 w-4" />
-            {createLabel}
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {headerActions}
+          {canCreate && (
+            <Button onClick={onCreate} size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              {createLabel}
+            </Button>
+          )}
+        </div>
       </CardHeaderRow>
       <CardContent className="p-0">
         <DataTable

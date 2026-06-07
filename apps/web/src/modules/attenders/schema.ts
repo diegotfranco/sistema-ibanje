@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AdmissionMode } from '@sistema-ibanje/shared';
+import { AdmissionMode, ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 
 export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
@@ -44,6 +44,17 @@ export const AttenderFormSchema = z.object({
 
 export type AttenderFormValues = z.infer<typeof AttenderFormSchema>;
 
+// Drives the lifecycle dialog (PATCH /attenders/:id/status). exitDate is required by the server
+// when entering a formal-exit state; exitLetterId only applies to `transferido`.
+export const AttenderStatusChangeSchema = z.object({
+  status: z.enum(ATTENDER_STATUS_VALUES),
+  exitDate: z.string().optional().nullable(),
+  exitReason: z.string().max(256, 'Máximo de 256 caracteres').optional().nullable(),
+  exitLetterId: z.number().int().positive().optional().nullable()
+});
+
+export type AttenderStatusChangeValues = z.infer<typeof AttenderStatusChangeSchema>;
+
 export type AttenderResponse = {
   id: number;
   userId: number | null;
@@ -59,6 +70,9 @@ export type AttenderResponse = {
   email: string | null;
   phone: string | null;
   status: string;
+  exitDate: string | null;
+  exitReason: string | null;
+  exitLetterId: number | null;
   isMember: boolean;
   baptismDate: string | null;
   memberSince: string | null;

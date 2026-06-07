@@ -14,7 +14,7 @@ import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
 import MoneyInput from '../components/MoneyInput';
 import { LinkPicker } from '../components/LinkPicker';
-import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
+import { ActiveStatus, EntryStatus, FundStatus } from '@sistema-ibanje/shared';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
@@ -33,7 +33,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
   const isInstallment = useWatch({ control, name: 'isInstallment' });
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const designatedFunds = useDesignatedFunds({ limit: 200, status: FundStatus.Active });
   const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
@@ -50,7 +50,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
 
   const paymentMethodsList = (paymentMethods.data?.data ?? []).filter((m) => m.allowsOutflow);
   const designatedFundsList = (designatedFunds.data?.data ?? []).filter(
-    (f) => f.status === ActiveStatus.Active
+    (f) => f.status === FundStatus.Active
   );
   const eventsListData = eventsList.data?.data ?? [];
   const attendersList = (attenders.data?.data ?? []).filter(

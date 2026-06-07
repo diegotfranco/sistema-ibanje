@@ -1,6 +1,7 @@
 import { eq, count, and, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { attenders } from '../../db/schema.js';
+import { notDeleted } from '../../lib/softDelete.js';
 import type { AttenderFilters } from './schema.js';
 
 const ATTENDER_COLUMNS = {
@@ -19,6 +20,9 @@ const ATTENDER_COLUMNS = {
   email: attenders.email,
   phone: attenders.phone,
   status: attenders.status,
+  exitDate: attenders.exitDate,
+  exitReason: attenders.exitReason,
+  exitLetterId: attenders.exitLetterId,
   isMember: attenders.isMember,
   memberSince: attenders.memberSince,
   congregatingSince: attenders.congregatingSince,
@@ -35,11 +39,11 @@ function attenderNameFilter(q: string): SQL {
 }
 
 function attenderWhere(filters?: AttenderFilters): SQL | undefined {
-  const conditions: SQL[] = [];
+  const conditions: SQL[] = [notDeleted(attenders)];
   if (filters?.isMember !== undefined) conditions.push(eq(attenders.isMember, filters.isMember));
   if (filters?.status !== undefined) conditions.push(eq(attenders.status, filters.status));
   if (filters?.q) conditions.push(attenderNameFilter(filters.q));
-  return conditions.length ? and(...conditions) : undefined;
+  return and(...conditions);
 }
 
 export async function listAttenders(offset: number, limit: number, filters?: AttenderFilters) {
@@ -72,7 +76,7 @@ export async function findAttenderById(id: number) {
   const result = await db
     .select(ATTENDER_COLUMNS)
     .from(attenders)
-    .where(eq(attenders.id, id))
+    .where(and(eq(attenders.id, id), notDeleted(attenders)))
     .limit(1);
 
   return result[0] ?? null;
@@ -84,7 +88,7 @@ export async function findAttenderByUserId(
   const result = await db
     .select({ id: attenders.id, isMember: attenders.isMember })
     .from(attenders)
-    .where(eq(attenders.userId, userId))
+    .where(and(eq(attenders.userId, userId), notDeleted(attenders)))
     .limit(1);
 
   return result[0] ?? null;
@@ -114,12 +118,25 @@ export async function updateAttender(
   return result[0] ?? null;
 }
 
-export async function deactivateAttender(id: number) {
+export async function updateAttenderStatus(
+  id: number,
+  data: Pick<typeof attenders.$inferInsert, 'status' | 'exitDate' | 'exitReason' | 'exitLetterId'>
+) {
+  const result = await db
+    .update(attenders)
+    .set({ ...data, updatedAt: new Date() })
+    .where(and(eq(attenders.id, id), notDeleted(attenders)))
+    .returning(ATTENDER_COLUMNS);
+
+  return result[0] ?? null;
+}
+
+export async function softDeleteAttender(id: number) {
   await db
     .update(attenders)
     .set({
-      status: 'inativo',
+      deletedAt: new Date(),
       updatedAt: new Date()
     })
-    .where(eq(attenders.id, id));
+    .where(and(eq(attenders.id, id), notDeleted(attenders)));
 }

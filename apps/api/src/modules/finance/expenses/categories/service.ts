@@ -3,6 +3,7 @@ import { assertPermission } from '../../../../lib/permissions.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
+import type { DeletedFilter } from '../../../../lib/softDelete.js';
 import type {
   CreateExpenseCategoryRequest,
   UpdateExpenseCategoryRequest,
@@ -18,11 +19,12 @@ export async function listExpenseCategories(
   callerId: number,
   page: number,
   limit: number,
-  q?: string
+  q?: string,
+  deleted?: DeletedFilter
 ) {
   await assertPermission(callerId, Module.ExpenseCategories, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listExpenseCategories(offset, limit, q);
+  const { rows, total } = await repo.listExpenseCategories(offset, limit, q, deleted);
   return paginate(
     rows.map((r): ExpenseCategoryResponse => r),
     total,
@@ -58,12 +60,20 @@ export async function updateExpenseCategory(
   return repo.updateExpenseCategory(targetId, body);
 }
 
-export async function deactivateExpenseCategory(
+export async function softDeleteExpenseCategory(
   callerId: number,
   targetId: number
 ): Promise<void | null> {
   await assertPermission(callerId, Module.ExpenseCategories, Action.Delete);
   const category = await repo.findExpenseCategoryById(targetId);
   if (!category) return null;
-  await repo.deactivateExpenseCategory(targetId);
+  await repo.softDeleteExpenseCategory(targetId);
+}
+
+export async function restoreExpenseCategory(
+  callerId: number,
+  targetId: number
+): Promise<ExpenseCategoryResponse | null> {
+  await assertPermission(callerId, Module.ExpenseCategories, Action.Delete);
+  return repo.restoreExpenseCategory(targetId);
 }

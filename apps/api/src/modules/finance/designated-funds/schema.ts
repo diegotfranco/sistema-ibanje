@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { FUND_STATUS_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../../lib/http-schemas.js';
 
 export const ListDesignatedFundsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(500).default(20),
-  status: z.enum(['ativo', 'inativo']).optional()
+  status: z.enum(FUND_STATUS_VALUES).optional()
 });
 
 export const CreateDesignatedFundRequestSchema = z.object({

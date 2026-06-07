@@ -1,12 +1,15 @@
-import { eq, ne, count, desc, and, type SQL } from 'drizzle-orm';
+import { eq, count, desc, and, type SQL } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { events } from '../../db/schema.js';
+import { notDeleted } from '../../lib/softDelete.js';
 
 type EventInsert = Omit<typeof events.$inferInsert, 'id' | 'status' | 'createdAt' | 'updatedAt'>;
 type EventUpdate = Partial<EventInsert>;
 
 export async function listEvents(offset: number, limit: number, status?: 'ativo' | 'inativo') {
-  const where: SQL | undefined = status ? eq(events.status, status) : ne(events.status, 'inativo');
+  const where: SQL | undefined = status
+    ? and(notDeleted(events), eq(events.status, status))
+    : notDeleted(events);
 
   const rows = await db
     .select()
@@ -22,7 +25,11 @@ export async function listEvents(offset: number, limit: number, status?: 'ativo'
 }
 
 export async function findEventById(id: number) {
-  const result = await db.select().from(events).where(eq(events.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.id, id), notDeleted(events)))
+    .limit(1);
   return result[0] ?? null;
 }
 
@@ -35,14 +42,14 @@ export async function updateEvent(id: number, data: EventUpdate) {
   const result = await db
     .update(events)
     .set({ ...data, updatedAt: new Date() })
-    .where(and(eq(events.id, id), ne(events.status, 'inativo')))
+    .where(and(eq(events.id, id), notDeleted(events)))
     .returning();
   return result[0] ?? null;
 }
 
-export async function deactivateEvent(id: number) {
+export async function softDeleteEvent(id: number) {
   await db
     .update(events)
-    .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(events.id, id));
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(events.id, id), notDeleted(events)));
 }

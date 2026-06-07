@@ -230,7 +230,7 @@ describe('meetings', () => {
     expect(deleteRes.statusCode).toBe(403);
   });
 
-  it('soft-deletes a meeting (204): it leaves the list but stays fetchable as inativo', async () => {
+  it('soft-deletes a meeting (204): it leaves the list and is no longer fetchable', async () => {
     // Create a meeting
     const createRes = await app.inject({
       method: 'POST',
@@ -243,7 +243,7 @@ describe('meetings', () => {
     });
     const created = createRes.json<MeetingResponse>();
 
-    // Delete the meeting (soft delete → status 'inativo')
+    // Delete the meeting (soft delete → sets deleted_at; status is untouched).
     const deleteRes = await app.inject({
       method: 'DELETE',
       url: `/meetings/${created.id}`,
@@ -251,7 +251,7 @@ describe('meetings', () => {
     });
     expect(deleteRes.statusCode).toBe(204);
 
-    // The list excludes inactive meetings (repository filters status !== 'inativo').
+    // The list excludes soft-deleted meetings (repository filters deleted_at IS NULL).
     const listRes = await app.inject({
       method: 'GET',
       url: '/meetings?page=1&limit=100',
@@ -260,14 +260,13 @@ describe('meetings', () => {
     const list = listRes.json<{ data: MeetingResponse[] }>().data;
     expect(list.some((m) => m.id === created.id)).toBe(false);
 
-    // getById still returns the record, now flagged inactive.
+    // getById now 404s — a deleted record is gone, not merely flagged inactive.
     const getRes = await app.inject({
       method: 'GET',
       url: `/meetings/${created.id}`,
       headers: { cookie: admin.cookie }
     });
-    expect(getRes.statusCode).toBe(200);
-    expect(getRes.json<MeetingResponse>().status).toBe('inativo');
+    expect(getRes.statusCode).toBe(404);
   });
 
   it('validation negative: PUT agenda items with invalid body (empty items array) returns 400', async () => {

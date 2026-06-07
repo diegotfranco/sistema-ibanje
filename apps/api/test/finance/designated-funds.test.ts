@@ -6,8 +6,8 @@ import { reseedDb } from '../helpers/db.js';
 
 type FundRow = { id: number; name: string; status: string; targetAmount: string | null };
 
-// Covers the designated-funds CRUD lifecycle including the soft-delete → status-filter →
-// restore round-trip (both delete and restore are gated by Action.Delete) and the permission gate.
+// Covers the designated-funds CRUD lifecycle including the soft-delete → restore round-trip via
+// `deleted_at` (both delete and restore are gated by Action.Delete) and the permission gate.
 describe('designated-funds module', () => {
   let app: FastifyInstance;
   let admin: AuthCookies;
@@ -33,7 +33,7 @@ describe('designated-funds module', () => {
     fundId = fund.id;
     expect(fund).toMatchObject({
       name: 'Fundo de Teste',
-      status: 'ativo',
+      status: 'ativa',
       targetAmount: '1500.00'
     });
   });
@@ -83,7 +83,7 @@ describe('designated-funds module', () => {
     expect(res.statusCode).toBe(400);
   });
 
-  it('soft-deletes then restores, reflected by the status filter', async () => {
+  it('soft-deletes then restores via deleted_at, reflected by list visibility', async () => {
     const del = await app.inject({
       method: 'DELETE',
       url: `/designated-funds/${fundId}`,
@@ -91,27 +91,36 @@ describe('designated-funds module', () => {
     });
     expect(del.statusCode).toBe(204);
 
-    const inactive = await app.inject({
+    // A soft-deleted fund disappears from the list entirely (no status filter brings it back)
+    // and is no longer fetchable by id.
+    const listed = await app.inject({
       method: 'GET',
-      url: '/designated-funds?status=inativo&limit=500',
+      url: '/designated-funds?limit=500',
       headers: { cookie: admin.cookie }
     });
-    expect(inactive.json<{ data: FundRow[] }>().data.some((f) => f.id === fundId)).toBe(true);
+    expect(listed.json<{ data: FundRow[] }>().data.some((f) => f.id === fundId)).toBe(false);
 
-    const active = await app.inject({
+    const getDeleted = await app.inject({
       method: 'GET',
-      url: '/designated-funds?status=ativo&limit=500',
+      url: `/designated-funds/${fundId}`,
       headers: { cookie: admin.cookie }
     });
-    expect(active.json<{ data: FundRow[] }>().data.some((f) => f.id === fundId)).toBe(false);
+    expect(getDeleted.statusCode).toBe(404);
 
+    // Restore clears deleted_at; the fund becomes visible and fetchable again.
     const restore = await app.inject({
       method: 'PATCH',
       url: `/designated-funds/${fundId}/restore`,
       headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
     });
     expect(restore.statusCode).toBe(200);
-    expect(restore.json<FundRow>().status).toBe('ativo');
+
+    const listedAgain = await app.inject({
+      method: 'GET',
+      url: '/designated-funds?limit=500',
+      headers: { cookie: admin.cookie }
+    });
+    expect(listedAgain.json<{ data: FundRow[] }>().data.some((f) => f.id === fundId)).toBe(true);
   });
 
   it('404s when restoring an unknown fund', async () => {
@@ -121,6 +130,41 @@ describe('designated-funds module', () => {
       headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
     });
     expect(res.statusCode).toBe(404);
+  });
+
+  // Campaign lifecycle — orthogonal to delete/restore. encerrar/reabrir flip fundStatus.
+  it('encerra and reabre a campaign, flipping fundStatus (ativa ↔ encerrada)', async () => {
+    const encerrar = await app.inject({
+      method: 'PATCH',
+      url: `/designated-funds/${fundId}/encerrar`,
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+    });
+    expect(encerrar.statusCode).toBe(200);
+    expect(encerrar.json<FundRow>().status).toBe('encerrada');
+
+    // It stays listed (encerrada ≠ deleted) and is filterable by status.
+    const ended = await app.inject({
+      method: 'GET',
+      url: '/designated-funds?status=encerrada&limit=500',
+      headers: { cookie: admin.cookie }
+    });
+    expect(ended.json<{ data: FundRow[] }>().data.some((f) => f.id === fundId)).toBe(true);
+
+    // Encerrar again is a no-op conflict.
+    const again = await app.inject({
+      method: 'PATCH',
+      url: `/designated-funds/${fundId}/encerrar`,
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+    });
+    expect(again.statusCode).toBe(409);
+
+    const reabrir = await app.inject({
+      method: 'PATCH',
+      url: `/designated-funds/${fundId}/reabrir`,
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+    });
+    expect(reabrir.statusCode).toBe(200);
+    expect(reabrir.json<FundRow>().status).toBe('ativa');
   });
 
   describe('route gating', () => {

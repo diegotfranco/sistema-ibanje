@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import type { DeletedFilter } from '@/lib/status';
 import type { RoleFormValues, RolePermissionEntry, RoleResponse } from './schema';
 
 const BASE = '/roles';
@@ -12,34 +13,19 @@ function describeError(err: unknown, fallback: string) {
   return fallback;
 }
 
-export function useRoles() {
-  return useResourceList<RoleResponse>(BASE, KEY);
+export function useRoles({ deleted }: { deleted?: DeletedFilter } = {}) {
+  return useResourceList<RoleResponse>(BASE, KEY, { ...(deleted && { deleted }) });
 }
 
 export function useRoleMutations() {
-  const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: KEY });
-
-  const { create, update } = useResourceMutations<
-    RoleResponse,
-    RoleFormValues,
-    Partial<RoleFormValues>
-  >(BASE, KEY, {
+  // The shared hook supplies create/update/remove/restore with correct cache invalidation
+  // (keyed by [basePath, ...KEY]); restore hits PATCH /roles/:id/restore.
+  return useResourceMutations<RoleResponse, RoleFormValues, Partial<RoleFormValues>>(BASE, KEY, {
     created: 'Cargo cadastrado.',
     updated: 'Cargo atualizado.',
-    removed: 'Cargo removido.'
+    removed: 'Cargo removido.',
+    restored: 'Cargo restaurado.'
   });
-
-  const remove = useMutation({
-    mutationFn: (id: number) => api.delete(`${BASE}/${id}`),
-    onSuccess: () => {
-      invalidate();
-      toast.success('Cargo removido.');
-    },
-    onError: (err) => toast.error(describeError(err, 'Erro ao remover cargo.'))
-  });
-
-  return { create, update, remove };
 }
 
 export function useRolePermissions(roleId: number | null) {

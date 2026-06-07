@@ -8,8 +8,10 @@ import type { IdParam } from '../../../../lib/validation.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit, q } = req.query as ListExpenseCategoriesRequest;
-  return reply.send(await service.listExpenseCategories(req.session.userId!, page, limit, q));
+  const { page, limit, q, deleted } = req.query as ListExpenseCategoriesRequest;
+  return reply.send(
+    await service.listExpenseCategories(req.session.userId!, page, limit, q, deleted)
+  );
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {
@@ -34,7 +36,14 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const result = await service.deactivateExpenseCategory(req.session.userId!, id);
+  const result = await service.softDeleteExpenseCategory(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Expense category not found' });
   return reply.code(204).send();
+}
+
+export async function restore(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const category = await service.restoreExpenseCategory(req.session.userId!, id);
+  if (!category) return reply.code(404).send({ message: 'Expense category not found' });
+  return reply.send(category);
 }

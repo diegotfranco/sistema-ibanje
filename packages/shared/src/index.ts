@@ -89,6 +89,44 @@ export const ActiveStatus = {
 } as const;
 export type ActiveStatusValue = (typeof ActiveStatus)[keyof typeof ActiveStatus];
 
+// Member lifecycle. `ativo`/`inativo` are reversible attendance states; `desligado`/`transferido`/
+// `falecido` are formal exits carrying exit metadata (date, reason, optional transfer letter).
+// Orthogonal to soft-delete (`deletedAt`): a deleted row is a data-entry mistake, not an exit.
+export const AttenderStatus = {
+  Active: 'ativo',
+  Inactive: 'inativo',
+  Dismissed: 'desligado',
+  Transferred: 'transferido',
+  Deceased: 'falecido'
+} as const;
+export type AttenderStatusValue = (typeof AttenderStatus)[keyof typeof AttenderStatus];
+export const ATTENDER_STATUS_VALUES = [
+  AttenderStatus.Active,
+  AttenderStatus.Inactive,
+  AttenderStatus.Dismissed,
+  AttenderStatus.Transferred,
+  AttenderStatus.Deceased
+] as const satisfies readonly AttenderStatusValue[];
+// Formal-exit states: entering one records exit metadata; they can only return to `ativo`
+// (reactivation), never directly to another terminal state.
+export const ATTENDER_TERMINAL_STATUSES = [
+  AttenderStatus.Dismissed,
+  AttenderStatus.Transferred,
+  AttenderStatus.Deceased
+] as const satisfies readonly AttenderStatusValue[];
+
+// Designated-fund (campaign) lifecycle — feminine to agree with "campanha". `encerrada` = the
+// campaign legitimately ended (goal/deadline reached); distinct from soft-delete (`deletedAt`).
+export const FundStatus = {
+  Active: 'ativa',
+  Ended: 'encerrada'
+} as const;
+export type FundStatusValue = (typeof FundStatus)[keyof typeof FundStatus];
+export const FUND_STATUS_VALUES = [
+  FundStatus.Active,
+  FundStatus.Ended
+] as const satisfies readonly FundStatusValue[];
+
 export const EntryStatus = {
   Pending: 'pendente',
   Paid: 'paga',

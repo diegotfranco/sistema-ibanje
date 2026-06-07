@@ -107,6 +107,77 @@ describe('payment-methods module', () => {
     expect(res.statusCode).toBe(204);
   });
 
+  describe('trash & restore', () => {
+    it('lists the soft-deleted method only under ?deleted=only', async () => {
+      const live = await app.inject({
+        method: 'GET',
+        url: '/payment-methods?limit=200',
+        headers: { cookie: admin.cookie }
+      });
+      expect(live.json<{ data: PmRow[] }>().data.some((r) => r.id === pmId)).toBe(false);
+
+      const trash = await app.inject({
+        method: 'GET',
+        url: '/payment-methods?limit=200&deleted=only',
+        headers: { cookie: admin.cookie }
+      });
+      expect(trash.json<{ data: PmRow[] }>().data.some((r) => r.id === pmId)).toBe(true);
+    });
+
+    it('restores the method (200) and 404s an unknown id', async () => {
+      const res = await app.inject({
+        method: 'PATCH',
+        url: `/payment-methods/${pmId}/restore`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(res.statusCode).toBe(200);
+
+      const live = await app.inject({
+        method: 'GET',
+        url: '/payment-methods?limit=200',
+        headers: { cookie: admin.cookie }
+      });
+      expect(live.json<{ data: PmRow[] }>().data.some((r) => r.id === pmId)).toBe(true);
+
+      const missing = await app.inject({
+        method: 'PATCH',
+        url: '/payment-methods/999999/restore',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(missing.statusCode).toBe(404);
+    });
+
+    it('rejects a restore that collides with an active name (409)', async () => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/payment-methods',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: { name: 'Colisão', allowsInflow: true }
+      });
+      const id = created.json<PmRow>().id;
+      await app.inject({
+        method: 'DELETE',
+        url: `/payment-methods/${id}`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      // A new active method reclaims the freed name (partial-unique index allows it).
+      const reclaim = await app.inject({
+        method: 'POST',
+        url: '/payment-methods',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: { name: 'Colisão', allowsInflow: true }
+      });
+      expect(reclaim.statusCode).toBe(201);
+
+      const restore = await app.inject({
+        method: 'PATCH',
+        url: `/payment-methods/${id}/restore`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
+      });
+      expect(restore.statusCode).toBe(409);
+    });
+  });
+
   describe('route gating', () => {
     it('blocks a user without the permission from listing (403)', async () => {
       const res = await app.inject({

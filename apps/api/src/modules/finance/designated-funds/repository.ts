@@ -1,6 +1,8 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, and } from 'drizzle-orm';
+import type { FundStatusValue } from '@sistema-ibanje/shared';
 import { db } from '../../../db/index.js';
 import { designatedFunds } from '../../../db/schema.js';
+import { notDeleted } from '../../../lib/softDelete.js';
 
 const selectFields = {
   id: designatedFunds.id,
@@ -12,12 +14,10 @@ const selectFields = {
   createdAt: designatedFunds.createdAt
 };
 
-export async function listDesignatedFunds(
-  offset: number,
-  limit: number,
-  status?: 'ativo' | 'inativo'
-) {
-  const condition = status ? eq(designatedFunds.status, status) : undefined;
+export async function listDesignatedFunds(offset: number, limit: number, status?: FundStatusValue) {
+  const condition = status
+    ? and(notDeleted(designatedFunds), eq(designatedFunds.status, status))
+    : notDeleted(designatedFunds);
 
   const rows = await db
     .select(selectFields)
@@ -35,7 +35,7 @@ export async function findDesignatedFundById(id: number) {
   const result = await db
     .select(selectFields)
     .from(designatedFunds)
-    .where(eq(designatedFunds.id, id))
+    .where(and(eq(designatedFunds.id, id), notDeleted(designatedFunds)))
     .limit(1);
 
   return result[0] ?? null;
@@ -69,17 +69,30 @@ export async function updateDesignatedFund(
   return result[0] ?? null;
 }
 
-export async function deactivateDesignatedFund(id: number) {
-  await db
-    .update(designatedFunds)
-    .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(designatedFunds.id, id));
-}
-
-export async function reactivateDesignatedFund(id: number) {
+// Campaign lifecycle flip (ativa ↔ encerrada). Orthogonal to soft-delete — only touches `status`.
+export async function updateDesignatedFundStatus(id: number, status: FundStatusValue) {
   const result = await db
     .update(designatedFunds)
-    .set({ status: 'ativo', updatedAt: new Date() })
+    .set({ status, updatedAt: new Date() })
+    .where(and(eq(designatedFunds.id, id), notDeleted(designatedFunds)))
+    .returning(selectFields);
+
+  return result[0] ?? null;
+}
+
+export async function softDeleteDesignatedFund(id: number) {
+  await db
+    .update(designatedFunds)
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(designatedFunds.id, id), notDeleted(designatedFunds)));
+}
+
+// Restore clears `deletedAt`. It must target an already-deleted row, so it deliberately
+// does NOT compose `notDeleted` — returning the row, or null when the id doesn't exist.
+export async function restoreDesignatedFund(id: number) {
+  const result = await db
+    .update(designatedFunds)
+    .set({ deletedAt: null, updatedAt: new Date() })
     .where(eq(designatedFunds.id, id))
     .returning(selectFields);
 

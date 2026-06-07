@@ -31,7 +31,7 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const result = await service.deactivateEvent(req.session.userId!, id);
+  const result = await service.softDeleteEvent(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Event not found' });
   return reply.code(204).send();
 }

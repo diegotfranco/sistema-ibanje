@@ -1,9 +1,10 @@
 import * as repo from './repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
-import { httpError } from '../../lib/errors.js';
+import { httpError, isUniqueViolation } from '../../lib/errors.js';
 import { paginate } from '../../lib/pagination.js';
 import { db } from '../../db/index.js';
+import type { DeletedFilter } from '../../lib/softDelete.js';
 import type {
   CreateRoleRequest,
   UpdateRoleRequest,
@@ -12,11 +13,16 @@ import type {
   RolePermissionResponse
 } from './schema.js';
 
-export async function listRoles(callerId: number, page: number, limit: number) {
+export async function listRoles(
+  callerId: number,
+  page: number,
+  limit: number,
+  deleted?: DeletedFilter
+) {
   await assertPermission(callerId, Module.Roles, Action.View);
 
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listRoles(offset, limit);
+  const { rows, total } = await repo.listRoles(offset, limit, deleted);
 
   return paginate(
     rows.map((r): RoleResponse => r),
@@ -52,16 +58,37 @@ export async function updateRole(
   return repo.updateRole(targetId, body);
 }
 
-export async function deactivateRole(callerId: number, targetId: number): Promise<void | null> {
+export async function softDeleteRole(callerId: number, targetId: number): Promise<void | null> {
   await assertPermission(callerId, Module.Roles, Action.Delete);
 
   const role = await repo.findRoleById(targetId);
   if (!role) return null;
 
   const hasUsers = await repo.roleHasActiveUsers(targetId);
-  if (hasUsers) throw httpError(409, 'Cannot deactivate a role that has users assigned to it');
+  if (hasUsers) throw httpError(409, 'Cannot delete a role that has users assigned to it');
 
-  await repo.deactivateRole(targetId);
+  await repo.softDeleteRole(targetId);
+}
+
+export async function restoreRole(
+  callerId: number,
+  targetId: number
+): Promise<RoleResponse | null> {
+  await assertPermission(callerId, Module.Roles, Action.Delete);
+  try {
+    return await repo.restoreRole(targetId);
+  } catch (err) {
+    if (isUniqueViolation(err)) {
+      throw httpError(
+        409,
+        'Já existe um registro ativo com este nome. Renomeie o registro antes de restaurá-lo.',
+        {
+          fieldErrors: { name: 'Nome já em uso por um registro ativo.' }
+        }
+      );
+    }
+    throw err;
+  }
 }
 
 export async function getRolePermissions(id: number): Promise<RolePermissionResponse[] | null> {

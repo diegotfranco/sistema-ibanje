@@ -2,6 +2,7 @@ import {
   findMonthlyClosingByPeriod,
   findLatestNonAbertoClosing
 } from '../modules/finance/monthly-closings/repository.js';
+import { EntryStatus, type EntryStatusValue } from '@sistema-ibanje/shared';
 import { httpError } from './errors.js';
 
 export function deriveReferenceDateFromDeposit(depositISO: string): string {
@@ -55,5 +56,27 @@ export async function assertPeriodEditable(referenceDate: string): Promise<void>
         `Não é permitido lançar para um período mais de um mês à frente do último fechamento (último: ${latestStr}).`
       );
     }
+  }
+}
+
+// Legal moves for a finance entry's `transactionStatus` (income & expense share the same FSM).
+// A new entry starts `pendente`; confirming it makes it `paga`; either can be voided to
+// `cancelada`, which is terminal. We deliberately forbid un-voiding (`cancelada → *`) and
+// un-confirming (`paga → pendente`): an entry that already counted in a period must not silently
+// flip back. To "undo" a void, the operator re-creates the entry — preserving the ledger trail.
+const ENTRY_TRANSITIONS: Record<EntryStatusValue, readonly EntryStatusValue[]> = {
+  [EntryStatus.Pending]: [EntryStatus.Paid, EntryStatus.Cancelled],
+  [EntryStatus.Paid]: [EntryStatus.Cancelled],
+  [EntryStatus.Cancelled]: []
+};
+
+// Throws 409 when `to` is not reachable from `from`. A no-op transition (`from === to`) is allowed
+// so a plain field edit that re-sends the current status doesn't trip the guard.
+export function assertEntryTransition(from: EntryStatusValue, to: EntryStatusValue): void {
+  if (from === to) return;
+  if (!ENTRY_TRANSITIONS[from].includes(to)) {
+    throw httpError(409, `Transição de status inválida: ${from} → ${to}.`, {
+      fieldErrors: { status: `Não é possível mudar de "${from}" para "${to}".` }
+    });
   }
 }
