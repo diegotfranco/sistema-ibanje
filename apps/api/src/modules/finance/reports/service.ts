@@ -10,6 +10,13 @@ import {
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
 import { httpError } from '../../../lib/errors.js';
+import { getChurchSettings } from '../../church-settings/repository.js';
+import {
+  toChurchPdfData,
+  loadChurchLogo,
+  type ChurchPdfData,
+  type PdfLogo
+} from '../../../lib/pdf/church.js';
 import { FinancialStatementPdf, DetailedFinancialStatementPdf } from './pdf-template.js';
 import type {
   IncomeReportResponse,
@@ -428,13 +435,24 @@ export async function getEventDetail(
   }
 }
 
+async function loadChurchForPdf(): Promise<{ church: ChurchPdfData; logo?: PdfLogo }> {
+  const settings = await getChurchSettings();
+  if (!settings) throw httpError(409, 'Church settings not initialized');
+  return { church: toChurchPdfData(settings), logo: await loadChurchLogo(settings.logoPath) };
+}
+
 export async function renderFinancialStatementPdf(
   callerId: number,
   month: string
 ): Promise<Buffer> {
   const data = await getFinancialStatement(callerId, month);
+  const { church, logo } = await loadChurchForPdf();
   return renderToBuffer(
-    React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
+    React.createElement(FinancialStatementPdf, {
+      data,
+      church,
+      logo
+    }) as React.ReactElement<DocumentProps>
   );
 }
 
@@ -612,9 +630,12 @@ export async function renderDetailedFinancialStatementPdf(
   month: string
 ): Promise<Buffer> {
   const data = await getDetailedFinancialStatement(callerId, month);
+  const { church, logo } = await loadChurchForPdf();
   return renderToBuffer(
     React.createElement(DetailedFinancialStatementPdf, {
-      data
+      data,
+      church,
+      logo
     }) as React.ReactElement<DocumentProps>
   );
 }

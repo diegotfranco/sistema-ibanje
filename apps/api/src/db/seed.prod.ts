@@ -12,7 +12,11 @@
  * Safety: refuses to run if any of the target tables already have rows.
  */
 import { sql as drizzleSql } from 'drizzle-orm';
+import * as argon2 from 'argon2';
 import { db, sql } from './index.js';
+import { env } from '../config/env.js';
+import { ADMIN_ROLE_NAME } from '../lib/constants.js';
+import { copyRolePermissionsToUser } from '../modules/users/repository.js';
 import {
   roles,
   permissions,
@@ -24,7 +28,8 @@ import {
   expenseCategories,
   financeSettings,
   churchSettings,
-  minuteTemplates
+  minuteTemplates,
+  users
 } from './schema.js';
 import {
   SEED_ROLES,
@@ -43,7 +48,21 @@ import {
 } from './seed-data.js';
 import { SEED_MINUTE_TEMPLATES } from './seed-templates.js';
 
-export async function seedProd() {
+export type AdminConfig = { email: string; password: string; name?: string };
+
+/**
+ * Resolve the first-admin config from the validated env. Returns undefined when
+ * the bootstrap vars are not set, in which case the seed inserts structural data
+ * only. Tests pass an explicit config instead.
+ */
+function adminConfigFromEnv(): AdminConfig | undefined {
+  if (env.ADMIN_EMAIL && env.ADMIN_PASSWORD) {
+    return { email: env.ADMIN_EMAIL, password: env.ADMIN_PASSWORD, name: env.ADMIN_NAME };
+  }
+  return undefined;
+}
+
+export async function seedProd(admin: AdminConfig | undefined = adminConfigFromEnv()) {
   console.log('Production seed starting...');
 
   await db.transaction(async (tx) => {
@@ -138,6 +157,36 @@ export async function seedProd() {
         defaultAgendaItems: t.defaultAgendaItems
       }))
     );
+
+    // --- First admin (env-driven, optional) ----------------------------------
+    // Bootstraps an initial Administrador so the system is usable on first boot.
+    // Set ADMIN_EMAIL + ADMIN_PASSWORD to enable; otherwise structural data is
+    // seeded and the first admin must be created some other way.
+    if (admin) {
+      const adminRole = roleByName[ADMIN_ROLE_NAME];
+      if (!adminRole) {
+        throw new Error(`Seed role "${ADMIN_ROLE_NAME}" not found — cannot create first admin.`);
+      }
+      const passwordHash = await argon2.hash(admin.password + env.ARGON2_PEPPER, {
+        type: argon2.argon2id
+      });
+      const [adminUser] = await tx
+        .insert(users)
+        .values({
+          name: admin.name ?? env.ADMIN_NAME,
+          email: admin.email,
+          passwordHash,
+          roleId: adminRole.id,
+          status: 'ativo'
+        })
+        .returning();
+      await copyRolePermissionsToUser(adminRole.id, adminUser.id, tx);
+      console.log(`First admin created: ${admin.email}`);
+    } else {
+      console.warn(
+        'No admin created — set ADMIN_EMAIL and ADMIN_PASSWORD to bootstrap the first Administrador.'
+      );
+    }
   });
 
   console.log('Production seed complete.');

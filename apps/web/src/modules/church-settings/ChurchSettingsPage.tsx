@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useChurchSettings, useUpdateChurchSettings } from './useChurchSettings';
+import { LogoField } from './LogoField';
+import { FinanceSettingsCard } from '@/modules/finance/finance-settings/FinanceSettingsCard';
 import type { ChurchSettingsFormValues } from './schema';
 import { ChurchSettingsFormSchema } from './schema';
 
@@ -72,6 +74,23 @@ export default function ChurchSettingsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Logo — uploaded independently of the form (immediate upload/remove) */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Logo</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LogoField
+            logoPath={churchSettings?.logoPath ?? null}
+            version={churchSettings?.updatedAt ?? ''}
+          />
+          <p className="text-sm text-muted-foreground mt-3">
+            Aparece no cabeçalho dos documentos impressos (atas, demonstrativos, cartas). PNG ou
+            JPEG, até 5 MB.
+          </p>
+        </CardContent>
+      </Card>
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Identificação */}
         <Card>
@@ -263,6 +282,9 @@ export default function ChurchSettingsPage() {
           {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
         </Button>
       </form>
+
+      {/* Finance settings — separate endpoint/permission-shared surface, own action */}
+      <FinanceSettingsCard />
     </div>
   );
 }

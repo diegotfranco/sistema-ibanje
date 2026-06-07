@@ -51,6 +51,19 @@ export type StoredFile = {
   contentLength: number | null;
 };
 
+// Buffers the whole object into memory. Use for small files only (e.g. logos
+// embedded into server-rendered PDFs, where @react-pdf/renderer's <Image> needs
+// bytes, not a stream). For arbitrary downloads prefer getFileStream.
+export async function getFileBuffer(key: string): Promise<Buffer | null> {
+  const file = await getFileStream(key);
+  if (!file) return null;
+  const chunks: Buffer[] = [];
+  for await (const chunk of file.body) {
+    chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks);
+}
+
 // MinIO stays on an internal Docker DNS name, so presigned URLs are unreachable
 // from browsers; instead the API streams stored files back through authenticated routes.
 export async function getFileStream(key: string): Promise<StoredFile | null> {

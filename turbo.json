@@ -1,7 +1,16 @@
 {
   "$schema": "https://v2-9-14.turborepo.dev/schema.json",
   "ui": "tui",
-  "globalEnv": ["DATABASE_URL", "REDIS_URL", "MINIO_ENDPOINT", "CORS_ORIGIN", "NODE_ENV"],
+  "globalEnv": [
+    "DATABASE_URL",
+    "REDIS_URL",
+    "MINIO_ENDPOINT",
+    "CORS_ORIGIN",
+    "NODE_ENV",
+    "ADMIN_EMAIL",
+    "ADMIN_PASSWORD",
+    "ADMIN_NAME"
+  ],
   "tasks": {
     "topo": {
       "dependsOn": ["^topo"]
@@ -23,7 +32,7 @@
         "MINIO_SECRET_KEY",
         "MINIO_BUCKET",
         "RESEND_API_KEY",
-        "EMAIL_FROM_NOREPLY"
+        "EMAIL_FROM_ADDRESS"
       ],
       "outputs": []
     },

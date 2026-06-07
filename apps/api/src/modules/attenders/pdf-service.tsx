@@ -1,5 +1,3 @@
-import path from 'node:path';
-import { createRequire } from 'node:module';
 import React from 'react';
 import {
   renderToBuffer,
@@ -7,39 +5,38 @@ import {
   Document,
   Page,
   View,
-  Text,
-  Font
+  Text
 } from '@react-pdf/renderer';
-import { createTw } from 'react-pdf-tailwind';
 import * as repo from './repository.js';
 import {
   getAttenderDonationsSummary,
   getAttenderDonationsEntries,
   listAttendersForExport
 } from './service.js';
+import { getChurchSettings } from '../church-settings/repository.js';
+import { httpError } from '../../lib/errors.js';
+import { tw } from '../../lib/pdf/theme.js';
+import { Letterhead } from '../../lib/pdf/Letterhead.js';
+import { PageFooter } from '../../lib/pdf/PageFooter.js';
+import {
+  toChurchPdfData,
+  loadChurchLogo,
+  type ChurchPdfData,
+  type PdfLogo
+} from '../../lib/pdf/church.js';
 import type {
   AttenderDonationsSummaryResponse,
   AttenderDonationsEntriesResponse,
   AttenderFilters
 } from './schema.js';
 
-// Resolve @fontsource via Node module resolution rather than a hardcoded relative path —
-// the dev server runs from source (tsx) while prod runs from dist/, so a fixed `../..` chain
-// points at the wrong depth in one of them. require.resolve walks node_modules in both.
-const require = createRequire(import.meta.url);
-const FONTSOURCE = path.dirname(path.dirname(require.resolve('@fontsource/roboto/package.json')));
+type ChurchProps = { church: ChurchPdfData; logo?: PdfLogo };
 
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-400-normal.woff'), fontWeight: 400 },
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-700-normal.woff'), fontWeight: 700 }
-  ]
-});
-
-const tw = createTw({
-  fontFamily: { roboto: ['Roboto'] }
-});
+async function loadChurchForPdf(): Promise<ChurchProps> {
+  const settings = await getChurchSettings();
+  if (!settings) throw httpError(409, 'Church settings not initialized');
+  return { church: toChurchPdfData(settings), logo: await loadChurchLogo(settings.logoPath) };
+}
 
 function formatBRL(value: string): string {
   const num = parseFloat(value);
@@ -80,15 +77,18 @@ function PdfHeader({ title, generatedAt }: { title: string; generatedAt: string 
 function YearDonationsPdf({
   attenderName,
   summary,
-  generatedAt
+  generatedAt,
+  church,
+  logo
 }: {
   attenderName: string;
   summary: AttenderDonationsSummaryResponse;
   generatedAt: string;
-}) {
+} & ChurchProps) {
   return (
     <Document>
-      <Page size="A4" style={tw('font-roboto p-10 text-xs text-gray-900')}>
+      <Page size="A4" style={tw('font-roboto p-10 pb-14 text-xs text-gray-900')}>
+        <Letterhead church={church} logo={logo} />
         <PdfHeader
           title={`Contribuições ${summary.year} — ${attenderName}`}
           generatedAt={generatedAt}
@@ -119,6 +119,7 @@ function YearDonationsPdf({
           <Text style={tw('text-sm font-bold')}>Total do ano</Text>
           <Text style={tw('text-sm font-bold')}>{formatBRL(summary.grandTotal)}</Text>
         </View>
+        <PageFooter churchName={church.name} />
       </Page>
     </Document>
   );
@@ -128,15 +129,18 @@ function YearDonationsPdf({
 function MonthDonationsPdf({
   attenderName,
   data,
-  generatedAt
+  generatedAt,
+  church,
+  logo
 }: {
   attenderName: string;
   data: AttenderDonationsEntriesResponse;
   generatedAt: string;
-}) {
+} & ChurchProps) {
   return (
     <Document>
-      <Page size="A4" style={tw('font-roboto p-10 text-xs text-gray-900')}>
+      <Page size="A4" style={tw('font-roboto p-10 pb-14 text-xs text-gray-900')}>
+        <Letterhead church={church} logo={logo} />
         <PdfHeader
           title={`Contribuições — ${data.label} — ${attenderName}`}
           generatedAt={generatedAt}
@@ -169,6 +173,7 @@ function MonthDonationsPdf({
           <Text style={tw('text-sm font-bold')}>Total do mês</Text>
           <Text style={tw('text-sm font-bold')}>{formatBRL(data.total)}</Text>
         </View>
+        <PageFooter churchName={church.name} />
       </Page>
     </Document>
   );
@@ -195,6 +200,8 @@ export async function renderAttenderDonationsPdf(
     .replace(/\s+/g, '-')
     .replace(/[^a-z0-9-]/g, '');
 
+  const { church, logo } = await loadChurchForPdf();
+
   let element: React.ReactElement<DocumentProps>;
   let suffix: string;
 
@@ -204,7 +211,9 @@ export async function renderAttenderDonationsPdf(
     element = React.createElement(MonthDonationsPdf, {
       attenderName: attender.name,
       data,
-      generatedAt
+      generatedAt,
+      church,
+      logo
     }) as React.ReactElement<DocumentProps>;
     suffix = scope.month;
   } else {
@@ -213,7 +222,9 @@ export async function renderAttenderDonationsPdf(
     element = React.createElement(YearDonationsPdf, {
       attenderName: attender.name,
       summary,
-      generatedAt
+      generatedAt,
+      church,
+      logo
     }) as React.ReactElement<DocumentProps>;
     suffix = String(summary.year);
   }
@@ -265,16 +276,22 @@ const DEFAULT_ROSTER_COLUMNS = ['name', 'isMember', 'phone', 'city', 'status'];
 function RosterPdf({
   rows,
   columnKeys,
-  generatedAt
+  generatedAt,
+  church,
+  logo
 }: {
   rows: RosterRow[];
   columnKeys: string[];
   generatedAt: string;
-}) {
+} & ChurchProps) {
   const cols = columnKeys.map((k) => ({ key: k, ...ROSTER_COLUMNS[k] }));
   return (
     <Document>
-      <Page size="A4" orientation="landscape" style={tw('font-roboto p-8 text-xs text-gray-900')}>
+      <Page
+        size="A4"
+        orientation="landscape"
+        style={tw('font-roboto p-8 pb-14 text-xs text-gray-900')}>
+        <Letterhead church={church} logo={logo} />
         <PdfHeader title={`Congregados (${rows.length})`} generatedAt={generatedAt} />
 
         <View style={tw('flex-row border-b border-gray-400 pb-1 mb-1')}>
@@ -294,6 +311,7 @@ function RosterPdf({
             ))}
           </View>
         ))}
+        <PageFooter churchName={church.name} />
       </Page>
     </Document>
   );
@@ -317,10 +335,14 @@ export async function renderAttendersRosterPdf(
     year: 'numeric'
   });
 
+  const { church, logo } = await loadChurchForPdf();
+
   const element = React.createElement(RosterPdf, {
     rows,
     columnKeys,
-    generatedAt
+    generatedAt,
+    church,
+    logo
   }) as React.ReactElement<DocumentProps>;
 
   const buffer = await renderToBuffer(element);

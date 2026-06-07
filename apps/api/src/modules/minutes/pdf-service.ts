@@ -5,6 +5,7 @@ import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { httpError } from '../../lib/errors.js';
 import * as churchSettingsRepo from '../church-settings/repository.js';
+import { toChurchPdfData, loadChurchLogo } from '../../lib/pdf/church.js';
 import { MinutePdf } from './pdf-template.js';
 import type { Minute } from '../../db/schema.js';
 
@@ -154,6 +155,8 @@ export async function renderMinutePdf(callerId: number, minuteId: number): Promi
     agendaItems
   );
 
+  const logo = await loadChurchLogo(churchSettings.logoPath);
+
   return renderToBuffer(
     React.createElement(MinutePdf, {
       minute: {
@@ -169,15 +172,8 @@ export async function renderMinutePdf(callerId: number, minuteId: number): Promi
       },
       versionContent: interpolatedContent,
       attendersPresent,
-      church: {
-        name: churchSettings.name,
-        cnpj: churchSettings.cnpj,
-        addressStreet: churchSettings.addressStreet,
-        addressNumber: churchSettings.addressNumber,
-        addressDistrict: churchSettings.addressDistrict,
-        addressCity: churchSettings.addressCity,
-        addressState: churchSettings.addressState
-      }
+      church: toChurchPdfData(churchSettings),
+      logo
     }) as React.ReactElement<DocumentProps>
   );
 }

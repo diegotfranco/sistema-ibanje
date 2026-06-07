@@ -108,6 +108,27 @@ describe('ChurchSettingsPage', () => {
 
     renderWithProviders(<ChurchSettingsPage />);
 
-    expect(await screen.findByRole('button', { name: /salvar/i })).toBeInTheDocument();
+    // Exact name — the page also has a "Salvar saldo inicial" button in the finance card.
+    expect(await screen.findByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+  });
+
+  it('renders the logo and opening-balance (finance settings) sections', async () => {
+    server.use(
+      http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
+      http.get(`${API}/finance-settings`, () =>
+        HttpResponse.json({
+          openingBalance: '0.00',
+          lockedByClosing: false,
+          updatedAt: '2026-06-07T00:00:00.000Z'
+        })
+      ),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<ChurchSettingsPage />);
+
+    expect(await screen.findByText('Logo')).toBeInTheDocument();
+    expect(screen.getByText('Saldo inicial')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar logo' })).toBeInTheDocument();
   });
 });

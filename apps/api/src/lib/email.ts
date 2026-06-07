@@ -1,7 +1,28 @@
 import { Resend } from 'resend';
+import { eq } from 'drizzle-orm';
 import { env } from '../config/env.js';
+import { db } from '../db/index.js';
+import { churchSettings } from '../db/schema.js';
 
 const resend = new Resend(env.RESEND_API_KEY);
+
+// The verified sender address lives in env (EMAIL_FROM_ADDRESS); the display name follows
+// the church identity configured in the Configurações da Igreja page. Read it via a
+// direct shaped query, consistent with other lib/ utilities (audit, permissions) that
+// touch the db without importing a feature-module repository.
+async function senderDisplayName(): Promise<string> {
+  const [row] = await db
+    .select({ name: churchSettings.name })
+    .from(churchSettings)
+    .where(eq(churchSettings.id, 1))
+    .limit(1);
+  return row?.name?.trim() || 'Sistema Ibanje';
+}
+
+async function buildFrom(): Promise<string> {
+  const name = (await senderDisplayName()).replace(/"/g, '');
+  return `"${name}" <${env.EMAIL_FROM_ADDRESS}>`;
+}
 
 const BUTTON_STYLE =
   'display:inline-block;padding:12px 24px;background-color:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;font-weight:600;';
@@ -26,7 +47,7 @@ function wrap(title: string, body: string, buttonLabel: string, buttonUrl: strin
 async function send(to: string, subject: string, html: string, label: string): Promise<void> {
   try {
     const result = await resend.emails.send({
-      from: env.EMAIL_FROM_NOREPLY,
+      from: await buildFrom(),
       to,
       subject,
       html

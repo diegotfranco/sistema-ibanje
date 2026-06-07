@@ -11,6 +11,8 @@ import {
   DetailedFinancialStatementPdf,
   FinancialStatementPdf
 } from '../modules/finance/reports/pdf-template.js';
+import { getChurchSettings } from '../modules/church-settings/repository.js';
+import { toChurchPdfData, loadChurchLogo } from '../lib/pdf/church.js';
 import type {
   DetailedFinancialStatementResponse,
   FinancialStatementResponse
@@ -18,6 +20,12 @@ import type {
 
 const from = '2025-10-01';
 const to = '2025-10-31';
+
+async function loadChurch() {
+  const settings = await getChurchSettings();
+  if (!settings) throw new Error('Church settings not initialized — run the seed first.');
+  return { church: toChurchPdfData(settings), logo: await loadChurchLogo(settings.logoPath) };
+}
 
 const args = process.argv.slice(2);
 const modeIdx = args.indexOf('--mode');
@@ -55,9 +63,12 @@ async function generateDetailed() {
     expenseEntries
   };
 
+  const { church, logo } = await loadChurch();
   const buf = await renderToBuffer(
     React.createElement(DetailedFinancialStatementPdf, {
-      data
+      data,
+      church,
+      logo
     }) as React.ReactElement<DocumentProps>
   );
 
@@ -95,8 +106,13 @@ async function generateSimplified() {
     expensesByCategory
   };
 
+  const { church, logo } = await loadChurch();
   const buf = await renderToBuffer(
-    React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
+    React.createElement(FinancialStatementPdf, {
+      data,
+      church,
+      logo
+    }) as React.ReactElement<DocumentProps>
   );
 
   fs.writeFileSync('demonstrativo-simples.pdf', buf);

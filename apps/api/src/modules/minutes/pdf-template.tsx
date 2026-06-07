@@ -1,47 +1,8 @@
-import path from 'node:path';
-import { Document, Page, View, Text, Font } from '@react-pdf/renderer';
-import { createTw } from 'react-pdf-tailwind';
-
-const FONTSOURCE = path.resolve(import.meta.dirname, '../../../../node_modules/@fontsource');
-
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    {
-      src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-400-normal.woff'),
-      fontWeight: 400
-    },
-    {
-      src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-700-normal.woff'),
-      fontWeight: 700
-    },
-    {
-      src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-500-normal.woff'),
-      fontWeight: 500
-    }
-  ]
-});
-
-Font.register({
-  family: 'NotoSans',
-  fonts: [
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-400-normal.woff'),
-      fontWeight: 400
-    },
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-700-normal.woff'),
-      fontWeight: 700
-    }
-  ]
-});
-
-const tw = createTw({
-  fontFamily: {
-    roboto: ['Roboto'],
-    noto: ['NotoSans']
-  }
-});
+import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { tw } from '../../lib/pdf/theme.js';
+import { Letterhead } from '../../lib/pdf/Letterhead.js';
+import { PageFooter } from '../../lib/pdf/PageFooter.js';
+import type { ChurchPdfData, PdfLogo } from '../../lib/pdf/church.js';
 
 interface MinutePdfProps {
   minute: {
@@ -54,15 +15,8 @@ interface MinutePdfProps {
   };
   versionContent: unknown;
   attendersPresent?: Array<{ id: number; name: string }>;
-  church: {
-    name: string;
-    cnpj: string;
-    addressStreet: string;
-    addressNumber: string;
-    addressDistrict: string;
-    addressCity: string;
-    addressState: string;
-  };
+  church: ChurchPdfData;
+  logo?: PdfLogo;
 }
 
 interface TipTapNode {
@@ -238,7 +192,13 @@ function MembersSignaturePage({
   );
 }
 
-export function MinutePdf({ minute, versionContent, attendersPresent }: MinutePdfProps) {
+export function MinutePdf({
+  minute,
+  versionContent,
+  attendersPresent,
+  church,
+  logo
+}: MinutePdfProps) {
   let bodyContent: React.ReactNode = null;
   try {
     if (versionContent && typeof versionContent === 'object') {
@@ -259,12 +219,14 @@ export function MinutePdf({ minute, versionContent, attendersPresent }: MinutePd
   return (
     <Document>
       <Page size="A4" style={tw('p-12 pb-16 font-roboto flex flex-col')}>
+        <Letterhead church={church} logo={logo} />
         <View style={tw('flex-1')}>{bodyContent}</View>
 
         <SignatureBlock
           presidingPastorName={minute.presidingPastorName}
           secretaryName={minute.secretaryName}
         />
+        <PageFooter churchName={church.name} />
       </Page>
       {attendersPresent && attendersPresent.length > 0 && (
         <MembersSignaturePage attendersPresent={attendersPresent} />
