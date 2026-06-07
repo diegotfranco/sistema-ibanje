@@ -9,8 +9,10 @@ import {
   timestamp,
   index,
   primaryKey,
-  char
+  char,
+  check
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 import { activeStatus, admissionMode } from './enums.js';
 
 export const roles = pgTable('roles', {
@@ -100,13 +102,15 @@ export const attenders = pgTable(
       .unique()
       .references(() => users.id, { onDelete: 'set null' }),
     isMember: boolean('is_member').default(false).notNull(),
-    memberSince: date('member_since'),
-    congregatingSinceYear: integer('congregating_since_year'),
+    // Month-granular values are stored DB-wide as a single YYYYMM integer (e.g. 202404).
+    memberSince: integer('member_since'),
+    congregatingSince: integer('congregating_since'),
     admissionMode: admissionMode('admission_mode'),
     name: varchar('name', { length: 96 }).notNull(),
     birthDate: date('birth_date'),
+    baptismDate: date('baptism_date'),
     addressStreet: varchar('address_street', { length: 96 }),
-    addressNumber: integer('address_number'),
+    addressNumber: varchar('address_number', { length: 16 }),
     addressComplement: varchar('address_complement', { length: 64 }),
     addressDistrict: varchar('address_district', { length: 64 }),
     state: char('state', { length: 2 }),
@@ -118,7 +122,17 @@ export const attenders = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [index('attenders_status_idx').on(table.status)]
+  (table) => [
+    index('attenders_status_idx').on(table.status),
+    check(
+      'chk_member_since_yyyymm',
+      sql`${table.memberSince} IS NULL OR (${table.memberSince} BETWEEN 190001 AND 999912 AND ${table.memberSince} % 100 BETWEEN 1 AND 12)`
+    ),
+    check(
+      'chk_congregating_since_yyyymm',
+      sql`${table.congregatingSince} IS NULL OR (${table.congregatingSince} BETWEEN 190001 AND 999912 AND ${table.congregatingSince} % 100 BETWEEN 1 AND 12)`
+    )
+  ]
 );
 
 export const passwordResetTokens = pgTable(

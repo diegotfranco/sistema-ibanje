@@ -106,4 +106,22 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
     },
     controller.remove
   );
+
+  app.patch(
+    '/designated-funds/:id/restore',
+    {
+      schema: {
+        tags: ['Designated Funds'],
+        params: IdParamSchema,
+        response: {
+          200: DesignatedFundResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Delete)]
+    },
+    controller.restore
+  );
 }

@@ -31,7 +31,7 @@ const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
   [ClosingStatus.Open]: 'bg-primary-soft/15 text-primary-soft',
   [ClosingStatus.InReview]: 'bg-warning/15 text-warning',
-  [ClosingStatus.Rejected]: 'bg-destructive/15 text-destructive',
+  [ClosingStatus.Rejected]: 'bg-danger/15 text-danger',
   [ClosingStatus.Approved]: 'bg-success/15 text-success',
   [ClosingStatus.Closed]: 'bg-muted text-muted-foreground'
 };

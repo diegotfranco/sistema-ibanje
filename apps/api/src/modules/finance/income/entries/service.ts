@@ -3,11 +3,13 @@ import { sumExpensesForRange } from '../../reports/repository.js';
 import { findIncomeCategoryById, hasChildrenIncomeCategory } from '../categories/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findEventById } from '../../../events/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
 import { assertPeriodEditable, deriveReferenceDateFromDeposit } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
+import { yyyymmToString, stringToYyyymm } from '@sistema-ibanje/shared';
 import type {
   CreateIncomeEntryRequest,
   UpdateIncomeEntryRequest,
@@ -19,16 +21,30 @@ import type {
 type Row = NonNullable<Awaited<ReturnType<typeof repo.findIncomeEntryById>>>;
 
 function toResponse(row: Row): IncomeEntryResponse {
-  return row as unknown as IncomeEntryResponse;
+  // attributionMonth is stored as a YYYYMM int but emitted as a `YYYY-MM` string.
+  return {
+    ...row,
+    attributionMonth: row.attributionMonth == null ? null : yyyymmToString(row.attributionMonth)
+  } as unknown as IncomeEntryResponse;
 }
 
 async function validateEntry(data: {
   categoryId: number;
   attenderId?: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  designatedFundId?: number | null;
+  eventId?: number | null;
   referenceDate?: string;
 }) {
+  if (data.designatedFundId && data.eventId) {
+    throw httpError(400, 'Selecione um fundo OU um evento, não ambos.', {
+      fieldErrors: { eventId: 'Selecione um fundo OU um evento, não ambos.' }
+    });
+  }
+  if (data.eventId) {
+    const evt = await findEventById(data.eventId);
+    if (!evt) throw httpError(404, 'Event not found');
+  }
   const category = await findIncomeCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Income category not found');
 
@@ -65,21 +81,6 @@ export async function listIncomeEntries(callerId: number, page: number, limit: n
   return paginate(rows.map(toResponse), total, page, limit);
 }
 
-export async function listIncomeEntriesByAttender(
-  callerId: number,
-  attenderId: number,
-  page: number,
-  limit: number,
-  opts: { isSelfAccess: boolean }
-) {
-  if (!opts.isSelfAccess) {
-    await assertPermission(callerId, Module.IncomeEntries, Action.View);
-  }
-  const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listIncomeEntriesByAttender(attenderId, offset, limit);
-  return paginate(rows.map(toResponse), total, page, limit);
-}
-
 export async function getIncomeEntryById(id: number): Promise<IncomeEntryResponse | null> {
   const entry = await repo.findIncomeEntryById(id);
   if (!entry) return null;
@@ -98,10 +99,13 @@ export async function createIncomeEntry(
     attenderId: body.attenderId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
+    eventId: body.eventId,
     referenceDate
   });
   const created = await repo.insertIncomeEntry({
     ...body,
+    attributionMonth:
+      body.attributionMonth !== undefined ? stringToYyyymm(body.attributionMonth) : undefined,
     referenceDate,
     userId: callerId
   });
@@ -127,14 +131,22 @@ export async function updateIncomeEntry(
     categoryId: body.categoryId ?? entry.categoryId,
     attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
-    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
+    designatedFundId:
+      body.designatedFundId !== undefined
+        ? body.designatedFundId
+        : (entry.designatedFundId ?? undefined),
+    eventId: body.eventId !== undefined ? body.eventId : (entry.eventId ?? undefined),
     referenceDate
   };
   await validateEntry(mergedValues);
 
+  const { attributionMonth, ...restBody } = body;
   const updateData: Parameters<typeof repo.updateIncomeEntry>[1] = {
-    ...body,
+    ...restBody,
     ...(body.depositDate ? { referenceDate } : {}),
+    ...(attributionMonth !== undefined
+      ? { attributionMonth: stringToYyyymm(attributionMonth) }
+      : {}),
     amount: body.amount !== undefined ? body.amount.toString() : undefined
   };
 

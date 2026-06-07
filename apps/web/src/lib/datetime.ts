@@ -3,13 +3,14 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import 'dayjs/locale/pt-br';
+import { APP_TZ } from '@sistema-ibanje/shared';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(customParseFormat);
 dayjs.locale('pt-br');
 
-export const APP_TZ = 'America/Sao_Paulo';
+export { APP_TZ };
 dayjs.tz.setDefault(APP_TZ);
 
 type DateInput = string | number | Date | null | undefined;

@@ -66,7 +66,6 @@ export const IncomeReportResponseSchema = z.object({
 const ExpenseReportRowSchema = z.object({
   id: z.number().int().positive(),
   date: z.string(),
-  description: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
   parentCategoryId: z.number().int().positive().nullable(),
@@ -204,7 +203,6 @@ const FundIncomeEntrySchema = z.object({
 const FundExpenseEntrySchema = z.object({
   id: z.number().int().positive(),
   date: z.string(),
-  description: z.string(),
   amount: z.string(),
   categoryName: z.string(),
   notes: z.string().nullable()
@@ -214,6 +212,44 @@ export const FundDetailResponseSchema = FundSummarySchema.extend({
   period: PeriodSchema.nullable(),
   incomeEntries: z.array(FundIncomeEntrySchema),
   expenseEntries: z.array(FundExpenseEntrySchema)
+});
+
+const EventSummarySchema = z.object({
+  eventId: z.number().int().positive(),
+  eventTitle: z.string(),
+  startTime: z.string(),
+  endTime: z.string(),
+  totalRaised: z.string(),
+  totalSpent: z.string(),
+  net: z.string()
+});
+
+export const EventListResponseSchema = z.object({
+  period: PeriodSchema.nullable(),
+  events: z.array(EventSummarySchema)
+});
+
+const EventIncomeEntrySchema = z.object({
+  id: z.number().int().positive(),
+  referenceDate: z.string(),
+  amount: z.string(),
+  categoryName: z.string(),
+  attenderName: z.string().nullable(),
+  notes: z.string().nullable()
+});
+
+const EventExpenseEntrySchema = z.object({
+  id: z.number().int().positive(),
+  date: z.string(),
+  amount: z.string(),
+  categoryName: z.string(),
+  notes: z.string().nullable()
+});
+
+export const EventDetailResponseSchema = EventSummarySchema.extend({
+  period: PeriodSchema.nullable(),
+  incomeEntries: z.array(EventIncomeEntrySchema),
+  expenseEntries: z.array(EventExpenseEntrySchema)
 });
 
 export type IncomeReportRow = z.infer<typeof IncomeReportRowSchema>;
@@ -246,3 +282,8 @@ export type FundListResponse = z.infer<typeof FundListResponseSchema>;
 export type FundIncomeEntry = z.infer<typeof FundIncomeEntrySchema>;
 export type FundExpenseEntry = z.infer<typeof FundExpenseEntrySchema>;
 export type FundDetailResponse = z.infer<typeof FundDetailResponseSchema>;
+export type EventSummary = z.infer<typeof EventSummarySchema>;
+export type EventListResponse = z.infer<typeof EventListResponseSchema>;
+export type EventIncomeEntry = z.infer<typeof EventIncomeEntrySchema>;
+export type EventExpenseEntry = z.infer<typeof EventExpenseEntrySchema>;
+export type EventDetailResponse = z.infer<typeof EventDetailResponseSchema>;

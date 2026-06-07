@@ -8,13 +8,7 @@ import { DataTable } from '@/components/DataTable';
 import { PageContainer } from '@/components/PageContainer';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { YearPicker } from '@/components/YearPicker';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -52,7 +46,7 @@ export default function MonthlyClosingsPage() {
   const canCreate = hasPermission(perms, Module.MonthlyClosings, Action.Create);
   const canDelete = hasPermission(perms, Module.MonthlyClosings, Action.Delete);
 
-  const [year, setYear] = useState<number>(() => new Date().getFullYear());
+  const [year, setYear] = useState<number | undefined>(() => new Date().getFullYear());
   const list = useMonthlyClosings({ year });
   const yearsQuery = useMonthlyClosingYears();
   const remove = useRemoveMonthlyClosing();
@@ -61,12 +55,7 @@ export default function MonthlyClosingsPage() {
   const [newOpen, setNewOpen] = useState(false);
   const [deleting, setDeleting] = useState<MonthlyClosingResponse | null>(null);
 
-  const yearOptions = (() => {
-    const fromServer = yearsQuery.data?.years ?? [];
-    const set = new Set(fromServer);
-    set.add(year);
-    return Array.from(set).sort((a, b) => b - a);
-  })();
+  const yearOptions = (yearsQuery.data?.years ?? []).slice().sort((a, b) => b - a);
 
   const items = list.data?.data ?? [];
 
@@ -153,18 +142,7 @@ export default function MonthlyClosingsPage() {
                   Novo
                 </Button>
               )}
-              <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
-                <SelectTrigger className="w-32" aria-label="Ano">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent position="popper" align="end">
-                  {yearOptions.map((y) => (
-                    <SelectItem key={y} value={String(y)}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <YearPicker years={yearOptions} value={year} onChange={setYear} className="w-36" />
             </div>
           </CardHeaderRow>
           <CardContent className="p-0">

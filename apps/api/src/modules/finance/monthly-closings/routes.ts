@@ -10,6 +10,7 @@ import {
   SubmitMonthlyClosingRequestSchema,
   ApproveMonthlyClosingRequestSchema,
   RejectMonthlyClosingRequestSchema,
+  ResubmitMonthlyClosingRequestSchema,
   ReproveClosingRequestSchema,
   MonthlyClosingResponseSchema,
   MonthlyClosingListResponseSchema,
@@ -148,6 +149,47 @@ export async function monthlyClosingsRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.MonthlyClosings, Action.Review)]
     },
     controller.reject
+  );
+
+  app.post(
+    '/monthly-closings/:id/reopen',
+    {
+      schema: {
+        tags: ['Monthly Closings'],
+        params: IdParamSchema,
+        response: {
+          200: MonthlyClosingResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MonthlyClosings, Action.Create)]
+    },
+    controller.reopen
+  );
+
+  app.post(
+    '/monthly-closings/:id/resubmit',
+    {
+      schema: {
+        tags: ['Monthly Closings'],
+        params: IdParamSchema,
+        body: ResubmitMonthlyClosingRequestSchema,
+        response: {
+          200: MonthlyClosingResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.MonthlyClosings, Action.Create)]
+    },
+    controller.resubmit
   );
 
   app.post(

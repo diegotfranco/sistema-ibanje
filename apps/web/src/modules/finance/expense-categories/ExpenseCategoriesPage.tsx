@@ -36,7 +36,6 @@ export default function ExpenseCategoriesPage() {
 
   const [editing, setEditing] = useState<ExpenseCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<ExpenseCategoryResponse | null>(null);
-  const [defaultParentId, setDefaultParentId] = useState<number | undefined>(undefined);
 
   const { allCategories } = useCategoryPageData(fullList.data?.data);
   const { items } = useCategoryPageData(filteredList.data?.data);
@@ -44,10 +43,7 @@ export default function ExpenseCategoriesPage() {
   const isSearching =
     filteredList.isFetching && (debouncedQuery !== '' || searchQuery.trim() !== '');
 
-  const closeDialog = () => {
-    setEditing(null);
-    setDefaultParentId(undefined);
-  };
+  const closeDialog = () => setEditing(null);
 
   return (
     <PageContainer>
@@ -61,14 +57,7 @@ export default function ExpenseCategoriesPage() {
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
-        onCreate={() => {
-          setDefaultParentId(undefined);
-          setEditing('new');
-        }}
-        onCreateInGroup={(parentId) => {
-          setDefaultParentId(parentId);
-          setEditing('new');
-        }}
+        onCreate={() => setEditing('new')}
         onEdit={(row) => setEditing(row)}
         onDelete={(row) => setDeleting(row)}
         renderRowMeta={(row) => row.description || '—'}
@@ -87,7 +76,6 @@ export default function ExpenseCategoriesPage() {
           {editing !== null && (
             <ExpenseCategoryForm
               initialValues={editing === 'new' ? undefined : editing}
-              defaultParentId={editing === 'new' ? defaultParentId : undefined}
               categories={allCategories}
               isPending={create.isPending || update.isPending}
               onSubmit={handleSubmit}

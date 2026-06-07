@@ -17,6 +17,7 @@ import { sql } from 'drizzle-orm';
 import { activeStatus, transactionStatus, closingStatus } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
+import { events } from './events.js';
 
 export const paymentMethods = pgTable(
   'payment_methods',
@@ -65,7 +66,8 @@ export const incomeEntries = pgTable(
     id: serial('id').primaryKey(),
     depositDate: date('deposit_date').notNull(),
     referenceDate: date('reference_date').notNull(),
-    attributionMonth: date('attribution_month'),
+    // Month-granular value stored as a YYYYMM integer (e.g. 202404).
+    attributionMonth: integer('attribution_month'),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     categoryId: integer('category_id')
       .notNull()
@@ -75,6 +77,7 @@ export const incomeEntries = pgTable(
       .notNull()
       .references(() => paymentMethods.id),
     designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    eventId: integer('event_id').references(() => events.id),
     notes: text('notes'),
     userId: integer('user_id')
       .notNull()
@@ -85,13 +88,23 @@ export const incomeEntries = pgTable(
   },
   (table) => [
     check('chk_income_amount_positive', sql`${table.amount} > 0`),
+    check(
+      'chk_income_fund_or_event_exclusive',
+      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+    ),
+    check(
+      'chk_attribution_month_yyyymm',
+      sql`${table.attributionMonth} IS NULL OR (${table.attributionMonth} BETWEEN 190001 AND 999912 AND ${table.attributionMonth} % 100 BETWEEN 1 AND 12)`
+    ),
     index('income_entries_deposit_date_idx').on(table.depositDate),
     index('income_entries_reference_date_idx').on(table.referenceDate),
     index('income_entries_status_idx').on(table.status),
     index('income_entries_category_id_idx').on(table.categoryId),
     index('income_entries_attender_id_idx').on(table.attenderId),
     index('income_entries_payment_method_id_idx').on(table.paymentMethodId),
-    index('income_entries_designated_fund_id_idx').on(table.designatedFundId)
+    index('income_entries_designated_fund_id_idx').on(table.designatedFundId),
+    index('income_entries_event_id_idx').on(table.eventId),
+    index('income_entries_user_id_idx').on(table.userId)
   ]
 );
 
@@ -111,7 +124,6 @@ export const expenseEntries = pgTable(
     id: serial('id').primaryKey(),
     parentId: integer('parent_id').references((): AnyPgColumn => expenseEntries.id),
     date: date('date').notNull(),
-    description: varchar('description', { length: 256 }).notNull(),
     total: numeric('total', { precision: 12, scale: 2 }).notNull(),
     amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
     installment: integer('installment').default(1).notNull(),
@@ -124,6 +136,7 @@ export const expenseEntries = pgTable(
       .notNull()
       .references(() => paymentMethods.id),
     designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    eventId: integer('event_id').references(() => events.id),
     receipt: text('receipt'),
     notes: text('notes'),
     userId: integer('user_id')
@@ -140,13 +153,19 @@ export const expenseEntries = pgTable(
       'chk_expense_installments_valid',
       sql`${table.installment} > 0 AND ${table.totalInstallments} > 0 AND ${table.installment} <= ${table.totalInstallments}`
     ),
+    check(
+      'chk_expense_fund_or_event_exclusive',
+      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+    ),
     index('expense_entries_date_idx').on(table.date),
     index('expense_entries_status_idx').on(table.status),
     index('expense_entries_category_id_idx').on(table.categoryId),
     index('expense_entries_attender_id_idx').on(table.attenderId),
     index('expense_entries_payment_method_id_idx').on(table.paymentMethodId),
     index('expense_entries_designated_fund_id_idx').on(table.designatedFundId),
-    index('expense_entries_parent_id_idx').on(table.parentId)
+    index('expense_entries_event_id_idx').on(table.eventId),
+    index('expense_entries_parent_id_idx').on(table.parentId),
+    index('expense_entries_user_id_idx').on(table.userId)
   ]
 );
 
@@ -165,8 +184,8 @@ export const monthlyClosings = pgTable(
   'monthly_closings',
   {
     id: serial('id').primaryKey(),
-    periodYear: integer('period_year').notNull(),
-    periodMonth: integer('period_month').notNull(),
+    // The closed period, stored as a YYYYMM integer (e.g. April 2024 -> 202404).
+    period: integer('period').notNull(),
     closingBalance: numeric('closing_balance', { precision: 12, scale: 2 }),
     treasurerNotes: text('treasurer_notes'),
     accountantNotes: text('accountant_notes'),
@@ -180,8 +199,11 @@ export const monthlyClosings = pgTable(
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
-    check('chk_period_month_valid', sql`${table.periodMonth} BETWEEN 1 AND 12`),
-    unique('uq_monthly_closing_period').on(table.periodYear, table.periodMonth),
+    check(
+      'chk_period_yyyymm',
+      sql`${table.period} BETWEEN 190001 AND 999912 AND ${table.period} % 100 BETWEEN 1 AND 12`
+    ),
+    unique('uq_monthly_closing_period').on(table.period),
     index('monthly_closings_status_idx').on(table.status)
   ]
 );

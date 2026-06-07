@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { PageContainer } from '@/components/PageContainer';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { NavTabsBar } from '@/components/NavTabsBar';
 import { MonthPicker } from '@/components/MonthPicker';
 import { Module, Action } from '@/lib/permissions';
 import { RequirePermission } from '@/components/RequirePermission';
 import { IncomeReportTab } from './IncomeReportTab';
 import { ExpenseReportTab } from './ExpenseReportTab';
 import { StatementTab } from './StatementTab';
+import { FundsReportTab } from './FundsReportTab';
+import { EventsReportTab } from './EventsReportTab';
 
 function defaultMonth() {
   const now = new Date();
@@ -20,7 +23,9 @@ const DEFAULT_MONTH = defaultMonth();
 export default function ReportsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') ?? 'income';
-  const validTab = ['income', 'expenses', 'statement'].includes(activeTab) ? activeTab : 'income';
+  const validTab = ['income', 'expenses', 'statement', 'campanhas', 'events'].includes(activeTab)
+    ? activeTab
+    : 'income';
 
   const [month, setMonth] = useState(DEFAULT_MONTH);
 
@@ -42,13 +47,17 @@ export default function ReportsPage() {
               className="relative"
               value={validTab}
               onValueChange={(v) => setSearchParams({ tab: v })}>
-              <div className="overflow-x-auto border-b px-4 py-3">
-                <TabsList>
-                  <TabsTrigger value="income">Entradas</TabsTrigger>
-                  <TabsTrigger value="expenses">Saídas</TabsTrigger>
-                  <TabsTrigger value="statement">Demonstrativo</TabsTrigger>
-                </TabsList>
-              </div>
+              <NavTabsBar
+                value={validTab}
+                onValueChange={(v) => setSearchParams({ tab: v })}
+                tabs={[
+                  { value: 'income', label: 'Entradas' },
+                  { value: 'expenses', label: 'Saídas' },
+                  { value: 'statement', label: 'Demonstrativo' },
+                  { value: 'campanhas', label: 'Campanhas' },
+                  { value: 'events', label: 'Eventos' }
+                ]}
+              />
 
               <TabsContent value="income">
                 <IncomeReportTab month={month} />
@@ -58,6 +67,12 @@ export default function ReportsPage() {
               </TabsContent>
               <TabsContent value="statement">
                 <StatementTab month={month} />
+              </TabsContent>
+              <TabsContent value="campanhas">
+                <FundsReportTab month={month} />
+              </TabsContent>
+              <TabsContent value="events">
+                <EventsReportTab month={month} />
               </TabsContent>
             </Tabs>
           </CardContent>

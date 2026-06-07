@@ -4,7 +4,7 @@ import { Paperclip, X } from 'lucide-react';
 import { Button } from '@/components/Button';
 
 interface Props {
-  entryId: number;
+  entryId?: number;
   hasReceipt: boolean;
   stagedFile: File | null;
   stagedRemoval: boolean;

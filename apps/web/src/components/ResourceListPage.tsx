@@ -3,7 +3,11 @@ import { Edit, Plus, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
-import { DataTable } from '@/components/DataTable';
+import {
+  DataTable,
+  type DataTableSearchable,
+  type TableFilterOption
+} from '@/components/DataTable';
 import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 
 export interface ResourceColumn<T> {
@@ -11,6 +15,15 @@ export interface ResourceColumn<T> {
   cell: (row: T) => ReactNode;
   className?: string;
   hideBelow?: 'md' | 'lg' | 'xl';
+  /** Stable column id (defaults to `col-{index}`). Set it to a meaningful key when the
+   *  parent needs to map visible columns back to fields (e.g. for exports). */
+  id?: string;
+  /** Label shown in the "Colunas" toggle menu (defaults to `header`). */
+  label?: string;
+  /** Hidden by default but still toggleable via the "Colunas" menu. */
+  defaultHidden?: boolean;
+  /** Renders a filter funnel in the header (server-side; wire `filters`/`onFilterChange`). */
+  filter?: { options: TableFilterOption[]; allLabel?: string };
 }
 
 export interface CustomAction<T> {
@@ -18,6 +31,9 @@ export interface CustomAction<T> {
   icon?: ReactNode;
   onClick: (row: T) => void;
   className?: string;
+  /** When it returns true the action is omitted for that row (e.g. show
+   *  "Restaurar" only on inactive rows). Applies to both the table and the sheet. */
+  hidden?: (row: T) => boolean;
 }
 
 interface ResourceListPageProps<T> {
@@ -46,6 +62,13 @@ interface ResourceListPageProps<T> {
   tableId?: string;
   toolbarRight?: ReactNode;
   pagination?: ReactNode;
+  onColumnVisibilityChange?: (visibleColumnIds: string[]) => void;
+  // Search + per-column header filters (forwarded to DataTable; both server-side).
+  searchable?: DataTableSearchable;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+  filters?: Record<string, string | undefined>;
+  onFilterChange?: (columnId: string, value: string | undefined) => void;
 }
 
 export function ResourceListPage<T>({
@@ -68,7 +91,13 @@ export function ResourceListPage<T>({
   columnToggle,
   tableId,
   toolbarRight,
-  pagination
+  pagination,
+  onColumnVisibilityChange,
+  searchable,
+  globalFilter,
+  onGlobalFilterChange,
+  filters,
+  onFilterChange
 }: ResourceListPageProps<T>) {
   const [detailRow, setDetailRow] = useState<T | null>(null);
 
@@ -76,11 +105,20 @@ export function ResourceListPage<T>({
     (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
 
   const tableColumns: ColumnDef<T, unknown>[] = columns.map((col, i) => {
-    const meta: { className?: string; hideBelow?: 'md' | 'lg' | 'xl' } = {};
+    const meta: {
+      className?: string;
+      hideBelow?: 'md' | 'lg' | 'xl';
+      label?: string;
+      defaultHidden?: boolean;
+      filter?: { options: TableFilterOption[]; allLabel?: string };
+    } = {};
     if (col.className) meta.className = col.className;
     if (col.hideBelow) meta.hideBelow = col.hideBelow;
+    if (col.label) meta.label = col.label;
+    if (col.defaultHidden) meta.defaultHidden = col.defaultHidden;
+    if (col.filter) meta.filter = col.filter;
     return {
-      id: `col-${i}`,
+      id: col.id ?? `col-${i}`,
       header: col.header,
       cell: ({ row }) => col.cell(row.original),
       meta: Object.keys(meta).length ? meta : undefined
@@ -93,18 +131,20 @@ export function ResourceListPage<T>({
       header: 'Ações',
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          {customActions?.map((action) => (
-            <Button
-              key={action.label}
-              size="sm"
-              variant="ghost"
-              onClick={() => action.onClick(row.original)}
-              aria-label={action.label}
-              className={action.className}
-              title={action.label}>
-              {action.icon || action.label}
-            </Button>
-          ))}
+          {customActions
+            ?.filter((action) => !action.hidden?.(row.original))
+            .map((action) => (
+              <Button
+                key={action.label}
+                size="sm"
+                variant="ghost"
+                onClick={() => action.onClick(row.original)}
+                aria-label={action.label}
+                className={action.className}
+                title={action.label}>
+                {action.icon || action.label}
+              </Button>
+            ))}
           {canEdit && onEdit && (
             <Button
               size="sm"
@@ -133,19 +173,21 @@ export function ResourceListPage<T>({
 
   const sheetActions = detailRow && showActions && (
     <div className="flex flex-wrap gap-2">
-      {customActions?.map((action) => (
-        <Button
-          key={action.label}
-          variant="outline"
-          className={action.className}
-          onClick={() => {
-            action.onClick(detailRow);
-            setDetailRow(null);
-          }}>
-          {action.icon}
-          {action.label}
-        </Button>
-      ))}
+      {customActions
+        ?.filter((action) => !action.hidden?.(detailRow))
+        .map((action) => (
+          <Button
+            key={action.label}
+            variant="outline"
+            className={action.className}
+            onClick={() => {
+              action.onClick(detailRow);
+              setDetailRow(null);
+            }}>
+            {action.icon}
+            {action.label}
+          </Button>
+        ))}
       {canEdit && onEdit && (
         <Button
           variant="outline"
@@ -175,7 +217,7 @@ export function ResourceListPage<T>({
 
   return (
     <>
-      <Card>
+      <Card className="pb-0">
         <CardHeaderRow>
           <CardTitle>{title}</CardTitle>
           {canCreate && onCreate && (
@@ -197,6 +239,12 @@ export function ResourceListPage<T>({
             columnToggle={columnToggle}
             tableId={tableId}
             toolbarRight={toolbarRight}
+            onColumnVisibilityChange={onColumnVisibilityChange}
+            searchable={searchable}
+            globalFilter={globalFilter}
+            onGlobalFilterChange={onGlobalFilterChange}
+            filters={filters}
+            onFilterChange={onFilterChange}
           />
         </CardContent>
       </Card>

@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { zodResolver } from '@/lib/zodResolver';
+import { EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { IncomeEntryFields } from './IncomeEntryFields';
 import { IncomeEntryFormSchema, type IncomeEntryFormValues } from './schema';
@@ -18,7 +19,9 @@ const emptyDefaults: IncomeEntryFormValues = {
   attenderId: undefined,
   paymentMethodId: undefined as unknown as number,
   designatedFundId: undefined,
-  notes: ''
+  eventId: undefined,
+  notes: '',
+  status: EntryStatus.Paid
 };
 
 export function IncomeQuickEntryForm({ onCreated }: Props) {
@@ -29,7 +32,8 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
     reset,
     getValues,
     setError,
-    setFocus
+    setFocus,
+    setValue
   } = useForm<IncomeEntryFormValues>({
     resolver: zodResolver(IncomeEntryFormSchema),
     defaultValues: emptyDefaults
@@ -51,10 +55,12 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       amount: Number.parseFloat(values.amount),
       categoryId: values.categoryId!,
       paymentMethodId: values.paymentMethodId!,
+      status: values.status,
       ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
       ...(values.designatedFundId !== undefined
         ? { designatedFundId: values.designatedFundId }
         : {}),
+      ...(values.eventId !== undefined ? { eventId: values.eventId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
     };
 
@@ -75,7 +81,7 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       </CardHeader>
       <CardContent className="mt-4">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <IncomeEntryFields control={control} errors={errors} />
+          <IncomeEntryFields control={control} errors={errors} setValue={setValue} />
 
           <div className="flex justify-end pt-2">
             <Button

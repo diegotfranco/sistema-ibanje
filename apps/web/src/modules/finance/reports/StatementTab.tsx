@@ -34,15 +34,6 @@ export function StatementTab({ month }: Props) {
       cell: (info) => formatDate(info.row.original.date)
     },
     {
-      id: 'description',
-      header: 'Descrição',
-      cell: (info) => (
-        <span className="block max-w-48 truncate" title={info.row.original.description}>
-          {info.row.original.description}
-        </span>
-      )
-    },
-    {
       id: 'category',
       header: 'Categoria',
       cell: (info) => info.row.original.categoryName,
@@ -67,9 +58,9 @@ export function StatementTab({ month }: Props) {
         </span>
       </div>
       <div className="text-sm font-medium">{row.categoryName}</div>
-      {row.description && (
-        <p className="text-xs text-muted-foreground line-clamp-2" title={row.description}>
-          {row.description}
+      {row.notes && (
+        <p className="text-xs text-muted-foreground line-clamp-2" title={row.notes}>
+          {row.notes}
         </p>
       )}
     </div>
@@ -79,16 +70,18 @@ export function StatementTab({ month }: Props) {
     <div className="space-y-4 p-4">
       {/* Sub-toggle + PDF button */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex gap-2">
+        <div role="radiogroup" className="inline-flex rounded-md border bg-accent p-0.5">
           <Button
             size="sm"
-            variant={view === 'simple' ? 'default' : 'outline'}
+            role="radio"
+            variant={view === 'simple' ? 'default' : 'ghost'}
             onClick={() => setView('simple')}>
             Simplificado
           </Button>
           <Button
             size="sm"
-            variant={view === 'detailed' ? 'default' : 'outline'}
+            role="radio"
+            variant={view === 'detailed' ? 'default' : 'ghost'}
             onClick={() => setView('detailed')}>
             Detalhado
           </Button>
@@ -113,42 +106,7 @@ export function StatementTab({ month }: Props) {
       {view === 'simple' && (
         <>
           {simple.isLoading && <p className="text-center text-muted-foreground">Carregando...</p>}
-          {simple.data && (
-            <>
-              {/* Summary */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {[
-                  { label: 'Saldo Inicial', value: simple.data.openingBalance, color: '' },
-                  {
-                    label: 'Total Entradas',
-                    value: simple.data.totalIncome,
-                    color: 'text-money-in'
-                  },
-                  {
-                    label: 'Total Saídas',
-                    value: simple.data.totalExpenses,
-                    color: 'text-money-out'
-                  },
-                  { label: 'Saldo Atual', value: simple.data.currentBalance, color: '' }
-                ].map((card) => (
-                  <Card key={card.label}>
-                    <CardHeader compact>
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        {card.label}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0 pb-4">
-                      <p className={`text-lg font-mono font-semibold tabular-nums ${card.color}`}>
-                        {formatMoney(card.value)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              <FinancialStatementDocument data={simple.data} />
-            </>
-          )}
+          {simple.data && <FinancialStatementDocument data={simple.data} />}
         </>
       )}
 
@@ -158,7 +116,7 @@ export function StatementTab({ month }: Props) {
           {detailed.isLoading && <p className="text-center text-muted-foreground">Carregando...</p>}
           {detailed.data && (
             <>
-              <Card>
+              <Card className="gap-0 py-0">
                 <CardHeader>
                   <CardTitle className="text-base">Entradas</CardTitle>
                 </CardHeader>
@@ -167,7 +125,7 @@ export function StatementTab({ month }: Props) {
                 </CardContent>
               </Card>
 
-              <Card>
+              <Card className="gap-0 py-0">
                 <CardHeader>
                   <CardTitle className="text-base">Saídas</CardTitle>
                 </CardHeader>
@@ -179,6 +137,12 @@ export function StatementTab({ month }: Props) {
                     getRowKey={(row) => row.id}
                     mobileRow={renderDetailedExpenseMobile}
                   />
+                  <div className="flex items-baseline justify-between gap-3 border-t px-4 py-3 text-sm font-semibold">
+                    <span>Total Saídas</span>
+                    <span className="font-mono tabular-nums whitespace-nowrap text-money-out">
+                      {formatMoney(detailed.data.totalExpenses)}
+                    </span>
+                  </div>
                 </CardContent>
               </Card>
             </>

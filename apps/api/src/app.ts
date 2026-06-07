@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { env } from './config/env.js';
+import { loggerOptions } from './config/logger.js';
 import { sql } from './db/index.js';
 import { registerCorsPlugin } from './plugins/cors.js';
 import { registerSwaggerPlugin } from './plugins/swagger.js';
@@ -17,10 +18,7 @@ import { closeRedis } from './lib/redis.js';
 
 export async function buildApp() {
   const app = Fastify({
-    logger: {
-      level: env.LOG_LEVEL,
-      transport: env.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined
-    },
+    logger: loggerOptions,
     trustProxy: true,
     genReqId: (req) => {
       const inbound = req.headers['x-request-id'];
@@ -43,6 +41,16 @@ export async function buildApp() {
   await registerSessionPlugin(app);
   await registerRateLimitPlugin(app);
   await registerCsrfPlugin(app);
+
+  // Global CSRF enforcement: every state-changing request must carry a valid token. Safe (read-only)
+  // methods are exempt. Previously CSRF was wired only on /auth routes, leaving every other mutating
+  // route protected by the session cookie alone. app.csrfProtection is decorated by the csrf plugin.
+  const csrfSafeMethods = new Set(['GET', 'HEAD', 'OPTIONS']);
+  app.addHook('preHandler', (req, reply, done) => {
+    if (csrfSafeMethods.has(req.method)) return done();
+    return app.csrfProtection(req, reply, done);
+  });
+
   await registerIdempotencyPlugin(app);
   if (env.NODE_ENV !== 'test') {
     await initStorage();

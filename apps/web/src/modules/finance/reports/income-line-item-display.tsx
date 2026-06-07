@@ -3,9 +3,36 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { type RowDetailField } from '@/components/RowDetailPanel';
 import StatusBadge from '@/components/StatusBadge';
 import { formatDate, formatMoney, ENTRY_STATUS_FILTER_OPTIONS } from '../entries-utils';
+import { lineItemActionsColumn, type LineItemActions } from '../components/RowActions';
 import type { IncomeReportRow } from './schema';
 
-export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
+export interface IncomeRowActions {
+  canEdit: boolean;
+  canDelete: boolean;
+  onView?: (row: IncomeReportRow) => void;
+  onEdit: (id: number) => void;
+  onDelete: (row: IncomeReportRow) => void;
+}
+
+/** Minimal income shape the mobile row reads (fund is omitted — not shown). */
+export interface IncomeMobileItem {
+  depositDate: string;
+  referenceDate: string;
+  amount: string;
+  categoryName: string;
+  parentCategoryName: string | null;
+  paymentMethodName: string;
+  attenderName: string | null;
+  notes: string | null;
+  status: string;
+}
+
+/** Adds the fund name used by the detail-sheet fields. */
+export interface IncomeFieldsItem extends IncomeMobileItem {
+  fundName: string | null;
+}
+
+const baseColumns: ColumnDef<IncomeReportRow, unknown>[] = [
   {
     id: 'depositDate',
     header: 'Data Dep.',
@@ -50,13 +77,13 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'designatedFund',
     header: 'Campanha',
     cell: (info) => info.row.original.fundName ?? '—',
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'attender',
     header: 'Congregado',
     cell: (info) => info.row.original.attenderName ?? '—',
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'amount',
@@ -70,7 +97,7 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     id: 'paymentMethod',
     header: 'Forma de Pag.',
     cell: (info) => info.row.original.paymentMethodName,
-    meta: { hideBelow: 'xl' }
+    meta: { hideBelow: '2xl' }
   },
   {
     id: 'status',
@@ -80,7 +107,23 @@ export const incomeLineItemColumns: ColumnDef<IncomeReportRow, unknown>[] = [
   }
 ];
 
-export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
+export function buildIncomeLineItemColumns(
+  rowActions?: IncomeRowActions
+): ColumnDef<IncomeReportRow, unknown>[] {
+  if (!rowActions) return baseColumns;
+  const { canEdit, canDelete, onView, onEdit, onDelete } = rowActions;
+  const actions: LineItemActions<IncomeReportRow> = {
+    onView,
+    onEdit: canEdit ? (row) => onEdit(row.id) : undefined,
+    onDelete: canDelete ? (row) => onDelete(row) : undefined
+  };
+  const actionsColumn = lineItemActionsColumn(actions);
+  return actionsColumn ? [...baseColumns, actionsColumn] : baseColumns;
+}
+
+export const incomeLineItemColumns = baseColumns;
+
+export function renderIncomeLineItemMobile(row: IncomeMobileItem): ReactNode {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
@@ -113,7 +156,7 @@ export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
   );
 }
 
-export function buildIncomeLineItemFields(row: IncomeReportRow): RowDetailField[] {
+export function buildIncomeLineItemFields(row: IncomeFieldsItem): RowDetailField[] {
   return [
     { label: 'Data Dep.', value: formatDate(row.depositDate) },
     { label: 'Data Ref.', value: formatDate(row.referenceDate) },

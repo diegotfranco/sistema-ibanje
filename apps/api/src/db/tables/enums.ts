@@ -10,13 +10,6 @@ export const minuteVersionStatus = pgEnum('minute_version_status', [
   'aprovada',
   'substituída'
 ]);
-export const eventType = pgEnum('event_type', ['culto', 'reunião', 'evento especial', 'outro']);
-export const recurrenceType = pgEnum('recurrence_type', [
-  'nenhuma',
-  'semanal',
-  'quinzenal',
-  'mensal'
-]);
 export const closingStatus = pgEnum('closing_status', [
   'aberto',
   'em revisão',

@@ -35,3 +35,10 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   if (result === null) return reply.code(404).send({ message: 'Designated fund not found' });
   return reply.code(204).send();
 }
+
+export async function restore(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const fund = await service.reactivateDesignatedFund(req.session.userId!, id);
+  if (!fund) return reply.code(404).send({ message: 'Designated fund not found' });
+  return reply.send(fund);
+}

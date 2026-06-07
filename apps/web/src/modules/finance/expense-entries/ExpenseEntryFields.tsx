@@ -1,36 +1,40 @@
-import { Controller, type Control, type FieldErrors } from 'react-hook-form';
+import {
+  Controller,
+  useWatch,
+  type Control,
+  type FieldErrors,
+  type UseFormSetValue
+} from 'react-hook-form';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
 import MoneyInput from '../components/MoneyInput';
-import { ActiveStatus } from '@sistema-ibanje/shared';
+import { LinkPicker } from '../components/LinkPicker';
+import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useExpenseCategories } from '@/modules/finance/expense-categories/useExpenseCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
+import { useEvents } from '@/modules/finance/events/useEvents';
 import { useAttenders } from '@/modules/attenders/useAttenders';
 import type { ExpenseEntryFormValues } from './schema';
-
-const NONE = '__none__';
 
 interface Props {
   control: Control<ExpenseEntryFormValues>;
   errors: FieldErrors<ExpenseEntryFormValues>;
+  setValue: UseFormSetValue<ExpenseEntryFormValues>;
   detailsDefaultOpen?: boolean;
 }
 
-export function ExpenseEntryFields({ control, errors }: Props) {
+export function ExpenseEntryFields({ control, errors, setValue }: Props) {
+  const isInstallment = useWatch({ control, name: 'isInstallment' });
   const expenseCategories = useExpenseCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds();
+  const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
   const allCats = expenseCategories.data?.data ?? [];
@@ -45,10 +49,16 @@ export function ExpenseEntryFields({ control, errors }: Props) {
   };
 
   const paymentMethodsList = (paymentMethods.data?.data ?? []).filter((m) => m.allowsOutflow);
-  const designatedFundsList = designatedFunds.data?.data ?? [];
+  const designatedFundsList = (designatedFunds.data?.data ?? []).filter(
+    (f) => f.status === ActiveStatus.Active
+  );
+  const eventsListData = eventsList.data?.data ?? [];
   const attendersList = (attenders.data?.data ?? []).filter(
     (a) => a.status === ActiveStatus.Active
   );
+
+  const watchedFundId = useWatch({ control, name: 'designatedFundId' });
+  const watchedEventId = useWatch({ control, name: 'eventId' });
 
   return (
     <div className="space-y-4">
@@ -65,80 +75,99 @@ export function ExpenseEntryFields({ control, errors }: Props) {
       />
 
       <Controller
-        name="description"
+        name="isInstallment"
         control={control}
         render={({ field }) => (
-          <Field>
-            <FieldLabel htmlFor="description">Descrição</FieldLabel>
-            <Input id="description" placeholder="Descrição da despesa" maxLength={256} {...field} />
-            {errors.description && <FieldError>{errors.description.message}</FieldError>}
-          </Field>
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <Checkbox
+              id="isInstallment"
+              checked={field.value}
+              onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+            />
+            Esta despesa é parcelada?
+          </label>
         )}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {isInstallment ? (
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="amount">Valor da Parcela (R$)</FieldLabel>
+                  <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
+                  {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
+                </Field>
+              )}
+            />
+            <Controller
+              name="total"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="total">Valor Total (R$)</FieldLabel>
+                  <MoneyInput id="total" value={field.value ?? ''} onChange={field.onChange} />
+                  {errors.total && <FieldError>{errors.total.message}</FieldError>}
+                </Field>
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Controller
+              name="installment"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="installment">Parcela Nº</FieldLabel>
+                  <Input
+                    id="installment"
+                    type="number"
+                    min="1"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {errors.installment && <FieldError>{errors.installment.message}</FieldError>}
+                </Field>
+              )}
+            />
+            <Controller
+              name="totalInstallments"
+              control={control}
+              render={({ field }) => (
+                <Field>
+                  <FieldLabel htmlFor="totalInstallments">Total de Parcelas</FieldLabel>
+                  <Input
+                    id="totalInstallments"
+                    type="number"
+                    min="1"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                  />
+                  {errors.totalInstallments && (
+                    <FieldError>{errors.totalInstallments.message}</FieldError>
+                  )}
+                </Field>
+              )}
+            />
+          </div>
+        </>
+      ) : (
         <Controller
           name="amount"
           control={control}
           render={({ field }) => (
             <Field>
-              <FieldLabel htmlFor="amount">Valor da Parcela (R$)</FieldLabel>
+              <FieldLabel htmlFor="amount">Valor (R$)</FieldLabel>
               <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
               {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
             </Field>
           )}
         />
-        <Controller
-          name="total"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="total">Valor Total (R$)</FieldLabel>
-              <MoneyInput id="total" value={field.value} onChange={field.onChange} />
-              {errors.total && <FieldError>{errors.total.message}</FieldError>}
-            </Field>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Controller
-          name="installment"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="installment">Parcela Nº</FieldLabel>
-              <Input
-                id="installment"
-                type="number"
-                min="1"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.valueAsNumber)}
-              />
-              {errors.installment && <FieldError>{errors.installment.message}</FieldError>}
-            </Field>
-          )}
-        />
-        <Controller
-          name="totalInstallments"
-          control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="totalInstallments">Total de Parcelas</FieldLabel>
-              <Input
-                id="totalInstallments"
-                type="number"
-                min="1"
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.valueAsNumber)}
-              />
-              {errors.totalInstallments && (
-                <FieldError>{errors.totalInstallments.message}</FieldError>
-              )}
-            </Field>
-          )}
-        />
-      </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Controller
@@ -156,6 +185,7 @@ export function ExpenseEntryFields({ control, errors }: Props) {
                 placeholder="Selecionar categoria..."
                 emptyMessage="Nenhuma categoria encontrada."
                 isLoading={expenseCategories.isLoading}
+                ariaLabel="Categoria"
                 className="w-full"
               />
               {errors.categoryId && <FieldError>{errors.categoryId.message}</FieldError>}
@@ -189,72 +219,82 @@ export function ExpenseEntryFields({ control, errors }: Props) {
         />
       </div>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Controller
-            name="designatedFundId"
-            control={control}
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="designatedFundId">Campanha</FieldLabel>
-                <Select
-                  value={field.value !== undefined ? String(field.value) : NONE}
-                  onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
-                  <SelectTrigger id="designatedFundId" className="w-full">
-                    <SelectValue placeholder="Selecione uma campanha" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={NONE}>Sem fundo</SelectItem>
-                    {designatedFundsList.map((fund) => (
-                      <SelectItem key={fund.id} value={String(fund.id)}>
-                        {fund.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.designatedFundId && (
-                  <FieldError>{errors.designatedFundId.message}</FieldError>
-                )}
-              </Field>
-            )}
-          />
-
-          <Controller
-            name="attenderId"
-            control={control}
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="attenderId">Congregado Patrocinador</FieldLabel>
-                <EntityPicker
-                  items={attendersList}
-                  value={field.value ?? null}
-                  onChange={(v) => field.onChange(v ?? undefined)}
-                  getValue={(a) => a.id}
-                  getLabel={(a) => a.name}
-                  placeholder="Selecionar congregado..."
-                  emptyMessage="Nenhum congregado encontrado."
-                  isLoading={attenders.isLoading}
-                  allowClear
-                  className="w-full"
-                />
-                {errors.attenderId && <FieldError>{errors.attenderId.message}</FieldError>}
-              </Field>
-            )}
-          />
-        </div>
-
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Controller
-          name="notes"
+          name="status"
           control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="notes">Observações</FieldLabel>
-              <Textarea id="notes" placeholder="Adicione observações se necessário" {...field} />
-              {errors.notes && <FieldError>{errors.notes.message}</FieldError>}
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Status</FieldLabel>
+              <Select
+                value={field.value ?? EntryStatus.Paid}
+                onValueChange={(v) => field.onChange(v as ExpenseEntryFormValues['status'])}>
+                <SelectTrigger className="w-full" aria-label="Status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                  <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
+                </SelectContent>
+              </Select>
+              {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
             </Field>
           )}
         />
+
+        <Controller
+          name="attenderId"
+          control={control}
+          render={({ field }) => (
+            <Field>
+              <FieldLabel htmlFor="attenderId">Congregado Patrocinador</FieldLabel>
+              <EntityPicker
+                items={attendersList}
+                value={field.value ?? null}
+                onChange={(v) => field.onChange(v ?? undefined)}
+                getValue={(a) => a.id}
+                getLabel={(a) => a.name}
+                placeholder="Selecionar congregado..."
+                emptyMessage="Nenhum congregado encontrado."
+                isLoading={attenders.isLoading}
+                ariaLabel="Congregado patrocinador"
+                allowClear
+                className="w-full"
+              />
+              {errors.attenderId && <FieldError>{errors.attenderId.message}</FieldError>}
+            </Field>
+          )}
+        />
+
+        <Field>
+          <FieldLabel>Vincular a (opcional)</FieldLabel>
+          <LinkPicker
+            funds={designatedFundsList}
+            events={eventsListData}
+            fundId={watchedFundId}
+            eventId={watchedEventId}
+            onChangeFund={(id) => setValue('designatedFundId', id, { shouldDirty: true })}
+            onChangeEvent={(id) => setValue('eventId', id, { shouldDirty: true })}
+            isLoading={designatedFunds.isLoading || eventsList.isLoading}
+            ariaLabel="Vincular a campanha ou evento"
+            className="w-full"
+          />
+          {errors.designatedFundId && <FieldError>{errors.designatedFundId.message}</FieldError>}
+          {errors.eventId && <FieldError>{errors.eventId.message}</FieldError>}
+        </Field>
       </div>
+
+      <Controller
+        name="notes"
+        control={control}
+        render={({ field }) => (
+          <Field>
+            <FieldLabel htmlFor="notes">Observações</FieldLabel>
+            <Textarea id="notes" placeholder="Adicione observações se necessário" {...field} />
+            {errors.notes && <FieldError>{errors.notes.message}</FieldError>}
+          </Field>
+        )}
+      />
     </div>
   );
 }

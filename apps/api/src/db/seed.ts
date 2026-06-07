@@ -31,6 +31,8 @@ import {
   EXPECTED_MODULE_ORDER,
   SEED_PAYMENT_METHODS,
   SEED_DESIGNATED_FUNDS,
+  SEED_EVENTS,
+  SEED_CALENDAR_ENTRIES,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
@@ -67,6 +69,8 @@ import {
   incomeEntries,
   expenseEntries,
   meetings,
+  events,
+  calendarEntries,
   minutes,
   minuteVersions,
   monthlyClosings,
@@ -89,6 +93,44 @@ async function hashPassword(password: string) {
   return argon2.hash(password + env.ARGON2_PEPPER, { type: argon2.argon2id });
 }
 
+// The legacy fixture dump carries no membership data, which left ~97% of seeded
+// congregados as non-members — unrealistic. Synthesize it deterministically by row
+// index so `db:reset` stays reproducible and the values survive re-dumps of the fixture.
+const ADMISSION_MODES = [
+  'aclamação',
+  'batismo',
+  'carta de transferência',
+  'profissão de fé'
+] as const;
+
+function synthesizeMembership(i: number): {
+  isMember: boolean;
+  memberSince: number | null;
+  admissionMode: (typeof ADMISSION_MODES)[number] | null;
+  congregatingSince: number;
+  status: 'ativo' | 'inativo';
+} {
+  // Month-granular values are stored as YYYYMM ints (e.g. April 2024 -> 202404).
+  const month = (i % 12) + 1;
+  const congregatingSince = (2002 + (i % 21)) * 100 + month;
+  // ~12% inactive — people who transferred out, moved away, or stopped attending.
+  // Deterministic by index so `db:reset` stays reproducible; spans both members
+  // and non-members so the status filter has realistic data in either segment.
+  const status = i % 17 < 2 ? 'inativo' : 'ativo';
+  const isMember = i % 20 < 13; // ~65%
+  if (!isMember) {
+    return { isMember: false, memberSince: null, admissionMode: null, congregatingSince, status };
+  }
+  const memberSince = (2002 + (i % 21) + (i % 4)) * 100 + month;
+  return {
+    isMember: true,
+    memberSince,
+    admissionMode: ADMISSION_MODES[i % 4],
+    congregatingSince,
+    status
+  };
+}
+
 // ---------------------------------------------------------------------------
 // fixture shapes (match dump-fixtures.ts output)
 // ---------------------------------------------------------------------------
@@ -96,7 +138,7 @@ type AttenderFixture = {
   name: string;
   birthDate: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;
@@ -105,7 +147,14 @@ type AttenderFixture = {
   email: string | null;
   phone: string | null;
 };
-type DesignatedFundFixture = { name: string; description?: string | null };
+type DesignatedFundFixture = {
+  name: string;
+  description?: string | null;
+  targetAmount?: string | null;
+  targetDate?: string | null;
+  createdAt?: string | null;
+  status?: 'ativo' | 'inativo' | null;
+};
 type IncomeEntryFixture = {
   depositDate: string;
   referenceDate: string;
@@ -118,7 +167,6 @@ type IncomeEntryFixture = {
 };
 type ExpenseEntryFixture = {
   date: string;
-  description: string;
   total: string;
   amount: string;
   installment: number;
@@ -258,18 +306,54 @@ export async function seed() {
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
-      status: 'ativo' as const
+      targetDate: f.targetDate ?? null,
+      status: 'ativo' as const,
+      ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
+    // Historical campanhas are concluded — the fixture tags each with its real status
+    // (all currently `inativo`). Honor it so the seeded roster of funds is realistic:
+    // ongoing structural funds stay active, finished campaigns read as inactive.
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
       description: f.description ?? null,
-      status: 'ativo' as const
+      targetAmount: f.targetAmount ?? null,
+      targetDate: f.targetDate ?? null,
+      status: f.status ?? 'ativo',
+      ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const insertedFunds = await tx
       .insert(designatedFunds)
       .values([...baseFundRows, ...extraFundRows])
       .returning();
     const fundByName = new Map(insertedFunds.map((f) => [f.name, f]));
+
+    // --- Events --------------------------------------------------------------
+    const insertedEvents = SEED_EVENTS.length
+      ? await tx
+          .insert(events)
+          .values(
+            SEED_EVENTS.map((e) => ({
+              title: e.title,
+              description: e.description ?? null,
+              location: e.location ?? null,
+              startTime: new Date(e.startTime),
+              endTime: new Date(e.endTime)
+            }))
+          )
+          .returning()
+      : [];
+    const eventByTitle = new Map(insertedEvents.map((e) => [e.title, e]));
+
+    // --- Calendar entries ----------------------------------------------------
+    if (SEED_CALENDAR_ENTRIES.length) {
+      await tx.insert(calendarEntries).values(
+        SEED_CALENDAR_ENTRIES.map((c) => ({
+          title: c.title,
+          date: c.date,
+          notes: c.notes ?? null
+        }))
+      );
+    }
 
     // --- Income / Expense categories -----------------------------------------
     const insertedICParents = await tx
@@ -317,7 +401,7 @@ export async function seed() {
     );
 
     // --- Attenders: dumped fixture + edge cases -------------------------------
-    const fixtureAttenderRows = attendersFixture.map((a) => ({
+    const fixtureAttenderRows = attendersFixture.map((a, i) => ({
       name: a.name,
       birthDate: a.birthDate,
       addressStreet: a.addressStreet,
@@ -328,7 +412,8 @@ export async function seed() {
       city: a.city,
       postalCode: a.postalCode,
       email: a.email,
-      phone: a.phone
+      phone: a.phone,
+      ...synthesizeMembership(i)
     }));
     const insertedFixtureAttenders = fixtureAttenderRows.length
       ? await tx.insert(attenders).values(fixtureAttenderRows).returning()
@@ -343,6 +428,7 @@ export async function seed() {
       name: a.name,
       userId: a.linkToUserEmail ? (userByEmail.get(a.linkToUserEmail)?.id ?? null) : null,
       birthDate: a.birthDate ?? null,
+      baptismDate: a.baptismDate ?? null,
       addressStreet: a.addressStreet ?? null,
       addressNumber: a.addressNumber ?? null,
       addressDistrict: a.addressDistrict ?? null,
@@ -352,8 +438,9 @@ export async function seed() {
       email: a.email ?? null,
       phone: a.phone ?? null,
       isMember: a.isMember ?? false,
+      status: a.status ?? 'ativo',
       memberSince: a.memberSince ?? null,
-      congregatingSinceYear: a.congregatingSinceYear ?? null,
+      congregatingSince: a.congregatingSince ?? null,
       admissionMode: a.admissionMode ?? null
     }));
     const insertedEdgeAttenders = edgeAttenderRows.length
@@ -400,7 +487,6 @@ export async function seed() {
       const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
       return {
         date: e.date,
-        description: e.description,
         total: e.total,
         amount: e.amount,
         installment: e.installment,
@@ -487,8 +573,8 @@ export async function seed() {
     if (EDGE_CASE_CLOSINGS.length) {
       await tx.insert(monthlyClosings).values(
         EDGE_CASE_CLOSINGS.map((c) => ({
-          periodYear: c.periodYear,
-          periodMonth: c.periodMonth,
+          // Stored as a single YYYYMM int (fixtures stay readable as year/month).
+          period: c.periodYear * 100 + c.periodMonth,
           status: c.status,
           closingBalance: c.closingBalance ?? null,
           treasurerNotes: c.treasurerNotes ?? null,
@@ -517,6 +603,7 @@ export async function seed() {
           if (!u) throw new Error(`Edge income references unknown user ${e.createdByUserEmail}`);
           const attender = e.attenderName ? attenderByName.get(e.attenderName) : null;
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             referenceDate: e.referenceDate,
             depositDate: e.depositDate ?? e.referenceDate,
@@ -525,6 +612,7 @@ export async function seed() {
             attenderId: attender?.id ?? null,
             paymentMethodId: pm.id,
             designatedFundId: fund?.id ?? null,
+            eventId: evt?.id ?? null,
             notes: e.notes ?? null,
             status: 'paga' as const,
             userId: u.id
@@ -548,9 +636,9 @@ export async function seed() {
             const u = userByEmail.get(e.createdByUserEmail);
             if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
             const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+            const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
             return {
               date: e.date,
-              description: e.description,
               total: e.total,
               amount: e.amount,
               installment: e.installment,
@@ -558,6 +646,7 @@ export async function seed() {
               categoryId: category.id,
               paymentMethodId: pm.id,
               designatedFundId: fund?.id ?? null,
+              eventId: evt?.id ?? null,
               notes: e.notes ?? null,
               status: 'paga' as const,
               userId: u.id
@@ -580,9 +669,9 @@ export async function seed() {
           const u = userByEmail.get(e.createdByUserEmail);
           if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
           const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             date: e.date,
-            description: e.description,
             total: e.total,
             amount: e.amount,
             installment: e.installment,
@@ -590,6 +679,7 @@ export async function seed() {
             categoryId: category.id,
             paymentMethodId: pm.id,
             designatedFundId: fund?.id ?? null,
+            eventId: evt?.id ?? null,
             parentId: e.installmentGroupId
               ? (parentIdByGroup.get(e.installmentGroupId) ?? null)
               : null,

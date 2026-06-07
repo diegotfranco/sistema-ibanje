@@ -1,34 +1,55 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../../../lib/http-schemas.js';
 
+// Month-granular wire format `YYYY-MM`; the service converts to/from the DB's YYYYMM integer.
+const MonthStringSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: YYYY-MM');
+
 export const ListIncomeEntriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20)
 });
 
-export const CreateIncomeEntryRequestSchema = z.object({
-  depositDate: z.iso.date(),
-  attributionMonth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-01$/, 'attributionMonth must be the first day of a month (YYYY-MM-01)')
-    .optional(),
-  amount: z.number().positive(),
-  categoryId: z.number().int().positive(),
-  attenderId: z.number().int().positive().optional(),
-  paymentMethodId: z.number().int().positive(),
-  designatedFundId: z.number().int().positive().optional(),
-  notes: z.string().max(1000).optional()
-});
+export const CreateIncomeEntryRequestSchema = z
+  .object({
+    depositDate: z.iso.date(),
+    attributionMonth: MonthStringSchema.optional(),
+    amount: z.number().positive(),
+    categoryId: z.number().int().positive(),
+    attenderId: z.number().int().positive().optional(),
+    paymentMethodId: z.number().int().positive(),
+    designatedFundId: z.number().int().positive().optional(),
+    eventId: z.number().int().positive().optional(),
+    notes: z.string().max(1000).optional(),
+    status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  })
+  .refine((d) => !(d.designatedFundId && d.eventId), {
+    message: 'Selecione um fundo OU um evento, não ambos.',
+    path: ['eventId']
+  });
 
-export const UpdateIncomeEntryRequestSchema = CreateIncomeEntryRequestSchema.partial().extend({
-  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
-});
+export const UpdateIncomeEntryRequestSchema = z
+  .object({
+    depositDate: z.iso.date().optional(),
+    attributionMonth: MonthStringSchema.optional(),
+    amount: z.number().positive().optional(),
+    categoryId: z.number().int().positive().optional(),
+    attenderId: z.number().int().positive().optional(),
+    paymentMethodId: z.number().int().positive().optional(),
+    designatedFundId: z.number().int().positive().nullable().optional(),
+    eventId: z.number().int().positive().nullable().optional(),
+    notes: z.string().max(1000).optional(),
+    status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  })
+  .refine((d) => !(d.designatedFundId && d.eventId), {
+    message: 'Selecione um fundo OU um evento, não ambos.',
+    path: ['eventId']
+  });
 
 export const IncomeEntryResponseSchema = z.object({
   id: z.number().int().positive(),
   depositDate: z.iso.date(),
   referenceDate: z.iso.date(),
-  attributionMonth: z.iso.date().nullable(),
+  attributionMonth: MonthStringSchema.nullable(),
   amount: z.string(),
   categoryId: z.number().int().positive(),
   categoryName: z.string(),
@@ -40,6 +61,8 @@ export const IncomeEntryResponseSchema = z.object({
   paymentMethodName: z.string(),
   designatedFundId: z.number().int().positive().nullable(),
   designatedFundName: z.string().nullable(),
+  eventId: z.number().int().positive().nullable(),
+  eventName: z.string().nullable(),
   notes: z.string().nullable(),
   userId: z.number().int().positive(),
   status: z.string(),

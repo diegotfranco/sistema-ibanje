@@ -1,4 +1,4 @@
-export const DEFAULT_ROLE_NAME = 'Membro';
+export const DEFAULT_ROLE_NAME = 'Congregado';
 
 export const Module = {
   Users: 'Usuários',
@@ -15,9 +15,11 @@ export const Module = {
   Dashboard: 'Painel',
   Reports: 'Relatórios',
   Agendas: 'Pautas',
+  Events: 'Eventos',
   Minutes: 'Atas',
   MinuteTemplates: 'Modelos de Ata',
-  MembershipLetters: 'Cartas de Membro',
+  MembershipLetters: 'Cartas de Membros',
+  SecretaryCalendar: 'Calendário',
   Permissions: 'Permissões',
   Areas: 'Áreas',
   Status: 'Status'

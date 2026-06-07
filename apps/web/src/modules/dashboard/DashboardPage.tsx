@@ -1,40 +1,76 @@
 import { useState } from 'react';
+import { PageContainer } from '@/components/PageContainer';
 import { MonthPicker } from '@/components/MonthPicker';
-import { DashboardClosingBanner } from './DashboardClosingBanner';
-import { AttenderStats } from './AttenderStats';
-import { FundsChart } from './FundsChart';
+import { RequirePermission } from '@/components/RequirePermission';
+import { Module, Action } from '@/lib/permissions';
 import { getCurrentMonth } from './dashboard-utils';
+import { useDashboard } from './useDashboard';
+import { FinanceKpiStrip } from './FinanceKpiStrip';
+import { ClosingStatusCard } from './ClosingStatusCard';
+import { TrendChart } from './TrendChart';
+import { ParticipationCard } from './ParticipationCard';
+import { ParticipationChart } from './ParticipationChart';
+import { FundsAndEventsCard } from './FundsAndEventsCard';
+import { DashboardCalendarCard } from './DashboardCalendarCard';
 
 export default function DashboardPage() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+  const { data, isLoading } = useDashboard(selectedMonth);
+  const isFutureMonth = selectedMonth > getCurrentMonth();
 
   return (
-    <div className="space-y-8 p-8">
-      <div className="flex items-center justify-end gap-2">
-        <label htmlFor="month-input" className="text-sm font-medium text-muted-foreground">
-          Mês:
-        </label>
-        <MonthPicker
-          id="month-input"
-          value={selectedMonth}
-          onChange={setSelectedMonth}
-          className="w-48"
-        />
-      </div>
+    <RequirePermission module={Module.Dashboard} action={Action.View}>
+      <PageContainer>
+        <div className="flex items-center justify-end gap-2">
+          <MonthPicker
+            id="month-input"
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            className="w-48 hover:bg-muted-foreground/10"
+          />
+        </div>
 
-      {/* Closing Status Banner */}
-      <DashboardClosingBanner />
+        {!isFutureMonth && (
+          <ClosingStatusCard data={data?.closing} month={selectedMonth} isLoading={isLoading} />
+        )}
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Congregados</h2>
-        <AttenderStats month={selectedMonth} />
-      </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-2 gap-4">
+              <ParticipationCard
+                title="Participação no Dízimo"
+                data={data?.participation.tithe}
+                isLoading={isLoading}
+              />
+              <ParticipationCard
+                title="Participação na Oferta"
+                data={data?.participation.offering}
+                isLoading={isLoading}
+              />
+              <FinanceKpiStrip data={data?.finance} isLoading={isLoading} />
+            </div>
+          </div>
+          <div className="lg:col-span-3">
+            <TrendChart data={data?.trends.monthly} isLoading={isLoading} />
+          </div>
+        </div>
 
-      {/* Funds Chart */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-foreground">Campanhas (acumulado)</h2>
-        <FundsChart />
-      </div>
-    </div>
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+          <FundsAndEventsCard
+            className="lg:col-span-2"
+            events={data?.events}
+            funds={data?.funds}
+            isLoading={isLoading}
+          />
+          <ParticipationChart
+            className="lg:col-span-3"
+            data={data?.trends.monthly}
+            isLoading={isLoading}
+          />
+        </div>
+
+        <DashboardCalendarCard />
+      </PageContainer>
+    </RequirePermission>
   );
 }

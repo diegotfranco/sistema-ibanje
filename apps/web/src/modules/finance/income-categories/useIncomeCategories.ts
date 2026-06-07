@@ -5,7 +5,9 @@ const BASE = '/income-categories';
 const KEY = ['income-categories'] as const;
 
 export function useIncomeCategories(q?: string) {
-  return useResourceList<IncomeCategoryResponse>(BASE, KEY, { q });
+  // Bumped above default 30 because the page lists every category (paginated by
+  // parent group in the UI, not by row). Backend cap raised to 500 to match.
+  return useResourceList<IncomeCategoryResponse>(BASE, KEY, { q, limit: 200 });
 }
 
 export function useIncomeCategoryMutations() {

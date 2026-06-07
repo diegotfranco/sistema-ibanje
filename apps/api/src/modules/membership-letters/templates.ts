@@ -24,6 +24,14 @@ export function formatDateExtenso(dateStr: string | null | undefined): string {
   }
 }
 
+// Month-granular YYYYMM int (e.g. 202404) -> 'abril de 2024'.
+export function formatMonthExtenso(yyyymm: number | null | undefined): string {
+  if (yyyymm == null) return '';
+  const year = Math.trunc(yyyymm / 100);
+  const monthName = PORTUGUESE_MONTHS[(yyyymm % 100) - 1];
+  return monthName ? `${monthName} de ${year}` : '';
+}
+
 export function getAdmissionModeText(mode: string | null | undefined): string {
   switch (mode) {
     case 'aclamação':
@@ -52,7 +60,7 @@ Saudações no Senhor.
 
    Pela presente, informamos-vos que a Irmã/Irmão {{attender_name}} vem congregando
 em nossa igreja desde {{congregating_since_year}}, sendo dizimista fiel e assídua nas
-programações de nossa igreja. Por seu testemunho, no dia {{member_since_extenso}}
+programações de nossa igreja. Por seu testemunho, em {{member_since_extenso}}
 foi {{admission_mode_text}} em assembleia regular.
 
 {{additional_context}}
@@ -152,8 +160,8 @@ export function renderLetter(
   },
   attender: {
     name: string;
-    congregatingSinceYear?: number | null;
-    memberSince?: string | null;
+    congregatingSince?: number | null;
+    memberSince?: number | null;
     admissionMode?: string | null;
   },
   settings: {
@@ -197,8 +205,9 @@ export function renderLetter(
     church_city: settings.addressCity,
     church_state: settings.addressState,
     attender_name: attender.name,
-    congregating_since_year: attender.congregatingSinceYear ?? undefined,
-    member_since_extenso: formatDateExtenso(attender.memberSince),
+    congregating_since_year:
+      attender.congregatingSince != null ? Math.trunc(attender.congregatingSince / 100) : undefined,
+    member_since_extenso: formatMonthExtenso(attender.memberSince),
     admission_mode_text: getAdmissionModeText(attender.admissionMode)
   };
 

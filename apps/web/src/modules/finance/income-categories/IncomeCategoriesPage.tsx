@@ -36,7 +36,6 @@ export default function IncomeCategoriesPage() {
 
   const [editing, setEditing] = useState<IncomeCategoryResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<IncomeCategoryResponse | null>(null);
-  const [defaultParentId, setDefaultParentId] = useState<number | undefined>(undefined);
 
   const { allCategories } = useCategoryPageData(fullList.data?.data);
   const { items } = useCategoryPageData(filteredList.data?.data);
@@ -44,10 +43,7 @@ export default function IncomeCategoriesPage() {
   const isSearching =
     filteredList.isFetching && (debouncedQuery !== '' || searchQuery.trim() !== '');
 
-  const closeDialog = () => {
-    setEditing(null);
-    setDefaultParentId(undefined);
-  };
+  const closeDialog = () => setEditing(null);
 
   return (
     <div className="space-y-6 p-8">
@@ -61,14 +57,7 @@ export default function IncomeCategoriesPage() {
         canCreate={canCreate}
         canEdit={canEdit}
         canDelete={canDelete}
-        onCreate={() => {
-          setDefaultParentId(undefined);
-          setEditing('new');
-        }}
-        onCreateInGroup={(parentId) => {
-          setDefaultParentId(parentId);
-          setEditing('new');
-        }}
+        onCreate={() => setEditing('new')}
         onEdit={(row) => setEditing(row)}
         onDelete={(row) => setDeleting(row)}
         renderRowMeta={(row) =>
@@ -89,7 +78,6 @@ export default function IncomeCategoriesPage() {
           {editing !== null && (
             <IncomeCategoryForm
               initialValues={editing === 'new' ? undefined : editing}
-              defaultParentId={editing === 'new' ? defaultParentId : undefined}
               categories={allCategories}
               isPending={create.isPending || update.isPending}
               onSubmit={handleSubmit}

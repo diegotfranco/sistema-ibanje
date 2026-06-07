@@ -6,6 +6,7 @@ import {
   type SubmitMonthlyClosingRequest,
   type ApproveMonthlyClosingRequest,
   type RejectMonthlyClosingRequest,
+  type ResubmitMonthlyClosingRequest,
   type ReproveClosingRequest
 } from './schema.js';
 import type { IdParam } from '../../../lib/validation.js';
@@ -66,6 +67,27 @@ export async function reject(req: FastifyRequest, reply: FastifyReply) {
   const closing = await service.rejectMonthlyClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
     notes: 'aberto',
+    ipAddress: req.ip
+  });
+  return reply.send(closing);
+}
+
+export async function reopen(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const closing = await service.reopenMonthlyClosing(req.session.userId!, id);
+  logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
+    notes: 'aberto',
+    ipAddress: req.ip
+  });
+  return reply.send(closing);
+}
+
+export async function resubmit(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as ResubmitMonthlyClosingRequest;
+  const closing = await service.resubmitRejectedClosing(req.session.userId!, id, body);
+  logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
+    notes: 'em revisão',
     ipAddress: req.ip
   });
   return reply.send(closing);

@@ -125,6 +125,7 @@ export default function MinuteTemplatesPage() {
                             size="sm"
                             variant="ghost"
                             onClick={() => handleOpenEdit(row)}
+                            aria-label={`Editar modelo ${row.name}`}
                             className="text-warning hover:text-warning/80">
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -133,6 +134,7 @@ export default function MinuteTemplatesPage() {
                           <Button
                             size="sm"
                             variant="ghost"
+                            aria-label={`Remover modelo ${row.name}`}
                             className="text-destructive hover:text-destructive/80"
                             onClick={() => setDeleteTarget(row)}>
                             <Trash2 className="h-4 w-4" />

@@ -10,13 +10,7 @@ import {
   DialogTitle
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Checkbox } from '@/components/ui/checkbox';
 import DateInput from '@/components/DateInput';
 import { MeetingType } from '@sistema-ibanje/shared';

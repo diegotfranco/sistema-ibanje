@@ -1,12 +1,14 @@
-import { eq, count } from 'drizzle-orm';
+import { eq, count, and, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { attenders } from '../../db/schema.js';
+import type { AttenderFilters } from './schema.js';
 
 const ATTENDER_COLUMNS = {
   id: attenders.id,
   userId: attenders.userId,
   name: attenders.name,
   birthDate: attenders.birthDate,
+  baptismDate: attenders.baptismDate,
   addressStreet: attenders.addressStreet,
   addressNumber: attenders.addressNumber,
   addressComplement: attenders.addressComplement,
@@ -19,25 +21,51 @@ const ATTENDER_COLUMNS = {
   status: attenders.status,
   isMember: attenders.isMember,
   memberSince: attenders.memberSince,
-  congregatingSinceYear: attenders.congregatingSinceYear,
+  congregatingSince: attenders.congregatingSince,
   admissionMode: attenders.admissionMode,
   createdAt: attenders.createdAt,
   updatedAt: attenders.updatedAt
 };
 
-export async function listAttenders(offset: number, limit: number) {
+// Diacritic/case-insensitive name match. Mirrors the categories search; relies on
+// the `unaccent` extension (migration 0003).
+function attenderNameFilter(q: string): SQL {
+  const pattern = `%${q}%`;
+  return sql`unaccent(lower(${attenders.name})) LIKE unaccent(lower(${pattern}))`;
+}
+
+function attenderWhere(filters?: AttenderFilters): SQL | undefined {
+  const conditions: SQL[] = [];
+  if (filters?.isMember !== undefined) conditions.push(eq(attenders.isMember, filters.isMember));
+  if (filters?.status !== undefined) conditions.push(eq(attenders.status, filters.status));
+  if (filters?.q) conditions.push(attenderNameFilter(filters.q));
+  return conditions.length ? and(...conditions) : undefined;
+}
+
+export async function listAttenders(offset: number, limit: number, filters?: AttenderFilters) {
+  const where = attenderWhere(filters);
   const rows = await db
     .select(ATTENDER_COLUMNS)
     .from(attenders)
-    .orderBy(attenders.id)
+    .where(where)
+    .orderBy(attenders.name)
     .offset(offset)
     .limit(limit);
 
-  const countResult = await db.select({ count: count() }).from(attenders);
+  const countResult = await db.select({ count: count() }).from(attenders).where(where);
 
   const total = countResult[0]?.count ?? 0;
 
   return { rows, total };
+}
+
+// Whole filtered roster (no pagination), name-ordered — backs the PDF export.
+export async function listAttendersForExport(filters?: AttenderFilters) {
+  return db
+    .select(ATTENDER_COLUMNS)
+    .from(attenders)
+    .where(attenderWhere(filters))
+    .orderBy(attenders.name);
 }
 
 export async function findAttenderById(id: number) {

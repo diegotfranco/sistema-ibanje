@@ -33,19 +33,23 @@ export default function ExpenseEntriesPage() {
 
   const allEntries = list.data?.data ?? [];
 
-  const toCreateBody = (values: ExpenseEntryFormValues) => ({
-    date: values.date,
-    description: values.description,
-    amount: Number.parseFloat(values.amount),
-    total: Number.parseFloat(values.total),
-    installment: values.installment,
-    totalInstallments: values.totalInstallments,
-    categoryId: values.categoryId!,
-    paymentMethodId: values.paymentMethodId!,
-    ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
-    ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
-    ...(values.notes ? { notes: values.notes } : {})
-  });
+  const toCreateBody = (values: ExpenseEntryFormValues) => {
+    const amountNum = Number.parseFloat(values.amount);
+    return {
+      date: values.date,
+      amount: amountNum,
+      total: values.isInstallment ? Number.parseFloat(values.total!) : amountNum,
+      installment: values.isInstallment ? values.installment! : 1,
+      totalInstallments: values.isInstallment ? values.totalInstallments! : 1,
+      categoryId: values.categoryId!,
+      paymentMethodId: values.paymentMethodId!,
+      ...(values.designatedFundId !== undefined
+        ? { designatedFundId: values.designatedFundId }
+        : {}),
+      ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
+      ...(values.notes ? { notes: values.notes } : {})
+    };
+  };
 
   return (
     <PageContainer>
@@ -107,7 +111,7 @@ export default function ExpenseEntriesPage() {
       <ConfirmDeleteDialog
         open={deleting !== null}
         onOpenChange={(v) => !v && setDeleting(null)}
-        description={`Tem certeza que deseja remover o lançamento "${deleting?.description ?? ''}"?`}
+        description={`Tem certeza que deseja remover o lançamento "${deleting?.categoryName ?? ''}"?`}
         onConfirm={() =>
           deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
         }

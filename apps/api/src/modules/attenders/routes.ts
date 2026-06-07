@@ -6,13 +6,27 @@ import { IdParamSchema } from '../../lib/validation.js';
 import { ErrorResponseSchema } from '../../lib/http-schemas.js';
 import {
   ListAttendersRequestSchema,
+  AttendersExportPdfQuerySchema,
   CreateAttenderRequestSchema,
   UpdateAttenderRequestSchema,
   AttenderResponseSchema,
-  AttenderListResponseSchema
+  AttenderListResponseSchema,
+  AttenderDonationsSummaryResponseSchema,
+  AttenderDonationsEntriesResponseSchema,
+  DonationsSummaryQuerySchema,
+  DonationsEntriesQuerySchema,
+  DonationsPdfQuerySchema
 } from './schema.js';
-import { IncomeEntryListResponseSchema } from '../finance/income/entries/schema.js';
 import * as controller from './controller.js';
+
+// Binary response schema so the serializer passes the PDF buffer through untouched.
+// Without a 200 schema the zod type-provider JSON-stringifies the Buffer (it arrives as
+// application/json), which is why downloads showed up as "pdf.json".
+const PdfResponseSchema = {
+  type: 'string',
+  format: 'binary',
+  description: 'PDF document'
+} as const;
 
 export async function attendersRoutes(app: FastifyInstance) {
   app.post(
@@ -47,9 +61,26 @@ export async function attendersRoutes(app: FastifyInstance) {
           403: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.View)]
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Report)]
     },
     controller.list
+  );
+
+  app.get(
+    '/attenders/export/pdf',
+    {
+      schema: {
+        tags: ['Attenders'],
+        querystring: AttendersExportPdfQuerySchema,
+        response: {
+          200: PdfResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Report)]
+    },
+    controller.exportPdf
   );
 
   app.get(
@@ -91,14 +122,14 @@ export async function attendersRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/attenders/:id/donations',
+    '/attenders/:id/donations/summary',
     {
       schema: {
         tags: ['Attenders'],
         params: IdParamSchema,
-        querystring: ListAttendersRequestSchema,
+        querystring: DonationsSummaryQuerySchema,
         response: {
-          200: IncomeEntryListResponseSchema,
+          200: AttenderDonationsSummaryResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema
@@ -106,7 +137,46 @@ export async function attendersRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth]
     },
-    controller.listDonations
+    controller.donationsSummary
+  );
+
+  app.get(
+    '/attenders/:id/donations/entries',
+    {
+      schema: {
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        querystring: DonationsEntriesQuerySchema,
+        response: {
+          200: AttenderDonationsEntriesResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth]
+    },
+    controller.donationsEntries
+  );
+
+  app.get(
+    '/attenders/:id/donations/pdf',
+    {
+      schema: {
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        querystring: DonationsPdfQuerySchema,
+        response: {
+          200: PdfResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth]
+    },
+    controller.donationsPdf
   );
 
   app.delete(

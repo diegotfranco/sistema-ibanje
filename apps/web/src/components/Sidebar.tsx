@@ -1,19 +1,16 @@
 import { useState, type ReactElement } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 import { ChevronRight, LogOut, PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
-import { useTheme } from '@/hooks/useTheme';
 import { ThemeSwitch } from '@/components/ThemeSwitch';
 import { appRoutes, type AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { hasPermission, Action, Module, type PermissionMap } from '@/lib/permissions';
+import type { PermissionMap } from '@/lib/permissions';
 import { filterRoutesByPermission, isRouteActive, hasActiveDescendant } from '@/lib/sidebar-utils';
 import { useLogout } from '@/modules/auth/useLogout';
 import { Button } from '@/components/Button';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/Collapsible';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-
 // Make sure to import these Dropdown components
 import {
   DropdownMenu,
@@ -22,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+} from '@/components/DropdownMenu';
 
 import {
   Sidebar as ShadcnSidebar,
@@ -199,16 +196,8 @@ function MenuItemRenderer({
   if (route.path && route.label) {
     const isActive = isRouteActive(route, location.pathname, searchParams);
 
-    // Início (dashboard) leaf: resolve to /me when the user lacks Dashboard:View
-    // so attenders land on their own portal from the same sidebar entry.
-    const resolvedPath =
-      route.path === paths.dashboard &&
-      !hasPermission(user?.permissions, Module.Dashboard, Action.View)
-        ? paths.me
-        : route.path;
-
     const navElement = (
-      <NavLink to={resolvedPath}>
+      <NavLink to={route.path}>
         {route.icon && <route.icon size={16} />}
         <span className="truncate">{route.label}</span>
       </NavLink>
@@ -262,8 +251,6 @@ export function Sidebar() {
   const navigate = useNavigate();
   const { toggleSidebar, state } = useSidebar();
   const { state: subgroupState, setOpenState } = useSubgroupState();
-  const { theme } = useTheme();
-
   const isCollapsed = state === 'collapsed';
 
   // Filter routes recursively by permissions
@@ -339,23 +326,13 @@ export function Sidebar() {
                 <DropdownMenuLabel>Ações do Usuário</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate(paths.me)} className="cursor-pointer">
-                  <User className="mr-2 h-4 w-4" />
                   <span>Minha Conta</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="cursor-pointer focus:bg-transparent">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Tema</span>
-                        <ThemeSwitch />
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>{theme === 'dark' ? 'Escuro' : 'Claro'}</TooltipContent>
-                  </Tooltip>
-                </DropdownMenuItem>
+                <div className="flex w-full items-center justify-between px-1.5 py-1">
+                  <span className="text-sm">Tema</span>
+                  <ThemeSwitch />
+                </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => logout()}

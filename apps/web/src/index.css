@@ -23,10 +23,14 @@
   --secondary-foreground: oklch(0.21 0.006 285.885);
   --muted: oklch(0.963 0.002 197.1);
   --muted-foreground: oklch(0.535 0.021 213.5);
-  --accent: oklch(0.963 0.002 197.1);
+  --accent: oklch(0.963 0.002 220);
   --accent-foreground: oklch(0.218 0.008 223.9);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.971 0.013 17.38);
+  /* Soft red TONE (sibling of --success/--warning) for text on a /15 tint. The base --destructive
+     is tuned as a button FILL and is too light on /15 — 3.64:1, below WCAG AA. This matches the
+     warning/success darkness that already passes. */
+  --danger: oklch(0.5 0.21 27.325);
   --success: oklch(0.45 0.154 150.07);
   --success-foreground: oklch(0.982 0.018 155.826);
   --warning: oklch(0.473 0.137 46.201);
@@ -71,6 +75,8 @@
   --accent-foreground: oklch(0.987 0.002 197.1);
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.258 0.092 26.042);
+  /* Soft red tone for dark theme: lighter than base --destructive so text on a /15 tint passes AA. */
+  --danger: oklch(0.8 0.18 22);
   --success: oklch(0.723 0.219 149.579);
   --success-foreground: oklch(0.266 0.065 152.934);
   --warning: oklch(0.828 0.189 84.429);
@@ -116,6 +122,7 @@
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-danger: var(--danger);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -169,6 +176,10 @@
   label {
     @apply font-heading;
   }
+  /* Combobox triggers styled as form inputs — matches Input/SelectTrigger bg */
+  button[data-input-trigger] {
+    @apply bg-transparent dark:bg-input/30;
+  }
 }
 
 /* Keep the root view-transition synced with ThemeSwitch's thumb/icon crossfade
@@ -181,19 +192,27 @@
 }
 
 /* Light-mode input fills: lift inputs off pure-white card backgrounds.
-   Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment. */
+   Dark mode keeps the shadcn primitive's `dark:bg-input/30` treatment.
+   Selects/comboboxes only get the fill when closed — open state is handled
+   by aria-expanded:bg-muted on the trigger so it matches outline buttons. */
 :root:not(.dark) [data-slot='input'],
-:root:not(.dark) [data-slot="input-group"],
-:root:not(.dark) [data-slot='select-trigger'],
+:root:not(.dark) [data-slot='input-group'],
+:root:not(.dark) [data-slot='select-trigger'][aria-expanded='false'],
 :root:not(.dark) [data-slot='textarea'],
-:root:not(.dark) [data-input-trigger] {
-  background-color: color-mix(in oklch, var(--accent) 40%, transparent);
+:root:not(.dark) [data-input-trigger][aria-expanded='false'] {
+  background-color: color-mix(in oklch, var(--accent) 10%, transparent);
+}
+
+/* Open state: lift to muted so it matches the outline button open-state feedback. */
+:root:not(.dark) [data-slot='select-trigger'][aria-expanded='true'],
+:root:not(.dark) [data-input-trigger][aria-expanded='true'] {
+  background-color: var(--muted);
 }
 
 /* Auth pages sit on a translucent card over the glow background — the accent
    fill above muddies that, so opt out and let inputs read fully transparent. */
 :root:not(.dark) .auth-layout [data-slot='input'],
-:root:not(.dark) .auth-layout [data-slot="input-group"],
+:root:not(.dark) .auth-layout [data-slot='input-group'],
 :root:not(.dark) .auth-layout [data-slot='select-trigger'],
 :root:not(.dark) .auth-layout [data-slot='textarea'],
 :root:not(.dark) .auth-layout [data-input-trigger] {

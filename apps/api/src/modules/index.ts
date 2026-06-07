@@ -5,7 +5,10 @@ import { attendersRoutes } from './attenders/routes.js';
 import { churchSettingsRoutes } from './church-settings/routes.js';
 import { rolesRoutes } from './roles/routes.js';
 import { financeRoutes } from './finance/index.js';
+import { dashboardRoutes } from './dashboard/routes.js';
 import { meetingsRoutes } from './meetings/routes.js';
+import { eventsRoutes } from './events/routes.js';
+import { calendarRoutes } from './calendar/routes.js';
 import { minutesRoutes } from './minutes/routes.js';
 import { healthRoutes } from './health/routes.js';
 import { membershipLettersRoutes } from './membership-letters/routes.js';
@@ -19,6 +22,9 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(churchSettingsRoutes);
   await app.register(rolesRoutes);
   await app.register(financeRoutes);
+  await app.register(dashboardRoutes);
   await app.register(meetingsRoutes);
+  await app.register(eventsRoutes);
+  await app.register(calendarRoutes);
   await app.register(minutesRoutes);
 }

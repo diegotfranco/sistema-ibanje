@@ -113,7 +113,7 @@ function StatementSection({ title, groups, total, totalColor }: SectionProps) {
           })}
         </div>
       )}
-      <div className="flex items-baseline justify-between gap-3 border-t-2 pt-2 text-sm font-semibold">
+      <div className="flex items-baseline justify-between gap-3 border-t pt-2 text-sm font-semibold">
         <span className="min-w-0">Total {title}</span>
         <span
           className={`font-mono tabular-nums whitespace-nowrap shrink-0 ${totalColor === 'in' ? 'text-money-in' : 'text-money-out'}`}>
@@ -137,21 +137,23 @@ export function FinancialStatementDocument({ data }: Props) {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="space-y-6 py-4">
+      <Card className="gap-0 pt-0.5 pb-0">
+        <CardContent className="space-y-2 py-4 pb-2.5">
           <StatementSection
             title="Entradas"
             groups={incomeGroups}
             total={data.totalIncome}
             totalColor="in"
           />
-          <StatementSection
-            title="Saídas"
-            groups={expenseGroups}
-            total={data.totalExpenses}
-            totalColor="out"
-          />
-          <div className="border-y-2 py-3 flex items-baseline justify-between gap-3 text-base font-semibold">
+          <div className="mt-4">
+            <StatementSection
+              title="Saídas"
+              groups={expenseGroups}
+              total={data.totalExpenses}
+              totalColor="out"
+            />
+          </div>
+          <div className="border-t pt-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
             <span className="min-w-0">Resultado do mês</span>
             <span className={`font-mono tabular-nums whitespace-nowrap shrink-0 ${resultColor}`}>
               {fmt(result)}

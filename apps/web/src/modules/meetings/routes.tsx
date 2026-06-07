@@ -1,4 +1,4 @@
-import { ClipboardList } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import type { AppRoute } from '@/routes';
 import { paths } from '@/lib/paths';
 import { Module } from '@/lib/permissions';
@@ -15,7 +15,7 @@ export const pautasRouteChildren: AppRoute[] = [
     ),
     layout: 'app',
     label: 'Assembleias',
-    icon: ClipboardList,
+    icon: CalendarDays,
     module: Module.Agendas
   }
 ];

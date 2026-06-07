@@ -3,7 +3,6 @@ import { randomBytes, createHash } from 'node:crypto';
 import { env } from '../../config/env.js';
 import * as repo from './repository.js';
 import { findAttenderByUserId } from '../attenders/repository.js';
-import { listIncomeEntriesByAttender } from '../finance/income/entries/service.js';
 import { updateAttenderProfile } from '../attenders/service.js';
 import type { UpdateMyProfileRequest } from './schema.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
@@ -84,13 +83,6 @@ export async function confirmPasswordReset(token: string, newPassword: string) {
   await repo.markPasswordResetTokenUsed(record.id);
 
   return true;
-}
-
-export async function listMyDonations(callerId: number, page: number, limit: number) {
-  const link = await findAttenderByUserId(callerId);
-  if (!link) throw httpError(404, 'No attender linked to this user');
-
-  return listIncomeEntriesByAttender(callerId, link.id, page, limit, { isSelfAccess: true });
 }
 
 export async function updateMyProfile(callerId: number, body: UpdateMyProfileRequest) {

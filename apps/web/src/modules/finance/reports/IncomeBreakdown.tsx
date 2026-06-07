@@ -94,10 +94,10 @@ function IncomeBreakdownTable({ pivot, buckets, collapsed, toggle }: ViewProps) 
           return (
             <Fragment key={row.referenceDate}>
               <TableRow className={cn(rowIdx > 0 && 'border-t-2')}>
-                <TableCell className="font-semibold text-base py-3">
+                <TableCell className="font-semibold text-sm py-2">
                   {formatDate(row.referenceDate)}
                 </TableCell>
-                <TableCell className="text-right font-mono tabular-nums font-semibold text-base text-money-in py-3 whitespace-nowrap">
+                <TableCell className="text-right font-mono tabular-nums font-semibold text-sm text-money-in py-2 whitespace-nowrap">
                   R$ {formatMoney(row.total)}
                 </TableCell>
               </TableRow>
@@ -108,8 +108,8 @@ function IncomeBreakdownTable({ pivot, buckets, collapsed, toggle }: ViewProps) 
                 if (!expandable) {
                   return (
                     <TableRow key={`${row.referenceDate}:${bucket.key}`}>
-                      <TableCell className="pl-6 py-1.5">{bucketLabel(bucket)}</TableCell>
-                      <TableCell className="text-right font-mono tabular-nums py-1.5 whitespace-nowrap">
+                      <TableCell className="pl-6 py-1.5 text-sm">{bucketLabel(bucket)}</TableCell>
+                      <TableCell className="text-right font-mono tabular-nums py-1.5 text-sm whitespace-nowrap">
                         R$ {formatMoney(bucketSum.toFixed(2))}
                       </TableCell>
                     </TableRow>
@@ -157,9 +157,9 @@ function IncomeBreakdownTable({ pivot, buckets, collapsed, toggle }: ViewProps) 
         })}
       </TableBody>
       <tfoot>
-        <TableRow className="border-t-2 font-semibold">
-          <TableCell className="py-3 text-base">Total do período</TableCell>
-          <TableCell className="text-right font-mono tabular-nums text-money-in py-3 text-base whitespace-nowrap">
+        <TableRow className="border-t border-b-0 font-semibold">
+          <TableCell className="px-4 py-3 text-sm">Total Entradas</TableCell>
+          <TableCell className="text-right font-mono tabular-nums text-money-in py-2 text-sm whitespace-nowrap">
             R$ {formatMoney(pivot.grandTotal)}
           </TableCell>
         </TableRow>
@@ -178,10 +178,10 @@ function IncomeBreakdownCardsByDate({ pivot, buckets, collapsed, toggle }: ViewP
         return (
           <li key={row.referenceDate} className="px-4 py-3">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-base font-semibold tabular-nums">
+              <span className="text-sm font-semibold tabular-nums">
                 {formatDate(row.referenceDate)}
               </span>
-              <span className="font-mono tabular-nums text-base font-bold whitespace-nowrap shrink-0 text-money-in">
+              <span className="font-mono tabular-nums text-sm font-bold whitespace-nowrap shrink-0 text-money-in">
                 R$ {formatMoney(row.total)}
               </span>
             </div>
@@ -194,7 +194,7 @@ function IncomeBreakdownCardsByDate({ pivot, buckets, collapsed, toggle }: ViewP
                   return (
                     <div
                       key={`${row.referenceDate}:${bucket.key}`}
-                      className="flex items-baseline justify-between gap-3 pl-3 text-xs text-muted-foreground">
+                      className="flex items-baseline justify-between gap-3 pl-3 text-xs">
                       <dt className="min-w-0 truncate">{bucketLabel(bucket)}</dt>
                       <dd className="font-mono tabular-nums whitespace-nowrap shrink-0">
                         R$ {formatMoney(bucketSum.toFixed(2))}
@@ -204,7 +204,7 @@ function IncomeBreakdownCardsByDate({ pivot, buckets, collapsed, toggle }: ViewP
                 }
                 return (
                   <Fragment key={`${row.referenceDate}:${bucket.key}`}>
-                    <div className="flex items-baseline justify-between gap-3 pl-3 text-xs text-muted-foreground">
+                    <div className="flex items-baseline justify-between gap-3 pl-3 text-xs">
                       <dt className="min-w-0 truncate">
                         <button
                           type="button"
@@ -243,8 +243,8 @@ function IncomeBreakdownCardsByDate({ pivot, buckets, collapsed, toggle }: ViewP
           </li>
         );
       })}
-      <li className="border-t-2 px-4 py-3 flex items-baseline justify-between gap-3 text-base font-semibold">
-        <span>Total do período</span>
+      <li className="border-t px-4 py-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
+        <span>Total Entradas</span>
         <span className="font-mono tabular-nums whitespace-nowrap shrink-0 text-money-in">
           R$ {formatMoney(pivot.grandTotal)}
         </span>

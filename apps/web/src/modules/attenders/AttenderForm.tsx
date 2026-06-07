@@ -13,14 +13,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
+import MonthInput from '@/components/MonthInput';
 import { AdmissionMode } from '@sistema-ibanje/shared';
 import { AttenderFormSchema, type AttenderFormValues } from './schema';
 
@@ -48,7 +43,8 @@ const EMPTY: AttenderFormValues = {
   postalCode: null,
   isMember: false,
   memberSince: null,
-  congregatingSinceYear: null,
+  baptismDate: null,
+  congregatingSince: null,
   admissionMode: null
 };
 
@@ -94,6 +90,8 @@ export default function AttenderForm({
       addressDistrict: values.addressDistrict?.trim() || null,
       city: values.city?.trim() || null,
       state: values.state?.trim() || null,
+      baptismDate: values.baptismDate || null,
+      congregatingSince: values.congregatingSince || null,
       memberSince: values.isMember ? values.memberSince || null : null,
       admissionMode: values.isMember ? (values.admissionMode ?? null) : null
     };
@@ -101,7 +99,7 @@ export default function AttenderForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Editar Congregado' : 'Novo Congregado'}</DialogTitle>
         </DialogHeader>
@@ -146,23 +144,26 @@ export default function AttenderForm({
           </div>
 
           <div className="space-y-1">
-            <Label htmlFor="congregatingSinceYear">Congregando desde (ano)</Label>
-            <Input
-              id="congregatingSinceYear"
-              type="number"
-              min={1900}
-              max={2100}
-              placeholder="2010"
-              {...register('congregatingSinceYear', {
-                setValueAs: (v) => (v === '' || v === null ? null : Number(v))
-              })}
+            <Label htmlFor="congregatingSince">Congregando desde</Label>
+            <Controller
+              control={control}
+              name="congregatingSince"
+              render={({ field }) => (
+                <MonthInput
+                  id="congregatingSince"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+              )}
             />
-            {errors.congregatingSinceYear && (
-              <p className="text-xs text-destructive">{errors.congregatingSinceYear.message}</p>
+            {errors.congregatingSince && (
+              <p className="text-xs text-destructive">{errors.congregatingSince.message}</p>
             )}
           </div>
 
-          <p className="pt-2 text-sm font-medium text-muted-foreground">Membresia</p>
+          <p className="pt-2 text-sm font-medium text-muted-foreground">Vínculo</p>
           <Separator />
 
           <div className="flex items-center gap-2">
@@ -182,6 +183,23 @@ export default function AttenderForm({
             </Label>
           </div>
 
+          <div className="space-y-1">
+            <Label htmlFor="baptismDate">Data de batismo</Label>
+            <Controller
+              control={control}
+              name="baptismDate"
+              render={({ field }) => (
+                <DateInput
+                  id="baptismDate"
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  onBlur={field.onBlur}
+                  name={field.name}
+                />
+              )}
+            />
+          </div>
+
           {isMember && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -190,7 +208,7 @@ export default function AttenderForm({
                   control={control}
                   name="memberSince"
                   render={({ field }) => (
-                    <DateInput
+                    <MonthInput
                       id="memberSince"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
@@ -199,6 +217,9 @@ export default function AttenderForm({
                     />
                   )}
                 />
+                {errors.memberSince && (
+                  <p className="text-xs text-destructive">{errors.memberSince.message}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <Label htmlFor="admissionMode">Modo de Admissão</Label>
@@ -272,10 +293,9 @@ export default function AttenderForm({
               <Label htmlFor="addressNumber">Número</Label>
               <Input
                 id="addressNumber"
-                type="number"
-                min={1}
+                maxLength={16}
                 {...register('addressNumber', {
-                  setValueAs: (v) => (v === '' || v === null ? null : Number(v))
+                  setValueAs: (v) => (v === '' || v === null ? null : String(v))
                 })}
               />
               {errors.addressNumber && (

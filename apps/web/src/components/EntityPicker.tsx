@@ -24,6 +24,8 @@ export type EntityPickerProps<T> = {
   isLoading?: boolean;
   allowClear?: boolean;
   className?: string;
+  /** Accessible name for the trigger when there is no programmatically associated <label>. */
+  ariaLabel?: string;
 };
 
 function EntityPickerInner<T>(
@@ -38,7 +40,8 @@ function EntityPickerInner<T>(
     disabled = false,
     isLoading = false,
     allowClear = false,
-    className
+    className,
+    ariaLabel
   }: EntityPickerProps<T>,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
@@ -55,6 +58,7 @@ function EntityPickerInner<T>(
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           disabled={disabled}
           data-input-trigger=""
           className={cn('w-full justify-between min-w-0', className)}>

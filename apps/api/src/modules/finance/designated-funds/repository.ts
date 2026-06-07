@@ -75,3 +75,13 @@ export async function deactivateDesignatedFund(id: number) {
     .set({ status: 'inativo', updatedAt: new Date() })
     .where(eq(designatedFunds.id, id));
 }
+
+export async function reactivateDesignatedFund(id: number) {
+  const result = await db
+    .update(designatedFunds)
+    .set({ status: 'ativo', updatedAt: new Date() })
+    .where(eq(designatedFunds.id, id))
+    .returning(selectFields);
+
+  return result[0] ?? null;
+}

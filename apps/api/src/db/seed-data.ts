@@ -17,20 +17,12 @@ export const SEED_ROLES = [
     description: 'Acesso total para gestão, atuando como substituto legal do presidente.'
   },
   {
-    name: 'Secretário Responsável',
-    description: 'Gestão completa de atas e congregados, incluindo remoção de registros.'
-  },
-  {
     name: 'Secretário',
-    description: 'Gestão de atas e congregados, sem permissão para remover registros.'
-  },
-  {
-    name: 'Tesoureiro Responsável',
-    description: 'Gestão financeira completa, incluindo remoção de lançamentos.'
+    description: 'Gestão completa de atas, congregados e modelos administrativos.'
   },
   {
     name: 'Tesoureiro',
-    description: 'Gestão financeira do dia-a-dia, sem permissão para remover lançamentos.'
+    description: 'Gestão financeira completa, incluindo lançamentos, campanhas e fechamentos.'
   },
   {
     name: 'Comissão de Exame de Contas',
@@ -38,7 +30,7 @@ export const SEED_ROLES = [
       'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
   },
   {
-    name: 'Membro',
+    name: 'Congregado',
     description: 'Acesso de visualização para transparência de atas e dados pessoais.'
   }
 ];
@@ -86,7 +78,12 @@ export const SEED_MODULES = [
   { name: 'Atas', description: 'Gerencia as atas das reuniões da diretoria' },
   { name: 'Cartas de Membros', description: 'Gerencia as cartas de transferência de membros' },
   { name: 'Modelos de Ata', description: 'Gerencia os modelos de ata para assembleias' },
-  { name: 'Dados da Igreja', description: 'Gerencia os dados institucionais da igreja' }
+  { name: 'Dados da Igreja', description: 'Gerencia os dados institucionais da igreja' },
+  { name: 'Eventos', description: 'Gerencia os eventos da igreja com vínculo financeiro' },
+  {
+    name: 'Calendário',
+    description: 'Gerencia datas, feriados e lembretes do calendário da secretaria'
+  }
 ];
 
 export const EXPECTED_MODULE_ORDER = SEED_MODULES.map((m) => m.name);
@@ -112,23 +109,140 @@ export const SEED_DESIGNATED_FUNDS: {
   name: string;
   description?: string | null;
   targetAmount?: string;
+  targetDate?: string;
+  createdAt?: string;
 }[] = [
   {
     name: 'Fundo de Obras',
     description: 'Reserva para reformas e melhorias da sede',
-    targetAmount: '50000.00'
+    targetAmount: '50000.00',
+    targetDate: '2026-12-31',
+    createdAt: '2024-11-15'
   },
   {
     name: 'Fundo Missionário',
-    description: 'Recursos destinados ao apoio de missionários e seminaristas'
+    description: 'Recursos destinados ao apoio de missionários e seminaristas',
+    createdAt: '2025-01-10'
   },
   {
     name: 'Dia das Crianças',
     description: 'Campanha anual para o evento infantil',
-    targetAmount: '2000.00'
+    targetAmount: '2000.00',
+    targetDate: '2026-10-12',
+    createdAt: '2026-02-20'
   },
-  { name: 'Terenos', description: 'Apoio à congregação irmã em Terenos/MS' },
-  { name: 'PAM', description: 'Plano de Auxílio Missionário' }
+  {
+    name: 'Aquisição de Som',
+    description: 'Renovação dos equipamentos de áudio do templo',
+    targetAmount: '8000.00',
+    targetDate: '2026-09-30',
+    createdAt: '2025-11-05'
+  },
+  {
+    name: 'Terenos',
+    description: 'Apoio à congregação irmã em Terenos/MS',
+    createdAt: '2025-08-12'
+  },
+  {
+    name: 'PAM',
+    description: 'Plano de Auxílio Missionário',
+    targetAmount: '12000.00',
+    targetDate: '2026-12-15',
+    createdAt: '2025-09-22'
+  }
+];
+
+/**
+ * Structural events seeded in dev. Each event represents a bounded activity
+ * that books inscriptions (income) and costs (expense) against its eventId.
+ * Times are stored as absolute UTC and rendered in the user's local timezone.
+ */
+export const SEED_EVENTS: {
+  title: string;
+  description?: string;
+  location?: string;
+  startTime: string;
+  endTime: string;
+}[] = [
+  {
+    title: 'Pizzada da Mocidade',
+    description: 'Venda de pizza preparada pela mocidade.',
+    location: 'Sede',
+    startTime: '2025-09-13T22:00:00Z',
+    endTime: '2025-09-14T02:30:00Z'
+  },
+  {
+    title: 'Carreteiro Beneficente',
+    description: 'Almoço beneficente com carreteiro tradicional.',
+    location: 'Sede',
+    startTime: '2025-11-22T14:00:00Z',
+    endTime: '2025-11-22T18:00:00Z'
+  },
+  {
+    title: 'Pastéis no Estacionamento',
+    description: 'Venda de pastéis na manhã de domingo.',
+    location: 'Estacionamento da sede',
+    startTime: '2026-03-08T12:00:00Z',
+    endTime: '2026-03-08T15:30:00Z'
+  },
+  {
+    title: 'Almoço do Dia das Mães',
+    description: 'Almoço comemorativo do Dia das Mães.',
+    location: 'Sede',
+    startTime: '2026-05-11T15:00:00Z',
+    endTime: '2026-05-11T19:00:00Z'
+  },
+  {
+    title: 'Festa Junina',
+    description: 'Festa junina com comidas típicas e quadrilha.',
+    location: 'Sede',
+    startTime: '2026-06-21T20:00:00Z',
+    endTime: '2026-06-22T01:00:00Z'
+  },
+  {
+    title: 'Retiro de Casais 2026',
+    description: 'Retiro espiritual para casais da congregação.',
+    location: 'Chácara São José',
+    startTime: '2026-06-12T21:00:00Z',
+    endTime: '2026-06-14T20:00:00Z'
+  },
+  {
+    title: 'Pizzada de Aniversário da Igreja',
+    description: 'Pizzada comemorativa do aniversário da igreja.',
+    location: 'Sede',
+    startTime: '2026-08-30T22:00:00Z',
+    endTime: '2026-08-31T02:00:00Z'
+  },
+  {
+    title: 'Conferência 2026',
+    description: 'Conferência anual da igreja com palestrantes convidados.',
+    location: 'Sede',
+    startTime: '2026-10-15T22:00:00Z',
+    endTime: '2026-10-17T03:00:00Z'
+  }
+];
+
+// Manual calendar dates the secretary tracks (holidays, commemorative dates, reminders). One-off
+// dated rows — recurring birthdays/baptisms are derived from attenders, not stored here.
+export const SEED_CALENDAR_ENTRIES: {
+  title: string;
+  date: string;
+  notes?: string;
+}[] = [
+  {
+    title: 'Dia do Pastor',
+    date: '2026-06-14',
+    notes: 'Homenagem ao pastor durante o culto da noite.'
+  },
+  {
+    title: 'Feriado — Independência',
+    date: '2026-09-07',
+    notes: 'Não haverá expediente na secretaria.'
+  },
+  {
+    title: 'Aniversário da Igreja',
+    date: '2026-08-30'
+  }
 ];
 
 /**
@@ -429,31 +543,22 @@ export function buildRoleModulePermissions(
 
   return [
     ...cross(roleByName['Administrador'].id, allModNames, allPermIds),
-    ...cross(roleByName['Tesoureiro'].id, ['Painel', ...financialMods], writePermIds),
+    ...cross(roleByName['Tesoureiro'].id, ['Painel', ...financialMods], fullPermIds),
     ...cross(roleByName['Tesoureiro'].id, ['Congregados', 'Atas'], readPermIds),
     ...cross(
       roleByName['Comissão de Exame de Contas'].id,
       ['Painel', ...financialMods],
       readPermIds
     ),
-    ...cross(roleByName['Tesoureiro Responsável'].id, ['Painel', ...financialMods], fullPermIds),
-    ...cross(roleByName['Tesoureiro Responsável'].id, ['Congregados', 'Atas'], readPermIds),
-    ...cross(roleByName['Secretário'].id, adminMods, writePermIds),
+    ...cross(roleByName['Secretário'].id, adminMods, fullPermIds),
     ...cross(roleByName['Secretário'].id, financialMods, readPermIds),
-    ...cross(roleByName['Secretário Responsável'].id, adminMods, fullPermIds),
-    ...cross(roleByName['Secretário Responsável'].id, financialMods, readPermIds),
     ...cross(roleByName['Presidente'].id, financialMods, fullPermIds),
     ...cross(roleByName['Presidente'].id, adminMods, fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Pautas'], allPermIds),
     ...cross(roleByName['Vice-Presidente'].id, financialMods, fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, adminMods, fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Pautas'], allPermIds),
-    ...cross(
-      roleByName['Tesoureiro'].id,
-      ['Fechamentos Mensais'],
-      [permByName['Acessar'].id, permByName['Cadastrar'].id]
-    ),
-    ...cross(roleByName['Tesoureiro Responsável'].id, ['Fechamentos Mensais'], closingFullIds),
+    ...cross(roleByName['Tesoureiro'].id, ['Fechamentos Mensais'], closingFullIds),
     ...cross(roleByName['Presidente'].id, ['Fechamentos Mensais'], closingFullIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Fechamentos Mensais'], closingFullIds),
     ...cross(
@@ -461,17 +566,22 @@ export function buildRoleModulePermissions(
       ['Fechamentos Mensais'],
       examCommissionClosingIds
     ),
-    ...cross(roleByName['Membro'].id, ['Atas', 'Congregados'], [permByName['Acessar'].id]),
-    ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], writePermIds),
     ...cross(
-      roleByName['Secretário Responsável'].id,
-      ['Cartas de Membros', 'Modelos de Ata'],
-      fullPermIds
+      roleByName['Congregado'].id,
+      ['Atas', 'Congregados', 'Painel'],
+      [permByName['Acessar'].id]
     ),
+    ...cross(roleByName['Tesoureiro'].id, ['Eventos'], fullPermIds),
+    ...cross(roleByName['Presidente'].id, ['Eventos'], fullPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Eventos'], fullPermIds),
+    ...cross(roleByName['Secretário'].id, ['Eventos'], writePermIds),
+    ...cross(roleByName['Secretário'].id, ['Calendário'], fullPermIds),
+    ...cross(roleByName['Presidente'].id, ['Calendário'], fullPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Calendário'], fullPermIds),
+    ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Dados da Igreja'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Dados da Igreja'], fullPermIds),
-    ...cross(roleByName['Secretário Responsável'].id, ['Dados da Igreja'], fullPermIds),
-    ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], readPermIds)
+    ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], fullPermIds)
   ];
 }
 
@@ -506,22 +616,10 @@ export const SEED_DEMO_USERS: SeedDemoUser[] = [
     roleName: 'Vice-Presidente'
   },
   {
-    name: 'Tesoureiro Responsável da Silva',
-    email: 'tesoureiro.resp@email.com',
-    password: 'tesresp123',
-    roleName: 'Tesoureiro Responsável'
-  },
-  {
     name: 'Tesoureiro da Silva',
     email: 'tesoureiro@email.com',
     password: 'tesoureiro123',
     roleName: 'Tesoureiro'
-  },
-  {
-    name: 'Secretário Responsável da Silva',
-    email: 'secretario.resp@email.com',
-    password: 'secresp123',
-    roleName: 'Secretário Responsável'
   },
   {
     name: 'Secretário da Silva',
@@ -536,10 +634,10 @@ export const SEED_DEMO_USERS: SeedDemoUser[] = [
     roleName: 'Comissão de Exame de Contas'
   },
   {
-    name: 'Membro da Silva',
-    email: 'membro@email.com',
-    password: 'membro123',
-    roleName: 'Membro'
+    name: 'Congregado da Silva',
+    email: 'congregado@email.com',
+    password: 'congregado123',
+    roleName: 'Congregado'
   }
 ];
 
@@ -558,6 +656,6 @@ export const SEED_CHURCH_SETTINGS = {
   websiteUrl: null,
   currentPresidentName: 'Pr. Deucir Araújo de Almeida',
   currentPresidentTitle: 'Presidente',
-  currentSecretaryName: 'Secretário Responsável da Silva',
+  currentSecretaryName: 'Secretário da Silva',
   currentSecretaryTitle: '1º Secretário(a)'
 } as const;

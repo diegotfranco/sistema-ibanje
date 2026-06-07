@@ -227,5 +227,4 @@ Pages target 375px (iPhone SE / mobile M) up. Approach is **mobile-first respons
 
 ## Known gaps / deferred
 
-- `members.addressNumber` is `INTEGER` — may need `VARCHAR` for addresses like "123A".
-- TLS not handled by the Docker stack — runbook recommends Caddy / Cloudflare Tunnel / Traefik in front.
+- TLS is terminated by Cloudflare Tunnel in front of the Docker stack (the stack itself serves plain HTTP). No further action needed.

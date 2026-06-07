@@ -9,13 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { zodResolver } from '@/lib/zodResolver';
 import { NewClosingSchema, type NewClosingFormValues } from './schema';
 import { useCreateMonthlyClosing } from './useMonthlyClosings';

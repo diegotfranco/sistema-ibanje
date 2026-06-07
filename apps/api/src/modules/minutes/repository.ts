@@ -64,8 +64,9 @@ export async function deleteMinute(id: number): Promise<void> {
   await db.delete(minutes).where(eq(minutes.id, id));
 }
 
-export async function getVersionsForMinute(minuteId: number): Promise<MinuteVersion[]> {
-  return db
+export async function getVersionsForMinute(minuteId: number, tx?: Tx): Promise<MinuteVersion[]> {
+  const executor = tx ?? db;
+  return executor
     .select()
     .from(minuteVersions)
     .where(eq(minuteVersions.minuteId, minuteId))

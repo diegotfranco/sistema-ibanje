@@ -38,7 +38,6 @@ export type IncomeReportResponse = {
 export type ExpenseReportRow = {
   id: number;
   date: string;
-  description: string;
   categoryId: number;
   categoryName: string;
   parentCategoryId: number | null;
@@ -164,10 +163,24 @@ export type FundIncomeEntry = {
 export type FundExpenseEntry = {
   id: number;
   date: string;
-  description: string;
   amount: string;
   categoryName: string;
   notes: string | null;
+};
+
+export type EventSummary = {
+  eventId: number;
+  eventTitle: string;
+  startTime: string;
+  endTime: string;
+  totalRaised: string;
+  totalSpent: string;
+  net: string;
+};
+
+export type EventListResponse = {
+  period: { from: string; to: string } | null;
+  events: EventSummary[];
 };
 
 export type FundDetailResponse = FundSummary & {

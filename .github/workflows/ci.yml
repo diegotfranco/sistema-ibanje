@@ -75,3 +75,115 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Web coverage gate (lines >= 50%)
+        run: pnpm --filter @sistema-ibanje/web test:coverage
+
+      - name: API coverage gate (lines >= 50%)
+        run: pnpm --filter @sistema-ibanje/api test:coverage
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sistema_ibanje
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sistema_ibanje
+      REDIS_URL: redis://localhost:6379
+      SESSION_SECRET: test_session_secret_at_least_32_characters_long_xxxxx
+      ARGON2_PEPPER: test_argon2_pepper_at_least_32_characters_long_xxxxxxxx
+      MINIO_ENDPOINT: http://localhost:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: receipts
+      RESEND_API_KEY: re_test
+      EMAIL_FROM_NOREPLY: 'Test <no-reply@test.local>'
+      FRONTEND_URL: http://localhost:5173
+      CORS_ORIGIN: http://localhost:5173
+      NODE_ENV: development
+      # The a11y axe audit logs in as the seeded admin to reach protected routes.
+      TEST_USER_EMAIL: admin@email.com
+      TEST_USER_PASSWORD: admin123
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm --filter @sistema-ibanje/shared build
+
+      # MinIO can't run as a `services:` container (it needs the `server /data`
+      # command, which service containers can't override), so start it directly.
+      # The API calls initStorage() at boot and crashes if :9000 is unreachable.
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            quay.io/minio/minio:RELEASE.2024-04-18T19-09-19Z server /data
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9000/minio/health/live; then echo "MinIO ready"; exit 0; fi
+            sleep 2
+          done
+          echo "MinIO failed to become healthy" >&2
+          docker logs minio || true
+          exit 1
+
+      - name: Migrate + seed database
+        working-directory: apps/api
+        run: pnpm db:migrate && pnpm db:seed
+
+      - name: Install Playwright browser
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E
+        working-directory: apps/web
+        run: pnpm exec playwright test --project=e2e
+
+      - name: Run WCAG 2.1 AA audit (axe)
+        working-directory: apps/web
+        run: pnpm exec playwright test --project=a11y
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/test-results
+            apps/web/a11y-report.md
+          retention-days: 7

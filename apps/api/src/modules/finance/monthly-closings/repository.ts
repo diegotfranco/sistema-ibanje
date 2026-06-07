@@ -1,4 +1,4 @@
-import { eq, gte, lt, sum, count, and, or, desc, isNotNull, ne, sql } from 'drizzle-orm';
+import { eq, gte, lt, sum, count, and, desc, isNotNull, ne, sql } from 'drizzle-orm';
 import { db } from '../../../db/index.js';
 import {
   monthlyClosings,
@@ -17,83 +17,103 @@ export function periodEnd(year: number, month: number): string {
   return `${year}-${String(month + 1).padStart(2, '0')}-01`;
 }
 
+// The period is stored as a single YYYYMM int. The rest of the app speaks (year, month),
+// so reads decode back into those two fields and writes encode forward — the column shape
+// is an implementation detail confined to this repository.
+function toPeriodInt(year: number, month: number): number {
+  return year * 100 + month;
+}
+
+type MonthlyClosingRow = Omit<MonthlyClosing, 'period'> & {
+  periodYear: number;
+  periodMonth: number;
+};
+
+function decode(row: MonthlyClosing): MonthlyClosingRow {
+  const { period, ...rest } = row;
+  return { ...rest, periodYear: Math.trunc(period / 100), periodMonth: period % 100 };
+}
+
 export async function listMonthlyClosings(offset: number, limit: number, year?: number) {
-  const condition = year ? eq(monthlyClosings.periodYear, year) : undefined;
+  const condition = year
+    ? and(
+        gte(monthlyClosings.period, toPeriodInt(year, 1)),
+        lt(monthlyClosings.period, toPeriodInt(year + 1, 1))
+      )
+    : undefined;
   const rows = await db
     .select()
     .from(monthlyClosings)
     .where(condition)
-    .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
+    .orderBy(desc(monthlyClosings.period))
     .offset(offset)
     .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(monthlyClosings).where(condition);
-  return { rows, total: countResult[0]?.count ?? 0 };
+  return { rows: rows.map(decode), total: countResult[0]?.count ?? 0 };
 }
 
 export async function listMonthlyClosingYears(): Promise<number[]> {
+  const yearKey = sql<number>`${monthlyClosings.period} / 100`;
   const rows = await db
-    .selectDistinct({ year: monthlyClosings.periodYear })
+    .selectDistinct({ year: yearKey })
     .from(monthlyClosings)
-    .orderBy(sql`${monthlyClosings.periodYear} DESC`);
-  return rows.map((r) => r.year);
+    .orderBy(desc(yearKey));
+  return rows.map((r) => Number(r.year));
 }
 
-export async function findMonthlyClosingById(id: number): Promise<MonthlyClosing | null> {
+export async function findMonthlyClosingById(id: number): Promise<MonthlyClosingRow | null> {
   const result = await db.select().from(monthlyClosings).where(eq(monthlyClosings.id, id)).limit(1);
-  return result[0] ?? null;
+  return result[0] ? decode(result[0]) : null;
 }
 
 export async function findMonthlyClosingByPeriod(
   year: number,
   month: number
-): Promise<MonthlyClosing | null> {
+): Promise<MonthlyClosingRow | null> {
   const result = await db
     .select()
     .from(monthlyClosings)
-    .where(and(eq(monthlyClosings.periodYear, year), eq(monthlyClosings.periodMonth, month)))
+    .where(eq(monthlyClosings.period, toPeriodInt(year, month)))
     .limit(1);
-  return result[0] ?? null;
+  return result[0] ? decode(result[0]) : null;
 }
 
 export async function findPreviousFechadoClosing(
   year: number,
   month: number
-): Promise<MonthlyClosing | null> {
+): Promise<MonthlyClosingRow | null> {
   const result = await db
     .select()
     .from(monthlyClosings)
     .where(
       and(
         eq(monthlyClosings.status, 'fechado'),
-        or(
-          lt(monthlyClosings.periodYear, year),
-          and(eq(monthlyClosings.periodYear, year), lt(monthlyClosings.periodMonth, month))
-        )
+        lt(monthlyClosings.period, toPeriodInt(year, month))
       )
     )
-    .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
+    .orderBy(desc(monthlyClosings.period))
     .limit(1);
-  return result[0] ?? null;
+  return result[0] ? decode(result[0]) : null;
 }
 
-export async function findLatestNonAbertoClosing(): Promise<MonthlyClosing | null> {
+export async function findLatestNonAbertoClosing(): Promise<MonthlyClosingRow | null> {
   const result = await db
     .select()
     .from(monthlyClosings)
     .where(ne(monthlyClosings.status, 'aberto'))
-    .orderBy(desc(monthlyClosings.periodYear), desc(monthlyClosings.periodMonth))
+    .orderBy(desc(monthlyClosings.period))
     .limit(1);
-  return result[0] ?? null;
+  return result[0] ? decode(result[0]) : null;
 }
 
 export async function insertMonthlyClosing(data: {
   periodYear: number;
   periodMonth: number;
-}): Promise<MonthlyClosing | null> {
+}): Promise<MonthlyClosingRow | null> {
   const result = await db
     .insert(monthlyClosings)
-    .values(data)
+    .values({ period: toPeriodInt(data.periodYear, data.periodMonth) })
     .returning({ id: monthlyClosings.id });
   const insertedId = result[0]?.id;
   if (!insertedId) throw new Error('Failed to retrieve inserted closing ID');
@@ -116,7 +136,7 @@ export async function updateMonthlyClosing(
       | 'closedAt'
     >
   >
-): Promise<MonthlyClosing | null> {
+): Promise<MonthlyClosingRow | null> {
   await db
     .update(monthlyClosings)
     .set({ ...data, updatedAt: new Date() })

@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { RowDetailPanel } from '@/components/RowDetailPanel';
+import { RowDetailFooterActions } from '../components/RowActions';
 import { formatMoney } from '../entries-utils';
 import { useIncomeReport } from './useReports';
 import {
-  incomeLineItemColumns,
+  buildIncomeLineItemColumns,
   renderIncomeLineItemMobile,
-  buildIncomeLineItemFields
+  buildIncomeLineItemFields,
+  type IncomeRowActions
 } from './income-line-item-display';
 import type { IncomeReportRow } from './schema';
 
 interface Props {
   month: string;
   mode?: 'full' | 'embedded';
+  rowActions?: Omit<IncomeRowActions, 'onView'>;
 }
 
-export function IncomeReportTab({ month, mode = 'full' }: Props) {
+export function IncomeReportTab({ month, mode = 'full', rowActions }: Props) {
   const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<Record<string, string | undefined>>({});
   const [detail, setDetail] = useState<IncomeReportRow | null>(null);
@@ -26,10 +29,26 @@ export function IncomeReportTab({ month, mode = 'full' }: Props) {
   const rows = data?.data ?? [];
   const isEmbedded = mode === 'embedded';
 
+  const columns = useMemo(
+    () =>
+      buildIncomeLineItemColumns(
+        rowActions
+          ? {
+              ...rowActions,
+              onView: setDetail
+            }
+          : undefined
+      ),
+    [rowActions]
+  );
+
+  const canEdit = rowActions?.canEdit ?? false;
+  const canDelete = rowActions?.canDelete ?? false;
+
   return (
     <>
       {data && (
-        <div className="pointer-events-none absolute top-3 right-4 hidden h-9 items-center text-sm md:flex">
+        <div className="pointer-events-none absolute top-1 right-4 hidden h-9 items-center text-sm md:flex">
           <span className="text-muted-foreground">Total:&nbsp;</span>
           <span className="font-mono font-semibold tabular-nums text-money-in">
             R$ {formatMoney(data.totalIncome)}
@@ -37,7 +56,7 @@ export function IncomeReportTab({ month, mode = 'full' }: Props) {
         </div>
       )}
       <DataTable
-        columns={incomeLineItemColumns}
+        columns={columns}
         data={rows}
         isLoading={isLoading}
         emptyMessage="Nenhum registro encontrado."
@@ -63,6 +82,30 @@ export function IncomeReportTab({ month, mode = 'full' }: Props) {
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes da entrada"
         fields={detail ? buildIncomeLineItemFields(detail) : []}
+        actions={
+          detail && rowActions ? (
+            <RowDetailFooterActions
+              onEdit={
+                canEdit
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      rowActions.onEdit(row.id);
+                    }
+                  : undefined
+              }
+              onDelete={
+                canDelete
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      rowActions.onDelete(row);
+                    }
+                  : undefined
+              }
+            />
+          ) : undefined
+        }
       />
     </>
   );

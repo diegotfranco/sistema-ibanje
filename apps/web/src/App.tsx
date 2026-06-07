@@ -41,6 +41,7 @@ export default function App() {
               <AppLayout />
             </ProtectedRoute>
           }>
+          <Route index element={<Navigate to={paths.dashboard} replace />} />
           {protectedRoutes.map((route) => (
             <Route key={route.path} path={route.path} element={route.element} />
           ))}

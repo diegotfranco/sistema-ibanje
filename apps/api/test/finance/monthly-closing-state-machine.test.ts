@@ -7,13 +7,11 @@ import { reseedDb } from '../helpers/db.js';
 describe('monthly closing state machine', () => {
   let app: FastifyInstance;
   let tesAuth: AuthCookies;
-  let tesRespAuth: AuthCookies;
 
   beforeAll(async () => {
     reseedDb();
     app = await getTestApp();
     tesAuth = await loginAs(app, 'tesoureiro@email.com', 'tesoureiro123');
-    tesRespAuth = await loginAs(app, 'tesoureiro.resp@email.com', 'tesresp123');
   });
 
   async function createClosing(auth: AuthCookies, year: number, month: number) {
@@ -44,11 +42,11 @@ describe('monthly closing state machine', () => {
     expect(submitRes.statusCode).toBe(200);
     expect(submitRes.json<{ status: string }>().status).toBe('em revisão');
 
-    const approveRes = await transition(tesRespAuth, closing.id, 'approve');
+    const approveRes = await transition(tesAuth, closing.id, 'approve');
     expect(approveRes.statusCode).toBe(200);
     expect(approveRes.json<{ status: string }>().status).toBe('aprovado');
 
-    const closeRes = await transition(tesRespAuth, closing.id, 'close');
+    const closeRes = await transition(tesAuth, closing.id, 'close');
     expect(closeRes.statusCode).toBe(200);
     expect(closeRes.json<{ status: string }>().status).toBe('fechado');
   });
@@ -56,7 +54,7 @@ describe('monthly closing state machine', () => {
   it('reject moves em revisão back to aberto', async () => {
     const closing = await createClosing(tesAuth, 2098, 2);
     await transition(tesAuth, closing.id, 'submit');
-    const rejectRes = await transition(tesRespAuth, closing.id, 'reject', {
+    const rejectRes = await transition(tesAuth, closing.id, 'reject', {
       accountantNotes: 'redo'
     });
     expect(rejectRes.statusCode).toBe(200);
@@ -72,7 +70,7 @@ describe('monthly closing state machine', () => {
 
   it('cannot approve from aberto', async () => {
     const closing = await createClosing(tesAuth, 2098, 4);
-    const res = await transition(tesRespAuth, closing.id, 'approve');
+    const res = await transition(tesAuth, closing.id, 'approve');
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
   });
 
@@ -80,8 +78,65 @@ describe('monthly closing state machine', () => {
     // Period 2098-05 — the previous month (2098-04) is aberto from the prior test, not fechado.
     const closing = await createClosing(tesAuth, 2098, 5);
     await transition(tesAuth, closing.id, 'submit');
-    await transition(tesRespAuth, closing.id, 'approve');
-    const res = await transition(tesRespAuth, closing.id, 'close');
+    await transition(tesAuth, closing.id, 'approve');
+    const res = await transition(tesAuth, closing.id, 'close');
     expect(res.statusCode).toBeGreaterThanOrEqual(400);
+  });
+
+  it('reopen: rejeitado → aberto (treasurer can reopen)', async () => {
+    const closing = await createClosing(tesAuth, 2098, 6);
+    await transition(tesAuth, closing.id, 'submit');
+    await transition(tesAuth, closing.id, 'approve');
+    // Head treasurer reproves the approved closing to land it in rejeitado.
+    await transition(tesAuth, closing.id, 'reprove', { reason: 'mistake found' });
+
+    const res = await transition(tesAuth, closing.id, 'reopen');
+    expect(res.statusCode).toBe(200);
+    expect(res.json<{ status: string }>().status).toBe('aberto');
+  });
+
+  it('reopen: aprovado → aberto (any tesoureiro can reopen)', async () => {
+    const closing = await createClosing(tesAuth, 2098, 7);
+    await transition(tesAuth, closing.id, 'submit');
+    await transition(tesAuth, closing.id, 'approve');
+
+    const ok = await transition(tesAuth, closing.id, 'reopen');
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json<{ status: string }>().status).toBe('aberto');
+  });
+
+  it('reopen: cannot reopen from aberto / em revisão / fechado', async () => {
+    const openClosing = await createClosing(tesAuth, 2098, 8);
+    const openRes = await transition(tesAuth, openClosing.id, 'reopen');
+    expect(openRes.statusCode).toBe(409);
+
+    await transition(tesAuth, openClosing.id, 'submit');
+    const inReviewRes = await transition(tesAuth, openClosing.id, 'reopen');
+    expect(inReviewRes.statusCode).toBe(409);
+  });
+
+  it('resubmit: rejeitado → em revisão', async () => {
+    const closing = await createClosing(tesAuth, 2098, 9);
+    await transition(tesAuth, closing.id, 'submit');
+    await transition(tesAuth, closing.id, 'approve');
+    const reproveRes = await transition(tesAuth, closing.id, 'reprove', {
+      reason: 'please redo this month carefully'
+    });
+    expect(reproveRes.statusCode).toBe(200);
+    expect(reproveRes.json<{ status: string }>().status).toBe('rejeitado');
+
+    const res = await transition(tesAuth, closing.id, 'resubmit', { treasurerNotes: 'fixed' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json<{ status: string }>().status).toBe('em revisão');
+  });
+
+  it('resubmit: rejected from non-rejeitado sources', async () => {
+    const closing = await createClosing(tesAuth, 2098, 10);
+    const fromOpen = await transition(tesAuth, closing.id, 'resubmit');
+    expect(fromOpen.statusCode).toBe(409);
+
+    await transition(tesAuth, closing.id, 'submit');
+    const fromInReview = await transition(tesAuth, closing.id, 'resubmit');
+    expect(fromInReview.statusCode).toBe(409);
   });
 });

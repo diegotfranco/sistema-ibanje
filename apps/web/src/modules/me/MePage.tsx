@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/Button';
@@ -6,11 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { formatDate } from '@/lib/datetime';
+import { formatMonthYear } from '@/lib/datetime';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenderProfile, useUpdateMyProfile } from './useMyProfile';
-import { useMyDonations } from './useDonations';
-import DonationsTable from './DonationsTable';
 import { UpdateMyProfileFormSchema, type UpdateMyProfileFormValues } from './schema';
 
 const EMPTY: UpdateMyProfileFormValues = {
@@ -28,9 +25,6 @@ const EMPTY: UpdateMyProfileFormValues = {
 export default function MePage() {
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
   const { data: attender } = useAttenderProfile(currentUser?.attenderId ?? null);
-  const [donationsPage, setDonationsPage] = useState(1);
-  const donationLimit = 10;
-  const donations = useMyDonations(donationsPage, donationLimit);
 
   const updateProfile = useUpdateMyProfile();
 
@@ -107,7 +101,7 @@ export default function MePage() {
                 {attender.isMember && attender.memberSince && (
                   <div>
                     <Label className="text-xs text-muted-foreground">Membro desde</Label>
-                    <p className="text-sm font-medium">{formatDate(attender.memberSince)}</p>
+                    <p className="text-sm font-medium">{formatMonthYear(attender.memberSince)}</p>
                   </div>
                 )}
               </div>
@@ -168,10 +162,10 @@ export default function MePage() {
                 <Label htmlFor="addressNumber">Número</Label>
                 <Input
                   id="addressNumber"
-                  type="number"
-                  placeholder={attender?.addressNumber?.toString() || '123'}
-                  defaultValue={attender?.addressNumber || ''}
-                  {...register('addressNumber', { valueAsNumber: true })}
+                  maxLength={16}
+                  placeholder={attender?.addressNumber ?? '123'}
+                  defaultValue={attender?.addressNumber ?? ''}
+                  {...register('addressNumber')}
                   className={errors.addressNumber ? 'border-destructive' : ''}
                 />
                 {errors.addressNumber && (
@@ -260,30 +254,6 @@ export default function MePage() {
               {updateProfile.isPending ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </form>
-        </CardContent>
-      </Card>
-
-      {/* Minhas Contribuições */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Minhas Contribuições</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {currentUser.attenderId === null ? (
-            <p className="text-sm text-muted-foreground">
-              Você ainda não está vinculado a um cadastro de Congregado. Procure a secretaria.
-            </p>
-          ) : (
-            <DonationsTable
-              data={donations.data?.data ?? []}
-              page={donationsPage}
-              total={donations.data?.total ?? 0}
-              limit={donationLimit}
-              onPageChange={setDonationsPage}
-              loading={donations.isLoading}
-              emptyMessage="Você ainda não possui nenhuma contribuição registrada."
-            />
-          )}
         </CardContent>
       </Card>
     </div>

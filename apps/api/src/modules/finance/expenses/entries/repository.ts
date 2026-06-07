@@ -1,4 +1,4 @@
-import { eq, count, and, gte, lte, sum, sql } from 'drizzle-orm';
+import { eq, count, desc, and, gte, lte, sum, sql } from 'drizzle-orm';
 import { alias } from 'drizzle-orm/pg-core';
 import { db } from '../../../../db/index.js';
 import {
@@ -6,7 +6,8 @@ import {
   expenseCategories,
   paymentMethods,
   designatedFunds,
-  attenders
+  attenders,
+  events
 } from '../../../../db/schema.js';
 
 const parentExpenseCategories = alias(expenseCategories, 'parent_expense_categories');
@@ -15,7 +16,6 @@ const selectFields = {
   id: expenseEntries.id,
   parentId: expenseEntries.parentId,
   date: expenseEntries.date,
-  description: expenseEntries.description,
   total: expenseEntries.total,
   amount: expenseEntries.amount,
   installment: expenseEntries.installment,
@@ -28,6 +28,8 @@ const selectFields = {
   paymentMethodName: paymentMethods.name,
   designatedFundId: expenseEntries.designatedFundId,
   designatedFundName: designatedFunds.name,
+  eventId: expenseEntries.eventId,
+  eventName: events.title,
   attenderId: expenseEntries.attenderId,
   attenderName: attenders.name,
   receipt: expenseEntries.receipt,
@@ -46,11 +48,15 @@ function baseQuery() {
     .leftJoin(parentExpenseCategories, eq(parentExpenseCategories.id, expenseCategories.parentId))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(events, eq(expenseEntries.eventId, events.id))
     .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id));
 }
 
 export async function listExpenseEntries(offset: number, limit: number) {
-  const rows = await baseQuery().orderBy(expenseEntries.id).offset(offset).limit(limit);
+  const rows = await baseQuery()
+    .orderBy(desc(expenseEntries.date), desc(expenseEntries.id))
+    .offset(offset)
+    .limit(limit);
 
   const countResult = await db.select({ count: count() }).from(expenseEntries);
   return { rows, total: countResult[0]?.count ?? 0 };
@@ -64,7 +70,6 @@ export async function findExpenseEntryById(id: number) {
 
 export async function insertExpenseEntry(data: {
   date: string;
-  description: string;
   total: number;
   amount: number;
   installment?: number;
@@ -72,11 +77,13 @@ export async function insertExpenseEntry(data: {
   categoryId: number;
   paymentMethodId: number;
   designatedFundId?: number;
+  eventId?: number;
   attenderId?: number;
   parentId?: number;
   receipt?: string;
   notes?: string;
   userId: number;
+  status?: 'pendente' | 'paga' | 'cancelada';
 }) {
   const insertData = {
     ...data,
@@ -98,7 +105,6 @@ export async function updateExpenseEntry(
     Pick<
       typeof expenseEntries.$inferInsert,
       | 'date'
-      | 'description'
       | 'total'
       | 'amount'
       | 'installment'
@@ -106,6 +112,7 @@ export async function updateExpenseEntry(
       | 'categoryId'
       | 'paymentMethodId'
       | 'designatedFundId'
+      | 'eventId'
       | 'attenderId'
       | 'parentId'
       | 'receipt'

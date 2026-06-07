@@ -364,7 +364,7 @@ type AttenderFixture = {
   name: string;
   birthDate: string | null;
   addressStreet: string | null;
-  addressNumber: number | null;
+  addressNumber: string | null;
   addressComplement: string | null;
   addressDistrict: string | null;
   state: string | null;
@@ -386,7 +386,6 @@ type IncomeEntryFixture = {
 };
 type ExpenseEntryFixture = {
   date: string;
-  description: string;
   total: string;
   amount: string;
   installment: number;
@@ -433,7 +432,8 @@ function main() {
         name,
         birthDate: cleanBirthDate(clean(m.data_nascimento)),
         addressStreet: clean(m.endereco),
-        addressNumber: typeof m.numero === 'number' && Number.isFinite(m.numero) ? m.numero : null,
+        addressNumber:
+          typeof m.numero === 'number' && Number.isFinite(m.numero) ? String(m.numero) : null,
         addressComplement: clean(m.complemento),
         addressDistrict: clean(m.bairro),
         state: cleanUf(m.uf),
@@ -640,10 +640,8 @@ function main() {
       unmappedDestinoCounts.set(destino, (unmappedDestinoCounts.get(destino) ?? 0) + 1);
     }
     const amount = fmtMoney(s.valor);
-    const description = destino.length > 256 ? destino.slice(0, 256) : destino;
     expenseFixture.push({
       date: refDate!,
-      description,
       total: amount,
       amount,
       installment: 1,
@@ -651,12 +649,12 @@ function main() {
       categoryName,
       paymentMethodName: 'Transferência Bancária',
       designatedFundName: null,
-      notes: null
+      notes: destino.length > 1000 ? destino.slice(0, 1000) : destino
     });
   }
   expenseFixture.sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
-    return a.description.localeCompare(b.description, 'pt-BR');
+    return a.categoryName.localeCompare(b.categoryName, 'pt-BR');
   });
 
   // --- write files ---------------------------------------------------------

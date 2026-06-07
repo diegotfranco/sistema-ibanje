@@ -6,6 +6,7 @@ import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categori
 import { findAttenderById } from '../../../attenders/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
 import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findEventById } from '../../../events/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
 import { assertPeriodEditable } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
@@ -29,10 +30,20 @@ import type {
 async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  designatedFundId?: number | null;
+  eventId?: number | null;
   attenderId?: number;
   parentId?: number;
 }) {
+  if (data.designatedFundId && data.eventId) {
+    throw httpError(400, 'Selecione um fundo OU um evento, não ambos.', {
+      fieldErrors: { eventId: 'Selecione um fundo OU um evento, não ambos.' }
+    });
+  }
+  if (data.eventId) {
+    const evt = await findEventById(data.eventId);
+    if (!evt) throw httpError(404, 'Event not found');
+  }
   const category = await findExpenseCategoryById(data.categoryId);
   if (!category) throw httpError(404, 'Expense category not found');
 
@@ -99,6 +110,7 @@ export async function createExpenseEntry(
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
     designatedFundId: body.designatedFundId,
+    eventId: body.eventId,
     attenderId: body.attenderId,
     parentId: body.parentId
   });
@@ -122,7 +134,11 @@ export async function updateExpenseEntry(
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
-    designatedFundId: body.designatedFundId ?? entry.designatedFundId ?? undefined,
+    designatedFundId:
+      body.designatedFundId !== undefined
+        ? body.designatedFundId
+        : (entry.designatedFundId ?? undefined),
+    eventId: body.eventId !== undefined ? body.eventId : (entry.eventId ?? undefined),
     attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined
   };

@@ -5,6 +5,7 @@ import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
 import { attendersRoutes } from '@/modules/attenders/routes';
 import { financeRoutes } from '@/modules/finance/routes';
+import { paymentMethodsRouteChildren } from '@/modules/finance/payment-methods/routes';
 import { rolesRouteChildren } from '@/modules/roles/routes';
 import { usersRouteChildren } from '@/modules/users/routes';
 import { churchSettingsRouteChildren } from '@/modules/church-settings/routes';
@@ -13,6 +14,7 @@ import { atasRouteChildren } from '@/modules/minutes/routes';
 import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes';
 import { meRoutes } from '@/modules/me/routes';
 import { membershipLettersRouteChildren } from '@/modules/membership-letters/routes';
+import { calendarRouteChildren } from '@/modules/calendar/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -32,6 +34,7 @@ const configuracoesSection: AppRoute = {
   children: [
     ...rolesRouteChildren,
     ...usersRouteChildren,
+    ...paymentMethodsRouteChildren,
     ...churchSettingsRouteChildren,
     ...minuteTemplatesRouteChildren
   ]
@@ -42,6 +45,7 @@ const secretariaSection: AppRoute = {
   label: 'Secretaria',
   children: [
     ...(attendersRoutes[0].children ?? []),
+    ...calendarRouteChildren,
     ...pautasRouteChildren,
     ...atasRouteChildren,
     ...membershipLettersRouteChildren
@@ -51,8 +55,8 @@ const secretariaSection: AppRoute = {
 export const appRoutes: AppRoute[] = [
   ...authRoutes,
   ...dashboardRoutes,
-  configuracoesSection,
-  ...financeRoutes,
   secretariaSection,
+  ...financeRoutes,
+  configuracoesSection,
   ...meRoutes
 ];

@@ -1,15 +1,8 @@
 import { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/ui/dialog';
-import { Field, FieldError, FieldLabel } from '@/components/ui/field';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Field, FieldLabel } from '@/components/ui/field';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';
 import { ExpenseEntryFields } from './ExpenseEntryFields';
@@ -36,12 +29,13 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const {
     control,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
+    setValue
   } = useForm<ExpenseEntryFormValues>({
     resolver: zodResolver(ExpenseEntryFormSchema),
     defaultValues: {
+      isInstallment: initialValues ? initialValues.totalInstallments > 1 : false,
       date: initialValues?.date ?? '',
-      description: initialValues?.description ?? '',
       amount: initialValues?.amount ?? '',
       total: initialValues?.total ?? '',
       installment: initialValues?.installment ?? 1,
@@ -49,9 +43,10 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       categoryId: initialValues?.categoryId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
       designatedFundId: initialValues?.designatedFundId ?? undefined,
+      eventId: initialValues?.eventId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       notes: initialValues?.notes ?? '',
-      status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? undefined
+      status: (initialValues?.status as ExpenseEntryFormValues['status']) ?? EntryStatus.Paid
     }
   });
 
@@ -59,7 +54,10 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const [stagedRemoval, setStagedRemoval] = useState(false);
 
   const detailsDefaultOpen = Boolean(
-    initialValues?.designatedFundId || initialValues?.attenderId || initialValues?.notes
+    initialValues?.designatedFundId ||
+    initialValues?.eventId ||
+    initialValues?.attenderId ||
+    initialValues?.notes
   );
 
   const handleStage = (file: File | null) => {
@@ -79,45 +77,22 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       <ExpenseEntryFields
         control={control}
         errors={errors}
+        setValue={setValue}
         detailsDefaultOpen={detailsDefaultOpen}
       />
 
       {initialValues !== undefined && (
-        <>
-          <Controller
-            name="status"
-            control={control}
-            render={({ field }) => (
-              <Field>
-                <FieldLabel htmlFor="status">Status</FieldLabel>
-                <Select
-                  value={field.value !== undefined ? String(field.value) : ''}
-                  onValueChange={(v) => field.onChange(v)}>
-                  <SelectTrigger id="status">
-                    <SelectValue placeholder="Selecione um status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
-                    <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.status && <FieldError>{errors.status.message}</FieldError>}
-              </Field>
-            )}
+        <Field>
+          <FieldLabel>Comprovante</FieldLabel>
+          <ReceiptField
+            entryId={initialValues.id}
+            hasReceipt={initialValues.hasReceipt}
+            stagedFile={stagedFile}
+            stagedRemoval={stagedRemoval}
+            onStage={handleStage}
+            onStageRemoval={handleStageRemoval}
           />
-
-          <Field>
-            <FieldLabel>Comprovante</FieldLabel>
-            <ReceiptField
-              entryId={initialValues.id}
-              hasReceipt={initialValues.hasReceipt}
-              stagedFile={stagedFile}
-              stagedRemoval={stagedRemoval}
-              onStage={handleStage}
-              onStageRemoval={handleStageRemoval}
-            />
-          </Field>
-        </>
+        </Field>
       )}
 
       <DialogFooter>

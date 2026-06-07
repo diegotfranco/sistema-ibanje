@@ -10,13 +10,7 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Button } from '@/components/Button';
 import EntityPicker from '@/components/EntityPicker';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -51,6 +45,10 @@ const typeBadgeVariant = {
   pedido_de_carta_de_transferência: 'outline',
   carta_de_transferência: 'default'
 } as const;
+
+// Radix Select forbids an empty-string item value; use a sentinel for the
+// "all" option and map it back to null (mirrors FILTER_ALL in DataTable).
+const ALL_TYPES = '__all__';
 
 export default function MembershipLettersPage() {
   const { data: user } = useCurrentUser();
@@ -236,17 +234,20 @@ export default function MembershipLettersPage() {
               emptyMessage="Nenhum congregado encontrado."
               isLoading={attenders.isLoading}
               className="w-full"
+              ariaLabel="Filtrar por congregado"
               allowClear
             />
           </div>
           <div className="flex-1">
             <label className="text-sm font-medium block mb-2">Tipo</label>
-            <Select value={selectedType ?? ''} onValueChange={(v) => setSelectedType(v || null)}>
-              <SelectTrigger>
+            <Select
+              value={selectedType ?? ALL_TYPES}
+              onValueChange={(v) => setSelectedType(v === ALL_TYPES ? null : v)}>
+              <SelectTrigger aria-label="Filtrar por tipo">
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value={ALL_TYPES}>Todos os tipos</SelectItem>
                 <SelectItem value="pedido_de_carta_de_transferência">Pedido</SelectItem>
                 <SelectItem value="carta_de_transferência">Carta</SelectItem>
               </SelectContent>

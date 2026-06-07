@@ -1,34 +1,36 @@
-import { Controller, type Control, type FieldErrors, useWatch } from 'react-hook-form';
+import {
+  Controller,
+  type Control,
+  type FieldErrors,
+  type UseFormSetValue,
+  useWatch
+} from 'react-hook-form';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
 import MoneyInput from '../components/MoneyInput';
-import { ActiveStatus } from '@sistema-ibanje/shared';
+import { LinkPicker } from '../components/LinkPicker';
+import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
 import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
+import { useEvents } from '@/modules/finance/events/useEvents';
 import { useAttenders } from '@/modules/attenders/useAttenders';
 import type { IncomeEntryFormValues } from './schema';
-
-const NONE = '__none__';
 
 interface Props {
   control: Control<IncomeEntryFormValues>;
   errors: FieldErrors<IncomeEntryFormValues>;
+  setValue: UseFormSetValue<IncomeEntryFormValues>;
 }
 
-export function IncomeEntryFields({ control, errors }: Props) {
+export function IncomeEntryFields({ control, errors, setValue }: Props) {
   const incomeCategories = useIncomeCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds();
+  const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
   const allCats = incomeCategories.data?.data ?? [];
@@ -48,6 +50,7 @@ export function IncomeEntryFields({ control, errors }: Props) {
   const activeFunds = (designatedFunds.data?.data ?? []).filter(
     (f) => f.status === ActiveStatus.Active
   );
+  const activeEvents = eventsList.data?.data ?? [];
   const activeAttenders = (attenders.data?.data ?? []).filter(
     (a) => a.status === ActiveStatus.Active
   );
@@ -55,6 +58,9 @@ export function IncomeEntryFields({ control, errors }: Props) {
   const watchedCategoryId = useWatch({ control, name: 'categoryId' });
   const selectedCategory = leafCategories.find((c) => c.id === watchedCategoryId);
   const requiresMember = selectedCategory?.requiresMember ?? false;
+
+  const watchedFundId = useWatch({ control, name: 'designatedFundId' });
+  const watchedEventId = useWatch({ control, name: 'eventId' });
 
   return (
     <div className="space-y-4">
@@ -104,6 +110,7 @@ export function IncomeEntryFields({ control, errors }: Props) {
                 placeholder="Selecionar categoria..."
                 emptyMessage="Nenhuma categoria encontrada."
                 isLoading={incomeCategories.isLoading}
+                ariaLabel="Categoria"
                 className="w-full"
               />
               {errors.categoryId && <FieldError>{errors.categoryId.message}</FieldError>}
@@ -137,31 +144,25 @@ export function IncomeEntryFields({ control, errors }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Controller
-          name="designatedFundId"
+          name="status"
           control={control}
-          render={({ field }) => (
-            <Field>
-              <FieldLabel htmlFor="designatedFundId">Fundo Designado</FieldLabel>
+          render={({ field, fieldState }) => (
+            <Field data-invalid={fieldState.invalid}>
+              <FieldLabel>Status</FieldLabel>
               <Select
-                value={field.value !== undefined ? String(field.value) : NONE}
-                onValueChange={(v) => field.onChange(v === NONE ? undefined : Number(v))}>
-                <SelectTrigger id="designatedFundId" className="w-full">
-                  <SelectValue placeholder="Sem fundo" />
+                value={field.value ?? EntryStatus.Paid}
+                onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
+                <SelectTrigger className="w-full" aria-label="Status">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NONE}>Sem fundo</SelectItem>
-                  {activeFunds.map((f) => (
-                    <SelectItem key={f.id} value={String(f.id)}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value={EntryStatus.Pending}>Pendente</SelectItem>
+                  <SelectItem value={EntryStatus.Paid}>Paga</SelectItem>
                 </SelectContent>
               </Select>
-              {errors.designatedFundId && (
-                <FieldError>{errors.designatedFundId.message}</FieldError>
-              )}
+              {fieldState.invalid && <FieldError>{fieldState.error?.message}</FieldError>}
             </Field>
           )}
         />
@@ -183,6 +184,7 @@ export function IncomeEntryFields({ control, errors }: Props) {
                 placeholder="Selecionar congregado..."
                 emptyMessage="Nenhum congregado encontrado."
                 isLoading={attenders.isLoading}
+                ariaLabel="Congregado"
                 allowClear
                 className="w-full"
               />
@@ -190,6 +192,23 @@ export function IncomeEntryFields({ control, errors }: Props) {
             </Field>
           )}
         />
+
+        <Field>
+          <FieldLabel>Vincular a (opcional)</FieldLabel>
+          <LinkPicker
+            funds={activeFunds}
+            events={activeEvents}
+            fundId={watchedFundId}
+            eventId={watchedEventId}
+            onChangeFund={(id) => setValue('designatedFundId', id, { shouldDirty: true })}
+            onChangeEvent={(id) => setValue('eventId', id, { shouldDirty: true })}
+            isLoading={designatedFunds.isLoading || eventsList.isLoading}
+            ariaLabel="Vincular a campanha ou evento"
+            className="w-full"
+          />
+          {errors.designatedFundId && <FieldError>{errors.designatedFundId.message}</FieldError>}
+          {errors.eventId && <FieldError>{errors.eventId.message}</FieldError>}
+        </Field>
       </div>
 
       <Controller

@@ -62,14 +62,20 @@ const TRANSITION_LABELS: Record<string, string> = {
   submit: 'Fechamento submetido para revisão.',
   approve: 'Fechamento aprovado.',
   reject: 'Fechamento rejeitado.',
-  close: 'Período fechado com sucesso.'
+  close: 'Período fechado com sucesso.',
+  reopen: 'Fechamento reaberto.',
+  resubmit: 'Fechamento submetido para revisão.'
 };
+
+// Actions that carry treasurer notes (the treasurer is initiating); all others
+// either carry accountant notes (review actions) or no notes at all.
+const TREASURER_NOTE_ACTIONS = new Set(['submit', 'resubmit']);
 
 export function useClosingTransition() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, action, notes }: { id: number; action: string; notes?: string }) => {
-      const notesKey = action === 'submit' ? 'treasurerNotes' : 'accountantNotes';
+      const notesKey = TREASURER_NOTE_ACTIONS.has(action) ? 'treasurerNotes' : 'accountantNotes';
       const body = notes ? { [notesKey]: notes } : undefined;
       return api.post<MonthlyClosingResponse>(`${BASE}/${id}/${action}`, body);
     },

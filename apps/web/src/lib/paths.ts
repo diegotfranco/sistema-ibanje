@@ -7,8 +7,10 @@ export const paths = {
   roles: '/roles',
   users: '/users',
   attenders: '/attenders',
+  attenderDetail: '/attenders/:id',
   paymentMethods: '/payment-methods',
   designatedFunds: '/designated-funds',
+  events: '/events',
   incomeCategories: '/income-categories',
   expenseCategories: '/expense-categories',
   incomeEntries: '/income-entries',
@@ -22,6 +24,7 @@ export const paths = {
   minuteTemplates: '/minute-templates',
   churchSettings: '/church-settings',
   membershipLetters: '/membership-letters',
+  calendar: '/calendar',
   me: '/me'
 } as const;
 
