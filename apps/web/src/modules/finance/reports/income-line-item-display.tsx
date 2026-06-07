@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { Edit, Eye, Trash2 } from 'lucide-react';
-import { Button } from '@/components/Button';
 import { type RowDetailField } from '@/components/RowDetailPanel';
 import StatusBadge from '@/components/StatusBadge';
 import { formatDate, formatMoney, ENTRY_STATUS_FILTER_OPTIONS } from '../entries-utils';
+import { lineItemActionsColumn, type LineItemActions } from '../components/RowActions';
 import type { IncomeReportRow } from './schema';
 
 export interface IncomeRowActions {
@@ -13,6 +12,24 @@ export interface IncomeRowActions {
   onView?: (row: IncomeReportRow) => void;
   onEdit: (id: number) => void;
   onDelete: (row: IncomeReportRow) => void;
+}
+
+/** Minimal income shape the mobile row reads (fund is omitted — not shown). */
+export interface IncomeMobileItem {
+  depositDate: string;
+  referenceDate: string;
+  amount: string;
+  categoryName: string;
+  parentCategoryName: string | null;
+  paymentMethodName: string;
+  attenderName: string | null;
+  notes: string | null;
+  status: string;
+}
+
+/** Adds the fund name used by the detail-sheet fields. */
+export interface IncomeFieldsItem extends IncomeMobileItem {
+  fundName: string | null;
 }
 
 const baseColumns: ColumnDef<IncomeReportRow, unknown>[] = [
@@ -95,56 +112,18 @@ export function buildIncomeLineItemColumns(
 ): ColumnDef<IncomeReportRow, unknown>[] {
   if (!rowActions) return baseColumns;
   const { canEdit, canDelete, onView, onEdit, onDelete } = rowActions;
-  return [
-    ...baseColumns,
-    {
-      id: 'actions',
-      header: 'Ações',
-      cell: (info) => {
-        const row = info.row.original;
-        return (
-          <div className="flex justify-end gap-2">
-            {onView && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onView(row)}
-                title="Ver detalhes"
-                aria-label="Ver detalhes">
-                <Eye size={16} />
-              </Button>
-            )}
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(row.id)}
-                title="Editar"
-                aria-label="Editar">
-                <Edit size={16} />
-              </Button>
-            )}
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(row)}
-                title="Remover"
-                aria-label="Remover">
-                <Trash2 size={16} />
-              </Button>
-            )}
-          </div>
-        );
-      },
-      meta: { align: 'right', canHide: false }
-    }
-  ];
+  const actions: LineItemActions<IncomeReportRow> = {
+    onView,
+    onEdit: canEdit ? (row) => onEdit(row.id) : undefined,
+    onDelete: canDelete ? (row) => onDelete(row) : undefined
+  };
+  const actionsColumn = lineItemActionsColumn(actions);
+  return actionsColumn ? [...baseColumns, actionsColumn] : baseColumns;
 }
 
 export const incomeLineItemColumns = baseColumns;
 
-export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
+export function renderIncomeLineItemMobile(row: IncomeMobileItem): ReactNode {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-baseline justify-between gap-3">
@@ -177,7 +156,7 @@ export function renderIncomeLineItemMobile(row: IncomeReportRow): ReactNode {
   );
 }
 
-export function buildIncomeLineItemFields(row: IncomeReportRow): RowDetailField[] {
+export function buildIncomeLineItemFields(row: IncomeFieldsItem): RowDetailField[] {
   return [
     { label: 'Data Dep.', value: formatDate(row.depositDate) },
     { label: 'Data Ref.', value: formatDate(row.referenceDate) },

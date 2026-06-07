@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
-import { Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/Button';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { RowDetailPanel } from '@/components/RowDetailPanel';
+import { RowDetailFooterActions } from '../components/RowActions';
 import { formatMoney } from '../entries-utils';
 import { useIncomeReport } from './useReports';
 import {
@@ -84,35 +83,27 @@ export function IncomeReportTab({ month, mode = 'full', rowActions }: Props) {
         title="Detalhes da entrada"
         fields={detail ? buildIncomeLineItemFields(detail) : []}
         actions={
-          detail && rowActions && (canEdit || canDelete) ? (
-            <div className="flex justify-end gap-2">
-              {canEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const row = detail;
-                    setDetail(null);
-                    rowActions.onEdit(row.id);
-                  }}>
-                  <Edit size={16} className="mr-1" />
-                  Editar
-                </Button>
-              )}
-              {canDelete && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    const row = detail;
-                    setDetail(null);
-                    rowActions.onDelete(row);
-                  }}>
-                  <Trash2 size={16} className="mr-1" />
-                  Remover
-                </Button>
-              )}
-            </div>
+          detail && rowActions ? (
+            <RowDetailFooterActions
+              onEdit={
+                canEdit
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      rowActions.onEdit(row.id);
+                    }
+                  : undefined
+              }
+              onDelete={
+                canDelete
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      rowActions.onDelete(row);
+                    }
+                  : undefined
+              }
+            />
           ) : undefined
         }
       />

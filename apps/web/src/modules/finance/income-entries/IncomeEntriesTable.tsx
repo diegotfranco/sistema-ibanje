@@ -1,11 +1,16 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Edit, Eye, Trash2, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import StatusBadge from '@/components/StatusBadge';
-import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
+import { RowDetailPanel } from '@/components/RowDetailPanel';
+import { lineItemActionsColumn, RowDetailFooterActions } from '../components/RowActions';
+import {
+  renderIncomeLineItemMobile,
+  buildIncomeLineItemFields
+} from '../reports/income-line-item-display';
 import { formatDate, formatMoney } from '../entries-utils';
 import type { IncomeEntryResponse } from './schema';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -35,6 +40,9 @@ export function IncomeEntriesTable({
 
   const [detail, setDetail] = useState<IncomeEntryResponse | null>(null);
 
+  // This dashboard "latest" widget hides columns more aggressively than the
+  // report tab, so the column list stays local; only the action cell, mobile
+  // row, and detail fields are shared with income-line-item-display.
   const columns: ColumnDef<IncomeEntryResponse, unknown>[] = [
     {
       id: 'depositDate',
@@ -107,99 +115,15 @@ export function IncomeEntriesTable({
       header: 'Status',
       cell: (info) => <StatusBadge status={info.row.original.status} />,
       meta: { hideBelow: 'md' }
-    },
-    {
-      id: 'actions',
-      header: 'Ações',
-      cell: (info) => {
-        const row = info.row.original;
-        return (
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDetail(row)}
-              title="Ver detalhes"
-              aria-label="Ver detalhes">
-              <Eye size={16} />
-            </Button>
-            {canEdit && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(row)}
-                title="Editar"
-                aria-label="Editar">
-                <Edit size={16} />
-              </Button>
-            )}
-            {canDelete && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onDelete(row)}
-                title="Remover"
-                aria-label="Remover">
-                <Trash2 size={16} />
-              </Button>
-            )}
-          </div>
-        );
-      },
-      meta: { align: 'right', canHide: false }
     }
   ];
 
-  const renderMobileRow = (row: IncomeEntryResponse) => (
-    <div className="flex flex-col gap-1">
-      <div className="flex items-baseline justify-between gap-3">
-        <div>
-          <span className="text-sm tabular-nums text-muted-foreground">
-            {formatDate(row.depositDate)} - {formatDate(row.referenceDate)}
-          </span>
-        </div>
-        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
-      </div>
-      <div className="text-sm font-medium">{row.categoryName}</div>
-      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        {row.parentCategoryName && <span>{row.parentCategoryName}</span>}
-        {row.parentCategoryName && <span aria-hidden>•</span>}
-        <span>{row.paymentMethodName}</span>
-        {row.attenderName && (
-          <>
-            <span aria-hidden>•</span>
-            <span>{row.attenderName}</span>
-          </>
-        )}
-      </div>
-      {row.notes && (
-        <p className="text-xs text-muted-foreground line-clamp-1" title={row.notes}>
-          {row.notes}
-        </p>
-      )}
-      <div className="mt-1">
-        <StatusBadge status={row.status} />
-      </div>
-    </div>
-  );
-
-  const buildDetailFields = (row: IncomeEntryResponse): RowDetailField[] => [
-    { label: 'Data Dep.', value: formatDate(row.depositDate) },
-    { label: 'Data Ref.', value: formatDate(row.referenceDate) },
-    { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
-    { label: 'Categoria', value: row.categoryName },
-    { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
-    { label: 'Campanha', value: row.designatedFundName ?? '—', hideEmpty: true },
-    { label: 'Congregado', value: row.attenderName ?? '—', hideEmpty: true },
-    {
-      label: 'Valor',
-      value: (
-        <span className="font-mono tabular-nums font-semibold">R$ {formatMoney(row.amount)}</span>
-      )
-    },
-    { label: 'Forma de Pag.', value: row.paymentMethodName },
-    { label: 'Status', value: <StatusBadge status={row.status} /> }
-  ];
+  const actionsColumn = lineItemActionsColumn<IncomeEntryResponse>({
+    onView: setDetail,
+    onEdit: canEdit ? onEdit : undefined,
+    onDelete: canDelete ? onDelete : undefined
+  });
+  if (actionsColumn) columns.push(actionsColumn);
 
   return (
     <>
@@ -224,7 +148,7 @@ export function IncomeEntriesTable({
             isLoading={isLoading}
             emptyMessage="Nenhum lançamento ainda."
             getRowKey={(row) => row.id}
-            mobileRow={renderMobileRow}
+            mobileRow={renderIncomeLineItemMobile}
             mobileOnRowClick={setDetail}
             columnToggle
             tableId="income-entries"
@@ -235,37 +159,33 @@ export function IncomeEntriesTable({
         open={detail !== null}
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes do lançamento"
-        fields={detail ? buildDetailFields(detail) : []}
+        fields={
+          detail
+            ? buildIncomeLineItemFields({ ...detail, fundName: detail.designatedFundName })
+            : []
+        }
         actions={
-          detail && (canEdit || canDelete) ? (
-            <div className="flex justify-end gap-2">
-              {canEdit && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    const row = detail;
-                    setDetail(null);
-                    onEdit(row);
-                  }}>
-                  <Edit size={16} className="mr-1" />
-                  Editar
-                </Button>
-              )}
-              {canDelete && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    const row = detail;
-                    setDetail(null);
-                    onDelete(row);
-                  }}>
-                  <Trash2 size={16} className="mr-1" />
-                  Remover
-                </Button>
-              )}
-            </div>
+          detail ? (
+            <RowDetailFooterActions
+              onEdit={
+                canEdit
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      onEdit(row);
+                    }
+                  : undefined
+              }
+              onDelete={
+                canDelete
+                  ? () => {
+                      const row = detail;
+                      setDetail(null);
+                      onDelete(row);
+                    }
+                  : undefined
+              }
+            />
           ) : undefined
         }
       />
