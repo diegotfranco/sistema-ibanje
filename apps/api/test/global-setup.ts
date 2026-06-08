@@ -42,4 +42,12 @@ export default async function setup() {
 
   const { seed } = await import('../src/db/seed.js');
   await seed();
+
+  // Vitest globalSetup teardown (main process). `seed()` opens the module-level postgres pool in
+  // src/db/index.ts but only ends it in its CLI branch (import.meta.url === argv[1]), which doesn't
+  // run on import — so the pool stays open here and keeps the Vite server from exiting. Close it.
+  return async () => {
+    const { sql } = await import('../src/db/index.js');
+    await sql.end({ timeout: 5 });
+  };
 }
