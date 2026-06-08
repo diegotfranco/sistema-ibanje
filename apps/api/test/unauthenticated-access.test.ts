@@ -14,7 +14,7 @@ const PROTECTED_ROUTES: ReadonlyArray<{ name: string; url: string }> = [
   { name: 'users', url: '/users' },
   { name: 'attenders', url: '/attenders' },
   { name: 'roles', url: '/roles' },
-  { name: 'designated-funds', url: '/designated-funds' },
+  { name: 'campaigns', url: '/campaigns' },
   { name: 'payment-methods', url: '/payment-methods' },
   { name: 'income-entries', url: '/income-entries' },
   { name: 'monthly-closings', url: '/monthly-closings' },

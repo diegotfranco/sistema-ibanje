@@ -5,40 +5,40 @@ import { Module, Action } from '../../../lib/constants.js';
 import { IdParamSchema } from '../../../lib/validation.js';
 import { ErrorResponseSchema } from '../../../lib/http-schemas.js';
 import {
-  ListDesignatedFundsRequestSchema,
-  CreateDesignatedFundRequestSchema,
-  UpdateDesignatedFundRequestSchema,
-  DesignatedFundResponseSchema,
-  DesignatedFundListResponseSchema
+  ListCampaignsRequestSchema,
+  CreateCampaignRequestSchema,
+  UpdateCampaignRequestSchema,
+  CampaignResponseSchema,
+  CampaignListResponseSchema
 } from './schema.js';
 import * as controller from './controller.js';
 
-export async function designatedFundsRoutes(app: FastifyInstance) {
+export async function campaignsRoutes(app: FastifyInstance) {
   app.get(
-    '/designated-funds',
+    '/campaigns',
     {
       schema: {
-        tags: ['Designated Funds'],
-        querystring: ListDesignatedFundsRequestSchema,
+        tags: ['Campaigns'],
+        querystring: ListCampaignsRequestSchema,
         response: {
-          200: DesignatedFundListResponseSchema,
+          200: CampaignListResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.View)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.View)]
     },
     controller.list
   );
 
   app.get(
-    '/designated-funds/:id',
+    '/campaigns/:id',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
         response: {
-          200: DesignatedFundResponseSchema,
+          200: CampaignResponseSchema,
           401: ErrorResponseSchema,
           404: ErrorResponseSchema
         }
@@ -49,33 +49,33 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
   );
 
   app.post(
-    '/designated-funds',
+    '/campaigns',
     {
       schema: {
-        tags: ['Designated Funds'],
-        body: CreateDesignatedFundRequestSchema,
+        tags: ['Campaigns'],
+        body: CreateCampaignRequestSchema,
         response: {
-          201: DesignatedFundResponseSchema,
+          201: CampaignResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Create)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Create)]
     },
     controller.create
   );
 
   app.patch(
-    '/designated-funds/:id',
+    '/campaigns/:id',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
-        body: UpdateDesignatedFundRequestSchema,
+        body: UpdateCampaignRequestSchema,
         response: {
-          200: DesignatedFundResponseSchema,
+          200: CampaignResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -83,16 +83,16 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Update)]
     },
     controller.update
   );
 
   app.delete(
-    '/designated-funds/:id',
+    '/campaigns/:id',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
         response: {
           204: { type: 'null', description: 'Deleted' },
@@ -102,63 +102,63 @@ export async function designatedFundsRoutes(app: FastifyInstance) {
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Delete)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Delete)]
     },
     controller.remove
   );
 
   app.patch(
-    '/designated-funds/:id/restore',
+    '/campaigns/:id/restore',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
         response: {
-          200: DesignatedFundResponseSchema,
+          200: CampaignResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Delete)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Delete)]
     },
     controller.restore
   );
 
   app.patch(
-    '/designated-funds/:id/encerrar',
+    '/campaigns/:id/encerrar',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
         response: {
-          200: DesignatedFundResponseSchema,
+          200: CampaignResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema,
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Update)]
     },
     controller.encerrar
   );
 
   app.patch(
-    '/designated-funds/:id/reabrir',
+    '/campaigns/:id/reabrir',
     {
       schema: {
-        tags: ['Designated Funds'],
+        tags: ['Campaigns'],
         params: IdParamSchema,
         response: {
-          200: DesignatedFundResponseSchema,
+          200: CampaignResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema,
           409: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.DesignatedFunds, Action.Update)]
+      preHandler: [requireAuth, checkPermission(Module.Campaigns, Action.Update)]
     },
     controller.reabrir
   );

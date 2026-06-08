@@ -99,30 +99,30 @@ describe('reports module', () => {
     expect(res.rawPayload.length).toBeGreaterThan(0);
   });
 
-  describe('funds report', () => {
-    it('lists funds and reads a fund detail', async () => {
+  describe('campaigns report', () => {
+    it('lists campaigns and reads a campaign detail', async () => {
       const list = await app.inject({
         method: 'GET',
-        url: '/reports/funds',
+        url: '/reports/campaigns',
         headers: { cookie: admin.cookie }
       });
       expect(list.statusCode).toBe(200);
-      const funds = list.json<{ funds: { fundId: number }[] }>().funds;
-      expect(funds.length).toBeGreaterThan(0);
+      const campaigns = list.json<{ campaigns: { campaignId: number }[] }>().campaigns;
+      expect(campaigns.length).toBeGreaterThan(0);
 
       const detail = await app.inject({
         method: 'GET',
-        url: `/reports/funds/${funds[0].fundId}`,
+        url: `/reports/campaigns/${campaigns[0].campaignId}`,
         headers: { cookie: admin.cookie }
       });
       expect(detail.statusCode).toBe(200);
       expect(detail.json<{ incomeEntries: unknown[] }>()).toHaveProperty('incomeEntries');
     });
 
-    it('returns 404 for an unknown fund', async () => {
+    it('returns 404 for an unknown campaign', async () => {
       const res = await app.inject({
         method: 'GET',
-        url: '/reports/funds/999999',
+        url: '/reports/campaigns/999999',
         headers: { cookie: admin.cookie }
       });
       expect(res.statusCode).toBe(404);

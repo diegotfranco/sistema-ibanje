@@ -55,6 +55,23 @@ describe('ChurchSettingsPage', () => {
     expect(screen.getByLabelText('Código Postal')).toBeInTheDocument();
   });
 
+  // Regression: the form must populate from the async settings query. `defaultValues` alone is read
+  // only at mount (EMPTY on a cold load), so the fields stayed blank — fixed by the `values` prop.
+  it('populates the fields with the loaded settings values', async () => {
+    server.use(
+      http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<ChurchSettingsPage />);
+
+    await screen.findByText('Identificação');
+
+    expect(screen.getByLabelText('Nome')).toHaveValue('Igreja Batista Ibanje');
+    expect(screen.getByLabelText('Cidade')).toHaveValue('São Paulo');
+    expect(screen.getByLabelText('Nome do Presidente')).toHaveValue('João da Silva');
+  });
+
   it('displays church contact fields', async () => {
     server.use(
       http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
@@ -95,9 +112,11 @@ describe('ChurchSettingsPage', () => {
       ...referenceHandlers()
     );
 
-    renderWithProviders(<ChurchSettingsPage />);
+    const { container } = renderWithProviders(<ChurchSettingsPage />);
 
-    expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    // Loading renders skeleton placeholders (animate-pulse) before the form appears.
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    expect(screen.queryByText('Identificação')).not.toBeInTheDocument();
   });
 
   it('displays save button', async () => {

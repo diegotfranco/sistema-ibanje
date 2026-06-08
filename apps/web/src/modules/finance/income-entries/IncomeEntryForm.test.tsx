@@ -18,7 +18,7 @@ function handlers(opts: { eventsStatus?: number } = {}) {
   return [
     http.get(`${BASE}/income-categories`, () => HttpResponse.json(emptyPage)),
     http.get(`${BASE}/payment-methods`, () => HttpResponse.json(emptyPage)),
-    http.get(`${BASE}/designated-funds`, () => HttpResponse.json(emptyPage)),
+    http.get(`${BASE}/campaigns`, () => HttpResponse.json(emptyPage)),
     http.get(`${BASE}/attenders`, () => HttpResponse.json(emptyPage)),
     http.get(`${BASE}/events`, () =>
       opts.eventsStatus

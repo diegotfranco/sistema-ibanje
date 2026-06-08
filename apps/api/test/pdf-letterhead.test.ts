@@ -66,7 +66,7 @@ const data: FinancialStatementResponse = {
   totalExpenses: '0.00',
   currentBalance: '0.00',
   incomeByCategory: [],
-  incomeByFund: [],
+  incomeByCampaign: [],
   expensesByCategory: []
 };
 

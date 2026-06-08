@@ -10,8 +10,8 @@ import {
   AttenderStatus,
   type AttenderStatusValue,
   ATTENDER_TERMINAL_STATUSES,
-  FundStatus,
-  type FundStatusValue
+  CampaignStatus,
+  type CampaignStatusValue
 } from '@sistema-ibanje/shared';
 
 // Single source of truth for status presentation (labels + badge colors + filter options) and
@@ -62,9 +62,9 @@ export const ATTENDER_STATUS_LABELS: Record<AttenderStatusValue, string> = {
   [AttenderStatus.Deceased]: 'Falecido'
 };
 
-export const FUND_STATUS_LABELS: Record<FundStatusValue, string> = {
-  [FundStatus.Active]: 'Ativa',
-  [FundStatus.Ended]: 'Encerrada'
+export const CAMPAIGN_STATUS_LABELS: Record<CampaignStatusValue, string> = {
+  [CampaignStatus.Active]: 'Ativa',
+  [CampaignStatus.Ended]: 'Encerrada'
 };
 
 // Merged singular labels for the generic badge lookup. Keys overlap (ativo/inativo appear in both
@@ -75,7 +75,7 @@ const STATUS_LABELS: Record<string, string> = {
   ...CLOSING_STATUS_LABELS,
   ...MINUTE_STATUS_LABELS,
   ...ATTENDER_STATUS_LABELS,
-  ...FUND_STATUS_LABELS
+  ...CAMPAIGN_STATUS_LABELS
 };
 
 // Label for any known status value, falling back to capitalize-first for unknowns.
@@ -121,9 +121,9 @@ const ATTENDER_STATUS_CLASSES: Partial<Record<AttenderStatusValue, string>> = {
   [AttenderStatus.Deceased]: 'bg-muted text-muted-foreground'
 };
 
-const FUND_STATUS_CLASSES: Record<FundStatusValue, string> = {
-  [FundStatus.Active]: 'bg-success/15 text-success',
-  [FundStatus.Ended]: 'bg-muted text-muted-foreground'
+const CAMPAIGN_STATUS_CLASSES: Record<CampaignStatusValue, string> = {
+  [CampaignStatus.Active]: 'bg-success/15 text-success',
+  [CampaignStatus.Ended]: 'bg-muted text-muted-foreground'
 };
 
 // Resolution order matters: ativo/inativo belong to both ActiveStatus and AttenderStatus, and we
@@ -145,8 +145,8 @@ export function getStatusClass(status: string): string {
   if (Object.values(AttenderStatus).includes(status as AttenderStatusValue)) {
     return ATTENDER_STATUS_CLASSES[status as AttenderStatusValue] ?? '';
   }
-  if (Object.values(FundStatus).includes(status as FundStatusValue)) {
-    return FUND_STATUS_CLASSES[status as FundStatusValue] ?? '';
+  if (Object.values(CampaignStatus).includes(status as CampaignStatusValue)) {
+    return CAMPAIGN_STATUS_CLASSES[status as CampaignStatusValue] ?? '';
   }
   return '';
 }
@@ -159,6 +159,13 @@ export function getStatusClass(status: string): string {
 export const AVAILABILITY_STATUS_FILTER_OPTIONS: { value: ActiveStatusValue; label: string }[] = [
   { value: ActiveStatus.Active, label: 'Ativos' },
   { value: ActiveStatus.Inactive, label: 'Inativos' }
+];
+
+// User accounts — like availability but include `pendente` (self-registrations awaiting approval).
+export const USER_STATUS_FILTER_OPTIONS: { value: ActiveStatusValue; label: string }[] = [
+  { value: ActiveStatus.Active, label: 'Ativos' },
+  { value: ActiveStatus.Inactive, label: 'Inativos' },
+  { value: ActiveStatus.Pending, label: 'Pendentes' }
 ];
 
 // Finance entry status (no `all` sentinel — DataTable's header filter adds "Todos" itself).
@@ -176,9 +183,9 @@ export const ATTENDER_STATUS_FILTER_OPTIONS: { value: AttenderStatusValue; label
   { value: AttenderStatus.Deceased, label: 'Falecidos' }
 ];
 
-export const FUND_STATUS_FILTER_OPTIONS: { value: FundStatusValue; label: string }[] = [
-  { value: FundStatus.Active, label: 'Ativas' },
-  { value: FundStatus.Ended, label: 'Encerradas' }
+export const CAMPAIGN_STATUS_FILTER_OPTIONS: { value: CampaignStatusValue; label: string }[] = [
+  { value: CampaignStatus.Active, label: 'Ativas' },
+  { value: CampaignStatus.Ended, label: 'Encerradas' }
 ];
 
 // ---------------------------------------------------------------------------

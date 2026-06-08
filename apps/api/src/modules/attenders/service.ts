@@ -345,7 +345,7 @@ export async function getAttenderDonationsSummary(
   const availableYears = await listDonationYearsByAttender(attenderId);
   const resolvedYear = year ?? availableYears[0] ?? new Date().getFullYear();
 
-  // Rows arrive pre-grouped per (month, category, fund, event), exact SQL sums. We expand
+  // Rows arrive pre-grouped per (month, category, campaign, event), exact SQL sums. We expand
   // into a fixed Jan→Dez skeleton so the statement (and its PDF) never varies its shape:
   // a month with no giving stays present with empty groups. Cents accumulate as integers
   // so the printed totals never drift.
@@ -375,7 +375,7 @@ export async function getAttenderDonationsSummary(
     if (!entry) continue;
     entry.groups.push({
       categoryName: row.categoryName,
-      fundName: row.fundName,
+      campaignName: row.campaignName,
       eventName: row.eventName,
       total: (cents / 100).toFixed(2)
     });
@@ -418,7 +418,7 @@ export async function getAttenderDonationsEntries(
       id: row.id,
       depositDate: row.depositDate,
       categoryName: row.categoryName,
-      fundName: row.fundName,
+      campaignName: row.campaignName,
       eventName: row.eventName,
       paymentMethodName: row.paymentMethodName,
       amount: (cents / 100).toFixed(2)

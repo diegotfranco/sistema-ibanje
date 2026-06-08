@@ -43,9 +43,7 @@ export default function ExpenseEntriesPage() {
       totalInstallments: values.isInstallment ? values.totalInstallments! : 1,
       categoryId: values.categoryId!,
       paymentMethodId: values.paymentMethodId!,
-      ...(values.designatedFundId !== undefined
-        ? { designatedFundId: values.designatedFundId }
-        : {}),
+      ...(values.campaignId !== undefined ? { campaignId: values.campaignId } : {}),
       ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
     };

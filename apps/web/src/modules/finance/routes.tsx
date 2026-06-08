@@ -7,7 +7,7 @@ import IncomeEntriesPage from '@/modules/finance/income-entries/IncomeEntriesPag
 import ExpenseEntriesPage from '@/modules/finance/expense-entries/ExpenseEntriesPage';
 import MonthlyClosingsPage from '@/modules/finance/monthly-closings/MonthlyClosingsPage';
 import MonthlyClosingDetailPage from '@/modules/finance/monthly-closings/MonthlyClosingDetailPage';
-import DesignatedFundsPage from '@/modules/finance/designated-funds/DesignatedFundsPage';
+import CampaignsPage from '@/modules/finance/campaigns/CampaignsPage';
 import EventsPage from '@/modules/finance/events/EventsPage';
 import IncomeCategoriesPage from '@/modules/finance/income-categories/IncomeCategoriesPage';
 import ExpenseCategoriesPage from '@/modules/finance/expense-categories/ExpenseCategoriesPage';
@@ -82,15 +82,15 @@ export const financeRoutes: AppRoute[] = [
         icon: PiggyBank,
         children: [
           {
-            path: paths.designatedFunds,
+            path: paths.campaigns,
             element: (
-              <RequirePermission module={Module.DesignatedFunds}>
-                <DesignatedFundsPage />
+              <RequirePermission module={Module.Campaigns}>
+                <CampaignsPage />
               </RequirePermission>
             ),
             layout: 'app',
             label: 'Campanhas',
-            module: Module.DesignatedFunds
+            module: Module.Campaigns
           },
           {
             path: paths.events,

@@ -44,8 +44,8 @@ const IncomeReportRowSchema = z.object({
   categoryName: z.string(),
   parentCategoryId: z.number().int().positive().nullable(),
   parentCategoryName: z.string().nullable(),
-  fundId: z.number().int().positive().nullable(),
-  fundName: z.string().nullable(),
+  campaignId: z.number().int().positive().nullable(),
+  campaignName: z.string().nullable(),
   attenderId: z.number().int().positive().nullable(),
   attenderName: z.string().nullable(),
   paymentMethodName: z.string(),
@@ -70,8 +70,8 @@ const ExpenseReportRowSchema = z.object({
   categoryName: z.string(),
   parentCategoryId: z.number().int().positive().nullable(),
   parentCategoryName: z.string().nullable(),
-  fundId: z.number().int().positive().nullable(),
-  fundName: z.string().nullable(),
+  campaignId: z.number().int().positive().nullable(),
+  campaignName: z.string().nullable(),
   attenderId: z.number().int().positive().nullable(),
   attenderName: z.string().nullable(),
   paymentMethodName: z.string(),
@@ -109,9 +109,9 @@ const ExpenseByCategoryRowSchema = z.object({
   total: z.string()
 });
 
-const IncomeByFundRowSchema = z.object({
-  fundId: z.number().int().positive(),
-  fundName: z.string(),
+const IncomeByCampaignRowSchema = z.object({
+  campaignId: z.number().int().positive(),
+  campaignName: z.string(),
   total: z.string()
 });
 
@@ -147,7 +147,7 @@ export const FinancialStatementResponseSchema = z.object({
   totalExpenses: z.string(),
   currentBalance: z.string(),
   incomeByCategory: z.array(IncomeByCategoryRowSchema),
-  incomeByFund: z.array(IncomeByFundRowSchema),
+  incomeByCampaign: z.array(IncomeByCampaignRowSchema),
   expensesByCategory: z.array(ExpenseByCategoryRowSchema)
 });
 
@@ -176,9 +176,9 @@ export const AttendersReportResponseSchema = z.object({
   })
 });
 
-const FundSummarySchema = z.object({
-  fundId: z.number().int().positive(),
-  fundName: z.string(),
+const CampaignSummarySchema = z.object({
+  campaignId: z.number().int().positive(),
+  campaignName: z.string(),
   targetAmount: z.string().nullable(),
   totalRaised: z.string(),
   totalExpenses: z.string(),
@@ -186,12 +186,12 @@ const FundSummarySchema = z.object({
   progressPercentage: z.string().nullable()
 });
 
-export const FundListResponseSchema = z.object({
+export const CampaignListResponseSchema = z.object({
   period: PeriodSchema.nullable(),
-  funds: z.array(FundSummarySchema)
+  campaigns: z.array(CampaignSummarySchema)
 });
 
-const FundIncomeEntrySchema = z.object({
+const CampaignIncomeEntrySchema = z.object({
   id: z.number().int().positive(),
   referenceDate: z.string(),
   amount: z.string(),
@@ -200,7 +200,7 @@ const FundIncomeEntrySchema = z.object({
   notes: z.string().nullable()
 });
 
-const FundExpenseEntrySchema = z.object({
+const CampaignExpenseEntrySchema = z.object({
   id: z.number().int().positive(),
   date: z.string(),
   amount: z.string(),
@@ -208,10 +208,10 @@ const FundExpenseEntrySchema = z.object({
   notes: z.string().nullable()
 });
 
-export const FundDetailResponseSchema = FundSummarySchema.extend({
+export const CampaignDetailResponseSchema = CampaignSummarySchema.extend({
   period: PeriodSchema.nullable(),
-  incomeEntries: z.array(FundIncomeEntrySchema),
-  expenseEntries: z.array(FundExpenseEntrySchema)
+  incomeEntries: z.array(CampaignIncomeEntrySchema),
+  expenseEntries: z.array(CampaignExpenseEntrySchema)
 });
 
 const EventSummarySchema = z.object({
@@ -258,15 +258,15 @@ export type ExpenseReportRow = z.infer<typeof ExpenseReportRowSchema>;
 export type ExpenseReportResponse = z.infer<typeof ExpenseReportResponseSchema>;
 export type IncomeByCategoryRow = z.infer<typeof IncomeByCategoryRowSchema>;
 export type ExpenseByCategoryRow = z.infer<typeof ExpenseByCategoryRowSchema>;
-export type IncomeByFundRow = z.infer<typeof IncomeByFundRowSchema>;
+export type IncomeByCampaignRow = z.infer<typeof IncomeByCampaignRowSchema>;
 export type IncomeAggregateRow = {
   referenceDate: string;
   categoryId: number;
   categoryName: string;
   parentCategoryId: number | null;
   parentCategoryName: string | null;
-  fundId: number | null;
-  fundName: string | null;
+  campaignId: number | null;
+  campaignName: string | null;
   total: string;
 };
 export type IncomePivotColumn = z.infer<typeof IncomePivotColumnSchema>;
@@ -277,11 +277,11 @@ export type DetailedFinancialStatementResponse = z.infer<
   typeof DetailedFinancialStatementResponseSchema
 >;
 export type AttendersReportResponse = z.infer<typeof AttendersReportResponseSchema>;
-export type FundSummary = z.infer<typeof FundSummarySchema>;
-export type FundListResponse = z.infer<typeof FundListResponseSchema>;
-export type FundIncomeEntry = z.infer<typeof FundIncomeEntrySchema>;
-export type FundExpenseEntry = z.infer<typeof FundExpenseEntrySchema>;
-export type FundDetailResponse = z.infer<typeof FundDetailResponseSchema>;
+export type CampaignSummary = z.infer<typeof CampaignSummarySchema>;
+export type CampaignListResponse = z.infer<typeof CampaignListResponseSchema>;
+export type CampaignIncomeEntry = z.infer<typeof CampaignIncomeEntrySchema>;
+export type CampaignExpenseEntry = z.infer<typeof CampaignExpenseEntrySchema>;
+export type CampaignDetailResponse = z.infer<typeof CampaignDetailResponseSchema>;
 export type EventSummary = z.infer<typeof EventSummarySchema>;
 export type EventListResponse = z.infer<typeof EventListResponseSchema>;
 export type EventIncomeEntry = z.infer<typeof EventIncomeEntrySchema>;

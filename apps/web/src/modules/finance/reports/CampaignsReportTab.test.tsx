@@ -2,18 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { FundsReportTab } from './FundsReportTab';
+import { CampaignsReportTab } from './CampaignsReportTab';
 import { renderWithProviders } from '@/test/renderWithProviders';
 import { setMobileViewport } from '@/test/viewport';
 import { setupTestServer, referenceHandlers, API } from '@/test/server';
-import type { FundListResponse } from './schema';
+import type { CampaignListResponse } from './schema';
 
 const server = setupTestServer();
 
-const sampleFunds = [
+const sampleCampaigns = [
   {
-    fundId: 1,
-    fundName: 'Reforma do Templo',
+    campaignId: 1,
+    campaignName: 'Reforma do Templo',
     targetAmount: '10000.00',
     targetDate: '2024-12-31',
     totalRaised: '5000.00',
@@ -22,8 +22,8 @@ const sampleFunds = [
     progressPercentage: '50'
   },
   {
-    fundId: 2,
-    fundName: 'Compra de Instrumentos Musicais',
+    campaignId: 2,
+    campaignName: 'Compra de Instrumentos Musicais',
     targetAmount: null,
     targetDate: null,
     totalRaised: '3000.00',
@@ -33,30 +33,30 @@ const sampleFunds = [
   }
 ];
 
-describe('FundsReportTab', () => {
-  it('renders the funds table with data', async () => {
-    const response: FundListResponse = { funds: sampleFunds };
+describe('CampaignsReportTab', () => {
+  it('renders the campaigns table with data', async () => {
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     expect(await screen.findByText('Reforma do Templo')).toBeInTheDocument();
     expect(screen.getByText('Compra de Instrumentos Musicais')).toBeInTheDocument();
   });
 
   it('displays view toggle buttons', async () => {
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Reforma do Templo');
     // Buttons are radio buttons in a radiogroup
@@ -65,31 +65,31 @@ describe('FundsReportTab', () => {
   });
 
   it('shows accumulated view with target amounts by default', async () => {
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Reforma do Templo');
-    // Verify funds are displayed
+    // Verify campaigns are displayed
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
     expect(screen.getByText('Compra de Instrumentos Musicais')).toBeInTheDocument();
   });
 
   it('switches to month view when clicked', async () => {
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
     const user = userEvent.setup();
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Reforma do Templo');
     const monthButton = screen.getByRole('radio', { name: 'Mês' });
@@ -101,29 +101,29 @@ describe('FundsReportTab', () => {
   });
 
   it('displays amounts in Brazilian currency format', async () => {
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Reforma do Templo');
-    // Verify funds loaded successfully
+    // Verify campaigns loaded successfully
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
   });
 
-  it('shows empty state when no funds exist', async () => {
-    const response: FundListResponse = { funds: [] };
+  it('shows empty state when no campaigns exist', async () => {
+    const response: CampaignListResponse = { campaigns: [] };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await waitFor(() => {
       const table = screen.queryByRole('table');
@@ -133,16 +133,16 @@ describe('FundsReportTab', () => {
     });
   });
 
-  it('displays funds without target as "sem meta"', async () => {
+  it('displays campaigns without target as "sem meta"', async () => {
     setMobileViewport();
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Compra de Instrumentos Musicais');
     expect(screen.getByText('sem meta')).toBeInTheDocument();
@@ -150,14 +150,14 @@ describe('FundsReportTab', () => {
 
   it('displays progress percentage in accumulated view', async () => {
     setMobileViewport();
-    const response: FundListResponse = { funds: sampleFunds };
+    const response: CampaignListResponse = { campaigns: sampleCampaigns };
 
     server.use(
-      http.get(`${API}/reports/funds`, () => HttpResponse.json(response)),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json(response)),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<FundsReportTab month="2024-06" />);
+    renderWithProviders(<CampaignsReportTab month="2024-06" />);
 
     await screen.findByText('Reforma do Templo');
     expect(screen.getByText('50%')).toBeInTheDocument();

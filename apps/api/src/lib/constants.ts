@@ -7,7 +7,7 @@ export const Module = {
   Attenders: 'Congregados',
   ChurchSettings: 'Dados da Igreja',
   PaymentMethods: 'Formas de Pagamento',
-  DesignatedFunds: 'Campanhas',
+  Campaigns: 'Campanhas',
   IncomeCategories: 'Categorias de Entradas',
   ExpenseCategories: 'Categorias de Saídas',
   IncomeEntries: 'Lançamentos de Entradas',

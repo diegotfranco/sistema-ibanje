@@ -15,7 +15,7 @@ import {
   unique
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { activeStatus, transactionStatus, closingStatus, fundStatus } from './enums.js';
+import { activeStatus, transactionStatus, closingStatus, campaignStatus } from './enums.js';
 import { users } from './users.js';
 import { attenders } from './users.js';
 import { events } from './events.js';
@@ -45,20 +45,20 @@ export const paymentMethods = pgTable(
   ]
 );
 
-export const designatedFunds = pgTable(
-  'designated_funds',
+export const campaigns = pgTable(
+  'campaigns',
   {
     id: serial('id').primaryKey(),
     name: varchar('name', { length: 96 }).notNull(),
     description: text('description'),
     targetAmount: numeric('target_amount', { precision: 12, scale: 2 }),
     targetDate: date('target_date'),
-    status: fundStatus('status').default('ativa').notNull(),
+    status: campaignStatus('status').default('ativa').notNull(),
     deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
-  (table) => [index('designated_funds_deleted_at_idx').on(table.deletedAt)]
+  (table) => [index('campaigns_deleted_at_idx').on(table.deletedAt)]
 );
 
 export const incomeCategories = pgTable(
@@ -93,7 +93,7 @@ export const incomeEntries = pgTable(
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),
-    designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    campaignId: integer('campaign_id').references(() => campaigns.id),
     eventId: integer('event_id').references(() => events.id),
     notes: text('notes'),
     userId: integer('user_id')
@@ -106,8 +106,8 @@ export const incomeEntries = pgTable(
   (table) => [
     check('chk_income_amount_positive', sql`${table.amount} > 0`),
     check(
-      'chk_income_fund_or_event_exclusive',
-      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+      'chk_income_campaign_or_event_exclusive',
+      sql`${table.campaignId} IS NULL OR ${table.eventId} IS NULL`
     ),
     check(
       'chk_attribution_month_yyyymm',
@@ -119,7 +119,7 @@ export const incomeEntries = pgTable(
     index('income_entries_category_id_idx').on(table.categoryId),
     index('income_entries_attender_id_idx').on(table.attenderId),
     index('income_entries_payment_method_id_idx').on(table.paymentMethodId),
-    index('income_entries_designated_fund_id_idx').on(table.designatedFundId),
+    index('income_entries_campaign_id_idx').on(table.campaignId),
     index('income_entries_event_id_idx').on(table.eventId),
     index('income_entries_user_id_idx').on(table.userId)
   ]
@@ -157,7 +157,7 @@ export const expenseEntries = pgTable(
     paymentMethodId: integer('payment_method_id')
       .notNull()
       .references(() => paymentMethods.id),
-    designatedFundId: integer('designated_fund_id').references(() => designatedFunds.id),
+    campaignId: integer('campaign_id').references(() => campaigns.id),
     eventId: integer('event_id').references(() => events.id),
     receipt: text('receipt'),
     notes: text('notes'),
@@ -176,15 +176,15 @@ export const expenseEntries = pgTable(
       sql`${table.installment} > 0 AND ${table.totalInstallments} > 0 AND ${table.installment} <= ${table.totalInstallments}`
     ),
     check(
-      'chk_expense_fund_or_event_exclusive',
-      sql`${table.designatedFundId} IS NULL OR ${table.eventId} IS NULL`
+      'chk_expense_campaign_or_event_exclusive',
+      sql`${table.campaignId} IS NULL OR ${table.eventId} IS NULL`
     ),
     index('expense_entries_date_idx').on(table.date),
     index('expense_entries_status_idx').on(table.status),
     index('expense_entries_category_id_idx').on(table.categoryId),
     index('expense_entries_attender_id_idx').on(table.attenderId),
     index('expense_entries_payment_method_id_idx').on(table.paymentMethodId),
-    index('expense_entries_designated_fund_id_idx').on(table.designatedFundId),
+    index('expense_entries_campaign_id_idx').on(table.campaignId),
     index('expense_entries_event_id_idx').on(table.eventId),
     index('expense_entries_parent_id_idx').on(table.parentId),
     index('expense_entries_user_id_idx').on(table.userId)
@@ -232,8 +232,8 @@ export const monthlyClosings = pgTable(
 
 export type PaymentMethod = typeof paymentMethods.$inferSelect;
 export type NewPaymentMethod = typeof paymentMethods.$inferInsert;
-export type DesignatedFund = typeof designatedFunds.$inferSelect;
-export type NewDesignatedFund = typeof designatedFunds.$inferInsert;
+export type Campaign = typeof campaigns.$inferSelect;
+export type NewCampaign = typeof campaigns.$inferInsert;
 export type IncomeCategory = typeof incomeCategories.$inferSelect;
 export type NewIncomeCategory = typeof incomeCategories.$inferInsert;
 export type IncomeEntry = typeof incomeEntries.$inferSelect;

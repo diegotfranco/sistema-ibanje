@@ -34,7 +34,7 @@ describe('useDashboard', () => {
       incomeTotal: '5000.00',
       expenseTotal: '2000.00',
       netTotal: '3000.00',
-      funds: [],
+      campaigns: [],
       events: {
         recent: [],
         summary: { count: 0, totalRaised: '0', totalSpent: '0', totalNet: '0' }
@@ -68,7 +68,7 @@ describe('useDashboard', () => {
       incomeTotal: '6000.00',
       expenseTotal: '2500.00',
       netTotal: '3500.00',
-      funds: [],
+      campaigns: [],
       events: {
         recent: [],
         summary: { count: 0, totalRaised: '0', totalSpent: '0', totalNet: '0' }

@@ -13,7 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
-interface Fund {
+interface Campaign {
   id: number;
   name: string;
 }
@@ -24,11 +24,11 @@ interface Event {
 }
 
 interface Props {
-  funds: Fund[];
+  campaigns: Campaign[];
   events: Event[];
-  fundId: number | undefined;
+  campaignId: number | undefined;
   eventId: number | undefined;
-  onChangeFund: (id: number | undefined) => void;
+  onChangeCampaign: (id: number | undefined) => void;
   onChangeEvent: (id: number | undefined) => void;
   isLoading?: boolean;
   className?: string;
@@ -37,11 +37,11 @@ interface Props {
 }
 
 export function LinkPicker({
-  funds,
+  campaigns,
   events,
-  fundId,
+  campaignId,
   eventId,
-  onChangeFund,
+  onChangeCampaign,
   onChangeEvent,
   isLoading = false,
   className,
@@ -49,27 +49,27 @@ export function LinkPicker({
 }: Props) {
   const [open, setOpen] = React.useState(false);
 
-  const selectedLabel = fundId
-    ? (funds.find((f) => f.id === fundId)?.name ?? 'Campanha')
+  const selectedLabel = campaignId
+    ? (campaigns.find((f) => f.id === campaignId)?.name ?? 'Campanha')
     : eventId
       ? (events.find((e) => e.id === eventId)?.title ?? 'Evento')
       : null;
 
   const handleClear = () => {
-    onChangeFund(undefined);
+    onChangeCampaign(undefined);
     onChangeEvent(undefined);
     setOpen(false);
   };
 
-  const handleSelectFund = (id: number) => {
-    onChangeFund(id);
+  const handleSelectCampaign = (id: number) => {
+    onChangeCampaign(id);
     onChangeEvent(undefined);
     setOpen(false);
   };
 
   const handleSelectEvent = (id: number) => {
     onChangeEvent(id);
-    onChangeFund(undefined);
+    onChangeCampaign(undefined);
     setOpen(false);
   };
 
@@ -96,7 +96,7 @@ export function LinkPicker({
           <CommandList>
             <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
             {isLoading && <CommandItem disabled>Carregando...</CommandItem>}
-            {!isLoading && (fundId || eventId) && (
+            {!isLoading && (campaignId || eventId) && (
               <>
                 <CommandGroup>
                   <CommandItem value="__clear__" onSelect={handleClear}>
@@ -107,15 +107,18 @@ export function LinkPicker({
                 <CommandSeparator />
               </>
             )}
-            {funds.length > 0 && (
+            {campaigns.length > 0 && (
               <CommandGroup heading="Campanhas">
-                {funds.map((f) => (
+                {campaigns.map((f) => (
                   <CommandItem
-                    key={`fund-${f.id}`}
+                    key={`campaign-${f.id}`}
                     value={`campanha ${f.name} ${f.id}`}
-                    onSelect={() => handleSelectFund(f.id)}>
+                    onSelect={() => handleSelectCampaign(f.id)}>
                     <Check
-                      className={cn('mr-2 h-4 w-4', fundId === f.id ? 'opacity-100' : 'opacity-0')}
+                      className={cn(
+                        'mr-2 h-4 w-4',
+                        campaignId === f.id ? 'opacity-100' : 'opacity-0'
+                      )}
                     />
                     {f.name}
                   </CommandItem>

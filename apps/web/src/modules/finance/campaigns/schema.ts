@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const DesignatedFundFormSchema = z.object({
+export const CampaignFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
   description: z.string().max(500).optional().or(z.literal('')),
   targetAmount: z
@@ -11,9 +11,9 @@ export const DesignatedFundFormSchema = z.object({
   targetDate: z.string().optional().nullable()
 });
 
-export type DesignatedFundFormValues = z.infer<typeof DesignatedFundFormSchema>;
+export type CampaignFormValues = z.infer<typeof CampaignFormSchema>;
 
-export type DesignatedFundResponse = {
+export type CampaignResponse = {
   id: number;
   name: string;
   description: string | null;

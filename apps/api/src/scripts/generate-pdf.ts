@@ -79,14 +79,14 @@ async function generateDetailed() {
 async function generateSimplified() {
   const [
     incomeByCategory,
-    incomeByFund,
+    incomeByCampaign,
     expensesByCategory,
     totalIncome,
     totalExpenses,
     openingBalance
   ] = await Promise.all([
     repo.getIncomeByCategoryForRange(from, to),
-    repo.getIncomeByFundForRange(from, to),
+    repo.getIncomeByCampaignForRange(from, to),
     repo.getExpensesByCategoryForRange(from, to),
     repo.sumIncomeForRange(from, to),
     repo.sumExpensesForRange(from, to),
@@ -102,7 +102,7 @@ async function generateSimplified() {
     totalExpenses,
     currentBalance,
     incomeByCategory,
-    incomeByFund,
+    incomeByCampaign,
     expensesByCategory
   };
 

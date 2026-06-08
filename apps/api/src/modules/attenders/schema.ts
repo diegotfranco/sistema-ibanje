@@ -118,7 +118,7 @@ export const DonationsPdfQuerySchema = z.object({
 
 export const DonationGroupSchema = z.object({
   categoryName: z.string(),
-  fundName: z.string().nullable(),
+  campaignName: z.string().nullable(),
   eventName: z.string().nullable(),
   total: z.string()
 });
@@ -141,7 +141,7 @@ export const DonationEntrySchema = z.object({
   id: z.number().int().positive(),
   depositDate: z.string(),
   categoryName: z.string(),
-  fundName: z.string().nullable(),
+  campaignName: z.string().nullable(),
   eventName: z.string().nullable(),
   paymentMethodName: z.string(),
   amount: z.string()

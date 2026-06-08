@@ -5,14 +5,14 @@ import { sumIncomeForRange } from '../../reports/repository.js';
 import { findExpenseCategoryById, hasChildrenExpenseCategory } from '../categories/repository.js';
 import { findAttenderById } from '../../../attenders/repository.js';
 import { findPaymentMethodById } from '../../payment-methods/repository.js';
-import { findDesignatedFundById } from '../../designated-funds/repository.js';
+import { findCampaignById } from '../../campaigns/repository.js';
 import { findEventById } from '../../../events/repository.js';
 import { assertPermission } from '../../../../lib/permissions.js';
 import { assertPeriodEditable, assertEntryTransition } from '../../../../lib/finance.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
-import { FundStatus } from '@sistema-ibanje/shared';
+import { CampaignStatus } from '@sistema-ibanje/shared';
 import {
   uploadFile,
   deleteFile,
@@ -31,14 +31,14 @@ import type {
 async function validateEntry(data: {
   categoryId: number;
   paymentMethodId: number;
-  designatedFundId?: number | null;
+  campaignId?: number | null;
   eventId?: number | null;
   attenderId?: number;
   parentId?: number;
 }) {
-  if (data.designatedFundId && data.eventId) {
-    throw httpError(400, 'Selecione um fundo OU um evento, não ambos.', {
-      fieldErrors: { eventId: 'Selecione um fundo OU um evento, não ambos.' }
+  if (data.campaignId && data.eventId) {
+    throw httpError(400, 'Selecione uma campanha OU um evento, não ambos.', {
+      fieldErrors: { eventId: 'Selecione uma campanha OU um evento, não ambos.' }
     });
   }
   if (data.eventId) {
@@ -64,13 +64,13 @@ async function validateEntry(data: {
     throw httpError(400, 'Selected payment method does not allow outflow');
   }
 
-  if (data.designatedFundId) {
-    const fund = await findDesignatedFundById(data.designatedFundId);
-    if (!fund) throw httpError(404, 'Designated fund not found');
+  if (data.campaignId) {
+    const campaign = await findCampaignById(data.campaignId);
+    if (!campaign) throw httpError(404, 'Campaign not found');
 
-    if (fund.status === FundStatus.Ended) {
-      throw httpError(400, `A campanha "${fund.name}" está encerrada.`, {
-        fieldErrors: { designatedFundId: 'Campanha encerrada.' }
+    if (campaign.status === CampaignStatus.Ended) {
+      throw httpError(400, `A campanha "${campaign.name}" está encerrada.`, {
+        fieldErrors: { campaignId: 'Campanha encerrada.' }
       });
     }
   }
@@ -116,7 +116,7 @@ export async function createExpenseEntry(
   await validateEntry({
     categoryId: body.categoryId,
     paymentMethodId: body.paymentMethodId,
-    designatedFundId: body.designatedFundId,
+    campaignId: body.campaignId,
     eventId: body.eventId,
     attenderId: body.attenderId,
     parentId: body.parentId
@@ -143,10 +143,7 @@ export async function updateExpenseEntry(
   const mergedValues = {
     categoryId: body.categoryId ?? entry.categoryId,
     paymentMethodId: body.paymentMethodId ?? entry.paymentMethodId,
-    designatedFundId:
-      body.designatedFundId !== undefined
-        ? body.designatedFundId
-        : (entry.designatedFundId ?? undefined),
+    campaignId: body.campaignId !== undefined ? body.campaignId : (entry.campaignId ?? undefined),
     eventId: body.eventId !== undefined ? body.eventId : (entry.eventId ?? undefined),
     attenderId: body.attenderId ?? entry.attenderId ?? undefined,
     parentId: body.parentId ?? entry.parentId ?? undefined

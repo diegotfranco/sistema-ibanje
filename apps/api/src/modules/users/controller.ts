@@ -12,8 +12,8 @@ import { sendInviteEmail } from '../../lib/email.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit } = req.query as ListUsersRequest;
-  return reply.send(await service.listUsers(page, limit));
+  const { page, limit, q, status } = req.query as ListUsersRequest;
+  return reply.send(await service.listUsers(page, limit, { q, status }));
 }
 
 export async function getById(req: FastifyRequest, reply: FastifyReply) {

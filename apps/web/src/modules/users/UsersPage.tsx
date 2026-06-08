@@ -1,21 +1,16 @@
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { CheckCircle, Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { Edit, ShieldCheck, Trash2, UserCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { PageContainer } from '@/components/PageContainer';
+import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { Pagination } from '@/components/Pagination';
 import StatusBadge from '@/components/StatusBadge';
+import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
+import { getStatusLabel, USER_STATUS_FILTER_OPTIONS } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -36,8 +31,23 @@ export default function UsersPage() {
   const canEdit = hasPermission(perms, Module.Users, Action.Update);
   const canDelete = hasPermission(perms, Module.Users, Action.Delete);
 
-  const list = useUsers();
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<'ativo' | 'inativo' | 'pendente' | undefined>(undefined);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim(), 250);
+
+  // Server-side search narrows the whole list, so a new query must restart paging.
+  // Adjust during render (guarded) rather than in an effect — avoids a cascading render.
+  const [prevSearch, setPrevSearch] = useState(debouncedSearch);
+  if (prevSearch !== debouncedSearch) {
+    setPrevSearch(debouncedSearch);
+    setPage(1);
+  }
+
+  const list = useUsers({ page, status, q: debouncedSearch || undefined });
   const mutations = useUserMutations(user?.id);
+
+  const totalPages = list.data?.totalPages ?? 1;
 
   const [editing, setEditing] = useState<UserResponse | null | 'new'>(null);
   const [deleting, setDeleting] = useState<UserResponse | null>(null);
@@ -72,112 +82,91 @@ export default function UsersPage() {
     }
   }
 
-  const data = list.data?.data ?? [];
+  // Per-row actions. All are modelled as customActions (rather than ResourceListPage's
+  // onEdit/onDelete) so each can hide itself for the caller's own row and for the
+  // pending-only "Aprovar" case — in both the table and the mobile detail sheet.
+  const actions: CustomAction<UserResponse>[] = [];
+  if (canEdit) {
+    actions.push({
+      label: 'Aprovar',
+      icon: <UserCheck size={16} />,
+      onClick: (r) => mutations.approve.mutate(r.id),
+      hidden: (r) => mutations.isSelf(r.id) || r.status !== ActiveStatus.Pending
+    });
+    actions.push({
+      label: 'Editar',
+      icon: <Edit size={16} />,
+      onClick: (r) => setEditing(r),
+      hidden: (r) => mutations.isSelf(r.id)
+    });
+    actions.push({
+      label: 'Permissões',
+      icon: <ShieldCheck size={16} />,
+      onClick: (r) => setPermissionsTarget(r),
+      hidden: (r) => mutations.isSelf(r.id)
+    });
+  }
+  if (canDelete) {
+    actions.push({
+      label: 'Remover',
+      icon: <Trash2 size={16} />,
+      onClick: (r) => setDeleting(r),
+      hidden: (r) => mutations.isSelf(r.id)
+    });
+  }
 
   return (
     <>
-      <div className="p-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Usuários</CardTitle>
-            {canCreate && (
-              <Button size="sm" onClick={() => setEditing('new')}>
-                <Plus className="h-4 w-4" />
-                Novo
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>E-mail</TableHead>
-                  <TableHead>Cargo</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-40 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!list.isLoading && data.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Nenhum usuário encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!list.isLoading &&
-                  data.map((row) => {
-                    const self = mutations.isSelf(row.id);
-                    return (
-                      <TableRow key={row.id}>
-                        <TableCell>{row.name}</TableCell>
-                        <TableCell>{row.email}</TableCell>
-                        <TableCell>{row.role}</TableCell>
-                        <TableCell>
-                          <StatusBadge status={row.status} />
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {!self && (
-                            <div className="flex items-center justify-end gap-1">
-                              {canEdit && row.status === ActiveStatus.Pending && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => mutations.approve.mutate(row.id)}
-                                  disabled={mutations.approve.isPending}
-                                  aria-label="Aprovar"
-                                  className="text-success hover:text-success/80">
-                                  <CheckCircle className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {canEdit && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => setEditing(row)}
-                                  aria-label="Editar"
-                                  className="text-warning hover:text-warning/80">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {canEdit && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => setPermissionsTarget(row)}
-                                  aria-label="Permissões">
-                                  <ShieldCheck className="h-4 w-4" />
-                                </Button>
-                              )}
-                              {canDelete && (
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  onClick={() => setDeleting(row)}
-                                  aria-label="Remover"
-                                  className="text-destructive hover:text-destructive/80">
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+      <PageContainer>
+        <ResourceListPage<UserResponse>
+          title="Usuários"
+          columns={[
+            { header: 'Nome', cell: (r) => r.name },
+            { header: 'E-mail', cell: (r) => r.email, hideBelow: 'md' },
+            { header: 'Cargo', cell: (r) => r.role, hideBelow: 'md' },
+            {
+              id: 'status',
+              header: 'Status',
+              cell: (r) => <StatusBadge status={r.status} />,
+              filter: { options: USER_STATUS_FILTER_OPTIONS }
+            }
+          ]}
+          data={list.data?.data}
+          isLoading={list.isLoading}
+          emptyMessage="Nenhum usuário encontrado."
+          onCreate={canCreate ? () => setEditing('new') : undefined}
+          canCreate={canCreate}
+          customActions={actions.length > 0 ? actions : undefined}
+          rowKey={(r) => r.id}
+          searchable={{ placeholder: 'Buscar usuário…', loading: list.isFetching }}
+          globalFilter={search}
+          onGlobalFilterChange={setSearch}
+          filters={{ status }}
+          onFilterChange={(_, v) => {
+            setStatus(v as 'ativo' | 'inativo' | 'pendente' | undefined);
+            setPage(1);
+          }}
+          pagination={
+            <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+          }
+          mobileRow={(r) => (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{r.name}</span>
+                <span className="truncate text-sm text-muted-foreground">{r.email}</span>
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+          )}
+          mobileDetailTitle={(r) => r.name}
+          mobileDetailFields={(r) => [
+            { label: 'Nome', value: r.name },
+            { label: 'E-mail', value: r.email },
+            { label: 'Cargo', value: r.role },
+            { label: 'Status', value: getStatusLabel(r.status) }
+          ]}
+        />
+      </PageContainer>
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

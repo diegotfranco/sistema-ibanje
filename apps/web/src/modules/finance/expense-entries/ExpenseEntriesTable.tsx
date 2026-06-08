@@ -15,9 +15,9 @@ import type { ExpenseEntryResponse } from './schema';
 
 const LATEST_LIMIT = 15;
 
-// The report row exposes the fund as `fundName`; the entries response calls it
-// `designatedFundName`. Normalize so the shared expense display can render both.
-type Row = ExpenseEntryResponse & { fundName: string | null };
+// The report row exposes the campaign as `campaignName`; the entries response calls it
+// `campaignName`. Normalize so the shared expense display can render both.
+type Row = ExpenseEntryResponse & { campaignName: string | null };
 
 interface Props {
   data: ExpenseEntryResponse[];
@@ -39,7 +39,7 @@ export function ExpenseEntriesTable({
   const latest: Row[] = [...data]
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, LATEST_LIMIT)
-    .map((r) => ({ ...r, fundName: r.designatedFundName }));
+    .map((r) => ({ ...r, campaignName: r.campaignName }));
 
   const [detail, setDetail] = useState<Row | null>(null);
 

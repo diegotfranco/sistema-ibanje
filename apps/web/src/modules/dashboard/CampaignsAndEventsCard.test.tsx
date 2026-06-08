@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
-import { FundsAndEventsCard } from './FundsAndEventsCard';
+import { CampaignsAndEventsCard } from './CampaignsAndEventsCard';
 import { renderWithProviders } from '@/test/renderWithProviders';
-import type { FundSummary, Events } from '@sistema-ibanje/shared';
+import type { CampaignSummary, Events } from '@sistema-ibanje/shared';
 
-const fundSummaries: FundSummary[] = [
+const campaignSummaries: CampaignSummary[] = [
   {
-    fundId: 1,
-    fundName: 'Reforma do Templo',
+    campaignId: 1,
+    campaignName: 'Reforma do Templo',
     totalRaised: '15000.00',
     targetAmount: '50000.00',
     totalExpenses: '5000.00',
@@ -15,8 +15,8 @@ const fundSummaries: FundSummary[] = [
     progressPercentage: '30.0'
   },
   {
-    fundId: 2,
-    fundName: 'Missões',
+    campaignId: 2,
+    campaignName: 'Missões',
     totalRaised: '8500.75',
     targetAmount: null,
     totalExpenses: '2000.00',
@@ -54,37 +54,37 @@ const events: Events = {
   }
 };
 
-describe('FundsAndEventsCard', () => {
-  it('renders the card with funds view by default', async () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+describe('CampaignsAndEventsCard', () => {
+  it('renders the card with campaigns view by default', async () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
     expect(screen.getByText('Missões')).toBeInTheDocument();
   });
 
-  it('displays fund progress percentage when target exists', () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+  it('displays campaign progress percentage when target exists', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
     // Reforma do Templo: 15000 / 50000 = 30%
     expect(screen.getByText('30.0%')).toBeInTheDocument();
   });
 
-  it('displays "Sem meta" when fund has no target', () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+  it('displays "Sem meta" when campaign has no target', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
     expect(screen.getByText('Sem meta')).toBeInTheDocument();
   });
 
-  it('shows empty state when funds list is empty', () => {
-    renderWithProviders(<FundsAndEventsCard funds={[]} events={events} />);
+  it('shows empty state when campaigns list is empty', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={[]} events={events} />);
 
     expect(screen.getByText('Nenhuma campanha ativa')).toBeInTheDocument();
   });
 
-  it('renders with both funds and events data', () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+  it('renders with both campaigns and events data', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
-    // Verify fund data is displayed
+    // Verify campaign data is displayed
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
     expect(screen.getByText('Missões')).toBeInTheDocument();
   });
@@ -95,15 +95,17 @@ describe('FundsAndEventsCard', () => {
       summary: { count: 0, totalRaised: '0.00', totalSpent: '0.00', totalNet: '0.00' }
     };
 
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={emptyEvents} />);
+    renderWithProviders(
+      <CampaignsAndEventsCard campaigns={campaignSummaries} events={emptyEvents} />
+    );
 
-    // Should render funds view
+    // Should render campaigns view
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
   });
 
   it('renders skeleton when loading', () => {
     renderWithProviders(
-      <FundsAndEventsCard funds={undefined} events={undefined} isLoading={true} />
+      <CampaignsAndEventsCard campaigns={undefined} events={undefined} isLoading={true} />
     );
 
     // Skeleton renders as a div with h-72 class
@@ -111,14 +113,14 @@ describe('FundsAndEventsCard', () => {
     expect(skeleton).toBeInTheDocument();
   });
 
-  it('handles undefined funds and events gracefully', () => {
-    renderWithProviders(<FundsAndEventsCard funds={undefined} events={undefined} />);
+  it('handles undefined campaigns and events gracefully', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={undefined} events={undefined} />);
 
     expect(screen.getByText('Nenhuma campanha ativa')).toBeInTheDocument();
   });
 
-  it('displays correct amounts for funds', () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+  it('displays correct amounts for campaigns', () => {
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
     // Check that formatted amounts are displayed
     expect(screen.getByText(/R\$ 15[.,]000/)).toBeInTheDocument();
@@ -126,15 +128,19 @@ describe('FundsAndEventsCard', () => {
   });
 
   it('renders with event data available', () => {
-    renderWithProviders(<FundsAndEventsCard funds={fundSummaries} events={events} />);
+    renderWithProviders(<CampaignsAndEventsCard campaigns={campaignSummaries} events={events} />);
 
-    // Card should render with funds content visible
+    // Card should render with campaigns content visible
     expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
   });
 
   it('applies custom className prop', () => {
     const { container } = renderWithProviders(
-      <FundsAndEventsCard funds={fundSummaries} events={events} className="custom-class" />
+      <CampaignsAndEventsCard
+        campaigns={campaignSummaries}
+        events={events}
+        className="custom-class"
+      />
     );
 
     const card = container.querySelector('.custom-class');

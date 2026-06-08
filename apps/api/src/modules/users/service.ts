@@ -19,9 +19,13 @@ import { httpError, isUniqueViolation } from '../../lib/errors.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export async function listUsers(page: number, limit: number) {
+export async function listUsers(
+  page: number,
+  limit: number,
+  filters?: { q?: string; status?: 'ativo' | 'inativo' | 'pendente' }
+) {
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listUsers(offset, limit);
+  const { rows, total } = await repo.listUsers(offset, limit, filters);
 
   return paginate(
     rows.map(

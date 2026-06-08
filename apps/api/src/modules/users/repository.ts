@@ -1,4 +1,4 @@
-import { eq, inArray, count } from 'drizzle-orm';
+import { eq, inArray, count, and, or, sql, type SQL } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
@@ -12,7 +12,28 @@ import {
   roleModulePermissions
 } from '../../db/schema.js';
 
-export async function listUsers(offset: number, limit: number) {
+export type UserListFilters = { q?: string; status?: 'ativo' | 'inativo' | 'pendente' };
+
+// Diacritic/case-insensitive match across name + email. Mirrors the attenders search;
+// relies on the `unaccent` extension (migration 0003).
+function userSearchFilter(q: string): SQL {
+  const pattern = `%${q}%`;
+  return or(
+    sql`unaccent(lower(${users.name})) LIKE unaccent(lower(${pattern}))`,
+    sql`unaccent(lower(${users.email})) LIKE unaccent(lower(${pattern}))`
+  )!;
+}
+
+function usersWhere(filters?: UserListFilters): SQL | undefined {
+  const conditions: SQL[] = [];
+  if (filters?.q) conditions.push(userSearchFilter(filters.q));
+  if (filters?.status) conditions.push(eq(users.status, filters.status));
+  return conditions.length ? and(...conditions) : undefined;
+}
+
+export async function listUsers(offset: number, limit: number, filters?: UserListFilters) {
+  const where = usersWhere(filters);
+
   const rows = await db
     .select({
       id: users.id,
@@ -25,11 +46,12 @@ export async function listUsers(offset: number, limit: number) {
     })
     .from(users)
     .innerJoin(roles, eq(users.roleId, roles.id))
+    .where(where)
     .orderBy(users.id)
     .offset(offset)
     .limit(limit);
 
-  const countResult = await db.select({ count: count() }).from(users);
+  const countResult = await db.select({ count: count() }).from(users).where(where);
 
   const total = countResult[0]?.count ?? 0;
 

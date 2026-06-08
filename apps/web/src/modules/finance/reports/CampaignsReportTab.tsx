@@ -4,8 +4,8 @@ import { DataTable } from '@/components/DataTable';
 import { ProgressBar } from '@/components/ProgressBar';
 import { Button } from '@/components/ui/button';
 import { formatMoney } from '../entries-utils';
-import { useFundsReport } from './useReports';
-import type { FundSummary } from './schema';
+import { useCampaignsReport } from './useReports';
+import type { CampaignSummary } from './schema';
 
 interface Props {
   month: string;
@@ -13,11 +13,11 @@ interface Props {
 
 type ViewMode = 'acumulado' | 'mes';
 
-const acumuladoColumns: ColumnDef<FundSummary, unknown>[] = [
+const acumuladoColumns: ColumnDef<CampaignSummary, unknown>[] = [
   {
     id: 'name',
     header: 'Campanha',
-    cell: (info) => info.row.original.fundName,
+    cell: (info) => info.row.original.campaignName,
     meta: { className: 'w-[28%]' }
   },
   {
@@ -53,11 +53,11 @@ const acumuladoColumns: ColumnDef<FundSummary, unknown>[] = [
   }
 ];
 
-const mesColumns: ColumnDef<FundSummary, unknown>[] = [
+const mesColumns: ColumnDef<CampaignSummary, unknown>[] = [
   {
     id: 'name',
     header: 'Campanha',
-    cell: (info) => info.row.original.fundName,
+    cell: (info) => info.row.original.campaignName,
     meta: { className: 'w-full' }
   },
   {
@@ -92,10 +92,10 @@ const mesColumns: ColumnDef<FundSummary, unknown>[] = [
   }
 ];
 
-export function FundsReportTab({ month }: Props) {
+export function CampaignsReportTab({ month }: Props) {
   const [view, setView] = useState<ViewMode>('acumulado');
-  const { data, isLoading } = useFundsReport(view === 'mes' ? month : undefined);
-  const funds = data?.funds ?? [];
+  const { data, isLoading } = useCampaignsReport(view === 'mes' ? month : undefined);
+  const campaigns = data?.campaigns ?? [];
 
   return (
     <div className="space-y-4 px-4 py-4 sm:px-6">
@@ -117,16 +117,16 @@ export function FundsReportTab({ month }: Props) {
         ))}
       </div>
 
-      <DataTable<FundSummary>
+      <DataTable<CampaignSummary>
         columns={view === 'acumulado' ? acumuladoColumns : mesColumns}
-        data={funds}
+        data={campaigns}
         isLoading={isLoading}
-        getRowKey={(row) => row.fundId}
+        getRowKey={(row) => row.campaignId}
         mobileRow={(row) =>
           view === 'acumulado' ? (
             <div className="flex flex-col gap-1.5">
               <div className="flex items-start justify-between gap-3">
-                <p className="min-w-0 flex-1 font-medium truncate">{row.fundName}</p>
+                <p className="min-w-0 flex-1 font-medium truncate">{row.campaignName}</p>
                 <span className="shrink-0 font-mono text-sm">
                   R$ {formatMoney(row.totalRaised)}
                 </span>
@@ -146,7 +146,7 @@ export function FundsReportTab({ month }: Props) {
           ) : (
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="font-medium truncate">{row.fundName}</p>
+                <p className="font-medium truncate">{row.campaignName}</p>
                 <p className="text-xs text-muted-foreground">
                   R$ {formatMoney(row.totalRaised)}
                   {' − '}

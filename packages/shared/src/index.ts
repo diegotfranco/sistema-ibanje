@@ -16,7 +16,7 @@ export type {
   MonthlyTrend,
   Trends,
   Closing,
-  FundSummary,
+  CampaignSummary,
   EventSummary,
   Events
 } from './dashboard.js';
@@ -36,7 +36,7 @@ export const Module = {
   ExpenseCategories: 9,
   ExpenseEntries: 10,
   PaymentMethods: 11,
-  DesignatedFunds: 12,
+  Campaigns: 12,
   Dashboard: 13,
   Reports: 14,
   MonthlyClosings: 15,
@@ -115,17 +115,17 @@ export const ATTENDER_TERMINAL_STATUSES = [
   AttenderStatus.Deceased
 ] as const satisfies readonly AttenderStatusValue[];
 
-// Designated-fund (campaign) lifecycle — feminine to agree with "campanha". `encerrada` = the
+// Campaign lifecycle — feminine to agree with "campanha". `encerrada` = the
 // campaign legitimately ended (goal/deadline reached); distinct from soft-delete (`deletedAt`).
-export const FundStatus = {
+export const CampaignStatus = {
   Active: 'ativa',
   Ended: 'encerrada'
 } as const;
-export type FundStatusValue = (typeof FundStatus)[keyof typeof FundStatus];
-export const FUND_STATUS_VALUES = [
-  FundStatus.Active,
-  FundStatus.Ended
-] as const satisfies readonly FundStatusValue[];
+export type CampaignStatusValue = (typeof CampaignStatus)[keyof typeof CampaignStatus];
+export const CAMPAIGN_STATUS_VALUES = [
+  CampaignStatus.Active,
+  CampaignStatus.Ended
+] as const satisfies readonly CampaignStatusValue[];
 
 export const EntryStatus = {
   Pending: 'pendente',

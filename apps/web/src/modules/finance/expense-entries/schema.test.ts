@@ -48,21 +48,21 @@ describe('ExpenseEntryFormSchema', () => {
     expect(ExpenseEntryFormSchema.safeParse(base({ amount: '100' })).success).toBe(true);
   });
 
-  it('rejects both a designated fund and an event (mutual exclusion)', () => {
-    const r = ExpenseEntryFormSchema.safeParse(base({ designatedFundId: 1, eventId: 2 }));
+  it('rejects both a campaign and an event (mutual exclusion)', () => {
+    const r = ExpenseEntryFormSchema.safeParse(base({ campaignId: 1, eventId: 2 }));
     expect(r.success).toBe(false);
     if (!r.success) {
       expect(r.error.issues.find((i) => i.path[0] === 'eventId')?.message).toBe(
-        'Selecione um fundo OU um evento, não ambos.'
+        'Selecione uma campanha OU um evento, não ambos.'
       );
     }
   });
 
-  it('accepts a fund alone without an event', () => {
-    expect(ExpenseEntryFormSchema.safeParse(base({ designatedFundId: 1 })).success).toBe(true);
+  it('accepts a campaign alone without an event', () => {
+    expect(ExpenseEntryFormSchema.safeParse(base({ campaignId: 1 })).success).toBe(true);
   });
 
-  it('accepts an event alone without a fund', () => {
+  it('accepts an event alone without a campaign', () => {
     expect(ExpenseEntryFormSchema.safeParse(base({ eventId: 1 })).success).toBe(true);
   });
 

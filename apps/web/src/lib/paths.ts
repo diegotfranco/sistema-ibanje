@@ -9,7 +9,7 @@ export const paths = {
   attenders: '/attenders',
   attenderDetail: '/attenders/:id',
   paymentMethods: '/payment-methods',
-  designatedFunds: '/designated-funds',
+  campaigns: '/campaigns',
   events: '/events',
   incomeCategories: '/income-categories',
   expenseCategories: '/expense-categories',
@@ -23,6 +23,7 @@ export const paths = {
   minuteDetail: '/minutes/:id',
   minuteTemplates: '/minute-templates',
   churchSettings: '/church-settings',
+  settings: '/configuracoes',
   membershipLetters: '/membership-letters',
   calendar: '/calendar',
   me: '/me'

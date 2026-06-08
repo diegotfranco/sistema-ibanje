@@ -23,7 +23,7 @@ type ExpenseEntryRow = {
   amount: string;
   categoryId: number;
   paymentMethodId: number;
-  designatedFundId: number | null;
+  campaignId: number | null;
   eventId: number | null;
   status: string;
   createdAt: Date;
@@ -96,15 +96,15 @@ describe('expense-entries module', () => {
     });
   });
 
-  it('rejects an entry with both designatedFundId and eventId (400)', async () => {
-    // First get a designated fund and an event if available
-    const fundRes = await app.inject({
+  it('rejects an entry with both campaignId and eventId (400)', async () => {
+    // First get a campaign and an event if available
+    const campaignRes = await app.inject({
       method: 'GET',
-      url: '/designated-funds?limit=100',
+      url: '/campaigns?limit=100',
       headers: { cookie: admin.cookie }
     });
-    const fundData = fundRes.json<{ data: Array<{ id: number }> }>();
-    const fundId = fundData.data?.[0]?.id;
+    const campaignData = campaignRes.json<{ data: Array<{ id: number }> }>();
+    const campaignId = campaignData.data?.[0]?.id;
 
     const eventRes = await app.inject({
       method: 'GET',
@@ -115,7 +115,7 @@ describe('expense-entries module', () => {
     const eventId = eventData.data?.[0]?.id;
 
     // If either is available, test the refine violation
-    if (fundId && eventId) {
+    if (campaignId && eventId) {
       const res = await app.inject({
         method: 'POST',
         url: '/expense-entries',
@@ -126,7 +126,7 @@ describe('expense-entries module', () => {
           amount: 50,
           categoryId,
           paymentMethodId,
-          designatedFundId: fundId,
+          campaignId: campaignId,
           eventId
         }
       });

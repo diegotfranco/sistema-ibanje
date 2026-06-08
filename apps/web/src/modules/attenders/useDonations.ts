@@ -3,7 +3,7 @@ import { api, ApiError } from '@/lib/api';
 
 export interface DonationGroup {
   categoryName: string;
-  fundName: string | null;
+  campaignName: string | null;
   eventName: string | null;
   total: string;
 }
@@ -26,7 +26,7 @@ export interface DonationEntry {
   id: number;
   depositDate: string;
   categoryName: string;
-  fundName: string | null;
+  campaignName: string | null;
   eventName: string | null;
   paymentMethodName: string;
   amount: string;

@@ -658,7 +658,7 @@ export type EdgeCaseIncome = {
   categoryName: string;
   attenderName?: string | null;
   paymentMethodName: string;
-  designatedFundName?: string | null;
+  campaignName?: string | null;
   eventTitle?: string | null;
   notes?: string | null;
   createdByUserEmail: string;
@@ -672,7 +672,7 @@ export type EdgeCaseExpense = {
   totalInstallments: number;
   categoryName: string;
   paymentMethodName: string;
-  designatedFundName?: string | null;
+  campaignName?: string | null;
   eventTitle?: string | null;
   notes?: string | null;
   /** Synthetic id used to link installments together — the seed maps it to the actual parent id. */
@@ -768,7 +768,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     totalInstallments: 1,
     categoryName: 'Manutenção Predial',
     paymentMethodName: 'Transferência Bancária',
-    designatedFundName: 'Desafio Construção',
+    campaignName: 'Desafio Construção',
     notes: 'Pagamento de empreiteira — caso-limite: saldo do fundo fica negativo no mês.',
     createdByUserEmail: 'tesoureiro@email.com'
   },
@@ -973,7 +973,7 @@ export const EDGE_CASE_INCOME = [
       'Caso-limite: lançamento no último dia do período fechado — tentativas de edição devem ser bloqueadas.',
     createdByUserEmail: 'tesoureiro@email.com'
   },
-  // Designated-fund inflow.
+  // Campaign inflow.
   {
     depositDate: '2026-02-14',
     referenceDate: '2026-02-15',
@@ -981,7 +981,7 @@ export const EDGE_CASE_INCOME = [
     categoryName: 'Oferta',
     attenderName: 'João da Silva',
     paymentMethodName: 'Dinheiro',
-    designatedFundName: 'Fundo Missionário',
+    campaignName: 'Fundo Missionário',
     createdByUserEmail: 'tesoureiro@email.com'
   },
   // Income for a campanha fund (proves the campanha fan-out is wired up).
@@ -992,7 +992,7 @@ export const EDGE_CASE_INCOME = [
     categoryName: 'Oferta',
     attenderName: 'André Pereira',
     paymentMethodName: 'Dinheiro',
-    designatedFundName: 'Desafio Construção',
+    campaignName: 'Desafio Construção',
     createdByUserEmail: 'tesoureiro@email.com'
   },
   // Event-linked inscription income (proves eventId wire-up + event P&L report).

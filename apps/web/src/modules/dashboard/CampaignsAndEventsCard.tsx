@@ -12,23 +12,23 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
-import type { Events, FundSummary } from '@sistema-ibanje/shared';
+import type { Events, CampaignSummary } from '@sistema-ibanje/shared';
 
-type CardView = 'funds' | 'events';
+type CardView = 'campaigns' | 'events';
 
 const eventsChartConfig = {
   raised: { label: 'Arrecadado', color: 'var(--color-chart-1)' },
   spent: { label: 'Investido', color: 'var(--color-chart-2)' }
 } satisfies ChartConfig;
 
-interface FundsAndEventsCardProps {
-  funds: FundSummary[] | undefined;
+interface CampaignsAndEventsCardProps {
+  campaigns: CampaignSummary[] | undefined;
   events: Events | undefined;
   isLoading?: boolean;
   className?: string;
 }
 
-function FundsContent({ data }: { data: FundSummary[] }) {
+function CampaignsContent({ data }: { data: CampaignSummary[] }) {
   if (data.length === 0) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -43,7 +43,7 @@ function FundsContent({ data }: { data: FundSummary[] }) {
     const raisedPct =
       target !== null && target > 0 ? Math.min((raised / target) * 100, 100) : raised > 0 ? 100 : 0;
     return {
-      name: f.fundName,
+      name: f.campaignName,
       raised,
       target,
       raisedPct,
@@ -57,23 +57,23 @@ function FundsContent({ data }: { data: FundSummary[] }) {
 
   return (
     <ul className="space-y-4">
-      {rows.map((fund, idx) => (
+      {rows.map((campaign, idx) => (
         <li key={idx} className="space-y-1.5">
           <div className="flex items-baseline justify-between gap-2">
-            <span className="truncate text-sm font-medium text-foreground">{fund.name}</span>
+            <span className="truncate text-sm font-medium text-foreground">{campaign.name}</span>
             <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-              {fund.amountLabel}
+              {campaign.amountLabel}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="flex-1 h-2 overflow-hidden rounded-full bg-muted/40">
               <div
                 className="h-full transition-all"
-                style={{ width: `${fund.raisedPct}%`, backgroundColor: 'var(--color-chart-3)' }}
+                style={{ width: `${campaign.raisedPct}%`, backgroundColor: 'var(--color-chart-3)' }}
               />
             </div>
             <span className="w-16 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
-              {fund.progressLabel}
+              {campaign.progressLabel}
             </span>
           </div>
         </li>
@@ -184,13 +184,13 @@ function EventsContent({ data }: { data: Events }) {
   );
 }
 
-export function FundsAndEventsCard({
+export function CampaignsAndEventsCard({
   events,
-  funds,
+  campaigns,
   isLoading,
   className
-}: FundsAndEventsCardProps) {
-  const [view, setView] = useState<CardView>('funds');
+}: CampaignsAndEventsCardProps) {
+  const [view, setView] = useState<CardView>('campaigns');
 
   const viewSelect = (
     <Select value={view} onValueChange={(v) => setView(v as CardView)}>
@@ -198,7 +198,7 @@ export function FundsAndEventsCard({
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="funds">Campanhas ativas</SelectItem>
+        <SelectItem value="campaigns">Campanhas ativas</SelectItem>
         <SelectItem value="events">Eventos recentes</SelectItem>
       </SelectContent>
     </Select>
@@ -212,12 +212,12 @@ export function FundsAndEventsCard({
     );
   }
 
-  const title = view === 'funds' ? 'Campanhas ativas' : 'Resultado por Evento';
+  const title = view === 'campaigns' ? 'Campanhas ativas' : 'Resultado por Evento';
 
   return (
     <ChartCard title={title} action={viewSelect} className={className}>
-      {view === 'funds' ? (
-        <FundsContent data={funds ?? []} />
+      {view === 'campaigns' ? (
+        <CampaignsContent data={campaigns ?? []} />
       ) : (
         <EventsContent
           data={

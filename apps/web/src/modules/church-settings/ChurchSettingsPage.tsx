@@ -1,9 +1,10 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/Button';
+import { PageContainer } from '@/components/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
+import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useChurchSettings, useUpdateChurchSettings } from './useChurchSettings';
 import { LogoField } from './LogoField';
 import { FinanceSettingsCard } from '@/modules/finance/finance-settings/FinanceSettingsCard';
@@ -38,7 +39,10 @@ export default function ChurchSettingsPage() {
     formState: { errors }
   } = useForm<ChurchSettingsFormValues>({
     resolver: zodResolver(ChurchSettingsFormSchema),
-    defaultValues: churchSettings
+    defaultValues: EMPTY,
+    // `values` (not `defaultValues`) so the form re-syncs once the async settings query resolves —
+    // react-hook-form only reads `defaultValues` at mount, which on a cold load is still EMPTY.
+    values: churchSettings
       ? {
           name: churchSettings.name,
           cnpj: churchSettings.cnpj || '',
@@ -56,7 +60,7 @@ export default function ChurchSettingsPage() {
           currentSecretaryName: churchSettings.currentSecretaryName || '',
           currentSecretaryTitle: churchSettings.currentSecretaryTitle || ''
         }
-      : EMPTY
+      : undefined
   });
 
   function onSubmit(values: ChurchSettingsFormValues) {
@@ -64,30 +68,37 @@ export default function ChurchSettingsPage() {
   }
 
   if (isLoading) {
-    return <div className="p-4">Carregando...</div>;
-  }
-
-  function renderError(name: keyof ChurchSettingsFormValues) {
-    const error = errors[name];
-    return error ? <p className="text-sm text-destructive mt-1">{error.message}</p> : null;
+    return (
+      <PageContainer>
+        {[0, 1, 2].map((i) => (
+          <Card key={i}>
+            <CardContent className="space-y-3 py-8">
+              <div className="h-5 w-40 animate-pulse rounded bg-muted" />
+              <div className="h-9 w-full animate-pulse rounded bg-muted" />
+              <div className="h-9 w-2/3 animate-pulse rounded bg-muted" />
+            </CardContent>
+          </Card>
+        ))}
+      </PageContainer>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <PageContainer>
       {/* Logo — uploaded independently of the form (immediate upload/remove) */}
       <Card>
         <CardHeader>
-          <CardTitle>Logo</CardTitle>
+          <CardTitle className="py-0.75">Logo</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="mt-4">
           <LogoField
             logoPath={churchSettings?.logoPath ?? null}
             version={churchSettings?.updatedAt ?? ''}
           />
-          <p className="text-sm text-muted-foreground mt-3">
+          <FieldDescription className="mt-3">
             Aparece no cabeçalho dos documentos impressos (atas, demonstrativos, cartas). PNG ou
             JPEG, até 5 MB.
-          </p>
+          </FieldDescription>
         </CardContent>
       </Card>
 
@@ -95,93 +106,98 @@ export default function ChurchSettingsPage() {
         {/* Identificação */}
         <Card>
           <CardHeader>
-            <CardTitle>Identificação</CardTitle>
+            <CardTitle className="py-0.75">Identificação</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nome</Label>
-              <Controller
-                control={control}
-                name="name"
-                render={({ field }) => <Input {...field} id="name" />}
-              />
-              {renderError('name')}
-            </div>
+          <CardContent className="mt-4 space-y-4">
+            {/* nome · cnpj · cep */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field>
+                <FieldLabel htmlFor="name">Nome</FieldLabel>
+                <Controller
+                  control={control}
+                  name="name"
+                  render={({ field }) => <Input {...field} id="name" />}
+                />
+                {errors.name && <FieldError>{errors.name.message}</FieldError>}
+              </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="cnpj">CNPJ</Label>
+              <Field>
+                <FieldLabel htmlFor="cnpj">CNPJ</FieldLabel>
                 <Controller
                   control={control}
                   name="cnpj"
                   render={({ field }) => <Input {...field} id="cnpj" />}
                 />
-                {renderError('cnpj')}
-              </div>
+                {errors.cnpj && <FieldError>{errors.cnpj.message}</FieldError>}
+              </Field>
 
-              <div>
-                <Label htmlFor="postalCode">Código Postal</Label>
+              <Field>
+                <FieldLabel htmlFor="postalCode">Código Postal</FieldLabel>
                 <Controller
                   control={control}
                   name="postalCode"
                   render={({ field }) => <Input {...field} id="postalCode" maxLength={8} />}
                 />
-                {renderError('postalCode')}
-              </div>
+                {errors.postalCode && <FieldError>{errors.postalCode.message}</FieldError>}
+              </Field>
             </div>
 
-            <div>
-              <Label htmlFor="addressStreet">Rua</Label>
-              <Controller
-                control={control}
-                name="addressStreet"
-                render={({ field }) => <Input {...field} id="addressStreet" />}
-              />
-              {renderError('addressStreet')}
-            </div>
+            {/* rua · número */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="addressStreet">Rua</FieldLabel>
+                <Controller
+                  control={control}
+                  name="addressStreet"
+                  render={({ field }) => <Input {...field} id="addressStreet" />}
+                />
+                {errors.addressStreet && <FieldError>{errors.addressStreet.message}</FieldError>}
+              </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="addressNumber">Número</Label>
+              <Field>
+                <FieldLabel htmlFor="addressNumber">Número</FieldLabel>
                 <Controller
                   control={control}
                   name="addressNumber"
                   render={({ field }) => <Input {...field} id="addressNumber" />}
                 />
-                {renderError('addressNumber')}
-              </div>
+                {errors.addressNumber && <FieldError>{errors.addressNumber.message}</FieldError>}
+              </Field>
+            </div>
 
-              <div>
-                <Label htmlFor="addressDistrict">Bairro</Label>
+            {/* bairro · cidade · estado */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field>
+                <FieldLabel htmlFor="addressDistrict">Bairro</FieldLabel>
                 <Controller
                   control={control}
                   name="addressDistrict"
                   render={({ field }) => <Input {...field} id="addressDistrict" />}
                 />
-                {renderError('addressDistrict')}
-              </div>
-            </div>
+                {errors.addressDistrict && (
+                  <FieldError>{errors.addressDistrict.message}</FieldError>
+                )}
+              </Field>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="addressCity">Cidade</Label>
+              <Field>
+                <FieldLabel htmlFor="addressCity">Cidade</FieldLabel>
                 <Controller
                   control={control}
                   name="addressCity"
                   render={({ field }) => <Input {...field} id="addressCity" />}
                 />
-                {renderError('addressCity')}
-              </div>
+                {errors.addressCity && <FieldError>{errors.addressCity.message}</FieldError>}
+              </Field>
 
-              <div>
-                <Label htmlFor="addressState">Estado</Label>
+              <Field>
+                <FieldLabel htmlFor="addressState">Estado</FieldLabel>
                 <Controller
                   control={control}
                   name="addressState"
                   render={({ field }) => <Input {...field} id="addressState" maxLength={2} />}
                 />
-                {renderError('addressState')}
-              </div>
+                {errors.addressState && <FieldError>{errors.addressState.message}</FieldError>}
+              </Field>
             </div>
           </CardContent>
         </Card>
@@ -189,102 +205,115 @@ export default function ChurchSettingsPage() {
         {/* Contato */}
         <Card>
           <CardHeader>
-            <CardTitle>Contato</CardTitle>
+            <CardTitle className="py-0.75">Contato</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="mt-4 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="phone">Telefone</Label>
+              <Field>
+                <FieldLabel htmlFor="phone">Telefone</FieldLabel>
                 <Controller
                   control={control}
                   name="phone"
                   render={({ field }) => <Input {...field} id="phone" type="tel" />}
                 />
-                {renderError('phone')}
-              </div>
+                {errors.phone && <FieldError>{errors.phone.message}</FieldError>}
+              </Field>
 
-              <div>
-                <Label htmlFor="email">Email</Label>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Controller
                   control={control}
                   name="email"
                   render={({ field }) => <Input {...field} id="email" type="email" />}
                 />
-                {renderError('email')}
-              </div>
+                {errors.email && <FieldError>{errors.email.message}</FieldError>}
+              </Field>
             </div>
 
-            <div>
-              <Label htmlFor="websiteUrl">URL do Site</Label>
+            <Field>
+              <FieldLabel htmlFor="websiteUrl">URL do Site</FieldLabel>
               <Controller
                 control={control}
                 name="websiteUrl"
                 render={({ field }) => <Input {...field} id="websiteUrl" type="url" />}
               />
-              {renderError('websiteUrl')}
-            </div>
+              {errors.websiteUrl && <FieldError>{errors.websiteUrl.message}</FieldError>}
+            </Field>
           </CardContent>
         </Card>
 
         {/* Diretoria Atual */}
         <Card>
           <CardHeader>
-            <CardTitle>Diretoria Atual</CardTitle>
+            <CardTitle className="py-0.75">Diretoria Atual</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="mt-4 space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="currentPresidentName">Nome do Presidente</Label>
+              <Field>
+                <FieldLabel htmlFor="currentPresidentName">Nome do Presidente</FieldLabel>
                 <Controller
                   control={control}
                   name="currentPresidentName"
                   render={({ field }) => <Input {...field} id="currentPresidentName" />}
                 />
-                {renderError('currentPresidentName')}
-              </div>
+                {errors.currentPresidentName && (
+                  <FieldError>{errors.currentPresidentName.message}</FieldError>
+                )}
+              </Field>
 
-              <div>
-                <Label htmlFor="currentPresidentTitle">Título do Presidente</Label>
+              <Field>
+                <FieldLabel htmlFor="currentPresidentTitle">Título do Presidente</FieldLabel>
                 <Controller
                   control={control}
                   name="currentPresidentTitle"
                   render={({ field }) => <Input {...field} id="currentPresidentTitle" />}
                 />
-                {renderError('currentPresidentTitle')}
-              </div>
+                {errors.currentPresidentTitle && (
+                  <FieldError>{errors.currentPresidentTitle.message}</FieldError>
+                )}
+              </Field>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="currentSecretaryName">Nome do Secretário</Label>
+              <Field>
+                <FieldLabel htmlFor="currentSecretaryName">Nome do Secretário</FieldLabel>
                 <Controller
                   control={control}
                   name="currentSecretaryName"
                   render={({ field }) => <Input {...field} id="currentSecretaryName" />}
                 />
-                {renderError('currentSecretaryName')}
-              </div>
+                {errors.currentSecretaryName && (
+                  <FieldError>{errors.currentSecretaryName.message}</FieldError>
+                )}
+              </Field>
 
-              <div>
-                <Label htmlFor="currentSecretaryTitle">Título do Secretário</Label>
+              <Field>
+                <FieldLabel htmlFor="currentSecretaryTitle">Título do Secretário</FieldLabel>
                 <Controller
                   control={control}
                   name="currentSecretaryTitle"
                   render={({ field }) => <Input {...field} id="currentSecretaryTitle" />}
                 />
-                {renderError('currentSecretaryTitle')}
-              </div>
+                {errors.currentSecretaryTitle && (
+                  <FieldError>{errors.currentSecretaryTitle.message}</FieldError>
+                )}
+              </Field>
             </div>
           </CardContent>
         </Card>
 
-        <Button type="submit" disabled={updateMutation.isPending} className="w-full">
-          {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
-        </Button>
+        <div className="flex justify-end pt-2">
+          <Button
+            type="submit"
+            disabled={updateMutation.isPending}
+            className="w-full sm:w-auto sm:min-w-32">
+            {updateMutation.isPending ? 'Salvando...' : 'Salvar'}
+          </Button>
+        </div>
       </form>
 
       {/* Finance settings — separate endpoint/permission-shared surface, own action */}
       <FinanceSettingsCard />
-    </div>
+    </PageContainer>
   );
 }

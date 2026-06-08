@@ -2,14 +2,14 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError, rateLimitMessage } from '@/lib/api';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
-import type { FundStatusValue } from '@sistema-ibanje/shared';
+import type { CampaignStatusValue } from '@sistema-ibanje/shared';
 import type { DeletedFilter } from '@/lib/status';
-import type { DesignatedFundResponse, DesignatedFundFormValues } from './schema';
+import type { CampaignResponse, CampaignFormValues } from './schema';
 
-const BASE = '/designated-funds';
-const KEY = ['designated-funds'] as const;
+const BASE = '/campaigns';
+const KEY = ['campaigns'] as const;
 
-export function useDesignatedFunds({
+export function useCampaigns({
   page,
   limit,
   status,
@@ -17,10 +17,10 @@ export function useDesignatedFunds({
 }: {
   page?: number;
   limit?: number;
-  status?: FundStatusValue;
+  status?: CampaignStatusValue;
   deleted?: DeletedFilter;
 } = {}) {
-  return useResourceList<DesignatedFundResponse>(BASE, KEY, {
+  return useResourceList<CampaignResponse>(BASE, KEY, {
     page: page ?? 1,
     limit: limit ?? 20,
     ...(status && { status }),
@@ -28,16 +28,16 @@ export function useDesignatedFunds({
   });
 }
 
-export function useDesignatedFundMutations() {
+export function useCampaignMutations() {
   const base = useResourceMutations<
-    DesignatedFundResponse,
-    DesignatedFundFormValues,
-    Partial<DesignatedFundFormValues>
+    CampaignResponse,
+    CampaignFormValues,
+    Partial<CampaignFormValues>
   >(BASE, KEY, {
-    created: 'Fundo criado.',
-    updated: 'Fundo atualizado.',
-    removed: 'Fundo removido.',
-    restored: 'Fundo restaurado.'
+    created: 'Campanha criada.',
+    updated: 'Campanha atualizada.',
+    removed: 'Campanha removida.',
+    restored: 'Campanha restaurada.'
   });
 
   const qc = useQueryClient();
@@ -51,9 +51,9 @@ export function useDesignatedFundMutations() {
   };
 
   // Campaign lifecycle — distinct from delete/restore. `encerrar` closes a finished campaign;
-  // `reabrir` reopens it. Both flip `fundStatus` (ativa ↔ encerrada).
+  // `reabrir` reopens it. Both flip `campaignStatus` (ativa ↔ encerrada).
   const encerrar = useMutation({
-    mutationFn: (id: number) => api.patch<DesignatedFundResponse>(`${BASE}/${id}/encerrar`),
+    mutationFn: (id: number) => api.patch<CampaignResponse>(`${BASE}/${id}/encerrar`),
     onSuccess: () => {
       invalidate();
       toast.success('Campanha encerrada.');
@@ -62,7 +62,7 @@ export function useDesignatedFundMutations() {
   });
 
   const reabrir = useMutation({
-    mutationFn: (id: number) => api.patch<DesignatedFundResponse>(`${BASE}/${id}/reabrir`),
+    mutationFn: (id: number) => api.patch<CampaignResponse>(`${BASE}/${id}/reabrir`),
     onSuccess: () => {
       invalidate();
       toast.success('Campanha reaberta.');

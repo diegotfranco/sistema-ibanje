@@ -31,7 +31,7 @@ const mockAttenders = [
   { id: 2, name: 'Maria Santos', status: 'ativo' }
 ];
 
-const mockFunds = [
+const mockCampaigns = [
   { id: 1, name: 'Reforma do Templo', status: 'ativa', description: 'Campanha de reforma' }
 ];
 
@@ -65,7 +65,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -87,7 +87,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -104,7 +104,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -122,7 +122,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -139,7 +139,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -156,7 +156,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', []),
       listHandler('/payment-methods', []),
-      listHandler('/designated-funds', []),
+      listHandler('/campaigns', []),
       listHandler('/events', []),
       listHandler('/attenders', []),
       ...referenceHandlers()
@@ -177,7 +177,7 @@ describe('IncomeEntryFields', () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()
@@ -191,11 +191,11 @@ describe('IncomeEntryFields', () => {
     expect(notes).toBeInTheDocument();
   });
 
-  it('displays designated funds and events in link picker', async () => {
+  it('displays campaigns and events in link picker', async () => {
     server.use(
       listHandler('/income-categories', mockCategories),
       listHandler('/payment-methods', mockPaymentMethods),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockCampaigns),
       listHandler('/events', mockEvents),
       listHandler('/attenders', mockAttenders),
       ...referenceHandlers()

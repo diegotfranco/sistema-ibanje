@@ -54,7 +54,7 @@ describe('production bootstrap (clean slate)', () => {
       expect(await count('payment_methods')).toBe(SEED_PAYMENT_METHODS.length);
       expect(await count('income_categories')).toBeGreaterThan(0);
       expect(await count('expense_categories')).toBeGreaterThan(0);
-      expect(await count('designated_funds')).toBeGreaterThan(0);
+      expect(await count('campaigns')).toBeGreaterThan(0);
       expect(await count('minute_templates')).toBeGreaterThan(0);
     });
 

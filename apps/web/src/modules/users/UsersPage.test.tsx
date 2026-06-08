@@ -77,4 +77,22 @@ describe('UsersPage', () => {
     expect(screen.getByText('Administrador')).toBeInTheDocument();
     expect(screen.getByText('secretary@email.com')).toBeInTheDocument();
   });
+
+  it('renders the server-side search box', async () => {
+    server.use(listHandler('/users', rows), ...referenceHandlers());
+
+    renderWithProviders(<UsersPage />);
+    await screen.findByText('Admin User');
+
+    expect(screen.getByPlaceholderText('Buscar usuário…')).toBeInTheDocument();
+  });
+
+  it('renders the status column filter', async () => {
+    server.use(listHandler('/users', rows), ...referenceHandlers());
+
+    renderWithProviders(<UsersPage />);
+    await screen.findByText('Admin User');
+
+    expect(screen.getByRole('button', { name: 'Filtrar' })).toBeInTheDocument();
+  });
 });

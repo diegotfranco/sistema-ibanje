@@ -34,7 +34,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
       categoryId: initialValues?.categoryId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
-      designatedFundId: initialValues?.designatedFundId ?? undefined,
+      campaignId: initialValues?.campaignId ?? undefined,
       eventId: initialValues?.eventId ?? undefined,
       notes: initialValues?.notes ?? '',
       status: (initialValues?.status as IncomeEntryFormValues['status']) ?? EntryStatus.Paid

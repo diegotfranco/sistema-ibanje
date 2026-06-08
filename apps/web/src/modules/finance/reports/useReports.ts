@@ -7,8 +7,8 @@ import type {
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
   AttendersReportResponse,
-  FundListResponse,
-  FundDetailResponse,
+  CampaignListResponse,
+  CampaignDetailResponse,
   EventListResponse
 } from './schema';
 
@@ -97,19 +97,20 @@ export function useAttendersReport(month: string) {
   });
 }
 
-export function useFundsReport(month?: string) {
+export function useCampaignsReport(month?: string) {
   return useQuery({
-    queryKey: ['reports', 'funds', month],
-    queryFn: () => api.get<FundListResponse>(`/reports/funds?${buildParamsOptional(month)}`),
+    queryKey: ['reports', 'campaigns', month],
+    queryFn: () =>
+      api.get<CampaignListResponse>(`/reports/campaigns?${buildParamsOptional(month)}`),
     enabled: true
   });
 }
 
-export function useFundDetail(id: number, month?: string) {
+export function useCampaignDetail(id: number, month?: string) {
   return useQuery({
-    queryKey: ['reports', 'fund', id, month],
+    queryKey: ['reports', 'campaign', id, month],
     queryFn: () =>
-      api.get<FundDetailResponse>(`/reports/funds/${id}?${buildParamsOptional(month)}`),
+      api.get<CampaignDetailResponse>(`/reports/campaigns/${id}?${buildParamsOptional(month)}`),
     enabled: id > 0
   });
 }

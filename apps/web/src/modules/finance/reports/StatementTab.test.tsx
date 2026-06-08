@@ -31,7 +31,7 @@ const sampleStatement: FinancialStatementResponse = {
       total: '1000.00'
     }
   ],
-  incomeByFund: [],
+  incomeByCampaign: [],
   expensesByCategory: [
     {
       parentCategoryId: 1,
@@ -87,8 +87,8 @@ const sampleDetailedStatement: DetailedFinancialStatementResponse = {
       categoryName: 'Dízimo',
       parentCategoryId: 1,
       parentCategoryName: 'Contribuições',
-      fundId: null,
-      fundName: null,
+      campaignId: null,
+      campaignName: null,
       attenderId: 1,
       attenderName: 'João Silva',
       paymentMethodName: 'PIX',
@@ -104,8 +104,8 @@ const sampleDetailedStatement: DetailedFinancialStatementResponse = {
       categoryName: 'Aluguel',
       parentCategoryId: 1,
       parentCategoryName: 'Despesas Operacionais',
-      fundId: null,
-      fundName: null,
+      campaignId: null,
+      campaignName: null,
       attenderId: null,
       attenderName: null,
       paymentMethodName: 'Transferência',

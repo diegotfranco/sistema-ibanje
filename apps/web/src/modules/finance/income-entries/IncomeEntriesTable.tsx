@@ -85,9 +85,9 @@ export function IncomeEntriesTable({
       meta: { hideBelow: 'md', className: 'max-w-64' }
     },
     {
-      id: 'designatedFund',
+      id: 'campaign',
       header: 'Campanha',
-      cell: (info) => info.row.original.designatedFundName ?? '—',
+      cell: (info) => info.row.original.campaignName ?? '—',
       meta: { hideBelow: 'xl' }
     },
     {
@@ -160,9 +160,7 @@ export function IncomeEntriesTable({
         onOpenChange={(open) => !open && setDetail(null)}
         title="Detalhes do lançamento"
         fields={
-          detail
-            ? buildIncomeLineItemFields({ ...detail, fundName: detail.designatedFundName })
-            : []
+          detail ? buildIncomeLineItemFields({ ...detail, campaignName: detail.campaignName }) : []
         }
         actions={
           detail ? (

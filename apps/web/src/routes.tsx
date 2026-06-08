@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react';
-import type { LucideIcon } from 'lucide-react';
+import { Settings, type LucideIcon } from 'lucide-react';
 import type { Module, Action } from '@/lib/permissions';
+import { paths } from '@/lib/paths';
+import SettingsHubPage from '@/modules/settings/SettingsHubPage';
 import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
 import { attendersRoutes } from '@/modules/attenders/routes';
@@ -31,6 +33,11 @@ export type AppRoute = {
 const configuracoesSection: AppRoute = {
   layout: 'app',
   label: 'Configurações',
+  // The section header itself is a clickable landing: a card-grid hub of every
+  // settings area (gated per-card by permission). Children stay as direct links.
+  path: paths.settings,
+  element: <SettingsHubPage />,
+  icon: Settings,
   children: [
     ...rolesRouteChildren,
     ...usersRouteChildren,

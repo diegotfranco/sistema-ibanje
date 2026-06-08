@@ -7,45 +7,45 @@ import { Pagination } from '@/components/Pagination';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { Module, Action, hasPermission } from '@/lib/permissions';
-import { FundStatus, type FundStatusValue } from '@sistema-ibanje/shared';
-import { FUND_STATUS_FILTER_OPTIONS, FUND_STATUS_LABELS } from '@/lib/status';
+import { CampaignStatus, type CampaignStatusValue } from '@sistema-ibanje/shared';
+import { CAMPAIGN_STATUS_FILTER_OPTIONS, CAMPAIGN_STATUS_LABELS } from '@/lib/status';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useDesignatedFunds, useDesignatedFundMutations } from './useDesignatedFunds';
-import { DesignatedFundForm } from './DesignatedFundForm';
+import { useCampaigns, useCampaignMutations } from './useCampaigns';
+import { CampaignForm } from './CampaignForm';
 import { formatDate, makeSubmitHandler } from '../entries-utils';
-import type { DesignatedFundResponse } from './schema';
+import type { CampaignResponse } from './schema';
 
-export default function DesignatedFundsPage() {
+export default function CampaignsPage() {
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
-  const canCreate = hasPermission(perms, Module.DesignatedFunds, Action.Create);
-  const canEdit = hasPermission(perms, Module.DesignatedFunds, Action.Update);
-  const canDelete = hasPermission(perms, Module.DesignatedFunds, Action.Delete);
+  const canCreate = hasPermission(perms, Module.Campaigns, Action.Create);
+  const canEdit = hasPermission(perms, Module.Campaigns, Action.Update);
+  const canDelete = hasPermission(perms, Module.Campaigns, Action.Delete);
 
   const [page, setPage] = useState(1);
-  const [status, setStatus] = useState<FundStatusValue | undefined>(undefined);
+  const [status, setStatus] = useState<CampaignStatusValue | undefined>(undefined);
 
-  const list = useDesignatedFunds({ page, status });
-  const { create, update, remove, encerrar, reabrir } = useDesignatedFundMutations();
+  const list = useCampaigns({ page, status });
+  const { create, update, remove, encerrar, reabrir } = useCampaignMutations();
 
-  const [editing, setEditing] = useState<DesignatedFundResponse | null | 'new'>(null);
-  const [deleting, setDeleting] = useState<DesignatedFundResponse | null>(null);
+  const [editing, setEditing] = useState<CampaignResponse | null | 'new'>(null);
+  const [deleting, setDeleting] = useState<CampaignResponse | null>(null);
   const handleSubmit = makeSubmitHandler(editing, setEditing, create, update);
 
   // Campaign lifecycle — distinct from delete. Encerrar closes a running campaign; Reabrir
   // reopens a closed one. Gated by Update; each is shown only in the relevant state.
-  const lifecycleActions: CustomAction<DesignatedFundResponse>[] = canEdit
+  const lifecycleActions: CustomAction<CampaignResponse>[] = canEdit
     ? [
         {
           label: 'Encerrar',
           icon: <Archive size={16} />,
-          hidden: (row) => row.status !== FundStatus.Active,
+          hidden: (row) => row.status !== CampaignStatus.Active,
           onClick: (row) => encerrar.mutate(row.id)
         },
         {
           label: 'Reabrir',
           icon: <RotateCcw size={16} />,
-          hidden: (row) => row.status !== FundStatus.Ended,
+          hidden: (row) => row.status !== CampaignStatus.Ended,
           onClick: (row) => reabrir.mutate(row.id)
         }
       ]
@@ -61,7 +61,7 @@ export default function DesignatedFundsPage() {
   return (
     <>
       <PageContainer>
-        <ResourceListPage<DesignatedFundResponse>
+        <ResourceListPage<CampaignResponse>
           title="Campanhas"
           columns={[
             {
@@ -78,7 +78,7 @@ export default function DesignatedFundsPage() {
               id: 'status',
               header: 'Status',
               cell: (row) => <StatusBadge status={row.status} />,
-              filter: { options: FUND_STATUS_FILTER_OPTIONS }
+              filter: { options: CAMPAIGN_STATUS_FILTER_OPTIONS }
             },
             {
               header: 'Meta',
@@ -129,7 +129,7 @@ export default function DesignatedFundsPage() {
             { label: 'Nome', value: row.name },
             {
               label: 'Status',
-              value: FUND_STATUS_LABELS[row.status as FundStatusValue] ?? row.status ?? '—',
+              value: CAMPAIGN_STATUS_LABELS[row.status as CampaignStatusValue] ?? row.status ?? '—',
               hideEmpty: false
             },
             {
@@ -144,10 +144,10 @@ export default function DesignatedFundsPage() {
             { label: 'Encerra em', value: formatDate(row.targetDate) }
           ]}
           columnToggle={true}
-          tableId="designated-funds"
+          tableId="campaigns"
           filters={{ status }}
           onFilterChange={(_, v) => {
-            setStatus(v as FundStatusValue | undefined);
+            setStatus(v as CampaignStatusValue | undefined);
             setPage(1);
           }}
           pagination={paginationUI}
@@ -157,10 +157,10 @@ export default function DesignatedFundsPage() {
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editing === 'new' ? 'Novo fundo' : 'Editar fundo'}</DialogTitle>
+            <DialogTitle>{editing === 'new' ? 'Nova campanha' : 'Editar campanha'}</DialogTitle>
           </DialogHeader>
           {editing !== null && (
-            <DesignatedFundForm
+            <CampaignForm
               initialValues={editing === 'new' ? undefined : editing}
               isPending={create.isPending || update.isPending}
               onSubmit={handleSubmit}

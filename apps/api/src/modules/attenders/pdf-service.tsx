@@ -57,10 +57,10 @@ function formatMonthBR(yyyymm: number): string {
 
 function groupLabel(
   categoryName: string,
-  fundName: string | null,
+  campaignName: string | null,
   eventName: string | null
 ): string {
-  const suffix = fundName ?? eventName;
+  const suffix = campaignName ?? eventName;
   return suffix ? `${categoryName} (${suffix})` : categoryName;
 }
 
@@ -106,7 +106,7 @@ function YearDonationsPdf({
               m.groups.map((g, i) => (
                 <View key={i} style={tw('flex-row justify-between py-0.5 pl-4')}>
                   <Text style={tw('text-xs text-gray-700')}>
-                    {groupLabel(g.categoryName, g.fundName, g.eventName)}
+                    {groupLabel(g.categoryName, g.campaignName, g.eventName)}
                   </Text>
                   <Text style={tw('text-xs text-gray-700')}>{formatBRL(g.total)}</Text>
                 </View>
@@ -160,7 +160,7 @@ function MonthDonationsPdf({
                   {formatDateBR(e.depositDate)}
                 </Text>
                 <Text style={tw('text-xs text-gray-800 flex-1')}>
-                  {groupLabel(e.categoryName, e.fundName, e.eventName)}
+                  {groupLabel(e.categoryName, e.campaignName, e.eventName)}
                   <Text style={tw('text-gray-400')}> · {e.paymentMethodName}</Text>
                 </Text>
               </View>

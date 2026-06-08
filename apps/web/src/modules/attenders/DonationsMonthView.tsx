@@ -11,10 +11,10 @@ function formatBRL(value: string): string {
 
 function entryLabel(
   categoryName: string,
-  fundName: string | null,
+  campaignName: string | null,
   eventName: string | null
 ): string {
-  const suffix = fundName ?? eventName;
+  const suffix = campaignName ?? eventName;
   return suffix ? `${categoryName} (${suffix})` : categoryName;
 }
 
@@ -41,7 +41,7 @@ export default function DonationsMonthView({ data, isLoading }: Props) {
           <li key={e.id} className="flex items-start justify-between gap-3 py-2 px-1">
             <div className="min-w-0">
               <div className="text-sm font-medium truncate">
-                {entryLabel(e.categoryName, e.fundName, e.eventName)}
+                {entryLabel(e.categoryName, e.campaignName, e.eventName)}
               </div>
               <div className="text-xs text-muted-foreground">
                 {formatDate(e.depositDate)} · {e.paymentMethodName}

@@ -6,22 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import DateInput from '@/components/DateInput';
 import { zodResolver } from '@/lib/zodResolver';
-import {
-  DesignatedFundFormSchema,
-  type DesignatedFundFormValues,
-  type DesignatedFundResponse
-} from './schema';
+import { CampaignFormSchema, type CampaignFormValues, type CampaignResponse } from './schema';
 
 interface Props {
-  initialValues?: DesignatedFundResponse;
+  initialValues?: CampaignResponse;
   isPending: boolean;
-  onSubmit: (values: DesignatedFundFormValues) => void;
+  onSubmit: (values: CampaignFormValues) => void;
   onCancel: () => void;
 }
 
-export function DesignatedFundForm({ initialValues, isPending, onSubmit, onCancel }: Props) {
-  const form = useForm<DesignatedFundFormValues>({
-    resolver: zodResolver(DesignatedFundFormSchema),
+export function CampaignForm({ initialValues, isPending, onSubmit, onCancel }: Props) {
+  const form = useForm<CampaignFormValues>({
+    resolver: zodResolver(CampaignFormSchema),
     defaultValues: {
       name: initialValues?.name ?? '',
       description: initialValues?.description ?? '',
@@ -30,14 +26,14 @@ export function DesignatedFundForm({ initialValues, isPending, onSubmit, onCance
     }
   });
 
-  const handleSubmit = (values: DesignatedFundFormValues) => {
+  const handleSubmit = (values: CampaignFormValues) => {
     const transformed = {
       ...values,
       description: values.description || undefined,
       targetAmount: values.targetAmount || undefined,
       targetDate: values.targetDate || null
     };
-    onSubmit(transformed as DesignatedFundFormValues);
+    onSubmit(transformed as CampaignFormValues);
   };
 
   return (

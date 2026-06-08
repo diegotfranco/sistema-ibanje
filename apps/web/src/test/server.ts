@@ -67,7 +67,7 @@ export function referenceHandlers() {
     listHandler('/income-categories'),
     listHandler('/expense-categories'),
     listHandler('/payment-methods'),
-    listHandler('/designated-funds'),
+    listHandler('/campaigns'),
     listHandler('/attenders'),
     listHandler('/events'),
     listHandler('/income-entries'),

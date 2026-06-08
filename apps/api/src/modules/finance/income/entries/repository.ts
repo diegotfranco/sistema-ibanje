@@ -6,7 +6,7 @@ import {
   incomeCategories,
   attenders,
   paymentMethods,
-  designatedFunds,
+  campaigns,
   events
 } from '../../../../db/schema.js';
 
@@ -26,8 +26,8 @@ const selectFields = {
   attenderName: attenders.name,
   paymentMethodId: incomeEntries.paymentMethodId,
   paymentMethodName: paymentMethods.name,
-  designatedFundId: incomeEntries.designatedFundId,
-  designatedFundName: designatedFunds.name,
+  campaignId: incomeEntries.campaignId,
+  campaignName: campaigns.name,
   eventId: incomeEntries.eventId,
   eventName: events.title,
   notes: incomeEntries.notes,
@@ -45,7 +45,7 @@ function baseQuery() {
     .leftJoin(parentIncomeCategories, eq(parentIncomeCategories.id, incomeCategories.parentId))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .leftJoin(events, eq(incomeEntries.eventId, events.id));
 }
 
@@ -68,7 +68,7 @@ const donationMonthKey = sql<string>`(${donationPeriod} / 100)::text || '-' || l
 const donationYearKey = sql<string>`(${donationPeriod} / 100)::text`;
 
 // Confirmed-only ('paga') donations for one attender in a given year, aggregated in SQL
-// per (month, leaf category, fund, event). Totals stay exact numeric — never summed as
+// per (month, leaf category, campaign, event). Totals stay exact numeric — never summed as
 // JS floats — matching how the reports module aggregates money. Grouping is by the
 // leaf category (`income_categories.name`), not the parent: a printable giving
 // statement should show what was actually given (Dízimo, Oferta, Doação) rather
@@ -78,13 +78,13 @@ export async function aggregateConfirmedDonationsByAttender(attenderId: number, 
     .select({
       month: donationMonthKey,
       categoryName: incomeCategories.name,
-      fundName: designatedFunds.name,
+      campaignName: campaigns.name,
       eventName: events.title,
       total: sum(incomeEntries.amount)
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .leftJoin(events, eq(incomeEntries.eventId, events.id))
     .where(
       and(
@@ -93,7 +93,7 @@ export async function aggregateConfirmedDonationsByAttender(attenderId: number, 
         eq(donationYearKey, String(year))
       )
     )
-    .groupBy(donationMonthKey, incomeCategories.name, designatedFunds.name, events.title)
+    .groupBy(donationMonthKey, incomeCategories.name, campaigns.name, events.title)
     .orderBy(donationMonthKey, incomeCategories.name);
 }
 
@@ -121,7 +121,7 @@ export async function listConfirmedDonationEntriesByAttenderMonth(
       id: incomeEntries.id,
       depositDate: incomeEntries.depositDate,
       categoryName: incomeCategories.name,
-      fundName: designatedFunds.name,
+      campaignName: campaigns.name,
       eventName: events.title,
       paymentMethodName: paymentMethods.name,
       amount: incomeEntries.amount
@@ -129,7 +129,7 @@ export async function listConfirmedDonationEntriesByAttenderMonth(
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .leftJoin(events, eq(incomeEntries.eventId, events.id))
     .where(
       and(
@@ -155,7 +155,7 @@ export async function insertIncomeEntry(data: {
   categoryId: number;
   attenderId?: number;
   paymentMethodId: number;
-  designatedFundId?: number;
+  campaignId?: number;
   eventId?: number;
   notes?: string;
   userId: number;
@@ -186,7 +186,7 @@ export async function updateIncomeEntry(
       | 'categoryId'
       | 'attenderId'
       | 'paymentMethodId'
-      | 'designatedFundId'
+      | 'campaignId'
       | 'eventId'
       | 'notes'
       | 'status'

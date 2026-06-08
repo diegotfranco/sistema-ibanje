@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import DashboardPage from './DashboardPage';
 import { renderWithProviders } from '@/test/renderWithProviders';
 import { setupTestServer, meHandler, referenceHandlers, API } from '@/test/server';
+import { Module } from '@sistema-ibanje/shared';
+
+const EMPTY_STATE = 'Nenhuma informação disponível para o seu perfil.';
 
 const server = setupTestServer();
 
@@ -27,7 +30,9 @@ const dashboardData = {
       { month: '202406', income: '8500.00', expense: '2000.00' }
     ]
   },
-  funds: [{ fundId: 1, fundName: 'Reforma', totalRaised: '5000.00', targetAmount: '20000.00' }],
+  campaigns: [
+    { campaignId: 1, campaignName: 'Reforma', totalRaised: '5000.00', targetAmount: '20000.00' }
+  ],
   events: {
     recent: [
       { eventId: 1, eventTitle: 'Café Social', totalRaised: '500.00', totalSpent: '200.00' }
@@ -85,7 +90,7 @@ describe('DashboardPage', () => {
     const minimalData = {
       ...dashboardData,
       trends: { monthly: [] },
-      funds: [],
+      campaigns: [],
       events: {
         recent: [],
         summary: { count: 0, totalRaised: '0', totalSpent: '0', totalNet: '0' }
@@ -151,5 +156,33 @@ describe('DashboardPage', () => {
 
     const { container } = renderWithProviders(<DashboardPage />);
     expect(container).toBeTruthy();
+  });
+
+  // RBAC gating: a user with Painel (Dashboard View) but no finance/closing/calendar read
+  // permissions sees the empty state and none of the gated sections.
+  it('shows the empty state for a user with only Dashboard access', async () => {
+    server.use(
+      meHandler({ permissions: { [Module.Dashboard]: 0b1 } }),
+      http.get(`${API}/dashboard`, () => HttpResponse.json(dashboardData)),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<DashboardPage />);
+
+    // Wait out the async /auth/me load (RequirePermission shows "Sem permissão" until it resolves).
+    expect(await screen.findByText(EMPTY_STATE)).toBeInTheDocument();
+  });
+
+  it('renders the sections (no empty state) for a full-permission user', async () => {
+    server.use(
+      http.get(`${API}/dashboard`, () => HttpResponse.json(dashboardData)),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<DashboardPage />);
+
+    // Once /auth/me resolves with full perms, the gate passes and no empty state is rendered.
+    await waitFor(() => expect(screen.queryByText('Sem permissão')).not.toBeInTheDocument());
+    expect(screen.queryByText(EMPTY_STATE)).not.toBeInTheDocument();
   });
 });

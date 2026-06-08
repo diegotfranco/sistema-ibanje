@@ -63,15 +63,15 @@ export async function attendersReport(req: FastifyRequest, reply: FastifyReply) 
   return reply.send(await service.getAttendersReport(req.session.userId!, month));
 }
 
-export async function fundList(req: FastifyRequest, reply: FastifyReply) {
+export async function campaignList(req: FastifyRequest, reply: FastifyReply) {
   const { month } = req.query as OptionalMonthQuery;
-  return reply.send(await service.getFundList(req.session.userId!, month));
+  return reply.send(await service.getCampaignList(req.session.userId!, month));
 }
 
-export async function fundDetail(req: FastifyRequest, reply: FastifyReply) {
+export async function campaignDetail(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const { month } = req.query as OptionalMonthQuery;
-  return reply.send(await service.getFundDetail(req.session.userId!, id, month));
+  return reply.send(await service.getCampaignDetail(req.session.userId!, id, month));
 }
 
 export async function eventList(req: FastifyRequest, reply: FastifyReply) {

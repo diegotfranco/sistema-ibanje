@@ -64,9 +64,9 @@ const ClosingSchema = z.object({
   oldestPendingId: z.number().int().positive().nullable()
 });
 
-const FundSummarySchema = z.object({
-  fundId: z.number().int().positive(),
-  fundName: z.string(),
+const CampaignSummarySchema = z.object({
+  campaignId: z.number().int().positive(),
+  campaignName: z.string(),
   targetAmount: z.string().nullable(),
   totalRaised: z.string(),
   totalExpenses: z.string(),
@@ -96,12 +96,15 @@ const EventsSchema = z.object({
 
 export const DashboardResponseSchema = z.object({
   month: z.string(),
-  finance: FinanceKpisSchema,
-  participation: ParticipationSchema,
-  trends: TrendsSchema,
-  closing: ClosingSchema,
-  funds: z.array(FundSummarySchema),
-  events: EventsSchema
+  // Finance sections are null when the caller lacks Module.Reports/Action.Report; the closing
+  // section is null when they lack Module.MonthlyClosings/Action.View. The service skips the
+  // underlying queries in those cases, so this isn't just a presentation filter.
+  finance: FinanceKpisSchema.nullable(),
+  participation: ParticipationSchema.nullable(),
+  trends: TrendsSchema.nullable(),
+  closing: ClosingSchema.nullable(),
+  campaigns: z.array(CampaignSummarySchema).nullable(),
+  events: EventsSchema.nullable()
 });
 
 export type DashboardResponse = z.infer<typeof DashboardResponseSchema>;
@@ -112,6 +115,6 @@ export type Participation = z.infer<typeof ParticipationSchema>;
 export type MonthlyTrend = z.infer<typeof MonthlyTrendSchema>;
 export type Trends = z.infer<typeof TrendsSchema>;
 export type Closing = z.infer<typeof ClosingSchema>;
-export type FundSummary = z.infer<typeof FundSummarySchema>;
+export type CampaignSummary = z.infer<typeof CampaignSummarySchema>;
 export type EventSummary = z.infer<typeof EventSummarySchema>;
 export type Events = z.infer<typeof EventsSchema>;

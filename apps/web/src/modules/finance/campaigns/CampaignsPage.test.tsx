@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 
-import DesignatedFundsPage from './DesignatedFundsPage';
+import CampaignsPage from './CampaignsPage';
 import { renderWithProviders } from '@/test/renderWithProviders';
 import { setupTestServer, referenceHandlers, listHandler, meHandler } from '@/test/server';
 
@@ -30,21 +30,21 @@ const mockFunds = [
   }
 ];
 
-describe('DesignatedFundsPage', () => {
+describe('CampaignsPage', () => {
   it('renders page title', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();
     });
   });
 
-  it('displays designated funds with names', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+  it('displays campaigns with names', async () => {
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
@@ -53,9 +53,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('shows create button when user has create permission', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();
@@ -65,11 +65,11 @@ describe('DesignatedFundsPage', () => {
   it('hides create button when user lacks create permission', async () => {
     server.use(
       meHandler({ permissions: {} }),
-      listHandler('/designated-funds', mockFunds),
+      listHandler('/campaigns', mockFunds),
       ...referenceHandlers()
     );
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();
@@ -77,9 +77,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('displays empty state when no funds exist', async () => {
-    server.use(listHandler('/designated-funds', []), ...referenceHandlers());
+    server.use(listHandler('/campaigns', []), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();
@@ -87,9 +87,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('displays status badges for funds', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       const badges = screen.getAllByText(/ativa/i);
@@ -98,9 +98,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('displays descriptions', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Renovação da estrutura')).toBeInTheDocument();
@@ -108,9 +108,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('displays target amounts', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       const amounts = screen.queryAllByText(/10000|5000/);
@@ -119,9 +119,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('renders table structure', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();
@@ -129,9 +129,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('displays multiple funds', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Reforma do Templo')).toBeInTheDocument();
@@ -139,9 +139,9 @@ describe('DesignatedFundsPage', () => {
   });
 
   it('handles loading state', async () => {
-    server.use(listHandler('/designated-funds', mockFunds), ...referenceHandlers());
+    server.use(listHandler('/campaigns', mockFunds), ...referenceHandlers());
 
-    renderWithProviders(<DesignatedFundsPage />);
+    renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Campanhas')).toBeInTheDocument();

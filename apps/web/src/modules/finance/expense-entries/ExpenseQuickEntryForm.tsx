@@ -34,7 +34,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
       totalInstallments: 1,
       categoryId: undefined,
       paymentMethodId: undefined,
-      designatedFundId: undefined,
+      campaignId: undefined,
       eventId: undefined,
       attenderId: undefined,
       notes: '',
@@ -57,9 +57,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
       categoryId: values.categoryId!,
       paymentMethodId: values.paymentMethodId!,
       status: values.status,
-      ...(values.designatedFundId !== undefined
-        ? { designatedFundId: values.designatedFundId }
-        : {}),
+      ...(values.campaignId !== undefined ? { campaignId: values.campaignId } : {}),
       ...(values.eventId !== undefined ? { eventId: values.eventId } : {}),
       ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
@@ -85,7 +83,7 @@ export function ExpenseQuickEntryForm({ onCreated }: Props) {
           totalInstallments: 1,
           categoryId: undefined,
           paymentMethodId: undefined,
-          designatedFundId: undefined,
+          campaignId: undefined,
           attenderId: undefined,
           notes: '',
           status: EntryStatus.Paid

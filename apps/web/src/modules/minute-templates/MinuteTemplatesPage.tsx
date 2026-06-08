@@ -1,15 +1,6 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { PageContainer } from '@/components/PageContainer';
+import { ResourceListPage } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { Badge } from '@/components/ui/badge';
 import { MeetingType } from '@sistema-ibanje/shared';
@@ -37,14 +28,14 @@ export default function MinuteTemplatesPage() {
 
   const list = useMinuteTemplates();
   const createTemplate = useCreateMinuteTemplate();
-  const updateTemplate = useUpdateMinuteTemplate(0);
   const deleteTemplate = useDeleteMinuteTemplate();
 
   const [formOpen, setFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MinuteTemplateResponse | null>(null);
   const [editTarget, setEditTarget] = useState<MinuteTemplateResponse | null>(null);
 
-  const items = list.data ?? [];
+  const mutationId = editTarget?.id || 0;
+  const updateMutation = useUpdateMinuteTemplate(mutationId);
 
   function handleCreate(values: MinuteTemplateFormValues) {
     createTemplate.mutate(values, { onSuccess: () => setFormOpen(false) });
@@ -52,7 +43,7 @@ export default function MinuteTemplatesPage() {
 
   function handleUpdate(values: MinuteTemplateFormValues) {
     if (!editTarget) return;
-    updateTemplate.mutate(values, {
+    updateMutation.mutate(values, {
       onSuccess: () => {
         setFormOpen(false);
         setEditTarget(null);
@@ -65,90 +56,57 @@ export default function MinuteTemplatesPage() {
     setFormOpen(true);
   }
 
-  const mutationId = editTarget?.id || 0;
-  const updateMutation = useUpdateMinuteTemplate(mutationId);
-
   return (
     <>
-      <div className="p-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Modelos de Ata</CardTitle>
-            {canCreate && (
-              <Button
-                onClick={() => {
+      <PageContainer>
+        <ResourceListPage<MinuteTemplateResponse>
+          title="Modelos de Ata"
+          columns={[
+            { header: 'Nome', cell: (r) => <span className="font-medium">{r.name}</span> },
+            { header: 'Tipo de Reunião', cell: (r) => meetingTypeLabel(r.meetingType) },
+            {
+              header: 'Padrão',
+              cell: (r) => (r.isDefault ? <Badge variant="soft">Padrão</Badge> : null)
+            },
+            { header: 'Itens de Pauta', cell: (r) => r.defaultAgendaItems.length, hideBelow: 'md' }
+          ]}
+          data={list.data}
+          isLoading={list.isLoading}
+          emptyMessage="Nenhum modelo encontrado."
+          onCreate={
+            canCreate
+              ? () => {
                   setEditTarget(null);
                   setFormOpen(true);
-                }}
-                size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Modelo
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Tipo de Reunião</TableHead>
-                  <TableHead>Padrão</TableHead>
-                  <TableHead>Itens de Pauta</TableHead>
-                  <TableHead className="w-32 text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!list.isLoading && items.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      Nenhum modelo encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {items.map((row) => (
-                  <TableRow key={row.id}>
-                    <TableCell className="font-medium">{row.name}</TableCell>
-                    <TableCell>{meetingTypeLabel(row.meetingType)}</TableCell>
-                    <TableCell>{row.isDefault && <Badge variant="soft">Padrão</Badge>}</TableCell>
-                    <TableCell>{row.defaultAgendaItems.length}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        {canUpdate && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleOpenEdit(row)}
-                            aria-label={`Editar modelo ${row.name}`}
-                            className="text-warning hover:text-warning/80">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {canDelete && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            aria-label={`Remover modelo ${row.name}`}
-                            className="text-destructive hover:text-destructive/80"
-                            onClick={() => setDeleteTarget(row)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+                }
+              : undefined
+          }
+          onEdit={canUpdate ? handleOpenEdit : undefined}
+          onDelete={canDelete ? (r) => setDeleteTarget(r) : undefined}
+          canCreate={canCreate}
+          canEdit={canUpdate}
+          canDelete={canDelete}
+          rowKey={(r) => r.id}
+          mobileRow={(r) => (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{r.name}</span>
+                <span className="truncate text-sm text-muted-foreground">
+                  {meetingTypeLabel(r.meetingType)}
+                </span>
+              </div>
+              {r.isDefault && <Badge variant="soft">Padrão</Badge>}
+            </div>
+          )}
+          mobileDetailTitle={(r) => r.name}
+          mobileDetailFields={(r) => [
+            { label: 'Nome', value: r.name },
+            { label: 'Tipo de Reunião', value: meetingTypeLabel(r.meetingType) },
+            { label: 'Padrão', value: r.isDefault ? 'Sim' : '—' },
+            { label: 'Itens de Pauta', value: r.defaultAgendaItems.length }
+          ]}
+        />
+      </PageContainer>
 
       <MinuteTemplateForm
         open={formOpen}

@@ -58,7 +58,7 @@ describe('MinuteTemplatesPage', () => {
     renderWithProviders(<MinuteTemplatesPage />);
     await screen.findByText('Assembleia Ordinária');
 
-    await userEvent.click(screen.getByRole('button', { name: /novo modelo/i }));
+    await userEvent.click(screen.getByRole('button', { name: /novo/i }));
 
     expect(await screen.findByText('Novo Modelo de Ata')).toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe('MinuteTemplatesPage', () => {
     renderWithProviders(<MinuteTemplatesPage />);
     await screen.findByText('Assembleia Ordinária');
 
-    expect(screen.queryByRole('button', { name: /novo modelo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /novo/i })).not.toBeInTheDocument();
   });
 
   it('shows the empty state when there are no templates', async () => {
@@ -138,7 +138,7 @@ describe('MinuteTemplatesPage', () => {
     renderWithProviders(<MinuteTemplatesPage />);
     await screen.findByText('Assembleia Ordinária');
 
-    const editButtons = screen.getAllByRole('button', { name: /editar modelo/i });
+    const editButtons = screen.getAllByRole('button', { name: /editar/i });
     expect(editButtons.length).toBeGreaterThan(0);
   });
 
@@ -167,8 +167,7 @@ describe('MinuteTemplatesPage', () => {
     renderWithProviders(<MinuteTemplatesPage />);
     await screen.findByText('Assembleia Ordinária');
 
-    const allButtons = screen.queryAllByRole('button');
-    const deleteButtons = allButtons.filter((b) => b.className.includes('text-destructive'));
+    const deleteButtons = screen.getAllByRole('button', { name: /remover/i });
     expect(deleteButtons.length).toBeGreaterThan(0);
   });
 
@@ -182,8 +181,7 @@ describe('MinuteTemplatesPage', () => {
     renderWithProviders(<MinuteTemplatesPage />);
     await screen.findByText('Assembleia Ordinária');
 
-    const allButtons = screen.queryAllByRole('button');
-    const deleteButtons = allButtons.filter((b) => b.className.includes('text-destructive'));
+    const deleteButtons = screen.queryAllByRole('button', { name: /remover/i });
     expect(deleteButtons.length).toBe(0);
   });
 

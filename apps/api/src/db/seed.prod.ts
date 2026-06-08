@@ -2,7 +2,7 @@
  * Production seed — runs once on first deploy.
  *
  * Inserts structural data only: roles, permissions, modules, role-module-
- * permissions, payment methods, base designated funds, income/expense
+ * permissions, payment methods, base campaigns, income/expense
  * categories, finance settings, church settings, minute templates.
  *
  * Real data (users, attenders, financial entries, meetings, minutes, monthly
@@ -23,7 +23,7 @@ import {
   modules,
   roleModulePermissions,
   paymentMethods,
-  designatedFunds,
+  campaigns,
   incomeCategories,
   expenseCategories,
   financeSettings,
@@ -38,7 +38,7 @@ import {
   SEED_MODULES,
   EXPECTED_MODULE_ORDER,
   SEED_PAYMENT_METHODS,
-  SEED_DESIGNATED_FUNDS,
+  SEED_CAMPAIGNS,
   SEED_INCOME_CATEGORY_PARENTS,
   buildIncomeCategoryChildren,
   SEED_EXPENSE_CATEGORY_PARENTS,
@@ -75,7 +75,7 @@ export async function seedProd(admin: AdminConfig | undefined = adminConfigFromE
       (SELECT COUNT(*) FROM income_categories) AS income_categories,
       (SELECT COUNT(*) FROM expense_categories) AS expense_categories,
       (SELECT COUNT(*) FROM finance_settings) AS finance_settings,
-      (SELECT COUNT(*) FROM designated_funds) AS designated_funds,
+      (SELECT COUNT(*) FROM campaigns) AS campaigns,
       (SELECT COUNT(*) FROM minute_templates) AS minute_templates`);
     const counts = existing[0] as Record<string, number | string>;
     const nonEmpty = Object.entries(counts).filter(([, v]) => Number(v) > 0);
@@ -121,8 +121,8 @@ export async function seedProd(admin: AdminConfig | undefined = adminConfigFromE
 
     await tx.insert(paymentMethods).values(SEED_PAYMENT_METHODS);
 
-    await tx.insert(designatedFunds).values(
-      SEED_DESIGNATED_FUNDS.map((f) => ({
+    await tx.insert(campaigns).values(
+      SEED_CAMPAIGNS.map((f) => ({
         name: f.name,
         description: f.description ?? null,
         targetAmount: f.targetAmount ?? null

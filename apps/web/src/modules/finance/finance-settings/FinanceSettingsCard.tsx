@@ -1,7 +1,9 @@
 import * as React from 'react';
+import { AlertTriangle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Button } from '@/components/Button';
-import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Field, FieldLabel, FieldDescription } from '@/components/ui/field';
 import MoneyInput from '@/modules/finance/components/MoneyInput';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useFinanceSettings, useUpdateOpeningBalance } from './useFinanceSettings';
@@ -27,42 +29,45 @@ export function FinanceSettingsCard() {
   const readOnly = locked && !isAdmin;
   const dirty = data ? Number(value) !== Number(data.openingBalance) : false;
 
+  // One derived message for the locked state instead of a nested ternary in the JSX.
+  const lockMessage = !locked
+    ? null
+    : readOnly
+      ? 'O saldo inicial está bloqueado porque já existe um fechamento concluído. Apenas um administrador pode alterá-lo.'
+      : 'Já existe um fechamento concluído — alterar o saldo inicial afeta registros já fechados. Edite apenas para corrigir um erro.';
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Saldo inicial</CardTitle>
+        <CardTitle className="py-0.75">Saldo inicial</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="max-w-xs">
-          <Label htmlFor="openingBalance">Saldo inicial (R$)</Label>
+      <CardContent className="mt-4 space-y-4">
+        <Field className="max-w-xs">
+          <FieldLabel htmlFor="openingBalance">Saldo inicial (R$)</FieldLabel>
           <MoneyInput id="openingBalance" value={value} onChange={setValue} disabled={readOnly} />
-        </div>
+        </Field>
 
-        <p className="text-sm text-muted-foreground">
+        <FieldDescription>
           Base do primeiro fechamento mensal — informe o saldo em caixa/banco no início do uso do
           sistema.
-        </p>
+        </FieldDescription>
 
-        {locked ? (
-          readOnly ? (
-            <p className="text-sm text-amber-600">
-              O saldo inicial está bloqueado porque já existe um fechamento concluído. Apenas um
-              administrador pode alterá-lo.
-            </p>
-          ) : (
-            <p className="text-sm text-amber-600">
-              Já existe um fechamento concluído — alterar o saldo inicial afeta registros já
-              fechados. Edite apenas para corrigir um erro.
-            </p>
-          )
-        ) : null}
+        {lockMessage && (
+          <Alert className="border-warning/40 text-warning">
+            <AlertTriangle />
+            <AlertDescription className="text-warning/90">{lockMessage}</AlertDescription>
+          </Alert>
+        )}
 
-        <Button
-          type="button"
-          onClick={() => updateMutation.mutate(value)}
-          disabled={readOnly || !dirty || updateMutation.isPending}>
-          {updateMutation.isPending ? 'Salvando...' : 'Salvar saldo inicial'}
-        </Button>
+        <div className="flex justify-end pt-2">
+          <Button
+            type="button"
+            onClick={() => updateMutation.mutate(value)}
+            disabled={readOnly || !dirty || updateMutation.isPending}
+            className="w-full sm:w-auto sm:min-w-32">
+            {updateMutation.isPending ? 'Salvando...' : 'Salvar saldo inicial'}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
