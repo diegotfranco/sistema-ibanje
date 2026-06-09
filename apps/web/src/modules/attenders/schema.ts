@@ -5,8 +5,13 @@ export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
   userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
-  phone: z.string().max(16, 'Máximo de 16 caracteres').optional().nullable(),
-  email: z.email().optional().nullable(),
+  phone: z
+    .string()
+    .regex(/^\d{10,11}$/, 'Telefone inválido')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+  email: z.email().optional().nullable().or(z.literal('')),
   addressStreet: z.string().max(96).optional().nullable(),
   addressNumber: z.string().max(16).optional().nullable(),
   addressComplement: z.string().max(64).optional().nullable(),
@@ -17,7 +22,8 @@ export const AttenderFormSchema = z.object({
     .string()
     .regex(/^\d{8}$/, 'CEP inválido')
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal('')),
   isMember: z.boolean().optional().default(false),
   // Month-granular fields use the `YYYY-MM` wire format (DB stores them as YYYYMM ints).
   memberSince: z

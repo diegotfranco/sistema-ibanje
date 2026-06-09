@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import { ufField, trimmedString } from '../../lib/normalize.js';
 
 export const ListMembershipLettersRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -12,20 +13,20 @@ export const CreateMembershipLetterRequestSchema = z.object({
   attenderId: z.number().int().positive(),
   type: z.enum(['pedido_de_carta_de_transferência', 'carta_de_transferência']),
   letterDate: z.string().date(),
-  otherChurchName: z.string().min(1).max(128),
-  otherChurchAddress: z.string().max(256).optional(),
-  otherChurchCity: z.string().min(1).max(96),
-  otherChurchState: z.string().length(2).optional(),
-  additionalContext: z.string().optional()
+  otherChurchName: trimmedString(128, 1),
+  otherChurchAddress: trimmedString(256).optional(),
+  otherChurchCity: trimmedString(96, 1),
+  otherChurchState: ufField.optional(),
+  additionalContext: trimmedString().optional()
 });
 
 export const UpdateMembershipLetterRequestSchema = z.object({
   letterDate: z.string().date().optional(),
-  otherChurchName: z.string().min(1).max(128).optional(),
-  otherChurchAddress: z.string().max(256).optional(),
-  otherChurchCity: z.string().min(1).max(96).optional(),
-  otherChurchState: z.string().length(2).optional(),
-  additionalContext: z.string().optional()
+  otherChurchName: trimmedString(128, 1).optional(),
+  otherChurchAddress: trimmedString(256).optional(),
+  otherChurchCity: trimmedString(96, 1).optional(),
+  otherChurchState: ufField.optional(),
+  additionalContext: trimmedString().optional()
 });
 
 export const MembershipLetterResponseSchema = z.object({

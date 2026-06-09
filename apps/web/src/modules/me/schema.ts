@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 export const UpdateMyProfileFormSchema = z.object({
-  phone: z.string().max(16, 'Máximo de 16 caracteres').optional().or(z.literal('')),
+  phone: z
+    .string()
+    .regex(/^\d{10,11}$/, 'Telefone inválido')
+    .optional()
+    .or(z.literal('')),
   email: z.email('E-mail inválido').optional().or(z.literal('')),
   addressStreet: z.string().max(96).optional().or(z.literal('')),
   addressNumber: z.string().max(16, 'Máximo de 16 caracteres').optional().or(z.literal('')),

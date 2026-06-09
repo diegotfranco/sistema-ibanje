@@ -1,5 +1,6 @@
 import { View, Text, Image } from '@react-pdf/renderer';
 import { tw } from './theme.js';
+import { formatCnpj, formatPhone } from '../format.js';
 import type { ChurchPdfData, PdfLogo } from './church.js';
 
 function buildAddressLine(c: ChurchPdfData): string | null {
@@ -14,7 +15,8 @@ function buildAddressLine(c: ChurchPdfData): string | null {
 }
 
 function buildContactLine(c: ChurchPdfData): string | null {
-  const line = [c.phone, c.email, c.websiteUrl].filter(Boolean).join(' · ');
+  const phone = c.phone ? formatPhone(c.phone) : null;
+  const line = [phone, c.email, c.websiteUrl].filter(Boolean).join(' · ');
   return line || null;
 }
 
@@ -37,7 +39,9 @@ export function Letterhead({ church, logo }: { church: ChurchPdfData; logo?: Pdf
         ) : null}
         {contact ? <Text style={tw('text-[8px] font-roboto text-gray-600')}>{contact}</Text> : null}
         {church.cnpj ? (
-          <Text style={tw('text-[8px] font-roboto text-gray-600')}>CNPJ: {church.cnpj}</Text>
+          <Text style={tw('text-[8px] font-roboto text-gray-600')}>
+            CNPJ: {formatCnpj(church.cnpj)}
+          </Text>
         ) : null}
       </View>
     </View>

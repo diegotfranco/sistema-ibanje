@@ -29,21 +29,21 @@ describe('ChurchSettingsFormSchema', () => {
     expect(r.success).toBe(false);
   });
 
-  it('accepts an optional CNPJ up to 18 chars', () => {
+  it('accepts an optional CNPJ of 14 raw digits', () => {
+    // The masked input emits raw digits; the form validates digits, not the formatted string.
     expect(
       ChurchSettingsFormSchema.safeParse({
         ...validBase,
-        cnpj: '12.345.678/0001-90'
+        cnpj: '12345678000190'
       }).success
     ).toBe(true);
   });
 
-  it('rejects a CNPJ longer than 18 chars', () => {
-    const r = ChurchSettingsFormSchema.safeParse({
-      ...validBase,
-      cnpj: 'a'.repeat(19)
-    });
-    expect(r.success).toBe(false);
+  it('rejects a CNPJ that is not 14 digits', () => {
+    expect(
+      ChurchSettingsFormSchema.safeParse({ ...validBase, cnpj: '12.345.678/0001-90' }).success
+    ).toBe(false);
+    expect(ChurchSettingsFormSchema.safeParse({ ...validBase, cnpj: '123' }).success).toBe(false);
   });
 
   it('rejects an empty street', () => {
@@ -150,21 +150,19 @@ describe('ChurchSettingsFormSchema', () => {
     ).toBe(true);
   });
 
-  it('accepts an optional phone up to 20 chars', () => {
-    expect(
-      ChurchSettingsFormSchema.safeParse({
-        ...validBase,
-        phone: '(11) 9999-9999'
-      }).success
-    ).toBe(true);
+  it('accepts an optional phone of 10–11 raw digits', () => {
+    expect(ChurchSettingsFormSchema.safeParse({ ...validBase, phone: '1127414262' }).success).toBe(
+      true
+    );
+    expect(ChurchSettingsFormSchema.safeParse({ ...validBase, phone: '11999998888' }).success).toBe(
+      true
+    );
   });
 
-  it('rejects a phone longer than 20 chars', () => {
-    const r = ChurchSettingsFormSchema.safeParse({
-      ...validBase,
-      phone: 'a'.repeat(21)
-    });
-    expect(r.success).toBe(false);
+  it('rejects a phone that is not 10–11 digits', () => {
+    expect(
+      ChurchSettingsFormSchema.safeParse({ ...validBase, phone: '(11) 9999-9999' }).success
+    ).toBe(false);
   });
 
   it('accepts an optional email', () => {

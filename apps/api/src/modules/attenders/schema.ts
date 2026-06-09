@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import {
+  phoneField,
+  cepField,
+  optionalEmailField,
+  ufField,
+  trimmedString
+} from '../../lib/normalize.js';
 
 // Month-granular fields use the human-readable `YYYY-MM` wire format; the service converts
 // to/from the DB's YYYYMM integer. Shared by the membership fields and the donation queries.
@@ -39,20 +46,17 @@ export type ListAttendersRequest = z.infer<typeof ListAttendersRequestSchema>;
 
 export const CreateAttenderRequestSchema = z.object({
   userId: z.number().int().positive().optional(),
-  name: z.string().min(2).max(96),
+  name: trimmedString(96, 2),
   birthDate: z.iso.date().optional(),
-  addressStreet: z.string().max(96).optional(),
-  addressNumber: z.string().max(16).optional(),
-  addressComplement: z.string().max(64).optional(),
-  addressDistrict: z.string().max(64).optional(),
-  state: z.string().length(2).optional(),
-  city: z.string().max(96).optional(),
-  postalCode: z
-    .string()
-    .regex(/^\d{8}$/)
-    .optional(),
-  email: z.email().optional(),
-  phone: z.string().max(16).optional(),
+  addressStreet: trimmedString(96).nullable().optional(),
+  addressNumber: trimmedString(16).nullable().optional(),
+  addressComplement: trimmedString(64).nullable().optional(),
+  addressDistrict: trimmedString(64).nullable().optional(),
+  state: ufField.nullable().optional(),
+  city: trimmedString(96).nullable().optional(),
+  postalCode: cepField.nullable().optional(),
+  email: optionalEmailField.nullable().optional(),
+  phone: phoneField.nullable().optional(),
   isMember: z.boolean().optional().default(false),
   baptismDate: z.iso.date().nullable().optional(),
   memberSince: MonthStringSchema.nullable().optional(),

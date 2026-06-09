@@ -12,6 +12,7 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
 import { openBlobInNewTab } from '@/lib/download';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
+import { formatPhone, formatCep } from '@/lib/format';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenders, useAttenderMutations, useChangeAttenderStatus } from './useAttenders';
@@ -202,7 +203,7 @@ export default function AttendersPage() {
         id: 'phone',
         header: 'Telefone',
         label: 'Telefone',
-        cell: (row: AttenderResponse) => row.phone ?? '—',
+        cell: (row: AttenderResponse) => (row.phone ? formatPhone(row.phone) : '—'),
         hideBelow: 'lg' as const
       },
       {
@@ -267,7 +268,7 @@ export default function AttendersPage() {
         header: 'CEP',
         label: 'CEP',
         defaultHidden: true,
-        cell: (row: AttenderResponse) => row.postalCode ?? '—'
+        cell: (row: AttenderResponse) => (row.postalCode ? formatCep(row.postalCode) : '—')
       }
     ],
     []
@@ -277,7 +278,7 @@ export default function AttendersPage() {
     () => (row: AttenderResponse) => {
       const meta = [
         row.isMember ? 'Membro' : 'Congregado',
-        row.phone,
+        row.phone ? formatPhone(row.phone) : null,
         formatCityState(row.city, row.state) === '—' ? null : formatCityState(row.city, row.state)
       ].filter(Boolean);
       return (
@@ -299,7 +300,7 @@ export default function AttendersPage() {
     () =>
       (row: AttenderResponse): RowDetailField[] => [
         { label: 'Membro', value: row.isMember ? 'Sim' : 'Não' },
-        { label: 'Telefone', value: row.phone ?? '—', hideEmpty: true },
+        { label: 'Telefone', value: row.phone ? formatPhone(row.phone) : '—', hideEmpty: true },
         { label: 'E-mail', value: row.email ?? '—', hideEmpty: true },
         { label: 'Cidade', value: formatCityState(row.city, row.state), hideEmpty: true },
         { label: 'Status', value: <StatusBadge status={row.status} /> }

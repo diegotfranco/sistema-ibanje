@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MEETING_TYPE_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import { trimmedString } from '../../lib/normalize.js';
 
 export const ListMeetingsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -20,8 +21,8 @@ export const UpdateMeetingRequestSchema = z.object({
 });
 
 export const AgendaItemInputSchema = z.object({
-  title: z.string().min(1).max(256),
-  description: z.string().max(2000).optional()
+  title: trimmedString(256, 1),
+  description: trimmedString(2000).optional()
 });
 
 export const SetAgendaItemsRequestSchema = z.object({

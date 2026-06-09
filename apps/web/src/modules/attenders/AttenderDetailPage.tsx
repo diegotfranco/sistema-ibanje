@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
+import { formatPhone, formatCep } from '@/lib/format';
 import { useAttender } from './useAttenders';
 import AttenderDonationsDialog from './AttenderDonationsDialog';
 
@@ -129,7 +130,10 @@ export default function AttenderDetailPage() {
 
               <Section title="Contato">
                 <Field label="E-mail" value={attender.email} />
-                <Field label="Telefone" value={attender.phone} />
+                <Field
+                  label="Telefone"
+                  value={attender.phone ? formatPhone(attender.phone) : null}
+                />
                 <Field
                   label="Data de nascimento"
                   value={attender.birthDate ? formatDate(attender.birthDate) : null}
@@ -141,7 +145,10 @@ export default function AttenderDetailPage() {
                 <Field label="Número" value={attender.addressNumber} />
                 <Field label="Complemento" value={attender.addressComplement} />
                 <Field label="Bairro" value={attender.addressDistrict} />
-                <Field label="CEP" value={attender.postalCode} />
+                <Field
+                  label="CEP"
+                  value={attender.postalCode ? formatCep(attender.postalCode) : null}
+                />
                 <Field label="Cidade" value={attender.city} />
                 <Field label="Estado" value={attender.state} />
               </Section>

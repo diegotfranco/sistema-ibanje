@@ -5,6 +5,7 @@ import { PageContainer } from '@/components/PageContainer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { CnpjInput, CepInput, PhoneInput } from '@/components/MaskedInput';
 import { useChurchSettings, useUpdateChurchSettings } from './useChurchSettings';
 import { LogoField } from './LogoField';
 import { FinanceSettingsCard } from '@/modules/finance/finance-settings/FinanceSettingsCard';
@@ -126,7 +127,15 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="cnpj"
-                  render={({ field }) => <Input {...field} id="cnpj" />}
+                  render={({ field }) => (
+                    <CnpjInput
+                      id="cnpj"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
                 {errors.cnpj && <FieldError>{errors.cnpj.message}</FieldError>}
               </Field>
@@ -136,7 +145,15 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="postalCode"
-                  render={({ field }) => <Input {...field} id="postalCode" maxLength={8} />}
+                  render={({ field }) => (
+                    <CepInput
+                      id="postalCode"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
                 {errors.postalCode && <FieldError>{errors.postalCode.message}</FieldError>}
               </Field>
@@ -214,7 +231,15 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="phone"
-                  render={({ field }) => <Input {...field} id="phone" type="tel" />}
+                  render={({ field }) => (
+                    <PhoneInput
+                      id="phone"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                    />
+                  )}
                 />
                 {errors.phone && <FieldError>{errors.phone.message}</FieldError>}
               </Field>

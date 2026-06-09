@@ -134,6 +134,13 @@ function synthesizeMembership(i: number): {
 // ---------------------------------------------------------------------------
 // fixture shapes (match dump-fixtures.ts output)
 // ---------------------------------------------------------------------------
+
+// Fixtures stay human-readable (formatted phones, mixed-case emails); the seeder normalizes
+// to the same stored form the Zod boundary (src/lib/normalize.ts) produces at runtime.
+const seedDigits = (v: string | null): string | null => (v == null ? v : v.replace(/\D/g, ''));
+const seedEmail = (v: string | null): string | null => (v == null ? v : v.trim().toLowerCase());
+const seedUf = (v: string | null): string | null => (v == null ? v : v.trim().toUpperCase());
+
 type AttenderFixture = {
   name: string;
   birthDate: string | null;
@@ -408,11 +415,11 @@ export async function seed() {
       addressNumber: a.addressNumber,
       addressComplement: a.addressComplement,
       addressDistrict: a.addressDistrict,
-      state: a.state,
+      state: seedUf(a.state),
       city: a.city,
-      postalCode: a.postalCode,
-      email: a.email,
-      phone: a.phone,
+      postalCode: seedDigits(a.postalCode),
+      email: seedEmail(a.email),
+      phone: seedDigits(a.phone),
       ...synthesizeMembership(i)
     }));
     const insertedFixtureAttenders = fixtureAttenderRows.length
@@ -432,11 +439,11 @@ export async function seed() {
       addressStreet: a.addressStreet ?? null,
       addressNumber: a.addressNumber ?? null,
       addressDistrict: a.addressDistrict ?? null,
-      state: a.state ?? null,
+      state: seedUf(a.state ?? null),
       city: a.city ?? null,
-      postalCode: a.postalCode ?? null,
-      email: a.email ?? null,
-      phone: a.phone ?? null,
+      postalCode: seedDigits(a.postalCode ?? null),
+      email: seedEmail(a.email ?? null),
+      phone: seedDigits(a.phone ?? null),
       isMember: a.isMember ?? false,
       status: a.status ?? 'ativo',
       exitDate: a.exitDate ?? null,

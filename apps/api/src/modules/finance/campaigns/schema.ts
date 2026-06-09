@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { CAMPAIGN_STATUS_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../../lib/http-schemas.js';
+import { trimmedString } from '../../../lib/normalize.js';
 
 export const ListCampaignsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -9,8 +10,8 @@ export const ListCampaignsRequestSchema = z.object({
 });
 
 export const CreateCampaignRequestSchema = z.object({
-  name: z.string().min(2).max(96),
-  description: z.string().optional(),
+  name: trimmedString(96, 2),
+  description: trimmedString().optional(),
   targetAmount: z
     .string()
     .regex(

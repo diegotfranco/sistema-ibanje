@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../../../lib/http-schemas.js';
+import { trimmedString } from '../../../../lib/normalize.js';
 
 export const ListExpenseCategoriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -11,8 +12,8 @@ export const ListExpenseCategoriesRequestSchema = z.object({
 export type ListExpenseCategoriesRequest = z.infer<typeof ListExpenseCategoriesRequestSchema>;
 
 export const CreateExpenseCategoryRequestSchema = z.object({
-  name: z.string().min(2).max(64),
-  description: z.string().max(256).optional(),
+  name: trimmedString(64, 2),
+  description: trimmedString(256).optional(),
   parentId: z.number().int().positive().optional()
 });
 

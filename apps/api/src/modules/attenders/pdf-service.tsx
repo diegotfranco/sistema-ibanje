@@ -15,6 +15,7 @@ import {
 } from './service.js';
 import { getChurchSettings } from '../church-settings/repository.js';
 import { httpError } from '../../lib/errors.js';
+import { formatPhone, formatCep } from '../../lib/format.js';
 import { tw } from '../../lib/pdf/theme.js';
 import { Letterhead } from '../../lib/pdf/Letterhead.js';
 import { PageFooter } from '../../lib/pdf/PageFooter.js';
@@ -247,7 +248,7 @@ function formatCityState(city: string | null, state: string | null): string {
 const ROSTER_COLUMNS: Record<string, { label: string; value: (row: RosterRow) => string }> = {
   name: { label: 'Nome', value: (r) => r.name },
   isMember: { label: 'Membro', value: (r) => (r.isMember ? 'Sim' : 'Não') },
-  phone: { label: 'Telefone', value: (r) => r.phone ?? '—' },
+  phone: { label: 'Telefone', value: (r) => (r.phone ? formatPhone(r.phone) : '—') },
   email: { label: 'E-mail', value: (r) => r.email ?? '—' },
   city: { label: 'Cidade', value: (r) => formatCityState(r.city, r.state) },
   status: {
@@ -268,7 +269,7 @@ const ROSTER_COLUMNS: Record<string, { label: string; value: (row: RosterRow) =>
     value: (r) => (r.birthDate ? formatDateBR(r.birthDate) : '—')
   },
   addressDistrict: { label: 'Bairro', value: (r) => r.addressDistrict ?? '—' },
-  postalCode: { label: 'CEP', value: (r) => r.postalCode ?? '—' }
+  postalCode: { label: 'CEP', value: (r) => (r.postalCode ? formatCep(r.postalCode) : '—') }
 };
 
 const DEFAULT_ROSTER_COLUMNS = ['name', 'isMember', 'phone', 'city', 'status'];

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../../lib/http-schemas.js';
+import { trimmedString } from '../../../lib/normalize.js';
 
 export const ListPaymentMethodsRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -9,7 +10,7 @@ export const ListPaymentMethodsRequestSchema = z.object({
 
 export const CreatePaymentMethodRequestSchema = z
   .object({
-    name: z.string().min(2).max(64),
+    name: trimmedString(64, 2),
     allowsInflow: z.boolean().default(false),
     allowsOutflow: z.boolean().default(false)
   })
@@ -18,7 +19,7 @@ export const CreatePaymentMethodRequestSchema = z
   });
 
 export const UpdatePaymentMethodRequestSchema = z.object({
-  name: z.string().min(2).max(64).optional(),
+  name: trimmedString(64, 2).optional(),
   allowsInflow: z.boolean().optional(),
   allowsOutflow: z.boolean().optional()
 });

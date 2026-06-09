@@ -127,7 +127,7 @@ export const attenders = pgTable(
     city: varchar('city', { length: 96 }),
     postalCode: char('postal_code', { length: 8 }),
     email: varchar('email', { length: 96 }),
-    phone: varchar('phone', { length: 16 }),
+    phone: varchar('phone', { length: 11 }),
     status: attenderStatus('status').default('ativo').notNull(),
     // Exit metadata, set when status moves to a formal-exit state (desligado/transferido/falecido);
     // cleared on reactivation. `exitLetterId` is a soft reference to a `carta_de_transferência`

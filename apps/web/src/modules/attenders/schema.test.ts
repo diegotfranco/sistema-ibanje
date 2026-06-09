@@ -42,13 +42,11 @@ describe('AttenderFormSchema', () => {
     expect(r.success).toBe(false);
   });
 
-  it('rejects a phone longer than 16 chars', () => {
+  it('rejects a phone that is not 10–11 raw digits', () => {
     const r = AttenderFormSchema.safeParse({ ...validBase, phone: '1'.repeat(17) });
     expect(r.success).toBe(false);
     if (!r.success) {
-      expect(r.error.issues.find((i) => i.path[0] === 'phone')?.message).toBe(
-        'Máximo de 16 caracteres'
-      );
+      expect(r.error.issues.find((i) => i.path[0] === 'phone')?.message).toBe('Telefone inválido');
     }
   });
 

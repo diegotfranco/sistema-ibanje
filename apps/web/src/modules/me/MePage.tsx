@@ -1,11 +1,13 @@
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { Input } from '@/components/ui/input';
+import { PhoneInput, CepInput } from '@/components/MaskedInput';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { formatMonthYear } from '@/lib/datetime';
+import { formatPhone } from '@/lib/format';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useAttenderProfile, useUpdateMyProfile } from './useMyProfile';
 import { UpdateMyProfileFormSchema, type UpdateMyProfileFormValues } from './schema';
@@ -30,11 +32,27 @@ export default function MePage() {
 
   const form = useForm<UpdateMyProfileFormValues>({
     resolver: zodResolver(UpdateMyProfileFormSchema),
-    defaultValues: EMPTY
+    defaultValues: EMPTY,
+    // `values` re-syncs the form once the async profile query resolves; phone/postalCode are
+    // stored as raw digits and rendered formatted by the masked inputs.
+    values: attender
+      ? {
+          phone: attender.phone ?? '',
+          email: attender.email ?? '',
+          addressStreet: attender.addressStreet ?? '',
+          addressNumber: attender.addressNumber ?? '',
+          addressComplement: attender.addressComplement ?? '',
+          addressDistrict: attender.addressDistrict ?? '',
+          state: attender.state ?? '',
+          city: attender.city ?? '',
+          postalCode: attender.postalCode ?? ''
+        }
+      : undefined
   });
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors }
   } = form;
@@ -118,7 +136,6 @@ export default function MePage() {
                   id="email"
                   type="email"
                   placeholder={attender?.email || 'seu@email.com'}
-                  defaultValue={attender?.email || ''}
                   {...register('email')}
                   className={errors.email ? 'border-destructive' : ''}
                 />
@@ -129,13 +146,22 @@ export default function MePage() {
 
               <div>
                 <Label htmlFor="phone">Telefone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder={attender?.phone || '(11) 99999-9999'}
-                  defaultValue={attender?.phone || ''}
-                  {...register('phone')}
-                  className={errors.phone ? 'border-destructive' : ''}
+                <Controller
+                  control={control}
+                  name="phone"
+                  render={({ field }) => (
+                    <PhoneInput
+                      id="phone"
+                      placeholder={
+                        attender?.phone ? formatPhone(attender.phone) : '(11) 99999-9999'
+                      }
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      className={errors.phone ? 'border-destructive' : ''}
+                    />
+                  )}
                 />
                 {errors.phone && (
                   <p className="text-xs text-destructive mt-1">{errors.phone.message}</p>
@@ -148,7 +174,6 @@ export default function MePage() {
               <Input
                 id="addressStreet"
                 placeholder={attender?.addressStreet || 'Nome da rua'}
-                defaultValue={attender?.addressStreet || ''}
                 {...register('addressStreet')}
                 className={errors.addressStreet ? 'border-destructive' : ''}
               />
@@ -164,7 +189,6 @@ export default function MePage() {
                   id="addressNumber"
                   maxLength={16}
                   placeholder={attender?.addressNumber ?? '123'}
-                  defaultValue={attender?.addressNumber ?? ''}
                   {...register('addressNumber')}
                   className={errors.addressNumber ? 'border-destructive' : ''}
                 />
@@ -178,7 +202,6 @@ export default function MePage() {
                 <Input
                   id="addressComplement"
                   placeholder={attender?.addressComplement || 'Apto, sala, etc.'}
-                  defaultValue={attender?.addressComplement || ''}
                   {...register('addressComplement')}
                   className={errors.addressComplement ? 'border-destructive' : ''}
                 />
@@ -195,7 +218,6 @@ export default function MePage() {
               <Input
                 id="addressDistrict"
                 placeholder={attender?.addressDistrict || 'Nome do bairro'}
-                defaultValue={attender?.addressDistrict || ''}
                 {...register('addressDistrict')}
                 className={errors.addressDistrict ? 'border-destructive' : ''}
               />
@@ -210,7 +232,6 @@ export default function MePage() {
                 <Input
                   id="state"
                   placeholder={attender?.state || 'SP'}
-                  defaultValue={attender?.state || ''}
                   maxLength={2}
                   {...register('state')}
                   className={errors.state ? 'border-destructive' : ''}
@@ -225,7 +246,6 @@ export default function MePage() {
                 <Input
                   id="city"
                   placeholder={attender?.city || 'Nome da cidade'}
-                  defaultValue={attender?.city || ''}
                   {...register('city')}
                   className={errors.city ? 'border-destructive' : ''}
                 />
@@ -237,13 +257,20 @@ export default function MePage() {
 
             <div>
               <Label htmlFor="postalCode">CEP</Label>
-              <Input
-                id="postalCode"
-                placeholder={attender?.postalCode || '12345678'}
-                defaultValue={attender?.postalCode || ''}
-                maxLength={8}
-                {...register('postalCode')}
-                className={errors.postalCode ? 'border-destructive' : ''}
+              <Controller
+                control={control}
+                name="postalCode"
+                render={({ field }) => (
+                  <CepInput
+                    id="postalCode"
+                    placeholder={attender?.postalCode || '00000-000'}
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    className={errors.postalCode ? 'border-destructive' : ''}
+                  />
+                )}
               />
               {errors.postalCode && (
                 <p className="text-xs text-destructive mt-1">{errors.postalCode.message}</p>

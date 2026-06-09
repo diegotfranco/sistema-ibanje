@@ -1,25 +1,30 @@
 import { z } from 'zod';
+import {
+  cnpjField,
+  phoneField,
+  cepField,
+  optionalEmailField,
+  ufField,
+  trimmedString
+} from '../../lib/normalize.js';
 
 export const UpdateChurchSettingsRequestSchema = z.object({
-  name: z.string().min(1).max(128).optional(),
-  cnpj: z.string().max(18).optional(),
-  addressStreet: z.string().max(128).optional(),
-  addressNumber: z.string().max(16).optional(),
-  addressDistrict: z.string().max(64).optional(),
-  addressCity: z.string().max(64).optional(),
-  addressState: z.string().length(2).optional(),
-  postalCode: z
-    .string()
-    .regex(/^\d{8}$/)
-    .optional(),
-  phone: z.string().max(20).optional(),
-  email: z.string().email().optional(),
-  websiteUrl: z.string().max(128).optional(),
+  name: trimmedString(128).optional(),
+  cnpj: cnpjField.optional(),
+  addressStreet: trimmedString(128).optional(),
+  addressNumber: trimmedString(16).optional(),
+  addressDistrict: trimmedString(64).optional(),
+  addressCity: trimmedString(64).optional(),
+  addressState: ufField.optional(),
+  postalCode: cepField.optional(),
+  phone: phoneField.optional(),
+  email: optionalEmailField.optional(),
+  websiteUrl: trimmedString(128).optional(),
   logoPath: z.string().optional(),
-  currentPresidentName: z.string().max(96).optional(),
-  currentPresidentTitle: z.string().max(48).optional(),
-  currentSecretaryName: z.string().max(96).optional(),
-  currentSecretaryTitle: z.string().max(48).optional()
+  currentPresidentName: trimmedString(96).optional(),
+  currentPresidentTitle: trimmedString(48).optional(),
+  currentSecretaryName: trimmedString(96).optional(),
+  currentSecretaryTitle: trimmedString(48).optional()
 });
 
 export const ChurchSettingsResponseSchema = z.object({
