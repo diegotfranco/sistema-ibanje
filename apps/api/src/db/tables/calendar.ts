@@ -12,12 +12,14 @@ export const calendarEntries = pgTable(
     date: date('date').notNull(),
     notes: text('notes'),
     status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
     index('calendar_entries_date_idx').on(table.date),
-    index('calendar_entries_status_idx').on(table.status)
+    index('calendar_entries_status_idx').on(table.status),
+    index('calendar_entries_deleted_at_idx').on(table.deletedAt)
   ]
 );
 

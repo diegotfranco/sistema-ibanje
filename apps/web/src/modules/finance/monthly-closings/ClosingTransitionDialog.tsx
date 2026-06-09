@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { zodResolver } from '@/lib/zodResolver';

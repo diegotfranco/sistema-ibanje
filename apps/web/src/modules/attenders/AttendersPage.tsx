@@ -2,7 +2,7 @@ import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Eye, FileDown } from 'lucide-react';
+import { Eye, FileDown, UserCog } from 'lucide-react';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
@@ -12,13 +12,19 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
 import { openBlobInNewTab } from '@/lib/download';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
+import { formatPhone, formatCep } from '@/lib/format';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
-import { useAttenders, useAttenderMutations } from './useAttenders';
+import { useAttenders, useAttenderMutations, useChangeAttenderStatus } from './useAttenders';
 import AttenderForm from './AttenderForm';
+import AttenderStatusDialog from './AttenderStatusDialog';
 import StatusBadge from '@/components/StatusBadge';
+import { ATTENDER_STATUS_FILTER_OPTIONS } from '@/lib/status';
+import type { AttenderStatusValue } from '@sistema-ibanje/shared';
 import type { RowDetailField } from '@/components/RowDetailPanel';
-import type { AttenderResponse, AttenderFormValues } from './schema';
+import type { AttenderResponse, AttenderFormValues, AttenderStatusChangeValues } from './schema';
+
+type StatusFormInstance = ReturnType<typeof useForm<AttenderStatusChangeValues>>;
 
 type AttenderFormInstance = ReturnType<typeof useForm<AttenderFormValues>>;
 
@@ -75,7 +81,7 @@ export default function AttendersPage() {
   const [exporting, setExporting] = useState(false);
 
   const isMember = filters.isMember as 'true' | 'false' | undefined;
-  const status = filters.status as 'ativo' | 'inativo' | undefined;
+  const status = filters.status as AttenderStatusValue | undefined;
 
   // Server-side search narrows the whole roster, so a new query must restart paging.
   // Adjust during render (guarded) rather than in an effect — avoids a cascading render.
@@ -87,6 +93,7 @@ export default function AttendersPage() {
 
   const list = useAttenders({ page, isMember, status, q: debouncedSearch || undefined });
   const mutations = useAttenderMutations();
+  const changeStatus = useChangeAttenderStatus();
 
   const handleFilterChange = useCallback((columnId: string, value: string | undefined) => {
     setFilters((prev) => ({ ...prev, [columnId]: value }));
@@ -96,8 +103,10 @@ export default function AttendersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<AttenderResponse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AttenderResponse | null>(null);
+  const [statusTarget, setStatusTarget] = useState<AttenderResponse | null>(null);
 
   const formRef = useRef<AttenderFormInstance | null>(null);
+  const statusFormRef = useRef<StatusFormInstance | null>(null);
 
   const items = list.data?.data;
   const totalPages = list.data?.totalPages ?? 1;
@@ -194,7 +203,7 @@ export default function AttendersPage() {
         id: 'phone',
         header: 'Telefone',
         label: 'Telefone',
-        cell: (row: AttenderResponse) => row.phone ?? '—',
+        cell: (row: AttenderResponse) => (row.phone ? formatPhone(row.phone) : '—'),
         hideBelow: 'lg' as const
       },
       {
@@ -216,12 +225,7 @@ export default function AttendersPage() {
         header: 'Status',
         label: 'Status',
         cell: (row: AttenderResponse) => <StatusBadge status={row.status} />,
-        filter: {
-          options: [
-            { value: 'ativo', label: 'Ativos' },
-            { value: 'inativo', label: 'Inativos' }
-          ]
-        }
+        filter: { options: ATTENDER_STATUS_FILTER_OPTIONS }
       },
       {
         id: 'memberSince',
@@ -264,7 +268,7 @@ export default function AttendersPage() {
         header: 'CEP',
         label: 'CEP',
         defaultHidden: true,
-        cell: (row: AttenderResponse) => row.postalCode ?? '—'
+        cell: (row: AttenderResponse) => (row.postalCode ? formatCep(row.postalCode) : '—')
       }
     ],
     []
@@ -274,7 +278,7 @@ export default function AttendersPage() {
     () => (row: AttenderResponse) => {
       const meta = [
         row.isMember ? 'Membro' : 'Congregado',
-        row.phone,
+        row.phone ? formatPhone(row.phone) : null,
         formatCityState(row.city, row.state) === '—' ? null : formatCityState(row.city, row.state)
       ].filter(Boolean);
       return (
@@ -296,7 +300,7 @@ export default function AttendersPage() {
     () =>
       (row: AttenderResponse): RowDetailField[] => [
         { label: 'Membro', value: row.isMember ? 'Sim' : 'Não' },
-        { label: 'Telefone', value: row.phone ?? '—', hideEmpty: true },
+        { label: 'Telefone', value: row.phone ? formatPhone(row.phone) : '—', hideEmpty: true },
         { label: 'E-mail', value: row.email ?? '—', hideEmpty: true },
         { label: 'Cidade', value: formatCityState(row.city, row.state), hideEmpty: true },
         { label: 'Status', value: <StatusBadge status={row.status} /> }
@@ -304,16 +308,38 @@ export default function AttendersPage() {
     []
   );
 
-  const customActions: CustomAction<AttenderResponse>[] = useMemo(
-    () => [
+  const customActions: CustomAction<AttenderResponse>[] = useMemo(() => {
+    const actions: CustomAction<AttenderResponse>[] = [
       {
         label: 'Detalhes',
         icon: <Eye className="h-4 w-4" />,
         onClick: (row) => navigate(`/attenders/${row.id}`)
       }
-    ],
-    [navigate]
-  );
+    ];
+    if (canEdit) {
+      actions.push({
+        label: 'Alterar situação',
+        icon: <UserCog className="h-4 w-4" />,
+        onClick: (row) => setStatusTarget(row)
+      });
+    }
+    return actions;
+  }, [navigate, canEdit]);
+
+  function handleStatusSubmit(values: AttenderStatusChangeValues) {
+    if (!statusTarget) return;
+    changeStatus.mutate(
+      { id: statusTarget.id, body: values },
+      {
+        onError: (err) => {
+          if (statusFormRef.current && !applyFieldErrors(err, statusFormRef.current)) {
+            toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+          }
+        },
+        onSuccess: () => setStatusTarget(null)
+      }
+    );
+  }
 
   const toolbarRight = (
     <Button
@@ -392,6 +418,17 @@ export default function AttendersPage() {
         onSubmit={handleSubmit}
         isPending={mutations.create.isPending || mutations.update.isPending}
         formRef={formRef}
+      />
+
+      <AttenderStatusDialog
+        open={!!statusTarget}
+        onOpenChange={(v) => {
+          if (!v) setStatusTarget(null);
+        }}
+        attender={statusTarget}
+        onSubmit={handleStatusSubmit}
+        isPending={changeStatus.isPending}
+        formRef={statusFormRef}
       />
 
       <ConfirmDeleteDialog

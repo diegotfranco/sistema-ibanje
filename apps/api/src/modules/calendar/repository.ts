@@ -1,6 +1,7 @@
-import { eq, ne, count, desc, asc, and, gte, lte, isNotNull, type SQL } from 'drizzle-orm';
+import { eq, count, desc, asc, and, gte, lte, isNotNull, type SQL } from 'drizzle-orm';
 import { db } from '../../db/index.js';
 import { calendarEntries, attenders, events } from '../../db/schema.js';
+import { notDeleted } from '../../lib/softDelete.js';
 
 type CalendarEntryInsert = Omit<
   typeof calendarEntries.$inferInsert,
@@ -14,8 +15,8 @@ export async function listCalendarEntries(
   status?: 'ativo' | 'inativo'
 ) {
   const where: SQL | undefined = status
-    ? eq(calendarEntries.status, status)
-    : ne(calendarEntries.status, 'inativo');
+    ? and(notDeleted(calendarEntries), eq(calendarEntries.status, status))
+    : notDeleted(calendarEntries);
 
   const rows = await db
     .select()
@@ -31,7 +32,11 @@ export async function listCalendarEntries(
 }
 
 export async function findCalendarEntryById(id: number) {
-  const result = await db.select().from(calendarEntries).where(eq(calendarEntries.id, id)).limit(1);
+  const result = await db
+    .select()
+    .from(calendarEntries)
+    .where(and(eq(calendarEntries.id, id), notDeleted(calendarEntries)))
+    .limit(1);
   return result[0] ?? null;
 }
 
@@ -44,16 +49,16 @@ export async function updateCalendarEntry(id: number, data: CalendarEntryUpdate)
   const result = await db
     .update(calendarEntries)
     .set({ ...data, updatedAt: new Date() })
-    .where(and(eq(calendarEntries.id, id), ne(calendarEntries.status, 'inativo')))
+    .where(and(eq(calendarEntries.id, id), notDeleted(calendarEntries)))
     .returning();
   return result[0] ?? null;
 }
 
-export async function deactivateCalendarEntry(id: number) {
+export async function softDeleteCalendarEntry(id: number) {
   await db
     .update(calendarEntries)
-    .set({ status: 'inativo', updatedAt: new Date() })
-    .where(eq(calendarEntries.id, id));
+    .set({ deletedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(calendarEntries.id, id), notDeleted(calendarEntries)));
 }
 
 // ---- Feed sources (read-only, used by GET /calendar/feed) ----
@@ -70,6 +75,7 @@ export async function listEntriesInRange(fromISO: string, toISO: string) {
     .from(calendarEntries)
     .where(
       and(
+        notDeleted(calendarEntries),
         eq(calendarEntries.status, 'ativo'),
         gte(calendarEntries.date, fromISO),
         lte(calendarEntries.date, toISO)
@@ -88,7 +94,7 @@ export async function listAttenderAnniversarySources() {
       baptismDate: attenders.baptismDate
     })
     .from(attenders)
-    .where(eq(attenders.status, 'ativo'));
+    .where(and(notDeleted(attenders), eq(attenders.status, 'ativo')));
 }
 
 // Active events whose start instant falls inside the visible range. The window is widened by a day
@@ -105,6 +111,7 @@ export async function listEventsInRange(fromInstant: Date, toInstant: Date) {
     .from(events)
     .where(
       and(
+        notDeleted(events),
         eq(events.status, 'ativo'),
         isNotNull(events.startTime),
         gte(events.startTime, fromInstant),

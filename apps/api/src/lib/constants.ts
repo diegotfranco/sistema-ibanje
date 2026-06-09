@@ -1,12 +1,13 @@
 export const DEFAULT_ROLE_NAME = 'Congregado';
+export const ADMIN_ROLE_NAME = 'Administrador';
 
 export const Module = {
   Users: 'Usuários',
   Roles: 'Cargos',
   Attenders: 'Congregados',
-  ChurchSettings: 'Configurações da Igreja',
+  ChurchSettings: 'Dados da Igreja',
   PaymentMethods: 'Formas de Pagamento',
-  DesignatedFunds: 'Campanhas',
+  Campaigns: 'Campanhas',
   IncomeCategories: 'Categorias de Entradas',
   ExpenseCategories: 'Categorias de Saídas',
   IncomeEntries: 'Lançamentos de Entradas',

@@ -10,7 +10,7 @@ import { RequirePermission } from '@/components/RequirePermission';
 import { IncomeReportTab } from './IncomeReportTab';
 import { ExpenseReportTab } from './ExpenseReportTab';
 import { StatementTab } from './StatementTab';
-import { FundsReportTab } from './FundsReportTab';
+import { CampaignsReportTab } from './CampaignsReportTab';
 import { EventsReportTab } from './EventsReportTab';
 
 function defaultMonth() {
@@ -69,7 +69,7 @@ export default function ReportsPage() {
                 <StatementTab month={month} />
               </TabsContent>
               <TabsContent value="campanhas">
-                <FundsReportTab month={month} />
+                <CampaignsReportTab month={month} />
               </TabsContent>
               <TabsContent value="events">
                 <EventsReportTab month={month} />

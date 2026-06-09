@@ -106,4 +106,22 @@ export async function expenseCategoriesRoutes(app: FastifyInstance) {
     },
     controller.remove
   );
+
+  app.patch(
+    '/expense-categories/:id/restore',
+    {
+      schema: {
+        tags: ['Expense Categories'],
+        params: IdParamSchema,
+        response: {
+          200: ExpenseCategoryResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.ExpenseCategories, Action.Delete)]
+    },
+    controller.restore
+  );
 }

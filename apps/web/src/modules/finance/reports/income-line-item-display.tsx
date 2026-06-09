@@ -14,7 +14,7 @@ export interface IncomeRowActions {
   onDelete: (row: IncomeReportRow) => void;
 }
 
-/** Minimal income shape the mobile row reads (fund is omitted — not shown). */
+/** Minimal income shape the mobile row reads (campaign is omitted — not shown). */
 export interface IncomeMobileItem {
   depositDate: string;
   referenceDate: string;
@@ -27,9 +27,9 @@ export interface IncomeMobileItem {
   status: string;
 }
 
-/** Adds the fund name used by the detail-sheet fields. */
+/** Adds the campaign name used by the detail-sheet fields. */
 export interface IncomeFieldsItem extends IncomeMobileItem {
-  fundName: string | null;
+  campaignName: string | null;
 }
 
 const baseColumns: ColumnDef<IncomeReportRow, unknown>[] = [
@@ -74,9 +74,9 @@ const baseColumns: ColumnDef<IncomeReportRow, unknown>[] = [
     meta: { hideBelow: 'lg', className: 'max-w-64' }
   },
   {
-    id: 'designatedFund',
+    id: 'campaign',
     header: 'Campanha',
-    cell: (info) => info.row.original.fundName ?? '—',
+    cell: (info) => info.row.original.campaignName ?? '—',
     meta: { hideBelow: '2xl' }
   },
   {
@@ -163,7 +163,7 @@ export function buildIncomeLineItemFields(row: IncomeFieldsItem): RowDetailField
     { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
     { label: 'Categoria', value: row.categoryName },
     { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
-    { label: 'Campanha', value: row.fundName ?? '—', hideEmpty: true },
+    { label: 'Campanha', value: row.campaignName ?? '—', hideEmpty: true },
     { label: 'Congregado', value: row.attenderName ?? '—', hideEmpty: true },
     {
       label: 'Valor',

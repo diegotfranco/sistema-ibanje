@@ -11,16 +11,25 @@ import { paginate } from '../../lib/pagination.js';
 import type {
   CreateAttenderRequest,
   UpdateAttenderRequest,
+  ChangeAttenderStatusRequest,
   AttenderResponse,
   AttenderDonationsSummaryResponse,
   AttenderDonationsEntriesResponse,
   AttenderFilters
 } from './schema.js';
 import type { UpdateMyProfileRequest } from '../auth/schema.js';
+import { findMembershipLetterById } from '../membership-letters/repository.js';
 import { db } from '../../db/index.js';
 import { eq } from 'drizzle-orm';
 import { users, attenders } from '../../db/schema.js';
-import { yyyymmToString, stringToYyyymm } from '@sistema-ibanje/shared';
+import {
+  yyyymmToString,
+  stringToYyyymm,
+  AttenderStatus,
+  MembershipLetterType,
+  ATTENDER_TERMINAL_STATUSES,
+  type AttenderStatusValue
+} from '@sistema-ibanje/shared';
 
 type AttenderRow = NonNullable<Awaited<ReturnType<typeof repo.findAttenderById>>>;
 
@@ -43,6 +52,9 @@ function toAttenderResponse(row: AttenderRow): AttenderResponse {
     email: row.email,
     phone: row.phone,
     status: row.status,
+    exitDate: row.exitDate,
+    exitReason: row.exitReason,
+    exitLetterId: row.exitLetterId,
     isMember: row.isMember,
     memberSince: row.memberSince == null ? null : yyyymmToString(row.memberSince),
     congregatingSince: row.congregatingSince == null ? null : yyyymmToString(row.congregatingSince),
@@ -211,13 +223,91 @@ export async function updateAttender(
   return toAttenderResponse(updated);
 }
 
-export async function deactivateAttender(callerId: number, targetId: number): Promise<void | null> {
+export async function softDeleteAttender(callerId: number, targetId: number): Promise<void | null> {
   await assertPermission(callerId, Module.Attenders, Action.Delete);
 
   const attender = await repo.findAttenderById(targetId);
   if (!attender) return null;
 
-  await repo.deactivateAttender(targetId);
+  await repo.softDeleteAttender(targetId);
+}
+
+const TERMINAL: readonly AttenderStatusValue[] = ATTENDER_TERMINAL_STATUSES;
+
+// Member lifecycle FSM. Legal moves:
+//  - any state → ativo (reactivation)
+//  - ativo/inativo → inativo or any formal-exit state (desligado/transferido/falecido)
+//  - same → same (idempotent metadata update, e.g. attaching the transfer letter weeks later)
+// Disallowed: jumping straight between two formal-exit states without reactivating first.
+function assertAttenderTransition(from: AttenderStatusValue, to: AttenderStatusValue): void {
+  if (from === to) return;
+  if (to === AttenderStatus.Active) return;
+  if (
+    (from === AttenderStatus.Active || from === AttenderStatus.Inactive) &&
+    (to === AttenderStatus.Inactive || TERMINAL.includes(to))
+  ) {
+    return;
+  }
+  throw httpError(409, `Transição de status inválida: ${from} → ${to}`);
+}
+
+export async function changeAttenderStatus(
+  callerId: number,
+  targetId: number,
+  body: ChangeAttenderStatusRequest
+): Promise<AttenderResponse | null> {
+  await assertPermission(callerId, Module.Attenders, Action.Update);
+
+  const attender = await repo.findAttenderById(targetId);
+  if (!attender) return null;
+
+  const to = body.status;
+  assertAttenderTransition(attender.status as AttenderStatusValue, to);
+
+  // exitLetterId only makes sense for a transfer.
+  if (body.exitLetterId != null && to !== AttenderStatus.Transferred) {
+    throw httpError(400, 'A carta de transferência só se aplica a um membro transferido.', {
+      fieldErrors: { exitLetterId: 'Aplicável apenas a transferências.' }
+    });
+  }
+
+  // A formal exit must record when it happened.
+  if (TERMINAL.includes(to) && body.exitDate == null) {
+    throw httpError(400, 'Informe a data de saída.', {
+      fieldErrors: { exitDate: 'Data de saída é obrigatória.' }
+    });
+  }
+
+  // Validate the optional transfer letter belongs to this attender and is a carta de transferência.
+  if (body.exitLetterId != null) {
+    const letter = await findMembershipLetterById(body.exitLetterId);
+    if (!letter || letter.attenderId !== targetId) {
+      throw httpError(404, 'Carta de transferência não encontrada para este membro.', {
+        fieldErrors: { exitLetterId: 'Carta não encontrada para este membro.' }
+      });
+    }
+    if (letter.type !== MembershipLetterType.OutgoingTransfer) {
+      throw httpError(400, 'A carta selecionada não é uma carta de transferência.', {
+        fieldErrors: { exitLetterId: 'Tipo de carta inválido.' }
+      });
+    }
+  }
+
+  // Reactivation wipes exit metadata; any other target persists what was supplied.
+  const updated = await repo.updateAttenderStatus(
+    targetId,
+    to === AttenderStatus.Active
+      ? { status: to, exitDate: null, exitReason: null, exitLetterId: null }
+      : {
+          status: to,
+          exitDate: body.exitDate ?? null,
+          exitReason: body.exitReason ?? null,
+          exitLetterId: body.exitLetterId ?? null
+        }
+  );
+
+  if (!updated) return null;
+  return toAttenderResponse(updated);
 }
 
 const PT_MONTHS = [
@@ -255,7 +345,7 @@ export async function getAttenderDonationsSummary(
   const availableYears = await listDonationYearsByAttender(attenderId);
   const resolvedYear = year ?? availableYears[0] ?? new Date().getFullYear();
 
-  // Rows arrive pre-grouped per (month, category, fund, event), exact SQL sums. We expand
+  // Rows arrive pre-grouped per (month, category, campaign, event), exact SQL sums. We expand
   // into a fixed Jan→Dez skeleton so the statement (and its PDF) never varies its shape:
   // a month with no giving stays present with empty groups. Cents accumulate as integers
   // so the printed totals never drift.
@@ -285,7 +375,7 @@ export async function getAttenderDonationsSummary(
     if (!entry) continue;
     entry.groups.push({
       categoryName: row.categoryName,
-      fundName: row.fundName,
+      campaignName: row.campaignName,
       eventName: row.eventName,
       total: (cents / 100).toFixed(2)
     });
@@ -328,7 +418,7 @@ export async function getAttenderDonationsEntries(
       id: row.id,
       depositDate: row.depositDate,
       categoryName: row.categoryName,
-      fundName: row.fundName,
+      campaignName: row.campaignName,
       eventName: row.eventName,
       paymentMethodName: row.paymentMethodName,
       amount: (cents / 100).toFixed(2)

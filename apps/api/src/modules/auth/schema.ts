@@ -1,15 +1,18 @@
 import { z } from 'zod';
+import { emailField, phoneField, cepField, ufField, trimmedString } from '../../lib/normalize.js';
 
 export type { MeResponse } from '@sistema-ibanje/shared';
 
+// Email is normalized to trimmed lowercase at the boundary so the exact-match lookup
+// (`findUserByEmail` uses `eq`) matches the lowercase value stored at registration.
 export const LoginRequestSchema = z.object({
-  email: z.email(),
+  email: emailField,
   password: z.string().min(1),
   rememberMe: z.boolean().optional().default(false)
 });
 
 export const PasswordResetRequestSchema = z.object({
-  email: z.email()
+  email: emailField
 });
 
 export const ResetPasswordRequestSchema = z.object({
@@ -18,8 +21,8 @@ export const ResetPasswordRequestSchema = z.object({
 });
 
 export const RegisterRequestSchema = z.object({
-  name: z.string().min(1).max(96),
-  email: z.email()
+  name: trimmedString(96, 1),
+  email: emailField
 });
 
 export const CsrfTokenResponseSchema = z.object({
@@ -47,20 +50,18 @@ export const MeResponseSchema = z.object({
   isMember: z.boolean()
 });
 
+// MePage converts blank inputs to `undefined` before submit, so these never receive `''`.
 export const UpdateMyProfileRequestSchema = z
   .object({
-    phone: z.string().max(16).optional(),
-    email: z.email().optional(),
-    addressStreet: z.string().max(96).optional(),
-    addressNumber: z.string().max(16).optional(),
-    addressComplement: z.string().max(64).optional(),
-    addressDistrict: z.string().max(64).optional(),
-    state: z.string().length(2).optional(),
-    city: z.string().max(96).optional(),
-    postalCode: z
-      .string()
-      .regex(/^\d{8}$/)
-      .optional()
+    phone: phoneField.optional(),
+    email: emailField.optional(),
+    addressStreet: trimmedString(96).optional(),
+    addressNumber: trimmedString(16).optional(),
+    addressComplement: trimmedString(64).optional(),
+    addressDistrict: trimmedString(64).optional(),
+    state: ufField.optional(),
+    city: trimmedString(96).optional(),
+    postalCode: cepField.optional()
   })
   .strict();
 

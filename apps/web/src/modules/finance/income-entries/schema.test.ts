@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { IncomeEntryFormSchema } from './schema';
 
 // The form schema is the client-side contract the income-entry form validates against before it ever
-// hits the API. These assertions pin the pt-BR messages and the fund×event mutual-exclusion rule
+// hits the API. These assertions pin the pt-BR messages and the campaign×event mutual-exclusion rule
 // (which mirrors the backend guard).
 function base(overrides: Record<string, unknown> = {}) {
   return {
@@ -47,18 +47,18 @@ describe('IncomeEntryFormSchema', () => {
     }
   });
 
-  it('rejects selecting both a designated fund and an event (mutual exclusion)', () => {
-    const r = IncomeEntryFormSchema.safeParse(base({ designatedFundId: 1, eventId: 2 }));
+  it('rejects selecting both a campaign and an event (mutual exclusion)', () => {
+    const r = IncomeEntryFormSchema.safeParse(base({ campaignId: 1, eventId: 2 }));
     expect(r.success).toBe(false);
     if (!r.success) {
       expect(r.error.issues.find((i) => i.path[0] === 'eventId')?.message).toBe(
-        'Selecione um fundo OU um evento, não ambos.'
+        'Selecione uma campanha OU um evento, não ambos.'
       );
     }
   });
 
-  it('accepts a fund alone and an event alone', () => {
-    expect(IncomeEntryFormSchema.safeParse(base({ designatedFundId: 1 })).success).toBe(true);
+  it('accepts a campaign alone and an event alone', () => {
+    expect(IncomeEntryFormSchema.safeParse(base({ campaignId: 1 })).success).toBe(true);
     expect(IncomeEntryFormSchema.safeParse(base({ eventId: 1 })).success).toBe(true);
   });
 

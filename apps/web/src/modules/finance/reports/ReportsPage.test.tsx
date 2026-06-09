@@ -70,7 +70,7 @@ describe('ReportsPage', () => {
           totalExpenses: '0.00',
           currentBalance: '0.00',
           incomeByCategory: [],
-          incomeByFund: [],
+          incomeByCampaign: [],
           expensesByCategory: []
         })
       ),
@@ -88,10 +88,10 @@ describe('ReportsPage', () => {
     expect(statementTab).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('switches to the funds tab when clicked', async () => {
+  it('switches to the campaigns tab when clicked', async () => {
     server.use(
       http.get(`${API}/reports/income`, () => HttpResponse.json(paginated([]))),
-      http.get(`${API}/reports/funds`, () => HttpResponse.json({ funds: [] })),
+      http.get(`${API}/reports/campaigns`, () => HttpResponse.json({ campaigns: [] })),
       meHandler(),
       ...referenceHandlers()
     );

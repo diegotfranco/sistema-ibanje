@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import PermissionsMatrix from '@/components/PermissionsMatrix';
 import { usePermissionsReference } from '@/hooks/usePermissionsReference';
 import { useRolePermissions, useSaveRolePermissions } from '@/modules/roles/useRoles';
@@ -55,18 +55,20 @@ export default function RolePermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Permissões — {role?.name}</DialogTitle>
         </DialogHeader>
-        <PermissionsMatrix
-          modules={ref.modules}
-          permissionTypes={ref.permissionTypes}
-          isLoadingReference={ref.isLoading || rolePerms.isLoading}
-          value={localValue}
-          onChange={setLocalValue}
-          disabled={save.isPending}
-        />
+        <div className="flex-1 overflow-y-auto">
+          <PermissionsMatrix
+            modules={ref.modules}
+            permissionTypes={ref.permissionTypes}
+            isLoadingReference={ref.isLoading || rolePerms.isLoading}
+            value={localValue}
+            onChange={setLocalValue}
+            disabled={save.isPending}
+          />
+        </div>
         <DialogFooter>
           <Button
             type="button"

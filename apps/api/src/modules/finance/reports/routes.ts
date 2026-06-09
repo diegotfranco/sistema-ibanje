@@ -13,8 +13,8 @@ import {
   FinancialStatementResponseSchema,
   DetailedFinancialStatementResponseSchema,
   AttendersReportResponseSchema,
-  FundListResponseSchema,
-  FundDetailResponseSchema,
+  CampaignListResponseSchema,
+  CampaignDetailResponseSchema,
   EventListResponseSchema,
   EventDetailResponseSchema
 } from './schema.js';
@@ -154,13 +154,13 @@ export async function reportsRoutes(app: FastifyInstance) {
   );
 
   app.get(
-    '/reports/funds',
+    '/reports/campaigns',
     {
       schema: {
         tags: ['Reports'],
         querystring: OptionalMonthQueryRequestSchema,
         response: {
-          200: FundListResponseSchema,
+          200: CampaignListResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema
@@ -168,18 +168,18 @@ export async function reportsRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
     },
-    controller.fundList
+    controller.campaignList
   );
 
   app.get(
-    '/reports/funds/:id',
+    '/reports/campaigns/:id',
     {
       schema: {
         tags: ['Reports'],
         params: IdParamSchema,
         querystring: OptionalMonthQueryRequestSchema,
         response: {
-          200: FundDetailResponseSchema,
+          200: CampaignDetailResponseSchema,
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
@@ -188,7 +188,7 @@ export async function reportsRoutes(app: FastifyInstance) {
       },
       preHandler: [requireAuth, checkPermission(Module.Reports, Action.Report)]
     },
-    controller.fundDetail
+    controller.campaignDetail
   );
 
   app.get(

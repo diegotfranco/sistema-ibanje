@@ -12,10 +12,10 @@ import DateInput from '@/components/DateInput';
 import EntityPicker from '@/components/EntityPicker';
 import MoneyInput from '../components/MoneyInput';
 import { LinkPicker } from '../components/LinkPicker';
-import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
+import { ActiveStatus, EntryStatus, CampaignStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
 import { usePaymentMethods } from '@/modules/finance/payment-methods/usePaymentMethods';
-import { useDesignatedFunds } from '@/modules/finance/designated-funds/useDesignatedFunds';
+import { useCampaigns } from '@/modules/finance/campaigns/useCampaigns';
 import { useEvents } from '@/modules/finance/events/useEvents';
 import { useAttenders } from '@/modules/attenders/useAttenders';
 import type { IncomeEntryFormValues } from './schema';
@@ -29,7 +29,7 @@ interface Props {
 export function IncomeEntryFields({ control, errors, setValue }: Props) {
   const incomeCategories = useIncomeCategories();
   const paymentMethods = usePaymentMethods();
-  const designatedFunds = useDesignatedFunds({ limit: 200 });
+  const campaigns = useCampaigns({ limit: 200, status: CampaignStatus.Active });
   const eventsList = useEvents({ limit: 200, status: 'ativo' });
   const attenders = useAttenders();
 
@@ -47,8 +47,8 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
   const inflowMethods = (paymentMethods.data?.data ?? []).filter(
     (m) => m.status === ActiveStatus.Active && m.allowsInflow
   );
-  const activeFunds = (designatedFunds.data?.data ?? []).filter(
-    (f) => f.status === ActiveStatus.Active
+  const activeCampaigns = (campaigns.data?.data ?? []).filter(
+    (f) => f.status === CampaignStatus.Active
   );
   const activeEvents = eventsList.data?.data ?? [];
   const activeAttenders = (attenders.data?.data ?? []).filter(
@@ -59,7 +59,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
   const selectedCategory = leafCategories.find((c) => c.id === watchedCategoryId);
   const requiresMember = selectedCategory?.requiresMember ?? false;
 
-  const watchedFundId = useWatch({ control, name: 'designatedFundId' });
+  const watchedCampaignId = useWatch({ control, name: 'campaignId' });
   const watchedEventId = useWatch({ control, name: 'eventId' });
 
   return (
@@ -196,17 +196,17 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
         <Field>
           <FieldLabel>Vincular a (opcional)</FieldLabel>
           <LinkPicker
-            funds={activeFunds}
+            campaigns={activeCampaigns}
             events={activeEvents}
-            fundId={watchedFundId}
+            campaignId={watchedCampaignId}
             eventId={watchedEventId}
-            onChangeFund={(id) => setValue('designatedFundId', id, { shouldDirty: true })}
+            onChangeCampaign={(id) => setValue('campaignId', id, { shouldDirty: true })}
             onChangeEvent={(id) => setValue('eventId', id, { shouldDirty: true })}
-            isLoading={designatedFunds.isLoading || eventsList.isLoading}
+            isLoading={campaigns.isLoading || eventsList.isLoading}
             ariaLabel="Vincular a campanha ou evento"
             className="w-full"
           />
-          {errors.designatedFundId && <FieldError>{errors.designatedFundId.message}</FieldError>}
+          {errors.campaignId && <FieldError>{errors.campaignId.message}</FieldError>}
           {errors.eventId && <FieldError>{errors.eventId.message}</FieldError>}
         </Field>
       </div>

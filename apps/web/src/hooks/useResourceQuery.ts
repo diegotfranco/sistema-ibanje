@@ -39,7 +39,7 @@ function describeError(err: unknown, fallback: string) {
 export function useResourceMutations<T, C, U>(
   basePath: string,
   queryKey: readonly unknown[],
-  labels: { created: string; updated: string; removed: string }
+  labels: { created: string; updated: string; removed: string; restored?: string }
 ) {
   const qc = useQueryClient();
   const fullKey = [basePath, ...queryKey];
@@ -72,5 +72,16 @@ export function useResourceMutations<T, C, U>(
     onError: (err) => toast.error(describeError(err, 'Erro ao remover.'))
   });
 
-  return { create, update, remove };
+  // Reverse of the soft-delete (`PATCH /:id/restore` clears `deletedAt`). Available on every
+  // resource that exposes a trash/restore view; the toast text is overridable per resource.
+  const restore = useMutation({
+    mutationFn: (id: number) => api.patch<T>(`${basePath}/${id}/restore`),
+    onSuccess: () => {
+      invalidate();
+      toast.success(labels.restored ?? 'Registro restaurado.');
+    },
+    onError: (err) => toast.error(describeError(err, 'Erro ao restaurar.'))
+  });
+
+  return { create, update, remove, restore };
 }

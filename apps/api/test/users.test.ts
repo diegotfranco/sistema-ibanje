@@ -151,4 +151,41 @@ describe('users self-service rules', () => {
       expect(body.fieldErrors).toHaveProperty('email');
     });
   });
+
+  // Server-side search (?q= across name + email, diacritic/case-insensitive) and status filter,
+  // with the paginated `total` reflecting the filter (not the whole table).
+  describe('GET /users list filters', () => {
+    it('filters by ?q= across name and email', async () => {
+      const byEmail = await app.inject({
+        method: 'GET',
+        url: '/users?q=admin@email.com',
+        headers: { cookie: admin.cookie }
+      });
+      expect(byEmail.statusCode).toBe(200);
+      const emailBody = byEmail.json<{ data: UserRow[]; total: number }>();
+      expect(emailBody.data.every((u) => u.email.includes('admin@email.com'))).toBe(true);
+      expect(emailBody.data.some((u) => u.email === 'admin@email.com')).toBe(true);
+      expect(emailBody.total).toBe(emailBody.data.length);
+
+      const byName = await app.inject({
+        method: 'GET',
+        url: `/users?q=${encodeURIComponent('congreg')}`,
+        headers: { cookie: admin.cookie }
+      });
+      const nameBody = byName.json<{ data: UserRow[] }>();
+      expect(nameBody.data.some((u) => u.email === 'congregado@email.com')).toBe(true);
+    });
+
+    it('filters by ?status=', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/users?status=ativo&limit=100',
+        headers: { cookie: admin.cookie }
+      });
+      expect(res.statusCode).toBe(200);
+      const body = res.json<{ data: UserRow[]; total: number }>();
+      expect(body.data.every((u) => u.status === 'ativo')).toBe(true);
+      expect(body.total).toBe(body.data.length);
+    });
+  });
 });

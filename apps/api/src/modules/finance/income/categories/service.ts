@@ -3,6 +3,7 @@ import { assertPermission } from '../../../../lib/permissions.js';
 import { Module, Action } from '../../../../lib/constants.js';
 import { httpError } from '../../../../lib/errors.js';
 import { paginate } from '../../../../lib/pagination.js';
+import type { DeletedFilter } from '../../../../lib/softDelete.js';
 import type {
   CreateIncomeCategoryRequest,
   UpdateIncomeCategoryRequest,
@@ -18,11 +19,12 @@ export async function listIncomeCategories(
   callerId: number,
   page: number,
   limit: number,
-  q?: string
+  q?: string,
+  deleted?: DeletedFilter
 ) {
   await assertPermission(callerId, Module.IncomeCategories, Action.View);
   const offset = (page - 1) * limit;
-  const { rows, total } = await repo.listIncomeCategories(offset, limit, q);
+  const { rows, total } = await repo.listIncomeCategories(offset, limit, q, deleted);
   return paginate(
     rows.map((r): IncomeCategoryResponse => r),
     total,
@@ -58,12 +60,20 @@ export async function updateIncomeCategory(
   return repo.updateIncomeCategory(targetId, body);
 }
 
-export async function deactivateIncomeCategory(
+export async function softDeleteIncomeCategory(
   callerId: number,
   targetId: number
 ): Promise<void | null> {
   await assertPermission(callerId, Module.IncomeCategories, Action.Delete);
   const category = await repo.findIncomeCategoryById(targetId);
   if (!category) return null;
-  await repo.deactivateIncomeCategory(targetId);
+  await repo.softDeleteIncomeCategory(targetId);
+}
+
+export async function restoreIncomeCategory(
+  callerId: number,
+  targetId: number
+): Promise<IncomeCategoryResponse | null> {
+  await assertPermission(callerId, Module.IncomeCategories, Action.Delete);
+  return repo.restoreIncomeCategory(targetId);
 }

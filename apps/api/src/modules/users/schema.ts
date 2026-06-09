@@ -1,15 +1,18 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import { emailField, trimmedString } from '../../lib/normalize.js';
 
 export const ListUsersRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(20)
+  limit: z.coerce.number().int().positive().max(100).default(20),
+  q: z.string().trim().min(1).optional(),
+  status: z.enum(['ativo', 'inativo', 'pendente']).optional()
 });
 
 export const UpdateUserRequestSchema = z
   .object({
-    name: z.string().min(1).max(96).optional(),
-    email: z.email().optional(),
+    name: trimmedString(96, 1).optional(),
+    email: emailField.optional(),
     roleId: z.number().int().positive().optional()
   })
   .refine((data) => Object.keys(data).some((key) => data[key as keyof typeof data] !== undefined), {
@@ -26,8 +29,8 @@ export const UpdatePermissionsRequestSchema = z.object({
 });
 
 export const CreateUserRequestSchema = z.object({
-  name: z.string().min(1).max(96),
-  email: z.email(),
+  name: trimmedString(96, 1),
+  email: emailField,
   roleId: z.number().int().positive(),
   attenderId: z.number().int().positive().optional()
 });

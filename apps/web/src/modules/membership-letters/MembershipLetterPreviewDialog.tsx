@@ -5,7 +5,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { useRenderedMembershipLetter } from './useMembershipLetters';
 
 interface Props {

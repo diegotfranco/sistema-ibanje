@@ -24,7 +24,11 @@ export type ChurchSettingsResponse = {
 
 export const ChurchSettingsFormSchema = z.object({
   name: z.string().min(1, 'Nome obrigatório').max(128),
-  cnpj: z.string().max(18).optional().or(z.literal('')),
+  cnpj: z
+    .string()
+    .regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos')
+    .optional()
+    .or(z.literal('')),
   addressStreet: z.string().min(1, 'Rua obrigatória').max(128),
   addressNumber: z.string().min(1, 'Número obrigatório').max(16),
   addressDistrict: z.string().min(1, 'Bairro obrigatório').max(64),
@@ -37,7 +41,11 @@ export const ChurchSettingsFormSchema = z.object({
     .string()
     .regex(/^\d{8}$/, 'Código postal deve ter 8 dígitos')
     .max(8),
-  phone: z.string().max(20).optional().or(z.literal('')),
+  phone: z
+    .string()
+    .regex(/^\d{10,11}$/, 'Telefone inválido')
+    .optional()
+    .or(z.literal('')),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   websiteUrl: z.string().max(128).optional().or(z.literal('')),
   currentPresidentName: z.string().max(96).optional().or(z.literal('')),

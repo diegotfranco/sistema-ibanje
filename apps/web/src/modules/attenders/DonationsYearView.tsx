@@ -10,10 +10,10 @@ function formatBRL(value: string): string {
 
 function groupLabel(
   categoryName: string,
-  fundName: string | null,
+  campaignName: string | null,
   eventName: string | null
 ): string {
-  const suffix = fundName ?? eventName;
+  const suffix = campaignName ?? eventName;
   return suffix ? `${categoryName} (${suffix})` : categoryName;
 }
 
@@ -50,7 +50,7 @@ export default function DonationsYearView({ data, isLoading }: Props) {
               {m.groups.map((g, i) => (
                 <div key={i} className="flex justify-between items-center py-1.5 px-3">
                   <dt className="text-sm text-muted-foreground">
-                    {groupLabel(g.categoryName, g.fundName, g.eventName)}
+                    {groupLabel(g.categoryName, g.campaignName, g.eventName)}
                   </dt>
                   <dd className="text-sm tabular-nums">{formatBRL(g.total)}</dd>
                 </div>

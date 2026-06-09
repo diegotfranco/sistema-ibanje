@@ -8,7 +8,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -16,6 +16,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import MonthInput from '@/components/MonthInput';
+import { PhoneInput, CepInput } from '@/components/MaskedInput';
 import { AdmissionMode } from '@sistema-ibanje/shared';
 import { AttenderFormSchema, type AttenderFormValues } from './schema';
 
@@ -132,7 +133,19 @@ export default function AttenderForm({
             </div>
             <div className="space-y-1">
               <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" {...register('phone')} maxLength={16} />
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field }) => (
+                  <PhoneInput
+                    id="phone"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
+              />
               {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
             </div>
           </div>
@@ -261,11 +274,18 @@ export default function AttenderForm({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1">
               <Label htmlFor="postalCode">CEP</Label>
-              <Input
-                id="postalCode"
-                {...register('postalCode')}
-                maxLength={8}
-                placeholder="00000000"
+              <Controller
+                control={control}
+                name="postalCode"
+                render={({ field }) => (
+                  <CepInput
+                    id="postalCode"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                  />
+                )}
               />
               {errors.postalCode && (
                 <p className="text-xs text-destructive">{errors.postalCode.message}</p>

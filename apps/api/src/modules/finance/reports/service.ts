@@ -10,6 +10,13 @@ import {
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
 import { httpError } from '../../../lib/errors.js';
+import { getChurchSettings } from '../../church-settings/repository.js';
+import {
+  toChurchPdfData,
+  loadChurchLogo,
+  type ChurchPdfData,
+  type PdfLogo
+} from '../../../lib/pdf/church.js';
 import { FinancialStatementPdf, DetailedFinancialStatementPdf } from './pdf-template.js';
 import type {
   IncomeReportResponse,
@@ -17,9 +24,9 @@ import type {
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
   AttendersReportResponse,
-  FundListResponse,
-  FundDetailResponse,
-  FundSummary,
+  CampaignListResponse,
+  CampaignDetailResponse,
+  CampaignSummary,
   EventListResponse,
   EventDetailResponse,
   EventSummary,
@@ -49,21 +56,21 @@ function monthToRange(month: string): { from: string; to: string } {
   return { from, to };
 }
 
-function buildFundSummary(
-  fundId: number,
-  fundName: string,
+function buildCampaignSummary(
+  campaignId: number,
+  campaignName: string,
   targetAmount: string | null,
   raised: string,
   expenses: string
-): FundSummary {
+): CampaignSummary {
   const balance = (Number.parseFloat(raised) - Number.parseFloat(expenses)).toFixed(2);
   const progressPercentage =
     targetAmount !== null && Number.parseFloat(targetAmount) > 0
       ? ((Number.parseFloat(balance) / Number.parseFloat(targetAmount)) * 100).toFixed(2)
       : null;
   return {
-    fundId,
-    fundName,
+    campaignId,
+    campaignName,
     targetAmount,
     totalRaised: raised,
     totalExpenses: expenses,
@@ -168,14 +175,14 @@ export async function getFinancialStatement(
 
   const [
     incomeByCategory,
-    incomeByFund,
+    incomeByCampaign,
     expensesByCategory,
     totalIncome,
     totalExpenses,
     openingBalance
   ] = await Promise.all([
     repo.getIncomeByCategoryForRange(from, to),
-    repo.getIncomeByFundForRange(from, to),
+    repo.getIncomeByCampaignForRange(from, to),
     repo.getExpensesByCategoryForRange(from, to),
     repo.sumIncomeForRange(from, to),
     repo.sumExpensesForRange(from, to),
@@ -191,7 +198,7 @@ export async function getFinancialStatement(
     totalExpenses,
     currentBalance,
     incomeByCategory,
-    incomeByFund,
+    incomeByCampaign,
     expensesByCategory
   };
 }
@@ -234,64 +241,67 @@ export async function getAttendersReport(
   };
 }
 
-export async function getFundList(callerId: number, month?: string): Promise<FundListResponse> {
+export async function getCampaignList(
+  callerId: number,
+  month?: string
+): Promise<CampaignListResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
 
   if (month) {
     const period = monthToRange(month);
-    const [funds, income, expenses] = await Promise.all([
-      repo.findAllActiveFunds(),
-      repo.sumIncomePerFundForRange(period.from, period.to),
-      repo.sumExpensesPerFundForRange(period.from, period.to)
+    const [campaigns, income, expenses] = await Promise.all([
+      repo.findAllActiveCampaigns(),
+      repo.sumIncomePerCampaignForRange(period.from, period.to),
+      repo.sumExpensesPerCampaignForRange(period.from, period.to)
     ]);
     return {
       period,
-      funds: funds.map((f) => {
+      campaigns: campaigns.map((f) => {
         const raised = income.get(f.id) ?? '0.00';
         const expensesVal = expenses.get(f.id) ?? '0.00';
-        return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
+        return buildCampaignSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
       })
     };
   } else {
-    const [funds, income, expenses] = await Promise.all([
-      repo.findAllActiveFunds(),
-      repo.sumAllTimeIncomePerFund(),
-      repo.sumAllTimeExpensesPerFund()
+    const [campaigns, income, expenses] = await Promise.all([
+      repo.findAllActiveCampaigns(),
+      repo.sumAllTimeIncomePerCampaign(),
+      repo.sumAllTimeExpensesPerCampaign()
     ]);
     return {
       period: null,
-      funds: funds.map((f) => {
+      campaigns: campaigns.map((f) => {
         const raised = income.get(f.id) ?? '0.00';
         const expensesVal = expenses.get(f.id) ?? '0.00';
-        return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
+        return buildCampaignSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
       })
     };
   }
 }
 
-export async function getFundDetail(
+export async function getCampaignDetail(
   callerId: number,
   id: number,
   month?: string
-): Promise<FundDetailResponse> {
+): Promise<CampaignDetailResponse> {
   await assertPermission(callerId, Module.Reports, Action.Report);
 
-  const fund = await repo.findFundById(id);
-  if (!fund) throw httpError(404, 'Fund not found');
+  const campaign = await repo.findCampaignById(id);
+  if (!campaign) throw httpError(404, 'Campaign not found');
 
   if (month) {
     const period = monthToRange(month);
     const [incomeEntries, expenseEntries, totalRaised, totalExpenses] = await Promise.all([
-      repo.getFundIncomeEntriesForRange(id, period.from, period.to),
-      repo.getFundExpenseEntriesForRange(id, period.from, period.to),
-      repo.sumIncomeForFundRange(id, period.from, period.to),
-      repo.sumExpensesForFundRange(id, period.from, period.to)
+      repo.getCampaignIncomeEntriesForRange(id, period.from, period.to),
+      repo.getCampaignExpenseEntriesForRange(id, period.from, period.to),
+      repo.sumIncomeForCampaignRange(id, period.from, period.to),
+      repo.sumExpensesForCampaignRange(id, period.from, period.to)
     ]);
 
-    const summary = buildFundSummary(
-      fund.id,
-      fund.name,
-      fund.targetAmount ?? null,
+    const summary = buildCampaignSummary(
+      campaign.id,
+      campaign.name,
+      campaign.targetAmount ?? null,
       totalRaised,
       totalExpenses
     );
@@ -299,16 +309,16 @@ export async function getFundDetail(
     return { ...summary, period, incomeEntries, expenseEntries };
   } else {
     const [incomeEntries, expenseEntries, totalRaised, totalExpenses] = await Promise.all([
-      repo.getFundIncomeEntries(id),
-      repo.getFundExpenseEntries(id),
-      repo.sumAllTimeIncomeForFund(id),
-      repo.sumAllTimeExpensesForFund(id)
+      repo.getCampaignIncomeEntries(id),
+      repo.getCampaignExpenseEntries(id),
+      repo.sumAllTimeIncomeForCampaign(id),
+      repo.sumAllTimeExpensesForCampaign(id)
     ]);
 
-    const summary = buildFundSummary(
-      fund.id,
-      fund.name,
-      fund.targetAmount ?? null,
+    const summary = buildCampaignSummary(
+      campaign.id,
+      campaign.name,
+      campaign.targetAmount ?? null,
       totalRaised,
       totalExpenses
     );
@@ -428,13 +438,24 @@ export async function getEventDetail(
   }
 }
 
+async function loadChurchForPdf(): Promise<{ church: ChurchPdfData; logo?: PdfLogo }> {
+  const settings = await getChurchSettings();
+  if (!settings) throw httpError(409, 'Church settings not initialized');
+  return { church: toChurchPdfData(settings), logo: await loadChurchLogo(settings.logoPath) };
+}
+
 export async function renderFinancialStatementPdf(
   callerId: number,
   month: string
 ): Promise<Buffer> {
   const data = await getFinancialStatement(callerId, month);
+  const { church, logo } = await loadChurchForPdf();
   return renderToBuffer(
-    React.createElement(FinancialStatementPdf, { data }) as React.ReactElement<DocumentProps>
+    React.createElement(FinancialStatementPdf, {
+      data,
+      church,
+      logo
+    }) as React.ReactElement<DocumentProps>
   );
 }
 
@@ -445,7 +466,7 @@ type ColumnSpec = {
   groupLabel: string;
   parentGroupKey: ParentGroupKey;
   parentGroupLabel: string;
-  splitByFund: boolean;
+  splitByCampaign: boolean;
   matches: (agg: IncomeAggregateRow) => boolean;
 };
 
@@ -455,7 +476,7 @@ const COLUMN_SPEC: ColumnSpec[] = [
     groupLabel: 'Dízimo',
     parentGroupKey: 'contribuicoes',
     parentGroupLabel: 'Contribuições',
-    splitByFund: false,
+    splitByCampaign: false,
     matches: (a) => a.categoryName === 'Dízimo'
   },
   {
@@ -463,7 +484,7 @@ const COLUMN_SPEC: ColumnSpec[] = [
     groupLabel: 'Oferta',
     parentGroupKey: 'contribuicoes',
     parentGroupLabel: 'Contribuições',
-    splitByFund: false,
+    splitByCampaign: false,
     matches: (a) => a.categoryName === 'Oferta'
   },
   {
@@ -471,7 +492,7 @@ const COLUMN_SPEC: ColumnSpec[] = [
     groupLabel: 'Doação',
     parentGroupKey: 'contribuicoes',
     parentGroupLabel: 'Contribuições',
-    splitByFund: true,
+    splitByCampaign: true,
     matches: (a) => a.categoryName === 'Doação'
   },
   {
@@ -479,7 +500,7 @@ const COLUMN_SPEC: ColumnSpec[] = [
     groupLabel: 'Eventos',
     parentGroupKey: 'outras-receitas',
     parentGroupLabel: 'Outras Receitas',
-    splitByFund: false,
+    splitByCampaign: false,
     matches: (a) => a.categoryName === 'Eventos'
   },
   {
@@ -487,7 +508,7 @@ const COLUMN_SPEC: ColumnSpec[] = [
     groupLabel: 'Outros rendimentos',
     parentGroupKey: 'outras-receitas',
     parentGroupLabel: 'Outras Receitas',
-    splitByFund: false,
+    splitByCampaign: false,
     matches: (a) => a.parentCategoryName === 'Outras Receitas' && a.categoryName !== 'Eventos'
   }
 ];
@@ -502,17 +523,17 @@ export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot 
   }
 
   // Resolve the per-row key for each tagged aggregate (leaf column key).
-  // - splitByFund=false → just the groupKey
-  // - splitByFund=true → 'doacao:fund:<id>' or 'doacao:sem-fundo'
+  // - splitByCampaign=false → just the groupKey
+  // - splitByCampaign=true → 'doacao:campaign:<id>' or 'doacao:sem-campanha'
   const leafKey = (t: Tagged): string => {
-    if (!t.spec.splitByFund) return t.spec.groupKey;
-    if (t.agg.fundId == null) return `${t.spec.groupKey}:sem-fundo`;
-    return `${t.spec.groupKey}:fund:${t.agg.fundId}`;
+    if (!t.spec.splitByCampaign) return t.spec.groupKey;
+    if (t.agg.campaignId == null) return `${t.spec.groupKey}:sem-campanha`;
+    return `${t.spec.groupKey}:campaign:${t.agg.campaignId}`;
   };
   const leafLabel = (t: Tagged): string => {
-    if (!t.spec.splitByFund) return t.spec.groupLabel;
-    if (t.agg.fundId == null) return 'Sem fundo';
-    return t.agg.fundName ?? 'Sem fundo';
+    if (!t.spec.splitByCampaign) return t.spec.groupLabel;
+    if (t.agg.campaignId == null) return 'Sem campanha';
+    return t.agg.campaignName ?? 'Sem campanha';
   };
 
   // Build per-column totals + per-row cells in one pass.
@@ -548,7 +569,7 @@ export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot 
     row.total = (parseFloat(row.total) + parseFloat(t.agg.total)).toFixed(2);
   }
 
-  // Hide zero-total columns + sort by COLUMN_SPEC order, then alpha within Doação fund sub-cols.
+  // Hide zero-total columns + sort by COLUMN_SPEC order, then alpha within Doação campaign sub-cols.
   const specOrder = new Map(COLUMN_SPEC.map((s, i) => [s.groupKey, i]));
   const columns = [...columnMap.values()]
     .filter((c) => parseFloat(c.total) !== 0)
@@ -556,9 +577,9 @@ export function buildIncomePivot(aggregates: IncomeAggregateRow[]): IncomePivot 
       const ga = specOrder.get(a.groupKey as ColumnSpec['groupKey']) ?? 999;
       const gb = specOrder.get(b.groupKey as ColumnSpec['groupKey']) ?? 999;
       if (ga !== gb) return ga - gb;
-      // Within the same group (e.g. Doação fund sub-cols), 'Sem fundo' last, then alpha.
-      const aSem = a.key.endsWith(':sem-fundo');
-      const bSem = b.key.endsWith(':sem-fundo');
+      // Within the same group (e.g. Doação campaign sub-cols), 'Sem campanha' last, then alpha.
+      const aSem = a.key.endsWith(':sem-campanha');
+      const bSem = b.key.endsWith(':sem-campanha');
       if (aSem !== bSem) return aSem ? 1 : -1;
       return a.label.localeCompare(b.label, 'pt-BR');
     });
@@ -612,9 +633,12 @@ export async function renderDetailedFinancialStatementPdf(
   month: string
 ): Promise<Buffer> {
   const data = await getDetailedFinancialStatement(callerId, month);
+  const { church, logo } = await loadChurchForPdf();
   return renderToBuffer(
     React.createElement(DetailedFinancialStatementPdf, {
-      data
+      data,
+      church,
+      logo
     }) as React.ReactElement<DocumentProps>
   );
 }

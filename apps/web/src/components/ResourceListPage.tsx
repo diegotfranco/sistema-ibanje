@@ -30,6 +30,9 @@ export interface CustomAction<T> {
   label: string;
   icon?: ReactNode;
   onClick: (row: T) => void;
+  /** Layout/spacing only — keep row-action icons neutral ghost. Semantic color belongs at the
+   *  point of decision (the ConfirmDeleteDialog's destructive button, primary form buttons), not
+   *  repeated per-row where it becomes noise. Don't pass `text-destructive`/`text-success`/etc. */
   className?: string;
   /** When it returns true the action is omitted for that row (e.g. show
    *  "Restaurar" only on inactive rows). Applies to both the table and the sheet. */
@@ -167,7 +170,7 @@ export function ResourceListPage<T>({
           )}
         </div>
       ),
-      meta: { align: 'right', className: 'w-32' }
+      meta: { align: 'center', className: 'w-36' }
     });
   }
 

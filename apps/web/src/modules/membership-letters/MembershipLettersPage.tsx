@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Button } from '@/components/Button';
 import EntityPicker from '@/components/EntityPicker';
@@ -156,10 +156,11 @@ export default function MembershipLettersPage() {
 
   const actionColumn = {
     header: 'Ações',
+    className: 'text-center w-36',
     cell: (row: unknown) => {
       const letter = row as MembershipLetterResponse;
       return (
-        <div className="flex gap-2">
+        <div className="flex items-center justify-end gap-1">
           <Button
             variant="ghost"
             size="sm"

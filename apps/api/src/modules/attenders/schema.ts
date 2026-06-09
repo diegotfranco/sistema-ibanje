@@ -1,5 +1,13 @@
 import { z } from 'zod';
+import { ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import {
+  phoneField,
+  cepField,
+  optionalEmailField,
+  ufField,
+  trimmedString
+} from '../../lib/normalize.js';
 
 // Month-granular fields use the human-readable `YYYY-MM` wire format; the service converts
 // to/from the DB's YYYYMM integer. Shared by the membership fields and the donation queries.
@@ -12,7 +20,7 @@ const attenderFilterShape = {
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
-  status: z.enum(['ativo', 'inativo']).optional(),
+  status: z.enum(ATTENDER_STATUS_VALUES).optional(),
   // Diacritic/case-insensitive name search (server-side LIKE), like the categories list.
   q: z.string().trim().min(1).max(64).optional()
 };
@@ -31,27 +39,24 @@ export const AttendersExportPdfQuerySchema = z.object({
 
 export type AttenderFilters = {
   isMember?: boolean;
-  status?: 'ativo' | 'inativo';
+  status?: (typeof ATTENDER_STATUS_VALUES)[number];
   q?: string;
 };
 export type ListAttendersRequest = z.infer<typeof ListAttendersRequestSchema>;
 
 export const CreateAttenderRequestSchema = z.object({
   userId: z.number().int().positive().optional(),
-  name: z.string().min(2).max(96),
+  name: trimmedString(96, 2),
   birthDate: z.iso.date().optional(),
-  addressStreet: z.string().max(96).optional(),
-  addressNumber: z.string().max(16).optional(),
-  addressComplement: z.string().max(64).optional(),
-  addressDistrict: z.string().max(64).optional(),
-  state: z.string().length(2).optional(),
-  city: z.string().max(96).optional(),
-  postalCode: z
-    .string()
-    .regex(/^\d{8}$/)
-    .optional(),
-  email: z.email().optional(),
-  phone: z.string().max(16).optional(),
+  addressStreet: trimmedString(96).nullable().optional(),
+  addressNumber: trimmedString(16).nullable().optional(),
+  addressComplement: trimmedString(64).nullable().optional(),
+  addressDistrict: trimmedString(64).nullable().optional(),
+  state: ufField.nullable().optional(),
+  city: trimmedString(96).nullable().optional(),
+  postalCode: cepField.nullable().optional(),
+  email: optionalEmailField.nullable().optional(),
+  phone: phoneField.nullable().optional(),
   isMember: z.boolean().optional().default(false),
   baptismDate: z.iso.date().nullable().optional(),
   memberSince: MonthStringSchema.nullable().optional(),
@@ -63,6 +68,16 @@ export const CreateAttenderRequestSchema = z.object({
 });
 
 export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial();
+
+// Drives the single guarded lifecycle endpoint (PATCH /attenders/:id/status). The service
+// enforces the legal transitions and the per-state requiredness of `exitDate` (required when
+// entering a formal-exit state) and validates `exitLetterId` against the attender's letters.
+export const ChangeAttenderStatusRequestSchema = z.object({
+  status: z.enum(ATTENDER_STATUS_VALUES),
+  exitDate: z.iso.date().nullable().optional(),
+  exitReason: z.string().max(256).nullable().optional(),
+  exitLetterId: z.number().int().positive().nullable().optional()
+});
 
 export const AttenderResponseSchema = z.object({
   id: z.number().int().positive(),
@@ -79,6 +94,9 @@ export const AttenderResponseSchema = z.object({
   email: z.string().nullable(),
   phone: z.string().nullable(),
   status: z.string(),
+  exitDate: z.string().nullable(),
+  exitReason: z.string().nullable(),
+  exitLetterId: z.number().int().positive().nullable(),
   isMember: z.boolean(),
   baptismDate: z.string().nullable(),
   memberSince: z.string().nullable(),
@@ -104,7 +122,7 @@ export const DonationsPdfQuerySchema = z.object({
 
 export const DonationGroupSchema = z.object({
   categoryName: z.string(),
-  fundName: z.string().nullable(),
+  campaignName: z.string().nullable(),
   eventName: z.string().nullable(),
   total: z.string()
 });
@@ -127,7 +145,7 @@ export const DonationEntrySchema = z.object({
   id: z.number().int().positive(),
   depositDate: z.string(),
   categoryName: z.string(),
-  fundName: z.string().nullable(),
+  campaignName: z.string().nullable(),
   eventName: z.string().nullable(),
   paymentMethodName: z.string(),
   amount: z.string()
@@ -142,6 +160,7 @@ export const AttenderDonationsEntriesResponseSchema = z.object({
 
 export type CreateAttenderRequest = z.infer<typeof CreateAttenderRequestSchema>;
 export type UpdateAttenderRequest = z.infer<typeof UpdateAttenderRequestSchema>;
+export type ChangeAttenderStatusRequest = z.infer<typeof ChangeAttenderStatusRequestSchema>;
 export type AttenderResponse = z.infer<typeof AttenderResponseSchema>;
 export type AttenderDonationsSummaryResponse = z.infer<
   typeof AttenderDonationsSummaryResponseSchema

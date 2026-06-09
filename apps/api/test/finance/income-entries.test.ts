@@ -24,7 +24,7 @@ type IncomeEntryRow = {
   amount: string;
   categoryId: number;
   paymentMethodId: number;
-  designatedFundId: number | null;
+  campaignId: number | null;
   eventId: number | null;
   status: string;
   createdAt: Date;
@@ -123,15 +123,15 @@ describe('income-entries module', () => {
     expect(entry.depositDate).toBe(today);
   });
 
-  it('rejects an entry with both designatedFundId and eventId (400)', async () => {
-    // First get a designated fund and an event if available
-    const fundRes = await app.inject({
+  it('rejects an entry with both campaignId and eventId (400)', async () => {
+    // First get a campaign and an event if available
+    const campaignRes = await app.inject({
       method: 'GET',
-      url: '/designated-funds?limit=100',
+      url: '/campaigns?limit=100',
       headers: { cookie: admin.cookie }
     });
-    const fundData = fundRes.json<{ data: Array<{ id: number }> }>();
-    const fundId = fundData.data?.[0]?.id;
+    const campaignData = campaignRes.json<{ data: Array<{ id: number }> }>();
+    const campaignId = campaignData.data?.[0]?.id;
 
     const eventRes = await app.inject({
       method: 'GET',
@@ -142,13 +142,13 @@ describe('income-entries module', () => {
     const eventId = eventData.data?.[0]?.id;
 
     // If both are available, test the refine violation
-    if (fundId && eventId) {
+    if (campaignId && eventId) {
       const payload: Record<string, unknown> = {
         depositDate: today,
         amount: 50,
         categoryId,
         paymentMethodId,
-        designatedFundId: fundId,
+        campaignId: campaignId,
         eventId
       };
       if (attenderId) {
@@ -256,6 +256,54 @@ describe('income-entries module', () => {
       headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken }
     });
     expect(res.statusCode).toBe(204);
+  });
+
+  describe('status transition guard', () => {
+    async function createEntry(): Promise<number> {
+      const payload: Record<string, unknown> = {
+        depositDate: today,
+        amount: 75,
+        categoryId,
+        paymentMethodId
+      };
+      if (attenderId) payload.attenderId = attenderId;
+      const res = await app.inject({
+        method: 'POST',
+        url: '/income-entries',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload
+      });
+      expect(res.statusCode).toBe(201);
+      return res.json<IncomeEntryRow>().id;
+    }
+
+    function setStatus(id: number, status: string) {
+      return app.inject({
+        method: 'PATCH',
+        url: `/income-entries/${id}`,
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: { status }
+      });
+    }
+
+    it('confirms pendente → paga (200), then blocks paga → pendente (409)', async () => {
+      const id = await createEntry();
+      const confirm = await setStatus(id, 'paga');
+      expect(confirm.statusCode).toBe(200);
+      expect(confirm.json<IncomeEntryRow>().status).toBe('paga');
+
+      const revert = await setStatus(id, 'pendente');
+      expect(revert.statusCode).toBe(409);
+    });
+
+    it('blocks reviving a cancelada entry (cancelada → paga, 409)', async () => {
+      const id = await createEntry();
+      const cancel = await setStatus(id, 'cancelada');
+      expect(cancel.statusCode).toBe(200);
+
+      const revive = await setStatus(id, 'paga');
+      expect(revive.statusCode).toBe(409);
+    });
   });
 
   describe('route gating', () => {

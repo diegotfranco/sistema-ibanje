@@ -16,7 +16,7 @@ const mockIncomeEntries = [
     categoryId: 1,
     parentCategoryName: 'Renda Regular',
     notes: 'Coleta',
-    designatedFundName: null,
+    campaignName: null,
     attenderName: 'Maria',
     attenderId: 1,
     amount: '500.00',

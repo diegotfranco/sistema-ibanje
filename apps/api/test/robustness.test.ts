@@ -121,7 +121,7 @@ describe('input robustness (no 500s under adversarial input)', () => {
     );
 
     // income-entries caps `limit` at 100 (schema.ts: .max(100)); the reference-data lists
-    // (payment-methods, categories, designated-funds) allow up to 500. 100 here is the boundary.
+    // (payment-methods, categories, campaigns) allow up to 500. 100 here is the boundary.
     it('accepts limit at the boundary (100 → HTTP 200)', async () => {
       const res = await app.inject({
         method: 'GET',
@@ -176,8 +176,8 @@ describe('input robustness (no 500s under adversarial input)', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('rejects both designatedFundId and eventId at once with 400', async () => {
-      const res = await post('/income-entries', validEntry({ designatedFundId: 1, eventId: 1 }));
+    it('rejects both campaignId and eventId at once with 400', async () => {
+      const res = await post('/income-entries', validEntry({ campaignId: 1, eventId: 1 }));
       expect(res.statusCode).toBe(400);
     });
 

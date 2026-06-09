@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/Dialog';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { PageContainer } from '@/components/PageContainer';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -33,7 +33,7 @@ export default function IncomeEntriesPage() {
     categoryId: values.categoryId!,
     paymentMethodId: values.paymentMethodId!,
     ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
-    ...(values.designatedFundId !== undefined ? { designatedFundId: values.designatedFundId } : {}),
+    ...(values.campaignId !== undefined ? { campaignId: values.campaignId } : {}),
     ...(values.notes ? { notes: values.notes } : {}),
     ...(values.status ? { status: values.status } : {})
   });

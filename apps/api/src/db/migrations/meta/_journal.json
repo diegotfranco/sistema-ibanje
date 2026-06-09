@@ -15,6 +15,34 @@
       "when": 1780758466479,
       "tag": "0001_partial_default_template_index",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780847906648,
+      "tag": "0002_awesome_absorbing_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780871593438,
+      "tag": "0003_worthless_lifeguard",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780894369819,
+      "tag": "0004_brown_dragon_lord",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780980000000,
+      "tag": "0005_normalize_contacts",
+      "breakpoints": true
     }
   ]
 }

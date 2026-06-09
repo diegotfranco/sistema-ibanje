@@ -6,7 +6,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { Label } from '@/components/ui/label';
 import {
   RichTextEditor as RichTextEditorComponent,

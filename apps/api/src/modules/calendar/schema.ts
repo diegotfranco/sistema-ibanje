@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
+import { trimmedString } from '../../lib/normalize.js';
 
 export const ListCalendarEntriesRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -8,15 +9,15 @@ export const ListCalendarEntriesRequestSchema = z.object({
 });
 
 export const CreateCalendarEntryRequestSchema = z.object({
-  title: z.string().min(2).max(128),
+  title: trimmedString(128, 2),
   date: z.iso.date(),
-  notes: z.string().max(2000).optional()
+  notes: trimmedString(2000).optional()
 });
 
 export const UpdateCalendarEntryRequestSchema = z.object({
-  title: z.string().min(2).max(128).optional(),
+  title: trimmedString(128, 2).optional(),
   date: z.iso.date().optional(),
-  notes: z.string().max(2000).nullable().optional()
+  notes: trimmedString(2000).nullable().optional()
 });
 
 export const CalendarEntryResponseSchema = z.object({

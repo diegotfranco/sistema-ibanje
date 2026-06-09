@@ -83,7 +83,7 @@ export default function PautasPage() {
                   <TableHead>Pauta</TableHead>
                   <TableHead>Pública</TableHead>
                   <TableHead>Ata</TableHead>
-                  <TableHead className="w-36 text-right">Ações</TableHead>
+                  <TableHead className="w-36 text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

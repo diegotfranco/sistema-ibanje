@@ -119,11 +119,11 @@ export async function setAgendaItems(
   return buildResponse(meeting, await repo.hasMinutes(id), items);
 }
 
-export async function deactivateMeeting(callerId: number, id: number): Promise<void | null> {
+export async function softDeleteMeeting(callerId: number, id: number): Promise<void | null> {
   await assertPermission(callerId, Module.Agendas, Action.Delete);
   const meeting = await repo.findMeetingById(id);
   if (!meeting) return null;
   if (await repo.hasMinutes(id))
     throw httpError(409, 'Cannot delete a meeting that already has minutes');
-  await repo.deactivateMeeting(id);
+  await repo.softDeleteMeeting(id);
 }

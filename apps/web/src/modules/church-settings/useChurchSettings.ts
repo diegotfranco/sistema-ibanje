@@ -29,3 +29,31 @@ export function useUpdateChurchSettings() {
     onError: (err) => toast.error(describeError(err, 'Erro ao atualizar configurações'))
   });
 }
+
+export function useUploadLogo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => {
+      const form = new FormData();
+      form.append('file', file);
+      return api.postForm<ChurchSettingsResponse>(`${BASE}/logo`, form);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      toast.success('Logo atualizado');
+    },
+    onError: (err) => toast.error(describeError(err, 'Erro ao enviar o logo'))
+  });
+}
+
+export function useDeleteLogo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.delete(`${BASE}/logo`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: KEY });
+      toast.success('Logo removido');
+    },
+    onError: (err) => toast.error(describeError(err, 'Erro ao remover o logo'))
+  });
+}

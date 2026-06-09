@@ -44,7 +44,7 @@ export async function setAgendaItems(req: FastifyRequest, reply: FastifyReply) {
 
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const result = await service.deactivateMeeting(req.session.userId!, id);
+  const result = await service.softDeleteMeeting(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Meeting not found' });
   return reply.code(204).send();
 }

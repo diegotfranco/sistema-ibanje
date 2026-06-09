@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
 import { api } from '@/lib/api';
-import type { AttenderFormValues, AttenderResponse } from './schema';
+import type { AttenderStatusValue } from '@sistema-ibanje/shared';
+import type { AttenderFormValues, AttenderResponse, AttenderStatusChangeValues } from './schema';
 
 const BASE = '/attenders';
 const KEY = ['attenders'] as const;
@@ -10,7 +12,7 @@ export function useAttenders(
   params: {
     page?: number;
     isMember?: 'true' | 'false';
-    status?: 'ativo' | 'inativo';
+    status?: AttenderStatusValue;
     q?: string;
   } = {}
 ) {
@@ -43,4 +45,19 @@ export function useAttenderMutations() {
       removed: 'Congregado removido.'
     }
   );
+}
+
+// Lifecycle transition (desligamento, transferência, óbito, reativação). Separate from the
+// generic update — it hits the guarded PATCH /attenders/:id/status endpoint.
+export function useChangeAttenderStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: AttenderStatusChangeValues }) =>
+      api.patch<AttenderResponse>(`${BASE}/${id}/status`, body),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: [...KEY, updated.id, 'profile'] });
+      toast.success('Situação do congregado atualizada.');
+    }
+  });
 }

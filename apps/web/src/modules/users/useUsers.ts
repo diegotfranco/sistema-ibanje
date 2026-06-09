@@ -12,8 +12,14 @@ function describeError(err: unknown, fallback: string) {
   return fallback;
 }
 
-export function useUsers() {
-  return useResourceList<UserResponse>(BASE, KEY);
+export function useUsers(
+  params: { page?: number; q?: string; status?: 'ativo' | 'inativo' | 'pendente' } = {}
+) {
+  return useResourceList<UserResponse>(BASE, KEY, {
+    page: params.page ?? 1,
+    ...(params.q && { q: params.q }),
+    ...(params.status !== undefined && { status: params.status })
+  });
 }
 
 export function useUserMutations(currentUserId: number | undefined) {

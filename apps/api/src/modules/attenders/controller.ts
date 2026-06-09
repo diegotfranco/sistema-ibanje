@@ -3,6 +3,7 @@ import type { z } from 'zod';
 import type {
   CreateAttenderRequest,
   UpdateAttenderRequest,
+  ChangeAttenderStatusRequest,
   ListAttendersRequest,
   AttendersExportPdfQuerySchema,
   DonationsSummaryQuerySchema,
@@ -58,9 +59,18 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
   return reply.send(attender);
 }
 
+export async function changeStatus(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as ChangeAttenderStatusRequest;
+  const attender = await service.changeAttenderStatus(req.session.userId!, id, body);
+  if (!attender) return reply.code(404).send({ message: 'Attender not found' });
+  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  return reply.send(attender);
+}
+
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
-  const result = await service.deactivateAttender(req.session.userId!, id);
+  const result = await service.softDeleteAttender(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Attender not found' });
   logAudit(req.session.userId!, 'delete', 'attender', id, { ipAddress: req.ip });
   return reply.code(204).send();

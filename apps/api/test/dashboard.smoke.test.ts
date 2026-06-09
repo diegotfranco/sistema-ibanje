@@ -31,7 +31,7 @@ describe('dashboard smoke: composite endpoint returns expected shape with matchi
     expect(body).toHaveProperty('participation');
     expect(body).toHaveProperty('trends');
     expect(body).toHaveProperty('closing');
-    expect(body).toHaveProperty('funds');
+    expect(body).toHaveProperty('campaigns');
     expect(body).toHaveProperty('events');
 
     // Finance KPIs shape
@@ -85,16 +85,16 @@ describe('dashboard smoke: composite endpoint returns expected shape with matchi
     expect(body.closing).toHaveProperty('priorPendingCount');
     expect(body.closing).toHaveProperty('oldestPendingId');
 
-    // Funds shape (array of fund summaries)
-    expect(Array.isArray(body.funds)).toBe(true);
-    for (const fund of body.funds) {
-      expect(fund).toHaveProperty('fundId');
-      expect(fund).toHaveProperty('fundName');
-      expect(fund).toHaveProperty('targetAmount');
-      expect(fund).toHaveProperty('totalRaised');
-      expect(fund).toHaveProperty('totalExpenses');
-      expect(fund).toHaveProperty('balance');
-      expect(fund).toHaveProperty('progressPercentage');
+    // Campaigns shape (array of campaign summaries)
+    expect(Array.isArray(body.campaigns)).toBe(true);
+    for (const campaign of body.campaigns) {
+      expect(campaign).toHaveProperty('campaignId');
+      expect(campaign).toHaveProperty('campaignName');
+      expect(campaign).toHaveProperty('targetAmount');
+      expect(campaign).toHaveProperty('totalRaised');
+      expect(campaign).toHaveProperty('totalExpenses');
+      expect(campaign).toHaveProperty('balance');
+      expect(campaign).toHaveProperty('progressPercentage');
     }
 
     // Events shape
@@ -128,6 +128,41 @@ describe('dashboard smoke: composite endpoint returns expected shape with matchi
   // Note: the Painel grant on every demo role (Congregado now included for transparency)
   // means there's no seeded user without Dashboard.View to drive a 403 smoke here. The
   // generic permission-gate behaviour is covered by permissions.test.ts.
+
+  // RBAC: each section is gated by the read permission of the module that owns its data.
+  it('returns null finance/closing sections for a Congregado (no Reports/Closings perms)', async () => {
+    const congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    const result = await app.inject({
+      method: 'GET',
+      url: '/dashboard?month=2026-05',
+      headers: { cookie: congregado.cookie, 'x-csrf-token': congregado.csrfToken }
+    });
+
+    expect(result.statusCode).toBe(200);
+    const body = result.json();
+    expect(body.month).toBe('2026-05');
+    expect(body.finance).toBeNull();
+    expect(body.participation).toBeNull();
+    expect(body.trends).toBeNull();
+    expect(body.campaigns).toBeNull();
+    expect(body.events).toBeNull();
+    expect(body.closing).toBeNull();
+  });
+
+  it('returns populated finance + closing for the treasurer (board role with Reports)', async () => {
+    const tesoureiro = await loginAs(app, 'tesoureiro@email.com', 'tesoureiro123');
+    const result = await app.inject({
+      method: 'GET',
+      url: '/dashboard?month=2026-05',
+      headers: { cookie: tesoureiro.cookie, 'x-csrf-token': tesoureiro.csrfToken }
+    });
+
+    expect(result.statusCode).toBe(200);
+    const body = result.json();
+    expect(body.finance).not.toBeNull();
+    expect(body.finance.income).toHaveProperty('current');
+    expect(body.closing).not.toBeNull();
+  });
 
   it('validates month query parameter format', async () => {
     const result = await app.inject({

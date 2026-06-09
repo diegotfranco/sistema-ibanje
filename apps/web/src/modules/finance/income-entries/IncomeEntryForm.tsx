@@ -1,6 +1,6 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/Dialog';
 import { zodResolver } from '@/lib/zodResolver';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';
@@ -34,7 +34,7 @@ export function IncomeEntryForm({ initialValues, isPending, onSubmit, onCancel }
       categoryId: initialValues?.categoryId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
-      designatedFundId: initialValues?.designatedFundId ?? undefined,
+      campaignId: initialValues?.campaignId ?? undefined,
       eventId: initialValues?.eventId ?? undefined,
       notes: initialValues?.notes ?? '',
       status: (initialValues?.status as IncomeEntryFormValues['status']) ?? EntryStatus.Paid

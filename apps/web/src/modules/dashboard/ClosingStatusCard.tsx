@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { formatMonthForBanner } from './dashboard-utils';
+import { CLOSING_STATUS_LABELS } from '@/lib/status';
 import type { Closing } from '@sistema-ibanje/shared';
 
 interface ClosingStatusCardProps {
@@ -44,14 +45,8 @@ const toneStyles: Record<Tone, { accent: string; icon: string; badge: string }> 
   }
 };
 
-const statusLabel: Record<NonNullable<Closing['status']>, string> = {
-  aberto: 'Aberto',
-  'em revisão': 'Em revisão',
-  rejeitado: 'Rejeitado',
-  aprovado: 'Aprovado',
-  fechado: 'Fechado'
-};
-
+// Labels come from the central status module; the per-card `statusTone` below is a card-specific
+// visual vocabulary (accent + icon + badge border) distinct from the StatusBadge color tokens.
 const statusTone: Record<NonNullable<Closing['status']>, Tone> = {
   aberto: 'action',
   'em revisão': 'review',
@@ -121,7 +116,7 @@ export function ClosingStatusCard({ data, month, isLoading }: ClosingStatusCardP
             ? Lock
             : Clock;
     headline = `Fechamento de ${monthLabel}`;
-    badgeText = statusLabel[data.status];
+    badgeText = CLOSING_STATUS_LABELS[data.status];
     onCta = () => {
       if (data.currentMonthId) navigate(`/monthly-closings/${data.currentMonthId}`);
     };
@@ -146,7 +141,7 @@ export function ClosingStatusCard({ data, month, isLoading }: ClosingStatusCardP
         <div className="flex items-center justify-between gap-3">
           {hasPriorPending && data.status ? (
             <p className="text-xs text-muted-foreground">
-              Atual ({monthLabel}): {statusLabel[data.status]}
+              Atual ({monthLabel}): {CLOSING_STATUS_LABELS[data.status]}
             </p>
           ) : (
             <span />

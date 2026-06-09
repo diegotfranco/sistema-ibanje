@@ -16,7 +16,7 @@ export type {
   MonthlyTrend,
   Trends,
   Closing,
-  FundSummary,
+  CampaignSummary,
   EventSummary,
   Events
 } from './dashboard.js';
@@ -36,7 +36,7 @@ export const Module = {
   ExpenseCategories: 9,
   ExpenseEntries: 10,
   PaymentMethods: 11,
-  DesignatedFunds: 12,
+  Campaigns: 12,
   Dashboard: 13,
   Reports: 14,
   MonthlyClosings: 15,
@@ -89,6 +89,44 @@ export const ActiveStatus = {
 } as const;
 export type ActiveStatusValue = (typeof ActiveStatus)[keyof typeof ActiveStatus];
 
+// Member lifecycle. `ativo`/`inativo` are reversible attendance states; `desligado`/`transferido`/
+// `falecido` are formal exits carrying exit metadata (date, reason, optional transfer letter).
+// Orthogonal to soft-delete (`deletedAt`): a deleted row is a data-entry mistake, not an exit.
+export const AttenderStatus = {
+  Active: 'ativo',
+  Inactive: 'inativo',
+  Dismissed: 'desligado',
+  Transferred: 'transferido',
+  Deceased: 'falecido'
+} as const;
+export type AttenderStatusValue = (typeof AttenderStatus)[keyof typeof AttenderStatus];
+export const ATTENDER_STATUS_VALUES = [
+  AttenderStatus.Active,
+  AttenderStatus.Inactive,
+  AttenderStatus.Dismissed,
+  AttenderStatus.Transferred,
+  AttenderStatus.Deceased
+] as const satisfies readonly AttenderStatusValue[];
+// Formal-exit states: entering one records exit metadata; they can only return to `ativo`
+// (reactivation), never directly to another terminal state.
+export const ATTENDER_TERMINAL_STATUSES = [
+  AttenderStatus.Dismissed,
+  AttenderStatus.Transferred,
+  AttenderStatus.Deceased
+] as const satisfies readonly AttenderStatusValue[];
+
+// Campaign lifecycle — feminine to agree with "campanha". `encerrada` = the
+// campaign legitimately ended (goal/deadline reached); distinct from soft-delete (`deletedAt`).
+export const CampaignStatus = {
+  Active: 'ativa',
+  Ended: 'encerrada'
+} as const;
+export type CampaignStatusValue = (typeof CampaignStatus)[keyof typeof CampaignStatus];
+export const CAMPAIGN_STATUS_VALUES = [
+  CampaignStatus.Active,
+  CampaignStatus.Ended
+] as const satisfies readonly CampaignStatusValue[];
+
 export const EntryStatus = {
   Pending: 'pendente',
   Paid: 'paga',
@@ -137,3 +175,36 @@ export const AdmissionMode = {
   FaithProfession: 'profissão de fé'
 } as const;
 export type AdmissionModeValue = (typeof AdmissionMode)[keyof typeof AdmissionMode];
+
+// The 27 Brazilian federative units (26 states + Federal District). Used to validate the
+// `state`/`addressState` fields after they are normalized to uppercase at the boundary.
+export const UF_VALUES = [
+  'AC',
+  'AL',
+  'AP',
+  'AM',
+  'BA',
+  'CE',
+  'DF',
+  'ES',
+  'GO',
+  'MA',
+  'MT',
+  'MS',
+  'MG',
+  'PA',
+  'PB',
+  'PR',
+  'PE',
+  'PI',
+  'RJ',
+  'RN',
+  'RS',
+  'RO',
+  'RR',
+  'SC',
+  'SP',
+  'SE',
+  'TO'
+] as const;
+export type Uf = (typeof UF_VALUES)[number];

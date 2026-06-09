@@ -17,15 +17,18 @@ git clone <repo-url> /opt/sistema-ibanje/app && cd /opt/sistema-ibanje/app
 cp .env.production.example .env.production
 # Edit .env.production — fill every CHANGE_ME secret. Generate strong values:
 #   openssl rand -base64 48   (use this for SESSION_SECRET and ARGON2_PEPPER)
+# Also set ADMIN_EMAIL and ADMIN_PASSWORD — these bootstrap the first admin.
 
 docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
 
 # Wait until postgres healthcheck is green, then run migrations + seed once:
 docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api pnpm db:migrate
-docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api pnpm db:seed
+docker compose -f docker-compose.prod.yml --env-file .env.production run --rm api pnpm db:seed:prod
 ```
 
-The seed creates the default admin user (`admin@email.com / admin123`). **Change this password immediately** by logging in and using the password change flow.
+`db:seed:prod` inserts structural/reference data only (roles, permissions, modules, categories, payment methods, church settings) and creates the first Administrador from `ADMIN_EMAIL` / `ADMIN_PASSWORD`. It is one-shot: it refuses to run if the target tables already contain data. **Log in and change the admin password immediately.**
+
+> Do **not** run `pnpm db:seed` in production — that is the development/test seed and it inserts demo users with public passwords plus fictitious congregants and finance data.
 
 ## Deploying a new version
 

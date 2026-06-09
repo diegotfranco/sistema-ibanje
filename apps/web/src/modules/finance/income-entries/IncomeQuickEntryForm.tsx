@@ -18,7 +18,7 @@ const emptyDefaults: IncomeEntryFormValues = {
   categoryId: undefined as unknown as number,
   attenderId: undefined,
   paymentMethodId: undefined as unknown as number,
-  designatedFundId: undefined,
+  campaignId: undefined,
   eventId: undefined,
   notes: '',
   status: EntryStatus.Paid
@@ -57,9 +57,7 @@ export function IncomeQuickEntryForm({ onCreated }: Props) {
       paymentMethodId: values.paymentMethodId!,
       status: values.status,
       ...(values.attenderId !== undefined ? { attenderId: values.attenderId } : {}),
-      ...(values.designatedFundId !== undefined
-        ? { designatedFundId: values.designatedFundId }
-        : {}),
+      ...(values.campaignId !== undefined ? { campaignId: values.campaignId } : {}),
       ...(values.eventId !== undefined ? { eventId: values.eventId } : {}),
       ...(values.notes ? { notes: values.notes } : {})
     };

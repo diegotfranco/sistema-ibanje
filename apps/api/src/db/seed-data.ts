@@ -102,10 +102,10 @@ export const SEED_MEETING_TYPES = {
 } as const;
 
 /**
- * Structural designated funds — present in every dev/prod seed.
- * Historical campaign funds are appended at dev-seed time from fixtures/designated_funds.json.
+ * Structural campaigns — present in every dev/prod seed.
+ * Historical campaign funds are appended at dev-seed time from fixtures/campaigns.json.
  */
-export const SEED_DESIGNATED_FUNDS: {
+export const SEED_CAMPAIGNS: {
   name: string;
   description?: string | null;
   targetAmount?: string;
@@ -247,7 +247,7 @@ export const SEED_CALENDAR_ENTRIES: {
 
 /**
  * Income taxonomy — category answers WHAT kind of inflow.
- * The WHERE-it's-earmarked dimension lives in designated_funds (e.g. missionary offering =
+ * The WHERE-it's-earmarked dimension lives in campaigns (e.g. missionary offering =
  * Oferta + Fundo Missionário; campaign contribution = Oferta + the specific Campanha X fund).
  */
 export const SEED_INCOME_CATEGORY_PARENTS = [
@@ -581,7 +581,15 @@ export function buildRoleModulePermissions(
     ...cross(roleByName['Secretário'].id, ['Cartas de Membros', 'Modelos de Ata'], fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Dados da Igreja'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Dados da Igreja'], fullPermIds),
-    ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], fullPermIds)
+    ...cross(roleByName['Secretário'].id, ['Dados da Igreja'], fullPermIds),
+    // The Reports page (view + export financial/administrative reports) is for the whole board, not
+    // just the admin. Read-only: Reports has no create/edit/delete. `readPermIds` = Acessar (open the
+    // page) + Relatórios (the view/export-reports capability).
+    ...cross(roleByName['Tesoureiro'].id, ['Relatórios'], readPermIds),
+    ...cross(roleByName['Presidente'].id, ['Relatórios'], readPermIds),
+    ...cross(roleByName['Vice-Presidente'].id, ['Relatórios'], readPermIds),
+    ...cross(roleByName['Secretário'].id, ['Relatórios'], readPermIds),
+    ...cross(roleByName['Comissão de Exame de Contas'].id, ['Relatórios'], readPermIds)
   ];
 }
 
@@ -644,14 +652,14 @@ export const SEED_DEMO_USERS: SeedDemoUser[] = [
 export const SEED_CHURCH_SETTINGS = {
   id: 1,
   name: 'Igreja Batista Nova Jerusalém',
-  cnpj: '15.556.152/0001-42',
+  cnpj: '15556152000142',
   addressStreet: 'Rua Santo Amaro',
   addressNumber: '286',
   addressDistrict: 'Vila Carrão',
   addressCity: 'São Paulo',
   addressState: 'SP',
   postalCode: '03446000',
-  phone: '(11) 2741-4262',
+  phone: '1127414262',
   email: null,
   websiteUrl: null,
   currentPresidentName: 'Pr. Deucir Araújo de Almeida',

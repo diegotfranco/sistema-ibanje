@@ -1,12 +1,17 @@
 import { z } from 'zod';
-import { AdmissionMode } from '@sistema-ibanje/shared';
+import { AdmissionMode, ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 
 export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
   userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
-  phone: z.string().max(16, 'Máximo de 16 caracteres').optional().nullable(),
-  email: z.email().optional().nullable(),
+  phone: z
+    .string()
+    .regex(/^\d{10,11}$/, 'Telefone inválido')
+    .optional()
+    .nullable()
+    .or(z.literal('')),
+  email: z.email().optional().nullable().or(z.literal('')),
   addressStreet: z.string().max(96).optional().nullable(),
   addressNumber: z.string().max(16).optional().nullable(),
   addressComplement: z.string().max(64).optional().nullable(),
@@ -17,7 +22,8 @@ export const AttenderFormSchema = z.object({
     .string()
     .regex(/^\d{8}$/, 'CEP inválido')
     .optional()
-    .nullable(),
+    .nullable()
+    .or(z.literal('')),
   isMember: z.boolean().optional().default(false),
   // Month-granular fields use the `YYYY-MM` wire format (DB stores them as YYYYMM ints).
   memberSince: z
@@ -44,6 +50,17 @@ export const AttenderFormSchema = z.object({
 
 export type AttenderFormValues = z.infer<typeof AttenderFormSchema>;
 
+// Drives the lifecycle dialog (PATCH /attenders/:id/status). exitDate is required by the server
+// when entering a formal-exit state; exitLetterId only applies to `transferido`.
+export const AttenderStatusChangeSchema = z.object({
+  status: z.enum(ATTENDER_STATUS_VALUES),
+  exitDate: z.string().optional().nullable(),
+  exitReason: z.string().max(256, 'Máximo de 256 caracteres').optional().nullable(),
+  exitLetterId: z.number().int().positive().optional().nullable()
+});
+
+export type AttenderStatusChangeValues = z.infer<typeof AttenderStatusChangeSchema>;
+
 export type AttenderResponse = {
   id: number;
   userId: number | null;
@@ -59,6 +76,9 @@ export type AttenderResponse = {
   email: string | null;
   phone: string | null;
   status: string;
+  exitDate: string | null;
+  exitReason: string | null;
+  exitLetterId: number | null;
   isMember: boolean;
   baptismDate: string | null;
   memberSince: string | null;

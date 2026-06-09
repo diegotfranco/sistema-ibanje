@@ -17,13 +17,13 @@ export const CreateIncomeEntryRequestSchema = z
     categoryId: z.number().int().positive(),
     attenderId: z.number().int().positive().optional(),
     paymentMethodId: z.number().int().positive(),
-    designatedFundId: z.number().int().positive().optional(),
+    campaignId: z.number().int().positive().optional(),
     eventId: z.number().int().positive().optional(),
     notes: z.string().max(1000).optional(),
     status: z.enum(['pendente', 'paga', 'cancelada']).optional()
   })
-  .refine((d) => !(d.designatedFundId && d.eventId), {
-    message: 'Selecione um fundo OU um evento, não ambos.',
+  .refine((d) => !(d.campaignId && d.eventId), {
+    message: 'Selecione uma campanha OU um evento, não ambos.',
     path: ['eventId']
   });
 
@@ -35,13 +35,13 @@ export const UpdateIncomeEntryRequestSchema = z
     categoryId: z.number().int().positive().optional(),
     attenderId: z.number().int().positive().optional(),
     paymentMethodId: z.number().int().positive().optional(),
-    designatedFundId: z.number().int().positive().nullable().optional(),
+    campaignId: z.number().int().positive().nullable().optional(),
     eventId: z.number().int().positive().nullable().optional(),
     notes: z.string().max(1000).optional(),
     status: z.enum(['pendente', 'paga', 'cancelada']).optional()
   })
-  .refine((d) => !(d.designatedFundId && d.eventId), {
-    message: 'Selecione um fundo OU um evento, não ambos.',
+  .refine((d) => !(d.campaignId && d.eventId), {
+    message: 'Selecione uma campanha OU um evento, não ambos.',
     path: ['eventId']
   });
 
@@ -59,8 +59,8 @@ export const IncomeEntryResponseSchema = z.object({
   attenderName: z.string().nullable(),
   paymentMethodId: z.number().int().positive(),
   paymentMethodName: z.string(),
-  designatedFundId: z.number().int().positive().nullable(),
-  designatedFundName: z.string().nullable(),
+  campaignId: z.number().int().positive().nullable(),
+  campaignName: z.string().nullable(),
   eventId: z.number().int().positive().nullable(),
   eventName: z.string().nullable(),
   notes: z.string().nullable(),

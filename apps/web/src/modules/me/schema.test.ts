@@ -6,23 +6,18 @@ describe('UpdateMyProfileFormSchema', () => {
     expect(UpdateMyProfileFormSchema.safeParse({}).success).toBe(true);
   });
 
-  it('accepts an optional phone up to 16 chars', () => {
-    expect(
-      UpdateMyProfileFormSchema.safeParse({
-        phone: '(11) 9999-9999'
-      }).success
-    ).toBe(true);
+  it('accepts an optional phone of 10–11 raw digits', () => {
+    expect(UpdateMyProfileFormSchema.safeParse({ phone: '1127414262' }).success).toBe(true);
+    expect(UpdateMyProfileFormSchema.safeParse({ phone: '11999998888' }).success).toBe(true);
   });
 
-  it('rejects a phone longer than 16 chars', () => {
+  it('rejects a phone that is not 10–11 raw digits', () => {
     const r = UpdateMyProfileFormSchema.safeParse({
-      phone: 'a'.repeat(17)
+      phone: '(11) 9999-9999'
     });
     expect(r.success).toBe(false);
     if (!r.success) {
-      expect(r.error.issues.find((i) => i.path[0] === 'phone')?.message).toBe(
-        'Máximo de 16 caracteres'
-      );
+      expect(r.error.issues.find((i) => i.path[0] === 'phone')?.message).toBe('Telefone inválido');
     }
   });
 
@@ -155,7 +150,7 @@ describe('UpdateMyProfileFormSchema', () => {
   it('accepts mixed filled and empty fields', () => {
     expect(
       UpdateMyProfileFormSchema.safeParse({
-        phone: '(11) 9999-9999',
+        phone: '1199999999',
         email: '',
         addressStreet: 'Rua das Flores'
       }).success

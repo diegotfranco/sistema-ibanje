@@ -16,7 +16,7 @@ const ROUTES: RouteSpec[] = [
   { path: '/dashboard', label: 'Dashboard' },
   { path: '/attenders', label: 'Congregados' },
   { path: '/payment-methods', label: 'Formas de pagamento' },
-  { path: '/designated-funds', label: 'Campanhas' },
+  { path: '/campaigns', label: 'Campanhas' },
   { path: '/income-categories', label: 'Categorias de entrada' },
   { path: '/expense-categories', label: 'Categorias de despesa' },
   { path: '/income-entries', label: 'Entradas' },

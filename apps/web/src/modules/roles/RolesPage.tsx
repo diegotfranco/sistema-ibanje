@@ -1,18 +1,12 @@
 import { useState } from 'react';
-import { Pencil, Plus, ShieldCheck, Trash2 } from 'lucide-react';
-import { Button } from '@/components/Button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { RotateCcw, ShieldCheck } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/Dialog';
+import { PageContainer } from '@/components/PageContainer';
+import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { TrashToggle } from '@/components/TrashToggle';
 import StatusBadge from '@/components/StatusBadge';
+import { getStatusLabel } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useRoles, useRoleMutations } from './useRoles';
@@ -27,7 +21,8 @@ export default function RolesPage() {
   const canEdit = hasPermission(perms, Module.Roles, Action.Update);
   const canDelete = hasPermission(perms, Module.Roles, Action.Delete);
 
-  const list = useRoles();
+  const [viewingTrash, setViewingTrash] = useState(false);
+  const list = useRoles({ deleted: viewingTrash ? 'only' : undefined });
   const mutations = useRoleMutations();
 
   const [editing, setEditing] = useState<RoleResponse | null | 'new'>(null);
@@ -45,98 +40,70 @@ export default function RolesPage() {
     }
   }
 
-  const data = list.data?.data ?? [];
+  const permissionsAction: CustomAction<RoleResponse> = {
+    label: 'Permissões',
+    icon: <ShieldCheck size={16} />,
+    onClick: (r) => setPermissionsTarget(r)
+  };
+  const restoreAction: CustomAction<RoleResponse> = {
+    label: 'Restaurar',
+    icon: <RotateCcw size={16} />,
+    onClick: (r) => mutations.restore.mutate(r.id)
+  };
 
   return (
     <>
-      <div className="p-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Cargos</CardTitle>
-            {canCreate && (
-              <Button size="sm" onClick={() => setEditing('new')}>
-                <Plus className="h-4 w-4" />
-                Novo
-              </Button>
-            )}
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>Status</TableHead>
-                  {(canEdit || canDelete) && (
-                    <TableHead className="w-32 text-right">Ações</TableHead>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {list.isLoading && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      Carregando...
-                    </TableCell>
-                  </TableRow>
+      <PageContainer>
+        <ResourceListPage<RoleResponse>
+          title={viewingTrash ? 'Cargos — Lixeira' : 'Cargos'}
+          columns={[
+            { header: 'Nome', cell: (r) => r.name },
+            { header: 'Descrição', cell: (r) => r.description ?? '—', hideBelow: 'md' },
+            { header: 'Status', cell: (r) => <StatusBadge status={r.status} /> }
+          ]}
+          data={list.data?.data}
+          isLoading={list.isLoading}
+          emptyMessage={viewingTrash ? 'A lixeira está vazia.' : 'Nenhum cargo encontrado.'}
+          toolbarRight={
+            canDelete ? (
+              <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
+            ) : undefined
+          }
+          onCreate={!viewingTrash && canCreate ? () => setEditing('new') : undefined}
+          onEdit={!viewingTrash && canEdit ? (r) => setEditing(r) : undefined}
+          onDelete={!viewingTrash && canDelete ? (r) => setDeleting(r) : undefined}
+          customActions={
+            viewingTrash
+              ? canDelete
+                ? [restoreAction]
+                : undefined
+              : canEdit
+                ? [permissionsAction]
+                : undefined
+          }
+          canCreate={!viewingTrash && canCreate}
+          canEdit={!viewingTrash && canEdit}
+          canDelete={!viewingTrash && canDelete}
+          rowKey={(r) => r.id}
+          mobileRow={(r) => (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate font-medium">{r.name}</span>
+                {r.description && (
+                  <span className="truncate text-sm text-muted-foreground">{r.description}</span>
                 )}
-                {!list.isLoading && data.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground">
-                      Nenhum cargo encontrado.
-                    </TableCell>
-                  </TableRow>
-                )}
-                {!list.isLoading &&
-                  data.map((row) => (
-                    <TableRow key={row.id}>
-                      <TableCell>{row.name}</TableCell>
-                      <TableCell>{row.description ?? '—'}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={row.status} />
-                      </TableCell>
-                      {(canEdit || canDelete) && (
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {canEdit && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setEditing(row)}
-                                aria-label="Editar"
-                                className="text-warning hover:text-warning/80">
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canEdit && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setPermissionsTarget(row)}
-                                aria-label="Permissões">
-                                <ShieldCheck className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {canDelete && (
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => setDeleting(row)}
-                                aria-label="Remover"
-                                className="text-destructive hover:text-destructive/80">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+              <StatusBadge status={r.status} />
+            </div>
+          )}
+          mobileDetailTitle={(r) => r.name}
+          mobileDetailFields={(r) => [
+            { label: 'Nome', value: r.name },
+            { label: 'Descrição', value: r.description ?? '—' },
+            { label: 'Status', value: getStatusLabel(r.status) }
+          ]}
+        />
+      </PageContainer>
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
         <DialogContent>

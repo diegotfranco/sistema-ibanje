@@ -28,7 +28,10 @@ export type EdgeCaseAttender = {
   email?: string | null;
   phone?: string | null;
   isMember?: boolean;
-  status?: 'ativo' | 'inativo';
+  status?: 'ativo' | 'inativo' | 'desligado' | 'transferido' | 'falecido';
+  // Exit metadata, set when status is a formal-exit state (desligado/transferido/falecido).
+  exitDate?: string | null;
+  exitReason?: string | null;
   // Month-granular values are stored as YYYYMM ints (e.g. April 2010 -> 201004).
   memberSince?: number | null;
   congregatingSince?: number | null;
@@ -85,7 +88,7 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     admissionMode: 'profissão de fé'
   },
   {
-    // inactive member — exercises the status filter and the inativo rendering path
+    // inativo — generic "drifted away", no formal exit. Exercises the inativo filter/badge.
     name: 'Geraldo Afastado',
     birthDate: '1968-07-22',
     city: 'Santos',
@@ -94,6 +97,48 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     status: 'inativo',
     memberSince: 200506,
     baptismDate: '2005-06-12',
+    admissionMode: 'batismo'
+  },
+  {
+    // desligado — membership formally terminated; carries exit date + reason.
+    name: 'Genival Desligado',
+    birthDate: '1979-01-30',
+    city: 'Guarujá',
+    state: 'SP',
+    isMember: true,
+    status: 'desligado',
+    exitDate: '2025-10-12',
+    exitReason: 'Desligamento a pedido próprio.',
+    memberSince: 201103,
+    baptismDate: '2011-03-06',
+    admissionMode: 'batismo'
+  },
+  {
+    // transferido — left with a carta de transferência (Beatriz holds the outgoing letter below).
+    name: 'Tobias Transferido',
+    birthDate: '1983-06-18',
+    city: 'São Vicente',
+    state: 'SP',
+    isMember: true,
+    status: 'transferido',
+    exitDate: '2026-05-05',
+    exitReason: 'Transferido para a Primeira Igreja Batista de São Paulo.',
+    memberSince: 201407,
+    baptismDate: '2014-07-20',
+    admissionMode: 'carta de transferência'
+  },
+  {
+    // falecido — deceased; exit date is the date of passing.
+    name: 'Benedito Saraiva',
+    birthDate: '1948-11-02',
+    city: 'Santos',
+    state: 'SP',
+    isMember: true,
+    status: 'falecido',
+    exitDate: '2026-02-28',
+    exitReason: 'Falecimento.',
+    memberSince: 197505,
+    baptismDate: '1975-05-11',
     admissionMode: 'batismo'
   }
 ];
@@ -613,7 +658,7 @@ export type EdgeCaseIncome = {
   categoryName: string;
   attenderName?: string | null;
   paymentMethodName: string;
-  designatedFundName?: string | null;
+  campaignName?: string | null;
   eventTitle?: string | null;
   notes?: string | null;
   createdByUserEmail: string;
@@ -627,7 +672,7 @@ export type EdgeCaseExpense = {
   totalInstallments: number;
   categoryName: string;
   paymentMethodName: string;
-  designatedFundName?: string | null;
+  campaignName?: string | null;
   eventTitle?: string | null;
   notes?: string | null;
   /** Synthetic id used to link installments together — the seed maps it to the actual parent id. */
@@ -723,7 +768,7 @@ export const EDGE_CASE_EXPENSES: EdgeCaseExpense[] = [
     totalInstallments: 1,
     categoryName: 'Manutenção Predial',
     paymentMethodName: 'Transferência Bancária',
-    designatedFundName: 'Desafio Construção',
+    campaignName: 'Desafio Construção',
     notes: 'Pagamento de empreiteira — caso-limite: saldo do fundo fica negativo no mês.',
     createdByUserEmail: 'tesoureiro@email.com'
   },
@@ -928,7 +973,7 @@ export const EDGE_CASE_INCOME = [
       'Caso-limite: lançamento no último dia do período fechado — tentativas de edição devem ser bloqueadas.',
     createdByUserEmail: 'tesoureiro@email.com'
   },
-  // Designated-fund inflow.
+  // Campaign inflow.
   {
     depositDate: '2026-02-14',
     referenceDate: '2026-02-15',
@@ -936,7 +981,7 @@ export const EDGE_CASE_INCOME = [
     categoryName: 'Oferta',
     attenderName: 'João da Silva',
     paymentMethodName: 'Dinheiro',
-    designatedFundName: 'Fundo Missionário',
+    campaignName: 'Fundo Missionário',
     createdByUserEmail: 'tesoureiro@email.com'
   },
   // Income for a campanha fund (proves the campanha fan-out is wired up).
@@ -947,7 +992,7 @@ export const EDGE_CASE_INCOME = [
     categoryName: 'Oferta',
     attenderName: 'André Pereira',
     paymentMethodName: 'Dinheiro',
-    designatedFundName: 'Desafio Construção',
+    campaignName: 'Desafio Construção',
     createdByUserEmail: 'tesoureiro@email.com'
   },
   // Event-linked inscription income (proves eventId wire-up + event P&L report).

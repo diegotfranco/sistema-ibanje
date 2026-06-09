@@ -74,7 +74,7 @@ export function lineItemActionsColumn<T>(
         />
       );
     },
-    meta: { align: 'right', canHide: false }
+    meta: { align: 'center', className: 'w-36', canHide: false }
   };
 }
 

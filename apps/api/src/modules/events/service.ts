@@ -71,9 +71,9 @@ export async function updateEvent(
   return buildResponse(updated);
 }
 
-export async function deactivateEvent(callerId: number, id: number): Promise<void | null> {
+export async function softDeleteEvent(callerId: number, id: number): Promise<void | null> {
   await assertPermission(callerId, Module.Events, Action.Delete);
   const existing = await repo.findEventById(id);
   if (!existing) return null;
-  await repo.deactivateEvent(id);
+  await repo.softDeleteEvent(id);
 }

@@ -55,6 +55,23 @@ describe('ChurchSettingsPage', () => {
     expect(screen.getByLabelText('Código Postal')).toBeInTheDocument();
   });
 
+  // Regression: the form must populate from the async settings query. `defaultValues` alone is read
+  // only at mount (EMPTY on a cold load), so the fields stayed blank — fixed by the `values` prop.
+  it('populates the fields with the loaded settings values', async () => {
+    server.use(
+      http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<ChurchSettingsPage />);
+
+    await screen.findByText('Identificação');
+
+    expect(screen.getByLabelText('Nome')).toHaveValue('Igreja Batista Ibanje');
+    expect(screen.getByLabelText('Cidade')).toHaveValue('São Paulo');
+    expect(screen.getByLabelText('Nome do Presidente')).toHaveValue('João da Silva');
+  });
+
   it('displays church contact fields', async () => {
     server.use(
       http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
@@ -95,9 +112,11 @@ describe('ChurchSettingsPage', () => {
       ...referenceHandlers()
     );
 
-    renderWithProviders(<ChurchSettingsPage />);
+    const { container } = renderWithProviders(<ChurchSettingsPage />);
 
-    expect(screen.getByText('Carregando...')).toBeInTheDocument();
+    // Loading renders skeleton placeholders (animate-pulse) before the form appears.
+    expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+    expect(screen.queryByText('Identificação')).not.toBeInTheDocument();
   });
 
   it('displays save button', async () => {
@@ -108,6 +127,27 @@ describe('ChurchSettingsPage', () => {
 
     renderWithProviders(<ChurchSettingsPage />);
 
-    expect(await screen.findByRole('button', { name: /salvar/i })).toBeInTheDocument();
+    // Exact name — the page also has a "Salvar saldo inicial" button in the finance card.
+    expect(await screen.findByRole('button', { name: 'Salvar' })).toBeInTheDocument();
+  });
+
+  it('renders the logo and opening-balance (finance settings) sections', async () => {
+    server.use(
+      http.get(`${API}/church-settings`, () => HttpResponse.json(churchSettings)),
+      http.get(`${API}/finance-settings`, () =>
+        HttpResponse.json({
+          openingBalance: '0.00',
+          lockedByClosing: false,
+          updatedAt: '2026-06-07T00:00:00.000Z'
+        })
+      ),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<ChurchSettingsPage />);
+
+    expect(await screen.findByText('Logo')).toBeInTheDocument();
+    expect(screen.getByText('Saldo inicial')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Enviar logo' })).toBeInTheDocument();
   });
 });

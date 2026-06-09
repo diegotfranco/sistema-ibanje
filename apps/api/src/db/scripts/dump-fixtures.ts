@@ -5,7 +5,7 @@
  *
  * What we dump:
  *   - attenders.json          — cleaned `membros` table
- *   - designated_funds.json   — one extra fund per distinct campanha_nome found
+ *   - campaigns.json   — one extra fund per distinct campanha_nome found
  *                               in `entradas` (base 6 are in seed-data.ts)
  *   - income_entries.json     — `entradas` rows fanned out per amount column,
  *                               filtered to referenceDate >= today - 5y
@@ -211,7 +211,7 @@ function mapForma(forma: string | null): string {
 
 // ---------------------------------------------------------------------------
 // campanha clustering — normalize spelling/whitespace variants into canonical
-// designated-fund names. Manual alias map covers the obvious typos.
+// campaign names. Manual alias map covers the obvious typos.
 // ---------------------------------------------------------------------------
 const CAMPANHA_ALIASES: Record<string, string> = {
   // typos (normalized form, applied at clustering time)
@@ -373,7 +373,7 @@ type AttenderFixture = {
   email: string | null;
   phone: string | null;
 };
-type DesignatedFundFixture = { name: string; description?: string | null };
+type CampaignFixture = { name: string; description?: string | null };
 type IncomeEntryFixture = {
   referenceDate: string;
   depositDate: string;
@@ -381,7 +381,7 @@ type IncomeEntryFixture = {
   categoryName: string;
   attenderName: string | null;
   paymentMethodName: string;
-  designatedFundName: string | null;
+  campaignName: string | null;
   notes: string | null;
 };
 type ExpenseEntryFixture = {
@@ -392,7 +392,7 @@ type ExpenseEntryFixture = {
   totalInstallments: number;
   categoryName: string;
   paymentMethodName: string;
-  designatedFundName: string | null;
+  campaignName: string | null;
   notes: string | null;
 };
 
@@ -485,7 +485,7 @@ function main() {
     'terenos',
     'pam'
   ]);
-  const designatedFundsFixture: DesignatedFundFixture[] = [...campanhaCountsByCanonical.entries()]
+  const campaignsFixture: CampaignFixture[] = [...campanhaCountsByCanonical.entries()]
     .filter(([canonical]) => !BASE_FUND_NORM.has(canonical))
     .sort((a, b) => a[1].display.localeCompare(b[1].display, 'pt-BR'))
     .map(([, info]) => ({
@@ -557,7 +557,7 @@ function main() {
         ...common,
         amount: fmtMoney(dizimo),
         categoryName: 'Dízimo',
-        designatedFundName: null,
+        campaignName: null,
         notes: baseNote
       });
     }
@@ -566,7 +566,7 @@ function main() {
         ...common,
         amount: fmtMoney(terenos),
         categoryName: 'Doação',
-        designatedFundName: 'Terenos',
+        campaignName: 'Terenos',
         notes: baseNote
       });
     }
@@ -575,7 +575,7 @@ function main() {
         ...common,
         amount: fmtMoney(missoes),
         categoryName: 'Oferta',
-        designatedFundName: 'Fundo Missionário',
+        campaignName: 'Fundo Missionário',
         notes: baseNote
       });
     }
@@ -584,7 +584,7 @@ function main() {
         ...common,
         amount: fmtMoney(pam),
         categoryName: 'Oferta',
-        designatedFundName: 'PAM',
+        campaignName: 'PAM',
         notes: baseNote
       });
     }
@@ -602,7 +602,7 @@ function main() {
         ...common,
         amount: fmtMoney(campanha),
         categoryName: 'Oferta',
-        designatedFundName: fundName,
+        campaignName: fundName,
         notes: campNote || null
       });
     }
@@ -648,7 +648,7 @@ function main() {
       totalInstallments: 1,
       categoryName,
       paymentMethodName: 'Transferência Bancária',
-      designatedFundName: null,
+      campaignName: null,
       notes: destino.length > 1000 ? destino.slice(0, 1000) : destino
     });
   }
@@ -664,7 +664,7 @@ function main() {
   };
 
   writeJson('attenders.json', attendersFixture);
-  writeJson('designated_funds.json', designatedFundsFixture);
+  writeJson('campaigns.json', campaignsFixture);
   writeJson('income_entries.json', incomeFixture);
   writeJson('expense_entries.json', expenseFixture);
 
@@ -687,13 +687,13 @@ function main() {
     `- expense_entries.json: **${expenseFixture.length}** rows (from ${saidas.length} saidas; ${skippedOutsideWindowExpense} outside window, ${skippedBadDateExpense} bad dates)`
   );
   lines.push(
-    `- designated_funds.json: **${designatedFundsFixture.length}** extra campanha funds (beyond the 5 base funds in seed-data.ts)`
+    `- campaigns.json: **${campaignsFixture.length}** extra campanha funds (beyond the 5 base funds in seed-data.ts)`
   );
   lines.push('');
 
   lines.push('## Campanha fan-out');
   lines.push('');
-  lines.push('Each distinct (normalized) `campanha_nome` becomes its own designated fund. ');
+  lines.push('Each distinct (normalized) `campanha_nome` becomes its own campaign. ');
   lines.push(
     'Whitespace, casing, accents, and a small alias map (`compaicao→compaixao`, `anivesario→aniversario`, `planfetos→panfletos`) are normalized to collapse spelling variants.'
   );

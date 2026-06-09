@@ -1,4 +1,4 @@
-import { assertPermission } from '../../lib/permissions.js';
+import { assertPermission, hasPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import type { DashboardResponse } from './schema.js';
 import * as financeRepo from '../finance/reports/repository.js';
@@ -32,9 +32,9 @@ function calculateDeltaPct(current: string, previous: string): string {
   return (((curr - prev) / Math.abs(prev)) * 100).toFixed(2);
 }
 
-function buildFundSummary(
-  fundId: number,
-  fundName: string,
+function buildCampaignSummary(
+  campaignId: number,
+  campaignName: string,
   targetAmount: string | null,
   raised: string,
   expenses: string
@@ -45,8 +45,8 @@ function buildFundSummary(
       ? ((Number.parseFloat(balance) / Number.parseFloat(targetAmount)) * 100).toFixed(2)
       : null;
   return {
-    fundId,
-    fundName,
+    campaignId,
+    campaignName,
     targetAmount,
     totalRaised: raised,
     totalExpenses: expenses,
@@ -129,212 +129,235 @@ async function getRecentEvents(month: string): Promise<
 export async function getDashboard(callerId: number, month: string): Promise<DashboardResponse> {
   await assertPermission(callerId, Module.Dashboard, Action.View);
 
+  // The dashboard is a presentation layer over other modules: each section is gated by the read
+  // permission of the module that owns its data. Finance analytics (KPIs, participation, trends,
+  // campaigns, events) ride on Reports; the closing card on Monthly Closings. Unauthorized sections
+  // are returned as null and their queries skipped entirely.
+  const [canFinance, canClosing] = await Promise.all([
+    hasPermission(callerId, Module.Reports, Action.Report),
+    hasPermission(callerId, Module.MonthlyClosings, Action.View)
+  ]);
+
   const currentRange = monthToRange(month);
   const previousMonth = getPreviousMonth(month);
   const previousRange = monthToRange(previousMonth);
 
-  // Finance KPIs: current and previous month
-  const [
-    currentIncome,
-    previousIncome,
-    currentExpenses,
-    previousExpenses,
-    pendingIncomeCount,
-    pendingExpensesCount,
-    openingBalance
-  ] = await Promise.all([
-    financeRepo.sumIncomeForRange(currentRange.from, currentRange.to),
-    financeRepo.sumIncomeForRange(previousRange.from, previousRange.to),
-    financeRepo.sumExpensesForRange(currentRange.from, currentRange.to),
-    financeRepo.sumExpensesForRange(previousRange.from, previousRange.to),
-    financeRepo.countIncomeReportRows(currentRange.from, currentRange.to, 'pendente'),
-    financeRepo.countExpenseReportRows(currentRange.from, currentRange.to, 'pendente'),
-    financeService.computeOpeningBalance(currentRange.from)
-  ]);
+  let finance: DashboardResponse['finance'] = null;
+  let participation: DashboardResponse['participation'] = null;
+  let trends: DashboardResponse['trends'] = null;
+  let campaigns: DashboardResponse['campaigns'] = null;
+  let events: DashboardResponse['events'] = null;
+  let closing: DashboardResponse['closing'] = null;
 
-  const currentNetResult = (
-    Number.parseFloat(currentIncome) - Number.parseFloat(currentExpenses)
-  ).toFixed(2);
-  const previousNetResult = (
-    Number.parseFloat(previousIncome) - Number.parseFloat(previousExpenses)
-  ).toFixed(2);
+  // The cash balance feeds both the finance KPIs and the closing card's runningBalance, so compute
+  // it (and the current-month totals it needs) whenever either section is visible.
+  let currentBalance = '0.00';
+  let currentIncome = '0.00';
+  let currentExpenses = '0.00';
 
-  // Cash balance: opening + income paid - expenses paid
-  const currentBalance = financeService.computeCurrentBalance(
-    openingBalance,
-    currentIncome,
-    currentExpenses
-  );
+  if (canFinance || canClosing) {
+    const openingBalance = await financeService.computeOpeningBalance(currentRange.from);
+    [currentIncome, currentExpenses] = await Promise.all([
+      financeRepo.sumIncomeForRange(currentRange.from, currentRange.to),
+      financeRepo.sumExpensesForRange(currentRange.from, currentRange.to)
+    ]);
+    currentBalance = financeService.computeCurrentBalance(
+      openingBalance,
+      currentIncome,
+      currentExpenses
+    );
+  }
 
-  const finance = {
-    income: {
-      current: currentIncome,
-      previous: previousIncome,
-      deltaPct: calculateDeltaPct(currentIncome, previousIncome)
-    },
-    expenses: {
-      current: currentExpenses,
-      previous: previousExpenses,
-      deltaPct: calculateDeltaPct(currentExpenses, previousExpenses)
-    },
-    netResult: {
-      current: currentNetResult,
-      previous: previousNetResult,
-      deltaPct: calculateDeltaPct(currentNetResult, previousNetResult)
-    },
-    cashBalance: {
-      current: currentBalance,
-      asOf: currentRange.to
-    },
-    pendingCounts: {
-      income: pendingIncomeCount,
-      expenses: pendingExpensesCount
-    }
-  };
-
-  // Participation metrics
-  const [titheIds, offeringIds] = await Promise.all([
-    financeRepo.findIncomeCategoryIdsByNames(['Dízimo']),
-    financeRepo.findIncomeCategoryIdsByNames(['Oferta', 'Doação'])
-  ]);
-
-  const [totalActiveAttenders, currentTithePayers, currentOfferingPayers] = await Promise.all([
-    financeRepo.countActiveAttenders(),
-    financeRepo.countDistinctAttendersWithTithe(currentRange.from, currentRange.to, titheIds),
-    financeRepo.countDistinctAttendersWithOfferings(currentRange.from, currentRange.to, offeringIds)
-  ]);
-
-  const currentTithePct =
-    totalActiveAttenders > 0
-      ? ((currentTithePayers / totalActiveAttenders) * 100).toFixed(2)
-      : '0.00';
-  const currentOfferingPct =
-    totalActiveAttenders > 0
-      ? ((currentOfferingPayers / totalActiveAttenders) * 100).toFixed(2)
-      : '0.00';
-
-  const sixMonthTitheAvg = await getLast6MonthsAverage(month, ['Dízimo']);
-  const sixMonthOfferingAvg = await getLast6MonthsAverage(month, ['Oferta', 'Doação']);
-
-  const participation = {
-    tithe: {
-      currentPct: currentTithePct,
-      sixMonthAvgPct: sixMonthTitheAvg,
-      deltaPct: calculateDeltaPct(currentTithePct, sixMonthTitheAvg)
-    },
-    offering: {
-      currentPct: currentOfferingPct,
-      sixMonthAvgPct: sixMonthOfferingAvg,
-      deltaPct: calculateDeltaPct(currentOfferingPct, sixMonthOfferingAvg)
-    }
-  };
-
-  // 12-month trends
-  // Category name contract: Dízimo, Oferta, Doação must match the names in seed-data.ts
-  const monthlyTrends = [];
-  let trendMonth = month;
-  for (let i = 0; i < 12; i++) {
-    const { from, to } = monthToRange(trendMonth);
-    const [income, expenses, categoryBreakdown, titheCount, offeringCount, donationCount] =
+  if (canFinance) {
+    // Finance KPIs: previous-month comparison + pending counts (current totals already computed).
+    const [previousIncome, previousExpenses, pendingIncomeCount, pendingExpensesCount] =
       await Promise.all([
-        financeRepo.sumIncomeForRange(from, to),
-        financeRepo.sumExpensesForRange(from, to),
-        financeRepo.getIncomeByCategoryForRange(from, to),
-        financeRepo.countIncomeByCategories(from, to, ['Dízimo']),
-        financeRepo.countIncomeByCategories(from, to, ['Oferta', 'Doação']),
-        financeRepo.countIncomeByCategories(from, to, ['Doação'])
+        financeRepo.sumIncomeForRange(previousRange.from, previousRange.to),
+        financeRepo.sumExpensesForRange(previousRange.from, previousRange.to),
+        financeRepo.countIncomeReportRows(currentRange.from, currentRange.to, 'pendente'),
+        financeRepo.countExpenseReportRows(currentRange.from, currentRange.to, 'pendente')
       ]);
 
-    let titheAmount = '0.00';
-    let offeringAmount = '0.00';
-    let donationAmount = '0.00';
-    for (const cat of categoryBreakdown) {
-      if (cat.categoryName === 'Dízimo') {
-        titheAmount = cat.total;
-      } else if (cat.categoryName === 'Oferta') {
-        offeringAmount = (Number.parseFloat(offeringAmount) + Number.parseFloat(cat.total)).toFixed(
-          2
-        );
-      } else if (cat.categoryName === 'Doação') {
-        donationAmount = cat.total;
+    const currentNetResult = (
+      Number.parseFloat(currentIncome) - Number.parseFloat(currentExpenses)
+    ).toFixed(2);
+    const previousNetResult = (
+      Number.parseFloat(previousIncome) - Number.parseFloat(previousExpenses)
+    ).toFixed(2);
+
+    finance = {
+      income: {
+        current: currentIncome,
+        previous: previousIncome,
+        deltaPct: calculateDeltaPct(currentIncome, previousIncome)
+      },
+      expenses: {
+        current: currentExpenses,
+        previous: previousExpenses,
+        deltaPct: calculateDeltaPct(currentExpenses, previousExpenses)
+      },
+      netResult: {
+        current: currentNetResult,
+        previous: previousNetResult,
+        deltaPct: calculateDeltaPct(currentNetResult, previousNetResult)
+      },
+      cashBalance: {
+        current: currentBalance,
+        asOf: currentRange.to
+      },
+      pendingCounts: {
+        income: pendingIncomeCount,
+        expenses: pendingExpensesCount
+      }
+    };
+
+    // Participation metrics
+    const [titheIds, offeringIds] = await Promise.all([
+      financeRepo.findIncomeCategoryIdsByNames(['Dízimo']),
+      financeRepo.findIncomeCategoryIdsByNames(['Oferta', 'Doação'])
+    ]);
+
+    const [totalActiveAttenders, currentTithePayers, currentOfferingPayers] = await Promise.all([
+      financeRepo.countActiveAttenders(),
+      financeRepo.countDistinctAttendersWithTithe(currentRange.from, currentRange.to, titheIds),
+      financeRepo.countDistinctAttendersWithOfferings(
+        currentRange.from,
+        currentRange.to,
+        offeringIds
+      )
+    ]);
+
+    const currentTithePct =
+      totalActiveAttenders > 0
+        ? ((currentTithePayers / totalActiveAttenders) * 100).toFixed(2)
+        : '0.00';
+    const currentOfferingPct =
+      totalActiveAttenders > 0
+        ? ((currentOfferingPayers / totalActiveAttenders) * 100).toFixed(2)
+        : '0.00';
+
+    const sixMonthTitheAvg = await getLast6MonthsAverage(month, ['Dízimo']);
+    const sixMonthOfferingAvg = await getLast6MonthsAverage(month, ['Oferta', 'Doação']);
+
+    participation = {
+      tithe: {
+        currentPct: currentTithePct,
+        sixMonthAvgPct: sixMonthTitheAvg,
+        deltaPct: calculateDeltaPct(currentTithePct, sixMonthTitheAvg)
+      },
+      offering: {
+        currentPct: currentOfferingPct,
+        sixMonthAvgPct: sixMonthOfferingAvg,
+        deltaPct: calculateDeltaPct(currentOfferingPct, sixMonthOfferingAvg)
+      }
+    };
+
+    // 12-month trends
+    // Category name contract: Dízimo, Oferta, Doação must match the names in seed-data.ts
+    const monthlyTrends = [];
+    let trendMonth = month;
+    for (let i = 0; i < 12; i++) {
+      const { from, to } = monthToRange(trendMonth);
+      const [income, expenses, categoryBreakdown, titheCount, offeringCount, donationCount] =
+        await Promise.all([
+          financeRepo.sumIncomeForRange(from, to),
+          financeRepo.sumExpensesForRange(from, to),
+          financeRepo.getIncomeByCategoryForRange(from, to),
+          financeRepo.countIncomeByCategories(from, to, ['Dízimo']),
+          financeRepo.countIncomeByCategories(from, to, ['Oferta', 'Doação']),
+          financeRepo.countIncomeByCategories(from, to, ['Doação'])
+        ]);
+
+      let titheAmount = '0.00';
+      let offeringAmount = '0.00';
+      let donationAmount = '0.00';
+      for (const cat of categoryBreakdown) {
+        if (cat.categoryName === 'Dízimo') {
+          titheAmount = cat.total;
+        } else if (cat.categoryName === 'Oferta') {
+          offeringAmount = (
+            Number.parseFloat(offeringAmount) + Number.parseFloat(cat.total)
+          ).toFixed(2);
+        } else if (cat.categoryName === 'Doação') {
+          donationAmount = cat.total;
+        }
+      }
+
+      monthlyTrends.unshift({
+        month: trendMonth,
+        income,
+        expenses,
+        titheAmount,
+        offeringAmount,
+        donationAmount,
+        titheCount,
+        offeringCount,
+        donationCount
+      });
+
+      trendMonth = getPreviousMonth(trendMonth);
+    }
+
+    trends = { monthly: monthlyTrends };
+
+    // Campaigns (active only)
+    const [activeCampaigns, incomePerCampaign, expensesPerCampaign] = await Promise.all([
+      financeRepo.findAllActiveCampaigns(),
+      financeRepo.sumIncomePerCampaignForRange(currentRange.from, currentRange.to),
+      financeRepo.sumExpensesPerCampaignForRange(currentRange.from, currentRange.to)
+    ]);
+
+    campaigns = activeCampaigns.map((f) => {
+      const raised = incomePerCampaign.get(f.id) ?? '0.00';
+      const expensesVal = expensesPerCampaign.get(f.id) ?? '0.00';
+      return buildCampaignSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
+    });
+
+    // Events (last 90 days relative to the selected month)
+    const recentEvents = await getRecentEvents(month);
+    events = {
+      recent: recentEvents,
+      summary: {
+        count: recentEvents.length,
+        totalRaised: recentEvents
+          .reduce((sum, e) => sum + Number.parseFloat(e.totalRaised), 0)
+          .toFixed(2),
+        totalSpent: recentEvents
+          .reduce((sum, e) => sum + Number.parseFloat(e.totalSpent), 0)
+          .toFixed(2),
+        totalNet: recentEvents.reduce((sum, e) => sum + Number.parseFloat(e.net), 0).toFixed(2)
+      }
+    };
+  }
+
+  if (canClosing) {
+    const [y, m] = month.split('-').map(Number);
+    const currentClosing = await monthlyClosingsRepo.findMonthlyClosingByPeriod(y, m);
+
+    let priorPendingCount = 0;
+    let oldestPendingId: number | null = null;
+    if (currentClosing) {
+      const priorClosings = await monthlyClosingsRepo.listMonthlyClosings(0, 1000, y);
+      const pending = priorClosings.rows.filter((c) => {
+        const isPrior =
+          c.periodYear < y || (c.periodYear === y && c.periodMonth < m && c.status !== 'fechado');
+        return isPrior;
+      });
+      priorPendingCount = pending.length;
+      if (pending.length > 0) {
+        oldestPendingId = pending[pending.length - 1]?.id ?? null;
       }
     }
 
-    monthlyTrends.unshift({
-      month: trendMonth,
-      income,
-      expenses,
-      titheAmount,
-      offeringAmount,
-      donationAmount,
-      titheCount,
-      offeringCount,
-      donationCount
-    });
-
-    trendMonth = getPreviousMonth(trendMonth);
+    closing = {
+      currentMonthId: currentClosing?.id ?? null,
+      status: currentClosing?.status ?? null,
+      runningBalance: currentBalance,
+      closingBalance: currentClosing?.closingBalance ?? null,
+      priorPendingCount,
+      oldestPendingId
+    };
   }
-
-  const trends = { monthly: monthlyTrends };
-
-  // Closing status
-  const [y, m] = month.split('-').map(Number);
-  const currentClosing = await monthlyClosingsRepo.findMonthlyClosingByPeriod(y, m);
-
-  let priorPendingCount = 0;
-  let oldestPendingId: number | null = null;
-  if (currentClosing) {
-    const priorClosings = await monthlyClosingsRepo.listMonthlyClosings(0, 1000, y);
-    const pending = priorClosings.rows.filter((c) => {
-      const isPrior =
-        c.periodYear < y || (c.periodYear === y && c.periodMonth < m && c.status !== 'fechado');
-      return isPrior;
-    });
-    priorPendingCount = pending.length;
-    if (pending.length > 0) {
-      oldestPendingId = pending[pending.length - 1]?.id ?? null;
-    }
-  }
-
-  const closing = {
-    currentMonthId: currentClosing?.id ?? null,
-    status: currentClosing?.status ?? null,
-    runningBalance: currentBalance,
-    closingBalance: currentClosing?.closingBalance ?? null,
-    priorPendingCount,
-    oldestPendingId
-  };
-
-  // Funds (active only)
-  const [funds, incomePerFund, expensesPerFund] = await Promise.all([
-    financeRepo.findAllActiveFunds(),
-    financeRepo.sumIncomePerFundForRange(currentRange.from, currentRange.to),
-    financeRepo.sumExpensesPerFundForRange(currentRange.from, currentRange.to)
-  ]);
-
-  const fundSummaries = funds.map((f) => {
-    const raised = incomePerFund.get(f.id) ?? '0.00';
-    const expensesVal = expensesPerFund.get(f.id) ?? '0.00';
-    return buildFundSummary(f.id, f.name, f.targetAmount ?? null, raised, expensesVal);
-  });
-
-  // Events (last 90 days relative to the selected month)
-  const recentEvents = await getRecentEvents(month);
-  const eventsSummary = {
-    count: recentEvents.length,
-    totalRaised: recentEvents
-      .reduce((sum, e) => sum + Number.parseFloat(e.totalRaised), 0)
-      .toFixed(2),
-    totalSpent: recentEvents
-      .reduce((sum, e) => sum + Number.parseFloat(e.totalSpent), 0)
-      .toFixed(2),
-    totalNet: recentEvents.reduce((sum, e) => sum + Number.parseFloat(e.net), 0).toFixed(2)
-  };
-
-  const events = {
-    recent: recentEvents,
-    summary: eventsSummary
-  };
 
   return {
     month,
@@ -342,7 +365,7 @@ export async function getDashboard(callerId: number, month: string): Promise<Das
     participation,
     trends,
     closing,
-    funds: fundSummaries,
+    campaigns,
     events
   };
 }

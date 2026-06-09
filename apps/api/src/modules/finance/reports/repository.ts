@@ -21,7 +21,7 @@ import {
   expenseEntries,
   incomeCategories,
   expenseCategories,
-  designatedFunds,
+  campaigns,
   paymentMethods,
   attenders,
   events
@@ -31,13 +31,15 @@ import type {
   ExpenseReportRow,
   IncomeByCategoryRow,
   ExpenseByCategoryRow,
-  IncomeByFundRow,
-  FundIncomeEntry,
-  FundExpenseEntry,
+  IncomeByCampaignRow,
+  CampaignIncomeEntry,
+  CampaignExpenseEntry,
   EventIncomeEntry,
   EventExpenseEntry,
   IncomeAggregateRow
 } from './schema.js';
+import { CampaignStatus } from '@sistema-ibanje/shared';
+import { notDeleted } from '../../../lib/softDelete.js';
 
 const parentIncomeCat = alias(incomeCategories, 'parent_income_cat');
 const parentExpenseCat = alias(expenseCategories, 'parent_expense_cat');
@@ -72,8 +74,8 @@ export async function getIncomeReportRows(
       categoryName: incomeCategories.name,
       parentCategoryId: parentIncomeCat.id,
       parentCategoryName: parentIncomeCat.name,
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       attenderId: attenders.id,
       attenderName: attenders.name,
       paymentMethodName: paymentMethods.name,
@@ -83,7 +85,7 @@ export async function getIncomeReportRows(
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .where(
@@ -109,8 +111,8 @@ export async function getIncomeReportRows(
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
     parentCategoryName: r.parentCategoryName ?? null,
-    fundId: r.fundId ?? null,
-    fundName: r.fundName ?? null,
+    campaignId: r.campaignId ?? null,
+    campaignName: r.campaignName ?? null,
     attenderId: r.attenderId ?? null,
     attenderName: r.attenderName ?? null,
     paymentMethodName: r.paymentMethodName,
@@ -170,8 +172,8 @@ export async function getExpenseReportRows(
       categoryName: expenseCategories.name,
       parentCategoryId: parentExpenseCat.id,
       parentCategoryName: parentExpenseCat.name,
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       attenderId: attenders.id,
       attenderName: attenders.name,
       paymentMethodName: paymentMethods.name,
@@ -185,7 +187,7 @@ export async function getExpenseReportRows(
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
     .leftJoin(parentExpenseCat, eq(expenseCategories.parentId, parentExpenseCat.id))
-    .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(expenseEntries.campaignId, campaigns.id))
     .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .where(
@@ -206,8 +208,8 @@ export async function getExpenseReportRows(
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
     parentCategoryName: r.parentCategoryName ?? null,
-    fundId: r.fundId ?? null,
-    fundName: r.fundName ?? null,
+    campaignId: r.campaignId ?? null,
+    campaignName: r.campaignName ?? null,
     attenderId: r.attenderId ?? null,
     attenderName: r.attenderName ?? null,
     paymentMethodName: r.paymentMethodName,
@@ -289,31 +291,31 @@ export async function getIncomeByCategoryForRange(
   }));
 }
 
-export async function getIncomeByFundForRange(
+export async function getIncomeByCampaignForRange(
   from: string,
   to: string
-): Promise<IncomeByFundRow[]> {
+): Promise<IncomeByCampaignRow[]> {
   const rows = await db
     .select({
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       total: sum(incomeEntries.amount)
     })
     .from(incomeEntries)
-    .innerJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .innerJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga'),
-        isNotNull(incomeEntries.designatedFundId)
+        isNotNull(incomeEntries.campaignId)
       )
     )
-    .groupBy(designatedFunds.id, designatedFunds.name);
+    .groupBy(campaigns.id, campaigns.name);
 
   return rows.map((r) => ({
-    fundId: r.fundId,
-    fundName: r.fundName,
+    campaignId: r.campaignId,
+    campaignName: r.campaignName,
     total: r.total ?? '0.00'
   }));
 }
@@ -367,8 +369,8 @@ export async function getAllIncomeReportRows(from: string, to: string): Promise<
       categoryName: incomeCategories.name,
       parentCategoryId: parentIncomeCat.id,
       parentCategoryName: parentIncomeCat.name,
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       attenderId: attenders.id,
       attenderName: attenders.name,
       paymentMethodName: paymentMethods.name,
@@ -378,7 +380,7 @@ export async function getAllIncomeReportRows(from: string, to: string): Promise<
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .innerJoin(paymentMethods, eq(incomeEntries.paymentMethodId, paymentMethods.id))
     .where(
@@ -402,8 +404,8 @@ export async function getAllIncomeReportRows(from: string, to: string): Promise<
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
     parentCategoryName: r.parentCategoryName ?? null,
-    fundId: r.fundId ?? null,
-    fundName: r.fundName ?? null,
+    campaignId: r.campaignId ?? null,
+    campaignName: r.campaignName ?? null,
     attenderId: r.attenderId ?? null,
     attenderName: r.attenderName ?? null,
     paymentMethodName: r.paymentMethodName,
@@ -424,8 +426,8 @@ export async function getAllExpenseReportRows(
       categoryName: expenseCategories.name,
       parentCategoryId: parentExpenseCat.id,
       parentCategoryName: parentExpenseCat.name,
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       attenderId: attenders.id,
       attenderName: attenders.name,
       paymentMethodName: paymentMethods.name,
@@ -439,7 +441,7 @@ export async function getAllExpenseReportRows(
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
     .leftJoin(parentExpenseCat, eq(expenseCategories.parentId, parentExpenseCat.id))
-    .leftJoin(designatedFunds, eq(expenseEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(expenseEntries.campaignId, campaigns.id))
     .leftJoin(attenders, eq(expenseEntries.attenderId, attenders.id))
     .innerJoin(paymentMethods, eq(expenseEntries.paymentMethodId, paymentMethods.id))
     .where(
@@ -458,8 +460,8 @@ export async function getAllExpenseReportRows(
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId ?? null,
     parentCategoryName: r.parentCategoryName ?? null,
-    fundId: r.fundId ?? null,
-    fundName: r.fundName ?? null,
+    campaignId: r.campaignId ?? null,
+    campaignName: r.campaignName ?? null,
     attenderId: r.attenderId ?? null,
     attenderName: r.attenderName ?? null,
     paymentMethodName: r.paymentMethodName,
@@ -530,117 +532,118 @@ export async function findIncomeCategoryIdsByNames(names: string[]): Promise<num
   return rows.map((r) => r.id);
 }
 
-export async function findAllActiveFunds() {
+export async function findAllActiveCampaigns() {
   const today = new Date().toISOString().slice(0, 10);
   return db
     .select()
-    .from(designatedFunds)
+    .from(campaigns)
     .where(
       and(
-        eq(designatedFunds.status, 'ativo'),
-        or(isNull(designatedFunds.targetDate), gte(designatedFunds.targetDate, today))
+        notDeleted(campaigns),
+        eq(campaigns.status, CampaignStatus.Active),
+        or(isNull(campaigns.targetDate), gte(campaigns.targetDate, today))
       )
     );
 }
 
-export async function findFundById(id: number) {
-  const result = await db.select().from(designatedFunds).where(eq(designatedFunds.id, id)).limit(1);
+export async function findCampaignById(id: number) {
+  const result = await db.select().from(campaigns).where(eq(campaigns.id, id)).limit(1);
   return result[0] ?? null;
 }
 
-export async function sumAllTimeIncomePerFund(): Promise<Map<number, string>> {
+export async function sumAllTimeIncomePerCampaign(): Promise<Map<number, string>> {
   const rows = await db
-    .select({ fundId: incomeEntries.designatedFundId, total: sum(incomeEntries.amount) })
+    .select({ campaignId: incomeEntries.campaignId, total: sum(incomeEntries.amount) })
     .from(incomeEntries)
-    .where(and(eq(incomeEntries.status, 'paga'), isNotNull(incomeEntries.designatedFundId)))
-    .groupBy(incomeEntries.designatedFundId);
+    .where(and(eq(incomeEntries.status, 'paga'), isNotNull(incomeEntries.campaignId)))
+    .groupBy(incomeEntries.campaignId);
 
   const map = new Map<number, string>();
   for (const r of rows) {
-    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+    if (r.campaignId !== null) map.set(r.campaignId, r.total ?? '0.00');
   }
   return map;
 }
 
-export async function sumAllTimeExpensesPerFund(): Promise<Map<number, string>> {
+export async function sumAllTimeExpensesPerCampaign(): Promise<Map<number, string>> {
   const rows = await db
-    .select({ fundId: expenseEntries.designatedFundId, total: sum(expenseEntries.amount) })
+    .select({ campaignId: expenseEntries.campaignId, total: sum(expenseEntries.amount) })
     .from(expenseEntries)
-    .where(and(eq(expenseEntries.status, 'paga'), isNotNull(expenseEntries.designatedFundId)))
-    .groupBy(expenseEntries.designatedFundId);
+    .where(and(eq(expenseEntries.status, 'paga'), isNotNull(expenseEntries.campaignId)))
+    .groupBy(expenseEntries.campaignId);
 
   const map = new Map<number, string>();
   for (const r of rows) {
-    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+    if (r.campaignId !== null) map.set(r.campaignId, r.total ?? '0.00');
   }
   return map;
 }
 
-export async function sumAllTimeIncomeForFund(fundId: number): Promise<string> {
+export async function sumAllTimeIncomeForCampaign(campaignId: number): Promise<string> {
   const result = await db
     .select({ total: sum(incomeEntries.amount) })
     .from(incomeEntries)
-    .where(and(eq(incomeEntries.status, 'paga'), eq(incomeEntries.designatedFundId, fundId)));
+    .where(and(eq(incomeEntries.status, 'paga'), eq(incomeEntries.campaignId, campaignId)));
   return result[0]?.total ?? '0.00';
 }
 
-export async function sumAllTimeExpensesForFund(fundId: number): Promise<string> {
+export async function sumAllTimeExpensesForCampaign(campaignId: number): Promise<string> {
   const result = await db
     .select({ total: sum(expenseEntries.amount) })
     .from(expenseEntries)
-    .where(and(eq(expenseEntries.status, 'paga'), eq(expenseEntries.designatedFundId, fundId)));
+    .where(and(eq(expenseEntries.status, 'paga'), eq(expenseEntries.campaignId, campaignId)));
   return result[0]?.total ?? '0.00';
 }
 
-export async function sumIncomePerFundForRange(
+export async function sumIncomePerCampaignForRange(
   from: string,
   to: string
 ): Promise<Map<number, string>> {
   const rows = await db
-    .select({ fundId: incomeEntries.designatedFundId, total: sum(incomeEntries.amount) })
+    .select({ campaignId: incomeEntries.campaignId, total: sum(incomeEntries.amount) })
     .from(incomeEntries)
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga'),
-        isNotNull(incomeEntries.designatedFundId)
+        isNotNull(incomeEntries.campaignId)
       )
     )
-    .groupBy(incomeEntries.designatedFundId);
+    .groupBy(incomeEntries.campaignId);
 
   const map = new Map<number, string>();
   for (const r of rows) {
-    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+    if (r.campaignId !== null) map.set(r.campaignId, r.total ?? '0.00');
   }
   return map;
 }
 
-export async function sumExpensesPerFundForRange(
+export async function sumExpensesPerCampaignForRange(
   from: string,
   to: string
 ): Promise<Map<number, string>> {
   const rows = await db
-    .select({ fundId: expenseEntries.designatedFundId, total: sum(expenseEntries.amount) })
+    .select({ campaignId: expenseEntries.campaignId, total: sum(expenseEntries.amount) })
     .from(expenseEntries)
     .where(
       and(
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
         eq(expenseEntries.status, 'paga'),
-        isNotNull(expenseEntries.designatedFundId)
+        isNotNull(expenseEntries.campaignId)
       )
     )
-    .groupBy(expenseEntries.designatedFundId);
+    .groupBy(expenseEntries.campaignId);
 
   const map = new Map<number, string>();
   for (const r of rows) {
-    if (r.fundId !== null) map.set(r.fundId, r.total ?? '0.00');
+    if (r.campaignId !== null) map.set(r.campaignId, r.total ?? '0.00');
   }
   return map;
 }
 
-export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEntry[]> {
+export async function getCampaignIncomeEntries(campaignId: number): Promise<CampaignIncomeEntry[]> {
   const rows = await db
     .select({
       id: incomeEntries.id,
@@ -653,7 +656,7 @@ export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEn
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
-    .where(and(eq(incomeEntries.designatedFundId, fundId), eq(incomeEntries.status, 'paga')))
+    .where(and(eq(incomeEntries.campaignId, campaignId), eq(incomeEntries.status, 'paga')))
     .orderBy(asc(incomeEntries.referenceDate));
 
   return rows.map((r) => ({
@@ -666,7 +669,9 @@ export async function getFundIncomeEntries(fundId: number): Promise<FundIncomeEn
   }));
 }
 
-export async function getFundExpenseEntries(fundId: number): Promise<FundExpenseEntry[]> {
+export async function getCampaignExpenseEntries(
+  campaignId: number
+): Promise<CampaignExpenseEntry[]> {
   const rows = await db
     .select({
       id: expenseEntries.id,
@@ -677,7 +682,7 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
     })
     .from(expenseEntries)
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
-    .where(and(eq(expenseEntries.designatedFundId, fundId), eq(expenseEntries.status, 'paga')))
+    .where(and(eq(expenseEntries.campaignId, campaignId), eq(expenseEntries.status, 'paga')))
     .orderBy(asc(expenseEntries.date));
 
   return rows.map((r) => ({
@@ -689,11 +694,11 @@ export async function getFundExpenseEntries(fundId: number): Promise<FundExpense
   }));
 }
 
-export async function getFundIncomeEntriesForRange(
-  fundId: number,
+export async function getCampaignIncomeEntriesForRange(
+  campaignId: number,
   from: string,
   to: string
-): Promise<FundIncomeEntry[]> {
+): Promise<CampaignIncomeEntry[]> {
   const rows = await db
     .select({
       id: incomeEntries.id,
@@ -708,7 +713,7 @@ export async function getFundIncomeEntriesForRange(
     .leftJoin(attenders, eq(incomeEntries.attenderId, attenders.id))
     .where(
       and(
-        eq(incomeEntries.designatedFundId, fundId),
+        eq(incomeEntries.campaignId, campaignId),
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga')
@@ -726,11 +731,11 @@ export async function getFundIncomeEntriesForRange(
   }));
 }
 
-export async function getFundExpenseEntriesForRange(
-  fundId: number,
+export async function getCampaignExpenseEntriesForRange(
+  campaignId: number,
   from: string,
   to: string
-): Promise<FundExpenseEntry[]> {
+): Promise<CampaignExpenseEntry[]> {
   const rows = await db
     .select({
       id: expenseEntries.id,
@@ -743,7 +748,7 @@ export async function getFundExpenseEntriesForRange(
     .innerJoin(expenseCategories, eq(expenseEntries.categoryId, expenseCategories.id))
     .where(
       and(
-        eq(expenseEntries.designatedFundId, fundId),
+        eq(expenseEntries.campaignId, campaignId),
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
         eq(expenseEntries.status, 'paga')
@@ -760,8 +765,8 @@ export async function getFundExpenseEntriesForRange(
   }));
 }
 
-export async function sumIncomeForFundRange(
-  fundId: number,
+export async function sumIncomeForCampaignRange(
+  campaignId: number,
   from: string,
   to: string
 ): Promise<string> {
@@ -770,7 +775,7 @@ export async function sumIncomeForFundRange(
     .from(incomeEntries)
     .where(
       and(
-        eq(incomeEntries.designatedFundId, fundId),
+        eq(incomeEntries.campaignId, campaignId),
         gte(incomeEntries.referenceDate, from),
         lte(incomeEntries.referenceDate, to),
         eq(incomeEntries.status, 'paga')
@@ -779,8 +784,8 @@ export async function sumIncomeForFundRange(
   return result[0]?.total ?? '0.00';
 }
 
-export async function sumExpensesForFundRange(
-  fundId: number,
+export async function sumExpensesForCampaignRange(
+  campaignId: number,
   from: string,
   to: string
 ): Promise<string> {
@@ -789,7 +794,7 @@ export async function sumExpensesForFundRange(
     .from(expenseEntries)
     .where(
       and(
-        eq(expenseEntries.designatedFundId, fundId),
+        eq(expenseEntries.campaignId, campaignId),
         gte(expenseEntries.date, from),
         lte(expenseEntries.date, to),
         eq(expenseEntries.status, 'paga')
@@ -799,7 +804,7 @@ export async function sumExpensesForFundRange(
 }
 
 // ---------------------------------------------------------------------------
-// Event report helpers — mirror the fund helpers above, but keyed on event_id.
+// Event report helpers — mirror the campaign helpers above, but keyed on event_id.
 // ---------------------------------------------------------------------------
 
 export async function findAllActiveEvents() {
@@ -1072,14 +1077,14 @@ export async function getIncomeAggregatesForRange(
       categoryName: incomeCategories.name,
       parentCategoryId: parentIncomeCat.id,
       parentCategoryName: parentIncomeCat.name,
-      fundId: designatedFunds.id,
-      fundName: designatedFunds.name,
+      campaignId: campaigns.id,
+      campaignName: campaigns.name,
       total: sum(incomeEntries.amount)
     })
     .from(incomeEntries)
     .innerJoin(incomeCategories, eq(incomeEntries.categoryId, incomeCategories.id))
     .leftJoin(parentIncomeCat, eq(incomeCategories.parentId, parentIncomeCat.id))
-    .leftJoin(designatedFunds, eq(incomeEntries.designatedFundId, designatedFunds.id))
+    .leftJoin(campaigns, eq(incomeEntries.campaignId, campaigns.id))
     .where(
       and(
         gte(incomeEntries.referenceDate, from),
@@ -1093,8 +1098,8 @@ export async function getIncomeAggregatesForRange(
       incomeCategories.name,
       parentIncomeCat.id,
       parentIncomeCat.name,
-      designatedFunds.id,
-      designatedFunds.name
+      campaigns.id,
+      campaigns.name
     )
     .orderBy(asc(incomeEntries.referenceDate));
 
@@ -1104,8 +1109,8 @@ export async function getIncomeAggregatesForRange(
     categoryName: r.categoryName,
     parentCategoryId: r.parentCategoryId,
     parentCategoryName: r.parentCategoryName,
-    fundId: r.fundId,
-    fundName: r.fundName,
+    campaignId: r.campaignId,
+    campaignName: r.campaignName,
     total: r.total ?? '0.00'
   }));
 }

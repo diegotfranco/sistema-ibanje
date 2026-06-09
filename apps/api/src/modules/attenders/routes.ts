@@ -9,6 +9,7 @@ import {
   AttendersExportPdfQuerySchema,
   CreateAttenderRequestSchema,
   UpdateAttenderRequestSchema,
+  ChangeAttenderStatusRequestSchema,
   AttenderResponseSchema,
   AttenderListResponseSchema,
   AttenderDonationsSummaryResponseSchema,
@@ -119,6 +120,27 @@ export async function attendersRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Update)]
     },
     controller.update
+  );
+
+  app.patch(
+    '/attenders/:id/status',
+    {
+      schema: {
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        body: ChangeAttenderStatusRequestSchema,
+        response: {
+          200: AttenderResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Update)]
+    },
+    controller.changeStatus
   );
 
   app.get(

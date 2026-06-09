@@ -16,8 +16,8 @@ export type IncomeReportRow = {
   categoryName: string;
   parentCategoryId: number | null;
   parentCategoryName: string | null;
-  fundId: number | null;
-  fundName: string | null;
+  campaignId: number | null;
+  campaignName: string | null;
   attenderId: number | null;
   attenderName: string | null;
   paymentMethodName: string;
@@ -42,8 +42,8 @@ export type ExpenseReportRow = {
   categoryName: string;
   parentCategoryId: number | null;
   parentCategoryName: string | null;
-  fundId: number | null;
-  fundName: string | null;
+  campaignId: number | null;
+  campaignName: string | null;
   attenderId: number | null;
   attenderName: string | null;
   paymentMethodName: string;
@@ -81,9 +81,9 @@ export type ExpenseByCategoryRow = {
   total: string;
 };
 
-export type IncomeByFundRow = {
-  fundId: number;
-  fundName: string;
+export type IncomeByCampaignRow = {
+  campaignId: number;
+  campaignName: string;
   total: string;
 };
 
@@ -94,7 +94,7 @@ export type FinancialStatementResponse = {
   totalExpenses: string;
   currentBalance: string;
   incomeByCategory: IncomeByCategoryRow[];
-  incomeByFund: IncomeByFundRow[];
+  incomeByCampaign: IncomeByCampaignRow[];
   expensesByCategory: ExpenseByCategoryRow[];
 };
 
@@ -138,9 +138,9 @@ export type AttendersReportResponse = {
   offerings: { attendersWhoContributed: number; percentage: string; note: string };
 };
 
-export type FundSummary = {
-  fundId: number;
-  fundName: string;
+export type CampaignSummary = {
+  campaignId: number;
+  campaignName: string;
   targetAmount: string | null;
   targetDate: string | null;
   totalRaised: string;
@@ -149,9 +149,9 @@ export type FundSummary = {
   progressPercentage: string | null;
 };
 
-export type FundListResponse = { funds: FundSummary[] };
+export type CampaignListResponse = { campaigns: CampaignSummary[] };
 
-export type FundIncomeEntry = {
+export type CampaignIncomeEntry = {
   id: number;
   referenceDate: string;
   amount: string;
@@ -160,7 +160,7 @@ export type FundIncomeEntry = {
   notes: string | null;
 };
 
-export type FundExpenseEntry = {
+export type CampaignExpenseEntry = {
   id: number;
   date: string;
   amount: string;
@@ -183,7 +183,7 @@ export type EventListResponse = {
   events: EventSummary[];
 };
 
-export type FundDetailResponse = FundSummary & {
-  incomeEntries: FundIncomeEntry[];
-  expenseEntries: FundExpenseEntry[];
+export type CampaignDetailResponse = CampaignSummary & {
+  incomeEntries: CampaignIncomeEntry[];
+  expenseEntries: CampaignExpenseEntry[];
 };

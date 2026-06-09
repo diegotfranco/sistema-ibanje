@@ -1,8 +1,9 @@
-import path from 'node:path';
 import { Fragment } from 'react';
-import { Document, Page, View, Text, Font } from '@react-pdf/renderer';
-import { createTw } from 'react-pdf-tailwind';
-import { brandColors } from '@sistema-ibanje/shared/colors';
+import { Document, Page, View, Text } from '@react-pdf/renderer';
+import { tw } from '../../../lib/pdf/theme.js';
+import { Letterhead } from '../../../lib/pdf/Letterhead.js';
+import { PageFooter } from '../../../lib/pdf/PageFooter.js';
+import type { ChurchPdfData, PdfLogo } from '../../../lib/pdf/church.js';
 import type {
   FinancialStatementResponse,
   DetailedFinancialStatementResponse,
@@ -13,79 +14,6 @@ import type {
   IncomePivotRow,
   ExpenseReportRow
 } from './schema.js';
-
-const FONTSOURCE = path.resolve(import.meta.dirname, '../../../../node_modules/@fontsource');
-
-Font.register({
-  family: 'Roboto',
-  fonts: [
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-100-normal.woff'), fontWeight: 100 }, // font-thin
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-200-normal.woff'), fontWeight: 200 }, // font-extralight
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-300-normal.woff'), fontWeight: 300 }, // font-light
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-400-normal.woff'), fontWeight: 400 }, // font-normal
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-500-normal.woff'), fontWeight: 500 }, // font-medium
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-600-normal.woff'), fontWeight: 600 }, // font-semibold
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-700-normal.woff'), fontWeight: 700 }, // font-bold
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-800-normal.woff'), fontWeight: 800 }, // font-extrabold
-    { src: path.join(FONTSOURCE, 'roboto/files/roboto-latin-900-normal.woff'), fontWeight: 900 } // font-black
-  ]
-});
-
-Font.register({
-  family: 'NotoSans',
-  fonts: [
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-100-normal.woff'),
-      fontWeight: 100
-    }, // font-thin
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-200-normal.woff'),
-      fontWeight: 200
-    }, // font-extralight
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-300-normal.woff'),
-      fontWeight: 300
-    }, // font-light
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-400-normal.woff'),
-      fontWeight: 400
-    }, // font-normal
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-500-normal.woff'),
-      fontWeight: 500
-    }, // font-medium
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-600-normal.woff'),
-      fontWeight: 600
-    }, // font-semibold
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-700-normal.woff'),
-      fontWeight: 700
-    }, // font-bold
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-800-normal.woff'),
-      fontWeight: 800
-    }, // font-extrabold
-    {
-      src: path.join(FONTSOURCE, 'noto-sans/files/noto-sans-latin-900-normal.woff'),
-      fontWeight: 900
-    } // font-black
-  ]
-});
-
-const tw = createTw({
-  colors: {
-    brand: {
-      primary: brandColors.primary.hex,
-      soft: brandColors.primarySoftLight.hex,
-      fg: brandColors.primaryForeground.hex
-    } as unknown as Record<number, string>
-  },
-  fontFamily: {
-    roboto: ['Roboto'],
-    noto: ['NotoSans']
-  }
-});
 
 type CatRow = IncomeByCategoryRow | ExpenseByCategoryRow;
 
@@ -118,25 +46,25 @@ const SIGNATORIES = [
   { role: 'Relator da Comissão de Exame de Contas' }
 ] as const;
 
-function PageHeader({
+function StatementHeader({
+  church,
+  logo,
   period,
-  title = 'Relatório de Fechamento Simples'
+  title
 }: {
+  church: ChurchPdfData;
+  logo?: PdfLogo;
   period: { from: string; to: string };
-  title?: string;
+  title: string;
 }) {
   return (
-    <View style={tw('px-8 pb-6 mb-6 border-b border-gray-200')}>
-      <View style={tw('flex-row justify-between items-end mb-2')}>
-        <View>
-          <Text style={tw('text-sm font-roboto font-bold text-brand-primary tracking-widest mb-1')}>
-            IGREJA BATISTA NOVA JERUSALÉM
-          </Text>
-          <Text
-            style={tw('text-3xl font-roboto font-bold text-slate-800 tracking-tight leading-none')}>
-            {title}
-          </Text>
-        </View>
+    <View style={tw('px-8 mb-6')}>
+      <Letterhead church={church} logo={logo} />
+      <View style={tw('flex-row justify-between items-end')}>
+        <Text
+          style={tw('text-3xl font-roboto font-bold text-slate-800 tracking-tight leading-none')}>
+          {title}
+        </Text>
 
         <View style={tw('bg-slate-50 border border-gray-200 rounded px-3 py-2')}>
           <Text
@@ -150,26 +78,6 @@ function PageHeader({
           </Text>
         </View>
       </View>
-    </View>
-  );
-}
-
-function PageFooter() {
-  return (
-    <View
-      style={tw(
-        'absolute bottom-5 left-8 right-8 flex-row justify-between pt-1 border-t border-gray-200'
-      )}
-      fixed>
-      <Text style={tw('text-[0.625rem] text-gray-500')}>
-        Gerado em {new Date().toLocaleDateString('pt-BR')} · Igreja Batista Nova Jerusalém
-      </Text>
-      <Text
-        style={tw('text-[0.625rem] text-gray-500')}
-        render={({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>
-          `Página ${pageNumber} de ${totalPages}`
-        }
-      />
     </View>
   );
 }
@@ -277,7 +185,7 @@ function SummaryCards({
   );
 }
 
-function SignatureBlock() {
+function SignatureBlock({ churchName }: { churchName: string }) {
   return (
     <View wrap={false} style={tw('px-8 mt-auto')}>
       <View style={tw('flex-row flex-wrap justify-between mb-9')}>
@@ -291,8 +199,7 @@ function SignatureBlock() {
       </View>
       <Text style={tw('text-xs text-gray-500 leading-normal')}>
         Declaramos que os presentes demonstrativos financeiros foram examinados e estão em
-        conformidade com os registros contábeis da Igreja Batista Nova Jerusalém referentes ao
-        período indicado.
+        conformidade com os registros contábeis da {churchName} referentes ao período indicado.
       </Text>
     </View>
   );
@@ -511,14 +418,23 @@ function ExpenseDetailTable({ rows }: { rows: ExpenseReportRow[] }) {
 }
 
 export function DetailedFinancialStatementPdf({
-  data
+  data,
+  church,
+  logo
 }: {
   data: DetailedFinancialStatementResponse;
+  church: ChurchPdfData;
+  logo?: PdfLogo;
 }) {
   return (
     <Document>
       <Page size="A4" orientation="landscape" style={tw('font-noto text-zinc-600 pt-8 pb-14')}>
-        <PageHeader period={data.period} title="Relatório de Fechamento Detalhado" />
+        <StatementHeader
+          church={church}
+          logo={logo}
+          period={data.period}
+          title="Relatório de Fechamento Detalhado"
+        />
         <View style={tw('px-8')}>
           <SummaryCards
             openingBalance={data.openingBalance}
@@ -535,18 +451,31 @@ export function DetailedFinancialStatementPdf({
             <ExpenseDetailTable rows={data.expenseEntries} />
           </View>
         </View>
-        <SignatureBlock />
-        <PageFooter />
+        <SignatureBlock churchName={church.name} />
+        <PageFooter churchName={church.name} />
       </Page>
     </Document>
   );
 }
 
-export function FinancialStatementPdf({ data }: { data: FinancialStatementResponse }) {
+export function FinancialStatementPdf({
+  data,
+  church,
+  logo
+}: {
+  data: FinancialStatementResponse;
+  church: ChurchPdfData;
+  logo?: PdfLogo;
+}) {
   return (
     <Document>
       <Page size="A4" style={tw('font-noto text-zinc-600 pt-8 pb-14')}>
-        <PageHeader period={data.period} />
+        <StatementHeader
+          church={church}
+          logo={logo}
+          period={data.period}
+          title="Relatório de Fechamento Simples"
+        />
 
         <View style={tw('px-8')}>
           <SummaryCards
@@ -564,8 +493,8 @@ export function FinancialStatementPdf({ data }: { data: FinancialStatementRespon
             <CategoryTable rows={data.expensesByCategory} totalLabel="Total" type="expense" />
           </View>
         </View>
-        <SignatureBlock />
-        <PageFooter />
+        <SignatureBlock churchName={church.name} />
+        <PageFooter churchName={church.name} />
       </Page>
     </Document>
   );

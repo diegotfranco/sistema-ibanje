@@ -5,7 +5,7 @@
  *   - Structural enums (roles, modules, permissions, categories, funds,
  *     payment methods, church settings, minute templates) live in
  *     seed-data.ts + seed-templates.ts and are always inserted.
- *   - Dumped legacy data (attenders, designated-fund campanhas, income and
+ *   - Dumped legacy data (attenders, campaign campanhas, income and
  *     expense entries filtered to the last 5 years) is loaded from JSON
  *     fixtures committed to `fixtures/`. Run `pnpm db:dump-fixtures` to
  *     regenerate them.
@@ -30,7 +30,7 @@ import {
   SEED_MODULES,
   EXPECTED_MODULE_ORDER,
   SEED_PAYMENT_METHODS,
-  SEED_DESIGNATED_FUNDS,
+  SEED_CAMPAIGNS,
   SEED_EVENTS,
   SEED_CALENDAR_ENTRIES,
   SEED_INCOME_CATEGORY_PARENTS,
@@ -62,7 +62,7 @@ import {
   roleModulePermissions,
   userModulePermissions,
   paymentMethods,
-  designatedFunds,
+  campaigns,
   incomeCategories,
   expenseCategories,
   attenders,
@@ -134,6 +134,13 @@ function synthesizeMembership(i: number): {
 // ---------------------------------------------------------------------------
 // fixture shapes (match dump-fixtures.ts output)
 // ---------------------------------------------------------------------------
+
+// Fixtures stay human-readable (formatted phones, mixed-case emails); the seeder normalizes
+// to the same stored form the Zod boundary (src/lib/normalize.ts) produces at runtime.
+const seedDigits = (v: string | null): string | null => (v == null ? v : v.replace(/\D/g, ''));
+const seedEmail = (v: string | null): string | null => (v == null ? v : v.trim().toLowerCase());
+const seedUf = (v: string | null): string | null => (v == null ? v : v.trim().toUpperCase());
+
 type AttenderFixture = {
   name: string;
   birthDate: string | null;
@@ -147,13 +154,13 @@ type AttenderFixture = {
   email: string | null;
   phone: string | null;
 };
-type DesignatedFundFixture = {
+type CampaignFixture = {
   name: string;
   description?: string | null;
   targetAmount?: string | null;
   targetDate?: string | null;
   createdAt?: string | null;
-  status?: 'ativo' | 'inativo' | null;
+  status?: 'ativa' | 'encerrada' | null;
 };
 type IncomeEntryFixture = {
   depositDate: string;
@@ -162,7 +169,7 @@ type IncomeEntryFixture = {
   categoryName: string;
   attenderName: string | null;
   paymentMethodName: string;
-  designatedFundName: string | null;
+  campaignName: string | null;
   notes: string | null;
 };
 type ExpenseEntryFixture = {
@@ -173,7 +180,7 @@ type ExpenseEntryFixture = {
   totalInstallments: number;
   categoryName: string;
   paymentMethodName: string;
-  designatedFundName: string | null;
+  campaignName: string | null;
   notes: string | null;
 };
 
@@ -185,7 +192,7 @@ export async function seed() {
   console.log('Seeding database (structural data + fixtures + edge cases)...');
 
   const attendersFixture = loadFixture<AttenderFixture[]>('attenders.json');
-  const fundsFixture = loadFixture<DesignatedFundFixture[]>('designated_funds.json');
+  const fundsFixture = loadFixture<CampaignFixture[]>('campaigns.json');
   const incomeFixture = loadFixture<IncomeEntryFixture[]>('income_entries.json');
   const expenseFixture = loadFixture<ExpenseEntryFixture[]>('expense_entries.json');
   console.log(
@@ -195,7 +202,7 @@ export async function seed() {
   await db.transaction(async (tx) => {
     await tx.execute(
       drizzleSql`TRUNCATE roles, permissions, modules, users, role_module_permissions,
-          user_module_permissions, payment_methods, designated_funds,
+          user_module_permissions, payment_methods, campaigns,
           income_categories, expense_categories, attenders, income_entries,
           expense_entries, meetings, minutes, minute_versions,
           monthly_closings, finance_settings, church_settings, agenda_items,
@@ -301,28 +308,28 @@ export async function seed() {
     const insertedPMs = await tx.insert(paymentMethods).values(SEED_PAYMENT_METHODS).returning();
     const pmByName = Object.fromEntries(insertedPMs.map((pm) => [pm.name, pm]));
 
-    // --- Designated funds: structural base + campanha fan-out ---------------
-    const baseFundRows = SEED_DESIGNATED_FUNDS.map((f) => ({
+    // --- Campaigns: structural base + campanha fan-out ---------------
+    const baseFundRows = SEED_CAMPAIGNS.map((f) => ({
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
       targetDate: f.targetDate ?? null,
-      status: 'ativo' as const,
+      status: 'ativa' as const,
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     // Historical campanhas are concluded — the fixture tags each with its real status
-    // (all currently `inativo`). Honor it so the seeded roster of funds is realistic:
-    // ongoing structural funds stay active, finished campaigns read as inactive.
+    // (all currently `encerrada`). Honor it so the seeded roster of funds is realistic:
+    // ongoing structural funds stay `ativa`, finished campaigns read as `encerrada`.
     const extraFundRows = fundsFixture.map((f) => ({
       name: f.name,
       description: f.description ?? null,
       targetAmount: f.targetAmount ?? null,
       targetDate: f.targetDate ?? null,
-      status: f.status ?? 'ativo',
+      status: f.status ?? 'ativa',
       ...(f.createdAt ? { createdAt: new Date(f.createdAt), updatedAt: new Date(f.createdAt) } : {})
     }));
     const insertedFunds = await tx
-      .insert(designatedFunds)
+      .insert(campaigns)
       .values([...baseFundRows, ...extraFundRows])
       .returning();
     const fundByName = new Map(insertedFunds.map((f) => [f.name, f]));
@@ -408,11 +415,11 @@ export async function seed() {
       addressNumber: a.addressNumber,
       addressComplement: a.addressComplement,
       addressDistrict: a.addressDistrict,
-      state: a.state,
+      state: seedUf(a.state),
       city: a.city,
-      postalCode: a.postalCode,
-      email: a.email,
-      phone: a.phone,
+      postalCode: seedDigits(a.postalCode),
+      email: seedEmail(a.email),
+      phone: seedDigits(a.phone),
       ...synthesizeMembership(i)
     }));
     const insertedFixtureAttenders = fixtureAttenderRows.length
@@ -432,13 +439,15 @@ export async function seed() {
       addressStreet: a.addressStreet ?? null,
       addressNumber: a.addressNumber ?? null,
       addressDistrict: a.addressDistrict ?? null,
-      state: a.state ?? null,
+      state: seedUf(a.state ?? null),
       city: a.city ?? null,
-      postalCode: a.postalCode ?? null,
-      email: a.email ?? null,
-      phone: a.phone ?? null,
+      postalCode: seedDigits(a.postalCode ?? null),
+      email: seedEmail(a.email ?? null),
+      phone: seedDigits(a.phone ?? null),
       isMember: a.isMember ?? false,
       status: a.status ?? 'ativo',
+      exitDate: a.exitDate ?? null,
+      exitReason: a.exitReason ?? null,
       memberSince: a.memberSince ?? null,
       congregatingSince: a.congregatingSince ?? null,
       admissionMode: a.admissionMode ?? null
@@ -459,7 +468,7 @@ export async function seed() {
       const pm = pmByName[e.paymentMethodName];
       if (!pm) throw new Error(`Unknown payment method "${e.paymentMethodName}"`);
       const attender = e.attenderName ? attenderByName.get(e.attenderName) : null;
-      const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+      const fund = e.campaignName ? fundByName.get(e.campaignName) : null;
       return {
         referenceDate: e.referenceDate,
         depositDate: e.depositDate,
@@ -467,7 +476,7 @@ export async function seed() {
         categoryId: category.id,
         attenderId: attender?.id ?? null,
         paymentMethodId: pm.id,
-        designatedFundId: fund?.id ?? null,
+        campaignId: fund?.id ?? null,
         notes: e.notes,
         status: 'paga' as const,
         userId: tesoureiroId
@@ -484,7 +493,7 @@ export async function seed() {
       if (!category) throw new Error(`Unknown expense category "${e.categoryName}"`);
       const pm = pmByName[e.paymentMethodName];
       if (!pm) throw new Error(`Unknown payment method "${e.paymentMethodName}"`);
-      const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+      const fund = e.campaignName ? fundByName.get(e.campaignName) : null;
       return {
         date: e.date,
         total: e.total,
@@ -493,7 +502,7 @@ export async function seed() {
         totalInstallments: e.totalInstallments,
         categoryId: category.id,
         paymentMethodId: pm.id,
-        designatedFundId: fund?.id ?? null,
+        campaignId: fund?.id ?? null,
         notes: e.notes,
         status: 'paga' as const,
         userId: tesoureiroId
@@ -602,7 +611,7 @@ export async function seed() {
           const u = userByEmail.get(e.createdByUserEmail);
           if (!u) throw new Error(`Edge income references unknown user ${e.createdByUserEmail}`);
           const attender = e.attenderName ? attenderByName.get(e.attenderName) : null;
-          const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const fund = e.campaignName ? fundByName.get(e.campaignName) : null;
           const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             referenceDate: e.referenceDate,
@@ -611,7 +620,7 @@ export async function seed() {
             categoryId: category.id,
             attenderId: attender?.id ?? null,
             paymentMethodId: pm.id,
-            designatedFundId: fund?.id ?? null,
+            campaignId: fund?.id ?? null,
             eventId: evt?.id ?? null,
             notes: e.notes ?? null,
             status: 'paga' as const,
@@ -635,7 +644,7 @@ export async function seed() {
             const pm = pmByName[e.paymentMethodName];
             const u = userByEmail.get(e.createdByUserEmail);
             if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
-            const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+            const fund = e.campaignName ? fundByName.get(e.campaignName) : null;
             const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
             return {
               date: e.date,
@@ -645,7 +654,7 @@ export async function seed() {
               totalInstallments: e.totalInstallments,
               categoryId: category.id,
               paymentMethodId: pm.id,
-              designatedFundId: fund?.id ?? null,
+              campaignId: fund?.id ?? null,
               eventId: evt?.id ?? null,
               notes: e.notes ?? null,
               status: 'paga' as const,
@@ -668,7 +677,7 @@ export async function seed() {
           const pm = pmByName[e.paymentMethodName];
           const u = userByEmail.get(e.createdByUserEmail);
           if (!u) throw new Error(`Edge expense references unknown user ${e.createdByUserEmail}`);
-          const fund = e.designatedFundName ? fundByName.get(e.designatedFundName) : null;
+          const fund = e.campaignName ? fundByName.get(e.campaignName) : null;
           const evt = e.eventTitle ? eventByTitle.get(e.eventTitle) : null;
           return {
             date: e.date,
@@ -678,7 +687,7 @@ export async function seed() {
             totalInstallments: e.totalInstallments,
             categoryId: category.id,
             paymentMethodId: pm.id,
-            designatedFundId: fund?.id ?? null,
+            campaignId: fund?.id ?? null,
             eventId: evt?.id ?? null,
             parentId: e.installmentGroupId
               ? (parentIdByGroup.get(e.installmentGroupId) ?? null)

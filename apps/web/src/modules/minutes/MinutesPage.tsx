@@ -65,7 +65,7 @@ export default function MinutesPage() {
                   <TableHead>Versão</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Cartório</TableHead>
-                  <TableHead className="w-32 text-right">Ações</TableHead>
+                  <TableHead className="w-36 text-center">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

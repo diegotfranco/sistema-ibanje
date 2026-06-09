@@ -189,7 +189,7 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
           gte(incomeEntries.referenceDate, start),
           lt(incomeEntries.referenceDate, end),
           eq(incomeEntries.status, 'paga'),
-          isNotNull(incomeEntries.designatedFundId)
+          isNotNull(incomeEntries.campaignId)
         )
       ),
     db
@@ -200,7 +200,7 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
           gte(expenseEntries.date, start),
           lt(expenseEntries.date, end),
           eq(expenseEntries.status, 'paga'),
-          isNotNull(expenseEntries.designatedFundId)
+          isNotNull(expenseEntries.campaignId)
         )
       )
   ]);

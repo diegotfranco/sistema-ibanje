@@ -1,21 +1,8 @@
-import { EntryStatus } from '@sistema-ibanje/shared';
-
 export { formatDate } from '@/lib/datetime';
 
-export const STATUS_FILTERS = [
-  { value: 'all', label: 'Todos' },
-  { value: EntryStatus.Pending, label: 'Pendente' },
-  { value: EntryStatus.Paid, label: 'Paga' },
-  { value: EntryStatus.Cancelled, label: 'Cancelada' }
-] as const;
-
-// Options for a column's `meta.filter` (no `all` sentinel — DataTable's header
-// filter menu adds the "Todos" entry itself, mapping it to `undefined`).
-export const ENTRY_STATUS_FILTER_OPTIONS = [
-  { value: EntryStatus.Pending, label: 'Pendente' },
-  { value: EntryStatus.Paid, label: 'Paga' },
-  { value: EntryStatus.Cancelled, label: 'Cancelada' }
-];
+// Entry-status filter options live in the central status module (lib/status.ts). Re-exported here
+// so finance call sites that already import from entries-utils don't need a second import path.
+export { ENTRY_STATUS_FILTER_OPTIONS } from '@/lib/status';
 
 export const formatMoney = (s: string) =>
   Number.parseFloat(s).toLocaleString('pt-BR', {

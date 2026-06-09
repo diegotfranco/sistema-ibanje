@@ -56,9 +56,9 @@ export type Closing = {
   oldestPendingId: number | null;
 };
 
-export type FundSummary = {
-  fundId: number;
-  fundName: string;
+export type CampaignSummary = {
+  campaignId: number;
+  campaignName: string;
   targetAmount: string | null;
   totalRaised: string;
   totalExpenses: string;
@@ -92,6 +92,6 @@ export type DashboardResponse = {
   participation: Participation;
   trends: Trends;
   closing: Closing;
-  funds: FundSummary[];
+  campaigns: CampaignSummary[];
   events: Events;
 };

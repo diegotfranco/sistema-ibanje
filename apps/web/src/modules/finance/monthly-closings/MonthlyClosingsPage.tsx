@@ -125,7 +125,7 @@ export default function MonthlyClosingsPage() {
           )}
         </div>
       ),
-      meta: { align: 'right', className: 'w-40' }
+      meta: { align: 'center', className: 'w-36' }
     }
   ];
 

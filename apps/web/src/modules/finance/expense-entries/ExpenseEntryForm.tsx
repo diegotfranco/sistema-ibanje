@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/Dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';
@@ -42,7 +42,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
       totalInstallments: initialValues?.totalInstallments ?? 1,
       categoryId: initialValues?.categoryId ?? undefined,
       paymentMethodId: initialValues?.paymentMethodId ?? undefined,
-      designatedFundId: initialValues?.designatedFundId ?? undefined,
+      campaignId: initialValues?.campaignId ?? undefined,
       eventId: initialValues?.eventId ?? undefined,
       attenderId: initialValues?.attenderId ?? undefined,
       notes: initialValues?.notes ?? '',
@@ -54,7 +54,7 @@ export function ExpenseEntryForm({ initialValues, isPending, onSubmit, onCancel 
   const [stagedRemoval, setStagedRemoval] = useState(false);
 
   const detailsDefaultOpen = Boolean(
-    initialValues?.designatedFundId ||
+    initialValues?.campaignId ||
     initialValues?.eventId ||
     initialValues?.attenderId ||
     initialValues?.notes

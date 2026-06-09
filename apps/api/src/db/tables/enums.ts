@@ -1,7 +1,13 @@
 import { pgEnum } from 'drizzle-orm/pg-core';
-import { MEETING_TYPE_VALUES } from '@sistema-ibanje/shared';
+import {
+  MEETING_TYPE_VALUES,
+  ATTENDER_STATUS_VALUES,
+  CAMPAIGN_STATUS_VALUES
+} from '@sistema-ibanje/shared';
 
 export const activeStatus = pgEnum('active_status', ['ativo', 'inativo', 'pendente']);
+export const attenderStatus = pgEnum('attender_status', ATTENDER_STATUS_VALUES);
+export const campaignStatus = pgEnum('campaign_status', CAMPAIGN_STATUS_VALUES);
 export const transactionStatus = pgEnum('transaction_status', ['pendente', 'paga', 'cancelada']);
 export const meetingType = pgEnum('meeting_type', MEETING_TYPE_VALUES);
 export const minuteVersionStatus = pgEnum('minute_version_status', [

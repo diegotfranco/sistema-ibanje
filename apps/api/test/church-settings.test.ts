@@ -51,10 +51,7 @@ describe('church-settings module', () => {
     expect(settings.name).toBeDefined();
   });
 
-  it('updates church settings with appropriate permissions', async () => {
-    // NOTE: The route requires Module.ChurchSettings ('Configurações da Igreja') permission,
-    // but the seed data uses 'Dados da Igreja' (different spelling). This is a mismatch,
-    // so even admin gets 403. This test documents the current behavior.
+  it('updates church settings with appropriate permissions (200) and persists', async () => {
     const newName = 'Updated Church Name';
     const res = await app.inject({
       method: 'PUT',
@@ -65,8 +62,18 @@ describe('church-settings module', () => {
         phone: '11999999999'
       }
     });
-    // Returns 403 because the permission module name doesn't match the constant
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(200);
+    const updated = res.json<ChurchSettingsRow>();
+    expect(updated.name).toBe(newName);
+    expect(updated.phone).toBe('11999999999');
+
+    // Confirm the change persisted on a fresh read.
+    const reread = await app.inject({
+      method: 'GET',
+      url: '/church-settings',
+      headers: { cookie: admin.cookie }
+    });
+    expect(reread.json<ChurchSettingsRow>().name).toBe(newName);
   });
 
   it('rejects invalid postal code format (400)', async () => {

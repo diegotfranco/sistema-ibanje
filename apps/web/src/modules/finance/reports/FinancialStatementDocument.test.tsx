@@ -13,7 +13,7 @@ describe('FinancialStatementDocument', () => {
       totalExpenses: '2000.00',
       currentBalance: '6000.00',
       incomeByCategory: [],
-      incomeByFund: [],
+      incomeByCampaign: [],
       expensesByCategory: []
     };
 
@@ -47,7 +47,7 @@ describe('FinancialStatementDocument', () => {
           total: '1000.00'
         }
       ],
-      incomeByFund: [],
+      incomeByCampaign: [],
       expensesByCategory: []
     };
 
@@ -65,7 +65,7 @@ describe('FinancialStatementDocument', () => {
       totalExpenses: '2000.00',
       currentBalance: '6000.00',
       incomeByCategory: [],
-      incomeByFund: [],
+      incomeByCampaign: [],
       expensesByCategory: [
         {
           parentCategoryId: 1,
@@ -106,7 +106,7 @@ describe('FinancialStatementDocument', () => {
           total: '3000.75'
         }
       ],
-      incomeByFund: [],
+      incomeByCampaign: [],
       expensesByCategory: [
         {
           parentCategoryId: 1,
@@ -141,7 +141,7 @@ describe('FinancialStatementDocument', () => {
           total: '3000.00'
         }
       ],
-      incomeByFund: [],
+      incomeByCampaign: [],
       expensesByCategory: [
         {
           parentCategoryId: 1,

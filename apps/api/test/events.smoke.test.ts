@@ -55,7 +55,7 @@ describe('events smoke: create event → log income → close month → verify P
     });
     expect(createEntry.statusCode).toBe(201);
 
-    // Backend CHECK rejects an entry with BOTH fund and event set (form layer also
+    // Backend CHECK rejects an entry with BOTH campaign and event set (form layer also
     // blocks this; this verifies the DB-level guard).
     const bothSet = await app.inject({
       method: 'POST',
@@ -67,7 +67,7 @@ describe('events smoke: create event → log income → close month → verify P
         amount: 100.0,
         depositDate: '2097-02-16',
         eventId: event.id,
-        designatedFundId: 1
+        campaignId: 1
       }
     });
     expect(bothSet.statusCode).toBe(400);

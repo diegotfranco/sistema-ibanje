@@ -94,7 +94,15 @@ function MenuItemRenderer({
   if (depth === 0 && route.children && route.children.length > 0) {
     return (
       <SidebarGroup key={route.label} className="py-2">
-        <SidebarGroupLabel className="truncate">{route.label}</SidebarGroupLabel>
+        <SidebarGroupLabel className="truncate">
+          {route.path ? (
+            <NavLink to={route.path} className="transition-colors hover:text-foreground">
+              {route.label}
+            </NavLink>
+          ) : (
+            route.label
+          )}
+        </SidebarGroupLabel>
         <SidebarGroupContent>
           <SidebarMenu>
             {route.children.map((child) => (

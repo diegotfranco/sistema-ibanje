@@ -8,7 +8,7 @@ import { lineItemActionsColumn, type LineItemActions } from '../components/RowAc
 /**
  * Minimal expense shape the table cells, mobile row, and detail fields read.
  * Both `ExpenseReportRow` and the entries page's `ExpenseEntryResponse` (once
- * its `designatedFundName` is normalized to `fundName`) satisfy it, so the
+ * its `campaignName` is normalized to `campaignName`) satisfy it, so the
  * report tab and the dashboard "latest" widget share one rendering.
  */
 export interface ExpenseLineItem {
@@ -17,7 +17,7 @@ export interface ExpenseLineItem {
   parentCategoryName: string | null;
   categoryName: string;
   notes: string | null;
-  fundName: string | null;
+  campaignName: string | null;
   attenderName: string | null;
   amount: string;
   paymentMethodName: string;
@@ -67,9 +67,9 @@ export function buildExpenseLineItemColumns<T extends ExpenseLineItem>(opts?: {
       meta: { hideBelow: 'lg', className: 'max-w-64' }
     },
     {
-      id: 'designatedFund',
+      id: 'campaign',
       header: 'Campanha',
-      cell: (info) => info.row.original.fundName ?? '—',
+      cell: (info) => info.row.original.campaignName ?? '—',
       meta: { hideBelow: '2xl' }
     },
     {
@@ -153,7 +153,7 @@ export function buildExpenseLineItemFields(row: ExpenseLineItem): RowDetailField
     { label: 'Grupo', value: row.parentCategoryName ?? '—', hideEmpty: true },
     { label: 'Categoria', value: row.categoryName },
     { label: 'Observações', value: row.notes ?? '—', hideEmpty: true },
-    { label: 'Campanha', value: row.fundName ?? '—', hideEmpty: true },
+    { label: 'Campanha', value: row.campaignName ?? '—', hideEmpty: true },
     { label: 'Patrocinador', value: row.attenderName ?? '—', hideEmpty: true },
     {
       label: 'Valor',

@@ -9,20 +9,32 @@ import {
   timestamp,
   index,
   primaryKey,
+  uniqueIndex,
   char,
   check
 } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
-import { activeStatus, admissionMode } from './enums.js';
+import { activeStatus, attenderStatus, admissionMode } from './enums.js';
 
-export const roles = pgTable('roles', {
-  id: serial('id').primaryKey(),
-  name: varchar('name', { length: 64 }).unique().notNull(),
-  description: varchar('description', { length: 256 }),
-  status: activeStatus('status').default('ativo').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
-});
+export const roles = pgTable(
+  'roles',
+  {
+    id: serial('id').primaryKey(),
+    name: varchar('name', { length: 64 }).notNull(),
+    description: varchar('description', { length: 256 }),
+    status: activeStatus('status').default('ativo').notNull(),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
+  },
+  (table) => [
+    // Partial unique: a soft-deleted role must not block re-creating a role with the same name.
+    uniqueIndex('uq_roles_name_active')
+      .on(table.name)
+      .where(sql`${table.deletedAt} IS NULL`),
+    index('roles_deleted_at_idx').on(table.deletedAt)
+  ]
+);
 
 export const modules = pgTable('modules', {
   id: serial('id').primaryKey(),
@@ -98,9 +110,7 @@ export const attenders = pgTable(
   'attenders',
   {
     id: serial('id').primaryKey(),
-    userId: integer('user_id')
-      .unique()
-      .references(() => users.id, { onDelete: 'set null' }),
+    userId: integer('user_id').references(() => users.id, { onDelete: 'set null' }),
     isMember: boolean('is_member').default(false).notNull(),
     // Month-granular values are stored DB-wide as a single YYYYMM integer (e.g. 202404).
     memberSince: integer('member_since'),
@@ -117,13 +127,26 @@ export const attenders = pgTable(
     city: varchar('city', { length: 96 }),
     postalCode: char('postal_code', { length: 8 }),
     email: varchar('email', { length: 96 }),
-    phone: varchar('phone', { length: 16 }),
-    status: activeStatus('status').default('ativo').notNull(),
+    phone: varchar('phone', { length: 11 }),
+    status: attenderStatus('status').default('ativo').notNull(),
+    // Exit metadata, set when status moves to a formal-exit state (desligado/transferido/falecido);
+    // cleared on reactivation. `exitLetterId` is a soft reference to a `carta_de_transferência`
+    // membership letter — app-validated, not a DB FK, to avoid an attenders↔membership_letters
+    // schema import cycle (the letter is often issued weeks after the transfer).
+    exitDate: date('exit_date'),
+    exitReason: varchar('exit_reason', { length: 256 }),
+    exitLetterId: integer('exit_letter_id'),
+    deletedAt: timestamp('deleted_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull()
   },
   (table) => [
     index('attenders_status_idx').on(table.status),
+    index('attenders_deleted_at_idx').on(table.deletedAt),
+    // Partial unique: a soft-deleted attender must not block re-linking that user to a new attender.
+    uniqueIndex('uq_attenders_user_id_active')
+      .on(table.userId)
+      .where(sql`${table.deletedAt} IS NULL`),
     check(
       'chk_member_since_yyyymm',
       sql`${table.memberSince} IS NULL OR (${table.memberSince} BETWEEN 190001 AND 999912 AND ${table.memberSince} % 100 BETWEEN 1 AND 12)`

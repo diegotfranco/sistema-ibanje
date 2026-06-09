@@ -106,4 +106,22 @@ export async function incomeCategoriesRoutes(app: FastifyInstance) {
     },
     controller.remove
   );
+
+  app.patch(
+    '/income-categories/:id/restore',
+    {
+      schema: {
+        tags: ['Income Categories'],
+        params: IdParamSchema,
+        response: {
+          200: IncomeCategoryResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.IncomeCategories, Action.Delete)]
+    },
+    controller.restore
+  );
 }
