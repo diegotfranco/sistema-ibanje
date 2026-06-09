@@ -1,6 +1,6 @@
 import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/Dialog';
 import { zodResolver } from '@/lib/zodResolver';
 import { ActiveStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { useIncomeCategories } from '@/modules/finance/income-categories/useIncomeCategories';

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/Dialog';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage } from '@/components/ResourceListPage';
 import { Pagination } from '@/components/Pagination';

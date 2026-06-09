@@ -164,7 +164,7 @@ export function CategoryGroupedList<T extends CategoryLike>({
       {
         id: 'actions',
         header: '',
-        meta: { align: 'right' },
+        meta: { align: 'center', className: 'w-36' },
         cell: (info) => {
           const r = info.row.original;
           if (r._kind !== 'item') return null;

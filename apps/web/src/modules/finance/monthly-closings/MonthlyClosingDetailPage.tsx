@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardHeaderRow, CardTitle } from '@/compo
 import { PageContainer } from '@/components/PageContainer';
 import StatusBadge from '@/components/StatusBadge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/Dialog';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';

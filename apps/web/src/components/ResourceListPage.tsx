@@ -170,7 +170,7 @@ export function ResourceListPage<T>({
           )}
         </div>
       ),
-      meta: { align: 'right', className: 'w-32' }
+      meta: { align: 'center', className: 'w-36' }
     });
   }
 

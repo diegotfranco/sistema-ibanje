@@ -1,6 +1,6 @@
 import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/Dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';

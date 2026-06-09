@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/Dialog';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { PageContainer } from '@/components/PageContainer';
 import { Module, Action, hasPermission } from '@/lib/permissions';

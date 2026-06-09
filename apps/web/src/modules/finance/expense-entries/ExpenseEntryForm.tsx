@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { DialogFooter } from '@/components/ui/dialog';
+import { DialogFooter } from '@/components/Dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { EntryStatus } from '@sistema-ibanje/shared';
 import { zodResolver } from '@/lib/zodResolver';

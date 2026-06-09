@@ -14,7 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle
-} from '@/components/ui/dialog';
+} from '@/components/Dialog';
 import { useIsAbove } from '@/hooks/useBreakpoint';
 
 export interface RowDetailField {

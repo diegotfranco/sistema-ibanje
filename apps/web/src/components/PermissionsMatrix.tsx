@@ -47,9 +47,13 @@ export default function PermissionsMatrix({
       <table className="w-full text-sm">
         <thead>
           <tr>
-            <th className="py-2 pr-4 text-left font-medium text-muted-foreground">Módulo</th>
+            <th className="sticky top-0 z-10 bg-popover py-2 pr-4 text-left font-medium text-muted-foreground">
+              Módulo
+            </th>
             {permissionTypes.map((pt) => (
-              <th key={pt.id} className="px-2 py-2 text-center font-medium text-muted-foreground">
+              <th
+                key={pt.id}
+                className="sticky top-0 z-10 bg-popover px-2 py-2 text-center font-medium text-muted-foreground">
                 {pt.name}
               </th>
             ))}
