@@ -132,7 +132,7 @@ describe('calendar smoke: CRUD, merged feed, and access split', () => {
   });
 
   it('exposes the feed to any authenticated role but gates management', async () => {
-    const congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    const congregant = await loginAs(app, 'membro@email.com', 'membro123');
 
     const feed = await app.inject({
       method: 'GET',

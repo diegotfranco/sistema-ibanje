@@ -61,6 +61,21 @@ export const AttenderStatusChangeSchema = z.object({
 
 export type AttenderStatusChangeValues = z.infer<typeof AttenderStatusChangeSchema>;
 
+// Drives the admission dialog (PATCH /attenders/:id/membership). Admission mode and the month
+// membership started are required; baptism date is optional context.
+export const AdmitMemberSchema = z.object({
+  admissionMode: z.enum([
+    AdmissionMode.Acclamation,
+    AdmissionMode.Baptism,
+    AdmissionMode.TransferLetter,
+    AdmissionMode.FaithProfession
+  ] as const),
+  memberSince: z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: MM/AAAA'),
+  baptismDate: z.string().optional().nullable()
+});
+
+export type AdmitMemberValues = z.infer<typeof AdmitMemberSchema>;
+
 export type AttenderResponse = {
   id: number;
   userId: number | null;

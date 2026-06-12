@@ -19,12 +19,17 @@ describe('roles module', () => {
   let moduleId: number;
   let permissionId: number;
   let createdRoleId: number;
+  // The base member floor (Acessar on Painel/Congregados/Atas) is merged into every role's
+  // permission set at write time, so reads always include it on top of the explicit entries.
+  const BASE_MODULE_NAMES = ['Painel', 'Congregados', 'Atas'];
+  let baseModuleIds: number[];
+  let accessId: number;
 
   beforeAll(async () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
 
     const me = await app.inject({
       method: 'GET',
@@ -39,13 +44,18 @@ describe('roles module', () => {
       url: '/modules',
       headers: { cookie: admin.cookie }
     });
-    moduleId = mods.json<RefRow[]>()[0].id;
+    const modRows = mods.json<RefRow[]>();
+    baseModuleIds = modRows.filter((m) => BASE_MODULE_NAMES.includes(m.name)).map((m) => m.id);
+    // Use a NON-base module so the explicit entry is always distinct from the base floor.
+    moduleId = modRows.find((m) => !BASE_MODULE_NAMES.includes(m.name))!.id;
     const perms = await app.inject({
       method: 'GET',
       url: '/permission-types',
       headers: { cookie: admin.cookie }
     });
-    permissionId = perms.json<RefRow[]>()[0].id;
+    const permRows = perms.json<RefRow[]>();
+    permissionId = permRows[0].id;
+    accessId = permRows.find((p) => p.name === 'Acessar')!.id;
   });
 
   it('lists roles for an admin', async () => {
@@ -123,10 +133,16 @@ describe('roles module', () => {
     });
     expect(get.statusCode).toBe(200);
     const rows = get.json<PermRow[]>();
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ moduleId, permissionId });
+    // Explicit entry + the always-merged base floor (Acessar on Painel/Congregados/Atas).
+    expect(rows).toHaveLength(baseModuleIds.length + 1);
+    expect(rows).toContainEqual(expect.objectContaining({ moduleId, permissionId }));
+    for (const bm of baseModuleIds) {
+      expect(rows).toContainEqual(
+        expect.objectContaining({ moduleId: bm, permissionId: accessId })
+      );
+    }
 
-    // Empty array clears the set.
+    // Empty array clears the explicit entries but the base floor remains.
     const clear = await app.inject({
       method: 'PUT',
       url: `/roles/${createdRoleId}/permissions`,
@@ -139,7 +155,9 @@ describe('roles module', () => {
       url: `/roles/${createdRoleId}/permissions`,
       headers: { cookie: admin.cookie }
     });
-    expect(after.json<PermRow[]>()).toHaveLength(0);
+    const afterRows = after.json<PermRow[]>();
+    expect(afterRows).toHaveLength(baseModuleIds.length);
+    expect(afterRows).not.toContainEqual(expect.objectContaining({ moduleId, permissionId }));
   });
 
   it('returns 404 when setting permissions on an unknown role', async () => {

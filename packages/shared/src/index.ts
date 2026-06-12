@@ -89,12 +89,13 @@ export const ActiveStatus = {
 } as const;
 export type ActiveStatusValue = (typeof ActiveStatus)[keyof typeof ActiveStatus];
 
-// Member lifecycle. `ativo`/`inativo` are reversible attendance states; `desligado`/`transferido`/
-// `falecido` are formal exits carrying exit metadata (date, reason, optional transfer letter).
-// Orthogonal to soft-delete (`deletedAt`): a deleted row is a data-entry mistake, not an exit.
+// Member lifecycle. `ativo` is the live state; `desligado`/`transferido`/`falecido` are the formal
+// exits carrying exit metadata (date, reason, optional transfer letter). There is no standalone
+// "inactive" status — "inactive" is the *union* of the three exits, surfaced only as a filter
+// (see ATTENDER_INACTIVE_FILTER). Orthogonal to soft-delete (`deletedAt`): a deleted row is a
+// data-entry mistake, not an exit.
 export const AttenderStatus = {
   Active: 'ativo',
-  Inactive: 'inativo',
   Dismissed: 'desligado',
   Transferred: 'transferido',
   Deceased: 'falecido'
@@ -102,7 +103,6 @@ export const AttenderStatus = {
 export type AttenderStatusValue = (typeof AttenderStatus)[keyof typeof AttenderStatus];
 export const ATTENDER_STATUS_VALUES = [
   AttenderStatus.Active,
-  AttenderStatus.Inactive,
   AttenderStatus.Dismissed,
   AttenderStatus.Transferred,
   AttenderStatus.Deceased
@@ -114,6 +114,9 @@ export const ATTENDER_TERMINAL_STATUSES = [
   AttenderStatus.Transferred,
   AttenderStatus.Deceased
 ] as const satisfies readonly AttenderStatusValue[];
+// Pseudo status used only as a list filter: selecting it returns the union of the terminal
+// (exit) states. Not a stored value — the repository expands it to `IN (desligado,…)`.
+export const ATTENDER_INACTIVE_FILTER = 'inativo' as const;
 
 // Campaign lifecycle — feminine to agree with "campanha". `encerrada` = the
 // campaign legitimately ended (goal/deadline reached); distinct from soft-delete (`deletedAt`).

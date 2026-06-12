@@ -5,6 +5,7 @@ import { db } from '../../db/index.js';
 import { passwordResetTokens, users, roles, attenders } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import * as repo from './repository.js';
+import { findAttenderByEmail } from '../attenders/repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { ActiveStatus } from '@sistema-ibanje/shared';
@@ -181,11 +182,29 @@ export async function createUser(
       if (!attender) {
         throw httpError(404, 'Attender not found');
       }
+      // Only members may hold a login — a plain congregado has no system access.
+      if (!attender.isMember) {
+        throw httpError(422, 'Apenas membros podem ter acesso ao sistema.', {
+          fieldErrors: { attenderId: 'O congregado selecionado não é membro.' }
+        });
+      }
       if (attender.userId !== null) {
         throw httpError(409, 'Attender already has a user account', {
           fieldErrors: { attenderId: 'Frequentista já possui usuário vinculado' }
         });
       }
+    }
+
+    // Guard against giving a login to (or duplicating) someone already in the roster by email.
+    // A non-member match is a hard block (congregados can't have accounts); an unlinked-member
+    // match is left for the frontend to surface as a non-blocking "did you mean to link?" toast.
+    const emailMatch = await findAttenderByEmail(body.email);
+    if (emailMatch && !emailMatch.isMember) {
+      throw httpError(
+        409,
+        'Este e-mail pertence a um congregado que não é membro; congregados não podem ter acesso ao sistema.',
+        { fieldErrors: { email: 'E-mail de um congregado não-membro.' } }
+      );
     }
 
     let result;

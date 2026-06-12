@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { zodResolver } from '@/lib/zodResolver';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
@@ -40,7 +41,10 @@ export default function UserForm({
   const rolesList = useRoles();
   const roles = rolesList.data?.data ?? [];
 
-  const attendersList = useAttenders();
+  // Only members can hold a login, so the picker (and the email-match warning below) work off the
+  // member roster. Server caps the page at 100 — fine for a single church; the email-match toast
+  // is best-effort and the backend independently blocks non-member email collisions.
+  const attendersList = useAttenders({ isMember: 'true', limit: 100 });
   const attenders = attendersList.data?.data ?? [];
 
   const createForm = useForm<UserCreateFormValues>({
@@ -54,6 +58,17 @@ export default function UserForm({
       ? { name: initialValues.name, email: initialValues.email, roleId: initialValues.roleId }
       : {}
   });
+
+  // When the typed email belongs to a member who wasn't linked, nudge the operator to link them
+  // instead of creating a detached account. Non-blocking — the backend enforces the hard rules.
+  function warnOnUnlinkedMemberEmail(rawEmail: string) {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email || createForm.getValues('attenderId')) return;
+    const match = attenders.find((a) => a.email?.toLowerCase() === email);
+    if (match) {
+      toast.warning(`Existe um membro com este e-mail (${match.name}). Considere vinculá-lo.`);
+    }
+  }
 
   useEffect(() => {
     // Populate form ref for error handling from parent
@@ -141,7 +156,20 @@ export default function UserForm({
       </div>
       <div className="space-y-1">
         <Label htmlFor="create-email">E-mail *</Label>
-        <Input id="create-email" type="email" {...register('email')} />
+        {(() => {
+          const emailField = register('email');
+          return (
+            <Input
+              id="create-email"
+              type="email"
+              {...emailField}
+              onBlur={(e) => {
+                emailField.onBlur(e);
+                warnOnUnlinkedMemberEmail(e.target.value);
+              }}
+            />
+          );
+        })()}
         {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
       </div>
       <div className="space-y-1">
@@ -164,7 +192,7 @@ export default function UserForm({
         {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
       </div>
       <div className="space-y-1">
-        <Label>Congregado (opcional)</Label>
+        <Label>Membro (opcional)</Label>
         <Controller
           name="attenderId"
           control={control}
@@ -175,7 +203,7 @@ export default function UserForm({
               onChange={(v) => field.onChange(v)}
               getValue={(a) => a.id}
               getLabel={(a) => a.name}
-              placeholder="Vincular a um congregado..."
+              placeholder="Vincular a um membro..."
               isLoading={attendersList.isLoading}
               allowClear
             />

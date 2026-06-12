@@ -3,7 +3,7 @@ import { expect, type Page } from '@playwright/test';
 // Seeded demo accounts (see apps/api/src/db/seed-data.ts). Passwords meet the 8-char minimum.
 export const ACCOUNTS = {
   admin: { email: 'admin@email.com', password: 'admin123' },
-  congregado: { email: 'congregado@email.com', password: 'congregado123' }
+  congregado: { email: 'membro@email.com', password: 'membro123' }
 } as const;
 
 // UI login: fills the real login form and waits for the post-login destination. Staff land on

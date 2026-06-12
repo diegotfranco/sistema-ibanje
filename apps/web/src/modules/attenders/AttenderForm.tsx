@@ -71,6 +71,10 @@ export default function AttenderForm({
   } = form;
 
   const isMember = useWatch({ control, name: 'isMember' }) ?? false;
+  // Membership is set at creation (for entering already-existing members) but on an existing
+  // attender it changes only via the dedicated admission action / status exits — so the whole
+  // "Vínculo" block is hidden when editing.
+  const isEditing = !!defaultValues;
 
   useEffect(() => {
     if (formRef && 'current' in formRef) {
@@ -176,53 +180,36 @@ export default function AttenderForm({
             )}
           </div>
 
-          <p className="pt-2 text-sm font-medium text-muted-foreground">Vínculo</p>
-          <Separator />
+          {!isEditing && (
+            <>
+              <p className="pt-2 text-sm font-medium text-muted-foreground">Vínculo</p>
+              <Separator />
 
-          <div className="flex items-center gap-2">
-            <Controller
-              name="isMember"
-              control={control}
-              render={({ field }) => (
-                <Checkbox
-                  id="isMember"
-                  checked={field.value ?? false}
-                  onCheckedChange={(v) => field.onChange(v === true)}
+              <div className="flex items-center gap-2">
+                <Controller
+                  name="isMember"
+                  control={control}
+                  render={({ field }) => (
+                    <Checkbox
+                      id="isMember"
+                      checked={field.value ?? false}
+                      onCheckedChange={(v) => field.onChange(v === true)}
+                    />
+                  )}
                 />
-              )}
-            />
-            <Label htmlFor="isMember" className="cursor-pointer">
-              É membro da igreja
-            </Label>
-          </div>
+                <Label htmlFor="isMember" className="cursor-pointer">
+                  É membro da igreja
+                </Label>
+              </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="baptismDate">Data de batismo</Label>
-            <Controller
-              control={control}
-              name="baptismDate"
-              render={({ field }) => (
-                <DateInput
-                  id="baptismDate"
-                  value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  onBlur={field.onBlur}
-                  name={field.name}
-                />
-              )}
-            />
-          </div>
-
-          {isMember && (
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <Label htmlFor="memberSince">Membro desde</Label>
+                <Label htmlFor="baptismDate">Data de batismo</Label>
                 <Controller
                   control={control}
-                  name="memberSince"
+                  name="baptismDate"
                   render={({ field }) => (
-                    <MonthInput
-                      id="memberSince"
+                    <DateInput
+                      id="baptismDate"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
@@ -230,42 +217,65 @@ export default function AttenderForm({
                     />
                   )}
                 />
-                {errors.memberSince && (
-                  <p className="text-xs text-destructive">{errors.memberSince.message}</p>
-                )}
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="admissionMode">Modo de Admissão</Label>
-                <Controller
-                  name="admissionMode"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      value={field.value ?? ''}
-                      onValueChange={(v) =>
-                        field.onChange(v === '' ? null : (v as AttenderFormValues['admissionMode']))
-                      }>
-                      <SelectTrigger id="admissionMode" className="w-full">
-                        <SelectValue placeholder="Selecionar..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={AdmissionMode.Acclamation}>Aclamação</SelectItem>
-                        <SelectItem value={AdmissionMode.Baptism}>Batismo</SelectItem>
-                        <SelectItem value={AdmissionMode.TransferLetter}>
-                          Carta de Transferência
-                        </SelectItem>
-                        <SelectItem value={AdmissionMode.FaithProfession}>
-                          Profissão de Fé
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                {errors.admissionMode && (
-                  <p className="text-xs text-destructive">{errors.admissionMode.message}</p>
-                )}
-              </div>
-            </div>
+
+              {isMember && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <Label htmlFor="memberSince">Membro desde</Label>
+                    <Controller
+                      control={control}
+                      name="memberSince"
+                      render={({ field }) => (
+                        <MonthInput
+                          id="memberSince"
+                          value={field.value ?? ''}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          onBlur={field.onBlur}
+                          name={field.name}
+                        />
+                      )}
+                    />
+                    {errors.memberSince && (
+                      <p className="text-xs text-destructive">{errors.memberSince.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="admissionMode">Modo de Admissão</Label>
+                    <Controller
+                      name="admissionMode"
+                      control={control}
+                      render={({ field }) => (
+                        <Select
+                          value={field.value ?? ''}
+                          onValueChange={(v) =>
+                            field.onChange(
+                              v === '' ? null : (v as AttenderFormValues['admissionMode'])
+                            )
+                          }>
+                          <SelectTrigger id="admissionMode" className="w-full">
+                            <SelectValue placeholder="Selecionar..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value={AdmissionMode.Acclamation}>Aclamação</SelectItem>
+                            <SelectItem value={AdmissionMode.Baptism}>Batismo</SelectItem>
+                            <SelectItem value={AdmissionMode.TransferLetter}>
+                              Carta de Transferência
+                            </SelectItem>
+                            <SelectItem value={AdmissionMode.FaithProfession}>
+                              Profissão de Fé
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                    {errors.admissionMode && (
+                      <p className="text-xs text-destructive">{errors.admissionMode.message}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
 
           <p className="pt-2 text-sm font-medium text-muted-foreground">Endereço</p>

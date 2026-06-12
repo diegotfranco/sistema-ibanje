@@ -7,7 +7,7 @@ import { reseedDb } from './helpers/db.js';
 import { db } from '../src/db/index.js';
 import { attenders } from '../src/db/schema.js';
 
-// João da Silva is the seeded attender linked to congregado@email.com and has
+// João da Silva is the seeded attender linked to membro@email.com and has
 // confirmed donations across multiple years (see seed-edge-cases.ts).
 describe('attenders donations + self-vs-staff RBAC', () => {
   let app: FastifyInstance;
@@ -19,7 +19,7 @@ describe('attenders donations + self-vs-staff RBAC', () => {
   beforeAll(async () => {
     reseedDb();
     app = await getTestApp();
-    congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregado = await loginAs(app, 'membro@email.com', 'membro123');
     staff = await loginAs(app, 'admin@email.com', 'admin123');
 
     const [self] = await db

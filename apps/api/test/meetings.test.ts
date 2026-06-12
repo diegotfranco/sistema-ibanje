@@ -14,7 +14,7 @@ describe('meetings', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregado = await loginAs(app, 'membro@email.com', 'membro123');
   });
 
   it('lists meetings (200, has data array)', async () => {

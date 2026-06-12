@@ -30,7 +30,7 @@ export const SEED_ROLES = [
       'Órgão de fiscalização interna responsável por garantir a transparência e a integridade das finanças da igreja'
   },
   {
-    name: 'Congregado',
+    name: 'Membro',
     description: 'Acesso de visualização para transparência de atas e dados pessoais.'
   }
 ];
@@ -541,7 +541,7 @@ export function buildRoleModulePermissions(
   // Comissão precisa anotar correções durante a revisão antes de aprovar — Editar habilita isso.
   const examCommissionClosingIds = ['Acessar', 'Editar', 'Revisar'].map((n) => permByName[n].id);
 
-  return [
+  const rows = [
     ...cross(roleByName['Administrador'].id, allModNames, allPermIds),
     ...cross(roleByName['Tesoureiro'].id, ['Painel', ...financialMods], fullPermIds),
     ...cross(roleByName['Tesoureiro'].id, ['Congregados', 'Atas'], readPermIds),
@@ -566,11 +566,8 @@ export function buildRoleModulePermissions(
       ['Fechamentos Mensais'],
       examCommissionClosingIds
     ),
-    ...cross(
-      roleByName['Congregado'].id,
-      ['Atas', 'Congregados', 'Painel'],
-      [permByName['Acessar'].id]
-    ),
+    // The base member ('Membro') floor — Acessar on Painel/Congregados/Atas — is no longer listed
+    // explicitly here: the `withBase` union below grants it to every role (Membro included).
     ...cross(roleByName['Tesoureiro'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Presidente'].id, ['Eventos'], fullPermIds),
     ...cross(roleByName['Vice-Presidente'].id, ['Eventos'], fullPermIds),
@@ -591,6 +588,28 @@ export function buildRoleModulePermissions(
     ...cross(roleByName['Secretário'].id, ['Relatórios'], readPermIds),
     ...cross(roleByName['Comissão de Exame de Contas'].id, ['Relatórios'], readPermIds)
   ];
+
+  // Base member floor: every role inherits at least what the Congregado role can do
+  // (`Acessar` on Painel/Congregados/Atas), so a board member never has *less* reach than an
+  // ordinary member. Union it into every role, then dedupe — most board roles already grant
+  // these modules with stronger permissions, and Admin holds everything.
+  const baseModules = ['Painel', 'Congregados', 'Atas'];
+  const accessId = permByName['Acessar'].id;
+  const withBase = Object.values(roleByName).flatMap((role) =>
+    baseModules.map((mod) => ({
+      roleId: role.id,
+      moduleId: modByName[mod].id,
+      permissionId: accessId
+    }))
+  );
+
+  const seen = new Set<string>();
+  return [...rows, ...withBase].filter((r) => {
+    const key = `${r.roleId}:${r.moduleId}:${r.permissionId}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 /**
@@ -642,10 +661,10 @@ export const SEED_DEMO_USERS: SeedDemoUser[] = [
     roleName: 'Comissão de Exame de Contas'
   },
   {
-    name: 'Congregado da Silva',
-    email: 'congregado@email.com',
-    password: 'congregado123',
-    roleName: 'Congregado'
+    name: 'Membro da Silva',
+    email: 'membro@email.com',
+    password: 'membro123',
+    roleName: 'Membro'
   }
 ];
 

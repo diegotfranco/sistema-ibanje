@@ -4,6 +4,7 @@ import type {
   CreateAttenderRequest,
   UpdateAttenderRequest,
   ChangeAttenderStatusRequest,
+  AdmitMemberRequest,
   ListAttendersRequest,
   AttendersExportPdfQuerySchema,
   DonationsSummaryQuerySchema,
@@ -16,9 +17,14 @@ import * as service from './service.js';
 import { renderAttenderDonationsPdf, renderAttendersRosterPdf } from './pdf-service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
-  const { page, limit, isMember, status, q } = req.query as ListAttendersRequest;
+  const { page, limit, isMember, status, deleted, q } = req.query as ListAttendersRequest;
   return reply.send(
-    await service.listAttenders(req.session.userId!, page, limit, { isMember, status, q })
+    await service.listAttenders(req.session.userId!, page, limit, {
+      isMember,
+      status,
+      deleted,
+      q
+    })
   );
 }
 
@@ -68,12 +74,29 @@ export async function changeStatus(req: FastifyRequest, reply: FastifyReply) {
   return reply.send(attender);
 }
 
+export async function admitMembership(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const body = req.body as AdmitMemberRequest;
+  const attender = await service.admitMember(req.session.userId!, id, body);
+  if (!attender) return reply.code(404).send({ message: 'Attender not found' });
+  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  return reply.send(attender);
+}
+
 export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const result = await service.softDeleteAttender(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Attender not found' });
   logAudit(req.session.userId!, 'delete', 'attender', id, { ipAddress: req.ip });
   return reply.code(204).send();
+}
+
+export async function restore(req: FastifyRequest, reply: FastifyReply) {
+  const { id } = req.params as IdParam;
+  const attender = await service.restoreAttender(req.session.userId!, id);
+  if (!attender) return reply.code(404).send({ message: 'Attender not found' });
+  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  return reply.send(attender);
 }
 
 export async function donationsSummary(req: FastifyRequest, reply: FastifyReply) {

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
+import { ATTENDER_STATUS_VALUES, ATTENDER_INACTIVE_FILTER } from '@sistema-ibanje/shared';
 import { paginatedSchema } from '../../lib/http-schemas.js';
 import {
   phoneField,
@@ -15,12 +15,17 @@ const MonthStringSchema = z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: Y
 
 // Shared filter shape for the list and the roster export. `isMember` arrives as the literal
 // string "true"/"false" — `z.coerce.boolean()` is wrong here (it maps "false" → true).
+// `status` accepts the real enum values plus the pseudo-token `inativo`, which the repository
+// expands to the union of the terminal (exit) states.
+const attenderStatusFilterValues = [...ATTENDER_STATUS_VALUES, ATTENDER_INACTIVE_FILTER] as const;
 const attenderFilterShape = {
   isMember: z
     .enum(['true', 'false'])
     .transform((v) => v === 'true')
     .optional(),
-  status: z.enum(ATTENDER_STATUS_VALUES).optional(),
+  status: z.enum(attenderStatusFilterValues).optional(),
+  // Trash view: 'only' shows soft-deleted rows, 'include' shows both. Omitted = live rows only.
+  deleted: z.enum(['only', 'include']).optional(),
   // Diacritic/case-insensitive name search (server-side LIKE), like the categories list.
   q: z.string().trim().min(1).max(64).optional()
 };
@@ -39,7 +44,8 @@ export const AttendersExportPdfQuerySchema = z.object({
 
 export type AttenderFilters = {
   isMember?: boolean;
-  status?: (typeof ATTENDER_STATUS_VALUES)[number];
+  status?: (typeof attenderStatusFilterValues)[number];
+  deleted?: 'only' | 'include';
   q?: string;
 };
 export type ListAttendersRequest = z.infer<typeof ListAttendersRequestSchema>;
@@ -67,7 +73,25 @@ export const CreateAttenderRequestSchema = z.object({
     .optional()
 });
 
-export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial();
+// Membership and admission data are NOT editable through the generic edit form — they change
+// only via the dedicated admission action (`PATCH /:id/membership`) or the status exits. Edit
+// is limited to identity/contact/address fields.
+export const UpdateAttenderRequestSchema = CreateAttenderRequestSchema.partial().omit({
+  isMember: true,
+  baptismDate: true,
+  memberSince: true,
+  admissionMode: true
+});
+
+// Admission (congregado → membro). A formal event: requires the admission mode and the month
+// the membership started; baptism date is optional context. An incoming transfer letter, when
+// applicable, is recorded separately in the membership-letters module (it already references
+// the attender), so it is not part of this payload.
+export const AdmitMemberRequestSchema = z.object({
+  admissionMode: z.enum(['aclamação', 'batismo', 'carta de transferência', 'profissão de fé']),
+  memberSince: MonthStringSchema,
+  baptismDate: z.iso.date().nullable().optional()
+});
 
 // Drives the single guarded lifecycle endpoint (PATCH /attenders/:id/status). The service
 // enforces the legal transitions and the per-state requiredness of `exitDate` (required when
@@ -161,6 +185,7 @@ export const AttenderDonationsEntriesResponseSchema = z.object({
 export type CreateAttenderRequest = z.infer<typeof CreateAttenderRequestSchema>;
 export type UpdateAttenderRequest = z.infer<typeof UpdateAttenderRequestSchema>;
 export type ChangeAttenderStatusRequest = z.infer<typeof ChangeAttenderStatusRequestSchema>;
+export type AdmitMemberRequest = z.infer<typeof AdmitMemberRequestSchema>;
 export type AttenderResponse = z.infer<typeof AttenderResponseSchema>;
 export type AttenderDonationsSummaryResponse = z.infer<
   typeof AttenderDonationsSummaryResponseSchema

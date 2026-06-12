@@ -131,7 +131,7 @@ describe('dashboard smoke: composite endpoint returns expected shape with matchi
 
   // RBAC: each section is gated by the read permission of the module that owns its data.
   it('returns null finance/closing sections for a Congregado (no Reports/Closings perms)', async () => {
-    const congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    const congregado = await loginAs(app, 'membro@email.com', 'membro123');
     const result = await app.inject({
       method: 'GET',
       url: '/dashboard?month=2026-05',

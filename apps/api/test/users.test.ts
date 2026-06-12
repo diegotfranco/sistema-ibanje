@@ -20,7 +20,7 @@ describe('users self-service rules', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
 
     const list = await app.inject({
       method: 'GET',
@@ -29,7 +29,7 @@ describe('users self-service rules', () => {
     });
     const users = list.json<{ data: UserRow[] }>().data;
     const adminRow = users.find((u) => u.email === 'admin@email.com')!;
-    const congRow = users.find((u) => u.email === 'congregado@email.com')!;
+    const congRow = users.find((u) => u.email === 'membro@email.com')!;
     adminId = adminRow.id;
     adminRoleId = adminRow.roleId;
     congregantId = congRow.id;
@@ -120,7 +120,7 @@ describe('users self-service rules', () => {
         method: 'PATCH',
         url: `/users/${congregantId}/password`,
         headers: { cookie: congregant.cookie, 'x-csrf-token': congregant.csrfToken },
-        payload: { currentPassword: 'congregado123', newPassword: 'brandNewPass123' }
+        payload: { currentPassword: 'membro123', newPassword: 'brandNewPass123' }
       });
       expect(res.statusCode).toBe(204);
     });
@@ -173,7 +173,7 @@ describe('users self-service rules', () => {
         headers: { cookie: admin.cookie }
       });
       const nameBody = byName.json<{ data: UserRow[] }>();
-      expect(nameBody.data.some((u) => u.email === 'congregado@email.com')).toBe(true);
+      expect(nameBody.data.some((u) => u.email === 'membro@email.com')).toBe(true);
     });
 
     it('filters by ?status=', async () => {

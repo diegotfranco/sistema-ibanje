@@ -21,7 +21,7 @@ describe('reports module', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
   });
 
   it('returns the income report for a month', async () => {
