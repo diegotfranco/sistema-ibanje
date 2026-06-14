@@ -52,6 +52,23 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d
 
 Database rollback: see "Restore from backup" below.
 
+## Database migrations & rollback policy
+
+- **Forward-only.** Migrations are never un-applied with a "down" step in production. To undo a bad
+  schema change you roll *forward* with a new corrective migration, or restore the pre-migration
+  snapshot (below). Drizzle migrations are append-only SQL under `apps/api/drizzle/`.
+- **Snapshot before migrating.** A deploy that includes a migration is the one moment most likely to
+  corrupt data. Before running `pnpm db:migrate` on a release with schema changes, take a manual dump:
+  `docker compose -f docker-compose.prod.yml --env-file .env.production exec backup /usr/local/bin/backup.sh`.
+  If the migration goes wrong, restore that dump (see "Restore from backup").
+- **Not zero-downtime.** `docker compose run --rm api pnpm db:migrate` runs the migration in a
+  one-shot container against the live database while the app is up. For this single-church, low-traffic
+  app that's acceptable — but it means a long-running or locking migration can briefly disrupt requests.
+  For a heavy migration, stop `api` first, migrate, then bring it back.
+- **Postgres version.** The stack is pinned to `postgres:18-alpine` (matched by the throwaway DB in the
+  restore drill). Staying on a single major avoids dump/restore incompatibilities; a major-version bump
+  is a deliberate, separately-planned operation (dump → upgrade → restore → verify), not a routine deploy.
+
 ## Offsite mirror — Cloudflare R2
 
 If the R2 env vars are set in `.env.production` (`R2_ENDPOINT`, `R2_BUCKET`, `R2_ACCESS_KEY`, `R2_SECRET_KEY`), the backup container mirrors each daily dump to the R2 bucket after the local MinIO write. Failure to mirror is logged but does not fail the backup. Retention on R2 is managed by a bucket lifecycle rule (recommended: delete objects older than 90 days); local MinIO retention is independent (`BACKUP_RETAIN_DAYS`, default 30).
@@ -78,12 +95,18 @@ docker exec -e PGPASSWORD=test restore-test psql -U postgres -c "CREATE DATABASE
 gunzip -c *.sql.gz | docker exec -i -e PGPASSWORD=test restore-test \
   psql -U postgres -d restore_test
 docker exec -e PGPASSWORD=test restore-test psql -U postgres -d restore_test \
-  -c "SELECT count(*) FROM members; SELECT count(*) FROM income_entries;"
+  -c "SELECT count(*) FROM attenders; SELECT count(*) FROM income_entries;"
 
 docker stop restore-test
 ```
 
 Counts must match production. Record the drill date in your notes.
+
+> **Automated check:** `scripts/verify-backup.sh` does the same restore-and-count automatically against
+> the latest dump (into a throwaway DB on the backup container's Postgres), failing with a non-zero
+> exit if no backup exists, the restore errors, or a structural table (`users`/`roles`/`modules`/
+> `permissions`) comes back empty. Schedule it a few hours after the nightly backup and alert on
+> failure. The quarterly manual drill above stays the belt-and-suspenders check on a separate machine.
 
 ## Restore from backup
 
