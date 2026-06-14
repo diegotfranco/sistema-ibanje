@@ -1,13 +1,8 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/Card';
+import { formatMoney } from '@/lib/format';
 import type { FinancialStatementResponse } from './schema';
-
-const formatMoney = (s: string) =>
-  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-
-const fmt = (n: number) =>
-  `R$ ${n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 interface CategoryRow {
   parentCategoryName: string | null;
@@ -91,7 +86,7 @@ function StatementSection({ title, groups, total, totalColor }: SectionProps) {
                     {group.name}
                   </span>
                   <span className="font-mono tabular-nums whitespace-nowrap shrink-0 text-sm font-medium">
-                    {fmt(group.subtotal)}
+                    {formatMoney(group.subtotal)}
                   </span>
                 </button>
                 {isExpanded && (
@@ -156,7 +151,7 @@ export function FinancialStatementDocument({ data }: Props) {
           <div className="border-t pt-2 flex items-baseline justify-between gap-3 text-sm font-semibold">
             <span className="min-w-0">Resultado do mês</span>
             <span className={`font-mono tabular-nums whitespace-nowrap shrink-0 ${resultColor}`}>
-              {fmt(result)}
+              {formatMoney(result)}
             </span>
           </div>
         </CardContent>

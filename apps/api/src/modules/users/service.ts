@@ -5,6 +5,7 @@ import { db } from '../../db/index.js';
 import { passwordResetTokens, users, roles, attenders } from '../../db/schema.js';
 import { eq } from 'drizzle-orm';
 import * as repo from './repository.js';
+import { findAttenderByEmail } from '../attenders/repository.js';
 import { assertPermission } from '../../lib/permissions.js';
 import { Module, Action } from '../../lib/constants.js';
 import { ActiveStatus } from '@sistema-ibanje/shared';
@@ -16,6 +17,7 @@ import type {
   CreateUserRequest
 } from './schema.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
+import { isCommonPassword } from '../../lib/passwordPolicy.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -120,6 +122,13 @@ export async function changePassword(
     await assertPermission(callerId, Module.Users, Action.Update);
   }
 
+  // Length is enforced by the Zod schema; reject breached/common passwords here in the service.
+  if (await isCommonPassword(body.newPassword)) {
+    throw httpError(400, 'Senha muito comum. Escolha uma senha mais forte.', {
+      fieldErrors: { newPassword: 'Senha muito comum. Escolha uma senha mais forte.' }
+    });
+  }
+
   const newPasswordHash = await argon2.hash(body.newPassword + env.ARGON2_PEPPER, {
     type: argon2.argon2id
   });
@@ -176,16 +185,34 @@ export async function createUser(
   logFn: (token: string) => void
 ): Promise<UserResponse> {
   return await db.transaction(async (tx) => {
-    if (body.attenderId !== undefined) {
+    if (body.attenderId != null) {
       const attender = await repo.findAttenderById(body.attenderId);
       if (!attender) {
         throw httpError(404, 'Attender not found');
+      }
+      // Only members may hold a login — a plain congregado has no system access.
+      if (!attender.isMember) {
+        throw httpError(422, 'Apenas membros podem ter acesso ao sistema.', {
+          fieldErrors: { attenderId: 'O congregado selecionado não é membro.' }
+        });
       }
       if (attender.userId !== null) {
         throw httpError(409, 'Attender already has a user account', {
           fieldErrors: { attenderId: 'Frequentista já possui usuário vinculado' }
         });
       }
+    }
+
+    // Guard against giving a login to (or duplicating) someone already in the roster by email.
+    // A non-member match is a hard block (congregados can't have accounts); an unlinked-member
+    // match is left for the frontend to surface as a non-blocking "did you mean to link?" toast.
+    const emailMatch = await findAttenderByEmail(body.email);
+    if (emailMatch && !emailMatch.isMember) {
+      throw httpError(
+        409,
+        'Este e-mail pertence a um congregado que não é membro; congregados não podem ter acesso ao sistema.',
+        { fieldErrors: { email: 'E-mail de um congregado não-membro.' } }
+      );
     }
 
     let result;
@@ -220,7 +247,7 @@ export async function createUser(
 
     await repo.copyRolePermissionsToUser(body.roleId, newUser.id, tx);
 
-    if (body.attenderId !== undefined) {
+    if (body.attenderId != null) {
       await tx
         .update(attenders)
         .set({ userId: newUser.id })

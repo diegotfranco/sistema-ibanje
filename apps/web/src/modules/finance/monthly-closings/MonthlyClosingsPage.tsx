@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router';
 import { Plus, Eye, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { PageContainer } from '@/components/PageContainer';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import StatusBadge from '@/components/StatusBadge';
 import { YearPicker } from '@/components/YearPicker';
+import { formatMoney } from '@/lib/format';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ClosingStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -36,9 +38,6 @@ const MONTHS = [
 ];
 
 const formatPeriod = (year: number, month: number) => `${MONTHS[month - 1]} ${year}`;
-
-const formatMoney = (s: string) =>
-  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export default function MonthlyClosingsPage() {
   const { data: user } = useCurrentUser();
@@ -78,7 +77,7 @@ export default function MonthlyClosingsPage() {
       id: 'income',
       header: 'Entradas',
       cell: ({ row }) => (
-        <span className="font-mono tabular-nums">R$ {formatMoney(row.original.totalIncome)}</span>
+        <span className="font-mono tabular-nums">{formatMoney(row.original.totalIncome)}</span>
       ),
       meta: { align: 'right' }
     },
@@ -86,7 +85,7 @@ export default function MonthlyClosingsPage() {
       id: 'expenses',
       header: 'Saídas',
       cell: ({ row }) => (
-        <span className="font-mono tabular-nums">R$ {formatMoney(row.original.totalExpenses)}</span>
+        <span className="font-mono tabular-nums">{formatMoney(row.original.totalExpenses)}</span>
       ),
       meta: { align: 'right' }
     },
@@ -94,9 +93,7 @@ export default function MonthlyClosingsPage() {
       id: 'balance',
       header: 'Saldo',
       cell: ({ row }) => (
-        <span className="font-mono tabular-nums">
-          R$ {formatMoney(row.original.closingBalance)}
-        </span>
+        <span className="font-mono tabular-nums">{formatMoney(row.original.closingBalance)}</span>
       ),
       meta: { align: 'right' }
     },
@@ -104,24 +101,18 @@ export default function MonthlyClosingsPage() {
       id: '__actions',
       header: 'Ações',
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
+        <div className="flex items-center justify-end gap-1">
+          <RowActionButton
+            label="Ver detalhes"
+            icon={<Eye size={16} />}
             onClick={() => navigate(`/monthly-closings/${row.original.id}`)}
-            aria-label="Abrir"
-            title="Abrir">
-            <Eye size={16} />
-          </Button>
+          />
           {canDelete && row.original.status === ClosingStatus.Open && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label="Excluir"
+              icon={<Trash2 size={16} />}
               onClick={() => setDeleting(row.original)}
-              aria-label="Excluir"
-              title="Excluir">
-              <Trash2 size={16} />
-            </Button>
+            />
           )}
         </div>
       ),
@@ -142,7 +133,14 @@ export default function MonthlyClosingsPage() {
                   Novo
                 </Button>
               )}
-              <YearPicker years={yearOptions} value={year} onChange={setYear} className="w-36" />
+              {/* Mobile: the DataTable toolbar is hidden below md, so the year filter lives in the
+                  header here and moves into the toolbar (toolbarRight) from md up. */}
+              <YearPicker
+                years={yearOptions}
+                value={year}
+                onChange={setYear}
+                className="w-30 md:hidden"
+              />
             </div>
           </CardHeaderRow>
           <CardContent className="p-0">
@@ -152,6 +150,14 @@ export default function MonthlyClosingsPage() {
               isLoading={list.isLoading}
               emptyMessage="Nenhum fechamento encontrado."
               getRowKey={(row) => row.id}
+              toolbarRight={
+                <YearPicker
+                  years={yearOptions}
+                  value={year}
+                  onChange={setYear}
+                  className="w-30 bg-transparent"
+                />
+              }
               mobileRow={(row) => (
                 <div className="flex flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">

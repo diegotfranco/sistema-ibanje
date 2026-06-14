@@ -1,7 +1,8 @@
-import { eq, count, and, sql, type SQL } from 'drizzle-orm';
+import { eq, count, and, inArray, sql, type SQL } from 'drizzle-orm';
+import { ATTENDER_INACTIVE_FILTER, ATTENDER_TERMINAL_STATUSES } from '@sistema-ibanje/shared';
 import { db } from '../../db/index.js';
 import { attenders } from '../../db/schema.js';
-import { notDeleted } from '../../lib/softDelete.js';
+import { notDeleted, deletedClause } from '../../lib/softDelete.js';
 import type { AttenderFilters } from './schema.js';
 
 const ATTENDER_COLUMNS = {
@@ -39,11 +40,20 @@ function attenderNameFilter(q: string): SQL {
 }
 
 function attenderWhere(filters?: AttenderFilters): SQL | undefined {
-  const conditions: SQL[] = [notDeleted(attenders)];
+  const conditions: SQL[] = [];
+  const deleted = deletedClause(attenders, filters?.deleted);
+  if (deleted) conditions.push(deleted);
   if (filters?.isMember !== undefined) conditions.push(eq(attenders.isMember, filters.isMember));
-  if (filters?.status !== undefined) conditions.push(eq(attenders.status, filters.status));
+  if (filters?.status !== undefined) {
+    // `inativo` is a pseudo-status: it stands for the union of the terminal (exit) states.
+    conditions.push(
+      filters.status === ATTENDER_INACTIVE_FILTER
+        ? inArray(attenders.status, ATTENDER_TERMINAL_STATUSES)
+        : eq(attenders.status, filters.status)
+    );
+  }
   if (filters?.q) conditions.push(attenderNameFilter(filters.q));
-  return and(...conditions);
+  return conditions.length ? and(...conditions) : undefined;
 }
 
 export async function listAttenders(offset: number, limit: number, filters?: AttenderFilters) {
@@ -94,6 +104,26 @@ export async function findAttenderByUserId(
   return result[0] ?? null;
 }
 
+// Exact (case-insensitive) email match among live attenders — backs the user-create guard
+// that blocks logins for non-member attenders and warns about unlinked members. Emails are
+// already lowercased at the Zod boundary; `lower()` keeps it robust against legacy rows.
+export async function findAttenderByEmail(
+  email: string
+): Promise<{ id: number; name: string; isMember: boolean; userId: number | null } | null> {
+  const result = await db
+    .select({
+      id: attenders.id,
+      name: attenders.name,
+      isMember: attenders.isMember,
+      userId: attenders.userId
+    })
+    .from(attenders)
+    .where(and(sql`lower(${attenders.email}) = lower(${email})`, notDeleted(attenders)))
+    .limit(1);
+
+  return result[0] ?? null;
+}
+
 export async function insertAttender(
   data: Omit<typeof attenders.$inferInsert, 'id' | 'status' | 'createdAt' | 'updatedAt'>
 ) {
@@ -139,4 +169,16 @@ export async function softDeleteAttender(id: number) {
       updatedAt: new Date()
     })
     .where(and(eq(attenders.id, id), notDeleted(attenders)));
+}
+
+// Clears the soft-delete tombstone. Deliberately does NOT compose `notDeleted` — it must
+// target the deleted row. Returns the restored row, or null when the id is unknown.
+export async function restoreAttender(id: number) {
+  const result = await db
+    .update(attenders)
+    .set({ deletedAt: null, updatedAt: new Date() })
+    .where(eq(attenders.id, id))
+    .returning(ATTENDER_COLUMNS);
+
+  return result[0] ?? null;
 }

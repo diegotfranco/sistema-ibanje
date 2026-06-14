@@ -26,6 +26,8 @@ export type EntityPickerProps<T> = {
   className?: string;
   /** Accessible name for the trigger when there is no programmatically associated <label>. */
   ariaLabel?: string;
+  /** Marks the trigger invalid so it picks up the destructive border/ring styling. */
+  'aria-invalid'?: boolean;
 };
 
 function EntityPickerInner<T>(
@@ -41,7 +43,8 @@ function EntityPickerInner<T>(
     isLoading = false,
     allowClear = false,
     className,
-    ariaLabel
+    ariaLabel,
+    'aria-invalid': ariaInvalid
   }: EntityPickerProps<T>,
   ref: React.ForwardedRef<HTMLButtonElement>
 ) {
@@ -59,10 +62,13 @@ function EntityPickerInner<T>(
           role="combobox"
           aria-expanded={open}
           aria-label={ariaLabel}
+          aria-invalid={ariaInvalid}
           disabled={disabled}
           data-input-trigger=""
           className={cn('w-full justify-between min-w-0', className)}>
-          <span className="truncate">{selectedLabel}</span>
+          <span className={cn('truncate', value === null && 'text-muted-foreground')}>
+            {selectedLabel}
+          </span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

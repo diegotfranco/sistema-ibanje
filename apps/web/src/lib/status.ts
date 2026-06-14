@@ -10,6 +10,7 @@ import {
   AttenderStatus,
   type AttenderStatusValue,
   ATTENDER_TERMINAL_STATUSES,
+  ATTENDER_INACTIVE_FILTER,
   CampaignStatus,
   type CampaignStatusValue
 } from '@sistema-ibanje/shared';
@@ -56,7 +57,6 @@ export const MINUTE_STATUS_LABELS: Record<MinuteStatusValue, string> = {
 
 export const ATTENDER_STATUS_LABELS: Record<AttenderStatusValue, string> = {
   [AttenderStatus.Active]: 'Ativo',
-  [AttenderStatus.Inactive]: 'Inativo',
   [AttenderStatus.Dismissed]: 'Desligado',
   [AttenderStatus.Transferred]: 'Transferido',
   [AttenderStatus.Deceased]: 'Falecido'
@@ -89,18 +89,18 @@ export function getStatusLabel(status: string): string {
 const ACTIVE_STATUS_CLASSES: Record<ActiveStatusValue, string> = {
   [ActiveStatus.Active]: 'bg-success/15 text-success',
   [ActiveStatus.Inactive]: 'bg-muted text-muted-foreground',
-  [ActiveStatus.Pending]: 'bg-warning/15 text-warning'
+  [ActiveStatus.Pending]: 'bg-warning-strong/15 text-warning-strong'
 };
 
 const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
-  [EntryStatus.Pending]: 'bg-warning/15 text-warning',
+  [EntryStatus.Pending]: 'bg-warning-strong/15 text-warning-strong',
   [EntryStatus.Paid]: 'bg-success/15 text-success',
   [EntryStatus.Cancelled]: 'bg-muted text-muted-foreground'
 };
 
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
   [ClosingStatus.Open]: 'bg-primary-soft/15 text-primary-soft',
-  [ClosingStatus.InReview]: 'bg-warning/15 text-warning',
+  [ClosingStatus.InReview]: 'bg-warning-strong/15 text-warning-strong',
   [ClosingStatus.Rejected]: 'bg-danger/15 text-danger',
   [ClosingStatus.Approved]: 'bg-success/15 text-success',
   [ClosingStatus.Closed]: 'bg-muted text-muted-foreground'
@@ -108,7 +108,7 @@ const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
 
 const MINUTE_STATUS_CLASSES: Record<MinuteStatusValue, string> = {
   [MinuteStatus.Draft]: 'bg-primary-soft/15 text-primary-soft',
-  [MinuteStatus.AwaitingApproval]: 'bg-warning/15 text-warning',
+  [MinuteStatus.AwaitingApproval]: 'bg-warning-strong/15 text-warning-strong',
   [MinuteStatus.Approved]: 'bg-success/15 text-success',
   [MinuteStatus.Replaced]: 'bg-muted text-muted-foreground'
 };
@@ -175,9 +175,14 @@ export const ENTRY_STATUS_FILTER_OPTIONS: { value: EntryStatusValue; label: stri
   { value: EntryStatus.Cancelled, label: 'Cancelada' }
 ];
 
-export const ATTENDER_STATUS_FILTER_OPTIONS: { value: AttenderStatusValue; label: string }[] = [
+// "Inativos" is the pseudo-token `inativo` — the server expands it to the union of the three
+// exit states. The granular options below filter to a single exit state.
+export const ATTENDER_STATUS_FILTER_OPTIONS: {
+  value: AttenderStatusValue | typeof ATTENDER_INACTIVE_FILTER;
+  label: string;
+}[] = [
   { value: AttenderStatus.Active, label: 'Ativos' },
-  { value: AttenderStatus.Inactive, label: 'Inativos' },
+  { value: ATTENDER_INACTIVE_FILTER, label: 'Inativos' },
   { value: AttenderStatus.Dismissed, label: 'Desligados' },
   { value: AttenderStatus.Transferred, label: 'Transferidos' },
   { value: AttenderStatus.Deceased, label: 'Falecidos' }
@@ -199,10 +204,8 @@ export function isAttenderTerminal(status: string): boolean {
 
 // The set of states a member can move to from `from`, excluding `from` itself.
 export function allowedAttenderTargets(from: AttenderStatusValue): AttenderStatusValue[] {
+  // From a formal exit, the only move is reactivation.
   if (isAttenderTerminal(from)) return [AttenderStatus.Active];
-  // ativo / inativo → the other reversible state plus every formal exit.
-  return [
-    from === AttenderStatus.Active ? AttenderStatus.Inactive : AttenderStatus.Active,
-    ...ATTENDER_TERMINAL
-  ];
+  // From ativo, the moves are the three formal exits.
+  return [...ATTENDER_TERMINAL];
 }

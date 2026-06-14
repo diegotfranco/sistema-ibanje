@@ -1,4 +1,5 @@
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import { FINANCE_DERIVED_KEYS } from '@/lib/financeInvalidation';
 import type { EventResponse, EventFormValues } from './schema';
 
 const BASE = '/events';
@@ -17,9 +18,14 @@ export function useEvents({
 }
 
 export function useEventMutations() {
-  return useResourceMutations<EventResponse, EventFormValues, Partial<EventFormValues>>(BASE, KEY, {
-    created: 'Evento criado.',
-    updated: 'Evento atualizado.',
-    removed: 'Evento removido.'
-  });
+  return useResourceMutations<EventResponse, EventFormValues, Partial<EventFormValues>>(
+    BASE,
+    KEY,
+    {
+      created: 'Evento criado.',
+      updated: 'Evento atualizado.',
+      removed: 'Evento removido.'
+    },
+    FINANCE_DERIVED_KEYS
+  );
 }

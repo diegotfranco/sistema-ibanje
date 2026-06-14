@@ -47,12 +47,11 @@ export function computeCurrentBalance(opening: string, income: string, expenses:
 function monthToRange(month: string): { from: string; to: string } {
   const [y, m] = month.split('-').map(Number);
   const from = `${month}-01`;
+  // Always span the full calendar month — including the current one. Income is filtered by its
+  // reference Sunday, which can fall later this week than today; capping `to` at today would hide
+  // freshly recorded contributions whose reference date is an upcoming Sunday.
   const lastDay = new Date(y, m, 0).getDate(); // m is 1-based; this gives last day of month m
-  const today = new Date();
-  const isCurrentMonth = today.getFullYear() === y && today.getMonth() + 1 === m;
-  const to = isCurrentMonth
-    ? today.toISOString().slice(0, 10)
-    : `${month}-${String(lastDay).padStart(2, '0')}`;
+  const to = `${month}-${String(lastDay).padStart(2, '0')}`;
   return { from, to };
 }
 

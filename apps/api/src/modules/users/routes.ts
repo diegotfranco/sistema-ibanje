@@ -29,9 +29,13 @@ export async function usersRoutes(app: FastifyInstance) {
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
           404: ErrorResponseSchema,
-          409: ErrorResponseSchema
+          409: ErrorResponseSchema,
+          429: ErrorResponseSchema
         }
       },
+      // Generous cap: account creation is a deliberate admin action, so this only trips on a runaway
+      // script/loop, not normal use. Each create also fans out an invite email (cost + reputation).
+      config: { rateLimit: { max: 20, timeWindow: '1 hour' } },
       preHandler: [requireAuth, checkPermission(Module.Users, Action.Create)]
     },
     controller.create
@@ -123,9 +127,13 @@ export async function usersRoutes(app: FastifyInstance) {
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
-          404: ErrorResponseSchema
+          404: ErrorResponseSchema,
+          429: ErrorResponseSchema
         }
       },
+      // A password change is rare; capping it blunts an authenticated brute-force of `currentPassword`
+      // (self-service requires it) without inconveniencing a genuine user.
+      config: { rateLimit: { max: 10, timeWindow: '1 hour' } },
       preHandler: [requireAuth]
     },
     controller.changePassword

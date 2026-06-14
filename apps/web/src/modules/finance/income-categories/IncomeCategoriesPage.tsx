@@ -10,7 +10,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
-import { TrashToggle } from '@/components/TrashToggle';
+import { trashToggleAction } from '@/components/toolbarActions';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -58,9 +58,7 @@ export default function IncomeCategoriesPage() {
     icon: <RotateCcw size={16} />,
     onClick: (r) => restore.mutate(r.id)
   };
-  const trashToggle = canDelete ? (
-    <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
-  ) : undefined;
+  const trashActions = canDelete ? [trashToggleAction(viewingTrash, setViewingTrash)] : undefined;
 
   return (
     <div className="space-y-6 p-8">
@@ -74,7 +72,7 @@ export default function IncomeCategoriesPage() {
           data={filteredList.data?.data}
           isLoading={filteredList.isLoading}
           emptyMessage="A lixeira está vazia."
-          toolbarRight={trashToggle}
+          actions={trashActions}
           customActions={canDelete ? [restoreAction] : undefined}
           rowKey={(r) => r.id}
           mobileRow={(row) => (
@@ -100,7 +98,7 @@ export default function IncomeCategoriesPage() {
           onCreate={() => setEditing('new')}
           onEdit={(row) => setEditing(row)}
           onDelete={(row) => setDeleting(row)}
-          headerActions={trashToggle}
+          actions={trashActions}
           renderRowMeta={(row) =>
             row.requiresMember ? <Badge variant="secondary">Exige membro</Badge> : null
           }
@@ -108,7 +106,7 @@ export default function IncomeCategoriesPage() {
       )}
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && closeDialog()}>
-        <DialogContent className="sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'Nova categoria' : 'Editar categoria'}</DialogTitle>
             <DialogDescription>

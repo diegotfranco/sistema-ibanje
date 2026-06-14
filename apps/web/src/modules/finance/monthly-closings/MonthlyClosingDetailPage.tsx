@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { useQueryClient } from '@tanstack/react-query';
 import { AlertTriangle, ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardHeaderRow, CardTitle } from '@/components/Card';
@@ -27,7 +26,7 @@ import { IncomeEntryForm } from '../income-entries/IncomeEntryForm';
 import type { ExpenseEntryFormValues } from '../expense-entries/schema';
 import type { IncomeEntryFormValues } from '../income-entries/schema';
 import type { ExpenseReportRow, IncomeReportRow } from '../reports/schema';
-import { formatMoney as formatAmount } from '../entries-utils';
+import { formatMoney, formatAmount } from '@/lib/format';
 
 const MONTHS = [
   'Janeiro',
@@ -47,9 +46,6 @@ const MONTHS = [
 const formatPeriod = (year: number, month: number) => `${MONTHS[month - 1]} ${year}`;
 
 const monthParam = (year: number, month: number) => `${year}-${String(month).padStart(2, '0')}`;
-
-const formatMoney = (s: string) =>
-  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 type TransitionAction = 'submit' | 'approve' | 'reject' | 'close' | 'reopen' | 'resubmit';
 
@@ -84,7 +80,6 @@ function SummaryTile({ label, value, valueClassName, hint }: SummaryTileProps) {
 export default function MonthlyClosingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const qc = useQueryClient();
   const { data: user } = useCurrentUser();
   const perms = user?.permissions;
 
@@ -112,8 +107,6 @@ export default function MonthlyClosingDetailPage() {
   const incomeMutations = useIncomeEntryMutations();
   const uploadReceipt = useUploadReceipt();
   const deleteReceipt = useDeleteReceipt();
-
-  const invalidateReports = () => qc.invalidateQueries({ queryKey: ['reports'] });
 
   if (isLoading) {
     return (
@@ -362,7 +355,7 @@ export default function MonthlyClosingDetailPage() {
       <Dialog
         open={editingExpenseId !== null}
         onOpenChange={(v) => !v && setEditingExpenseId(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Editar lançamento de saída</DialogTitle>
           </DialogHeader>
@@ -394,7 +387,6 @@ export default function MonthlyClosingDetailPage() {
                             file: receipt.stagedFile
                           });
                         }
-                        invalidateReports();
                         setEditingExpenseId(null);
                       } catch {
                         // mutation hooks already toasted; keep dialog open
@@ -417,7 +409,6 @@ export default function MonthlyClosingDetailPage() {
           deletingExpense &&
           expenseMutations.remove.mutate(deletingExpense.id, {
             onSuccess: () => {
-              invalidateReports();
               setDeletingExpense(null);
             }
           })
@@ -426,7 +417,7 @@ export default function MonthlyClosingDetailPage() {
       />
 
       <Dialog open={editingIncomeId !== null} onOpenChange={(v) => !v && setEditingIncomeId(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Editar lançamento de entrada</DialogTitle>
           </DialogHeader>
@@ -439,7 +430,6 @@ export default function MonthlyClosingDetailPage() {
                   { id: incomeEntry.data!.id, body: toIncomeUpdateBody(values) },
                   {
                     onSuccess: () => {
-                      invalidateReports();
                       setEditingIncomeId(null);
                     }
                   }
@@ -459,7 +449,6 @@ export default function MonthlyClosingDetailPage() {
           deletingIncome &&
           incomeMutations.remove.mutate(deletingIncome.id, {
             onSuccess: () => {
-              invalidateReports();
               setDeletingIncome(null);
             }
           })

@@ -35,12 +35,6 @@ export default function ReportsPage() {
         <Card className="gap-0 py-0">
           <CardHeaderRow className="border-b py-4">
             <CardTitle>Relatórios</CardTitle>
-            <MonthPicker
-              id="reports-month"
-              value={month}
-              onChange={setMonth}
-              className="w-full sm:w-48"
-            />
           </CardHeaderRow>
           <CardContent className="p-0">
             <Tabs
@@ -57,6 +51,14 @@ export default function ReportsPage() {
                   { value: 'campanhas', label: 'Campanhas' },
                   { value: 'events', label: 'Eventos' }
                 ]}
+                action={
+                  <MonthPicker
+                    id="reports-month"
+                    value={month}
+                    onChange={setMonth}
+                    className="w-full bg-transparent sm:w-40"
+                  />
+                }
               />
 
               <TabsContent value="income">

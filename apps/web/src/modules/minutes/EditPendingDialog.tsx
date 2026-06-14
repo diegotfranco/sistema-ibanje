@@ -40,7 +40,7 @@ export default function EditPendingDialog({
         if (v) reset({ content: currentContent ?? EMPTY_TIPTAP_DOC });
         onOpenChange(v);
       }}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Editar Rascunho</DialogTitle>
         </DialogHeader>

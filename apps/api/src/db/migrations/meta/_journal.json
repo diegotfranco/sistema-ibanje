@@ -43,6 +43,20 @@
       "when": 1780980000000,
       "tag": "0005_normalize_contacts",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1781304466901,
+      "tag": "0006_curved_manta",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1781421731625,
+      "tag": "0007_add_audit_changes",
+      "breakpoints": true
     }
   ]
 }

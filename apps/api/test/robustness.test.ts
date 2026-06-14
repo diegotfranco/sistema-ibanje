@@ -65,7 +65,7 @@ describe('input robustness (no 500s under adversarial input)', () => {
     const [linked] = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, 'congregado@email.com'));
+      .where(eq(users.email, 'membro@email.com'));
     linkedUserId = linked.id;
   });
 

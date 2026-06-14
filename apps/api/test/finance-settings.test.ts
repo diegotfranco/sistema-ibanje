@@ -27,7 +27,7 @@ describe('finance-settings module', () => {
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
     secretary = await loginAs(app, 'secretario@email.com', 'secretario123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
   });
 
   describe('with no closings (editable)', () => {

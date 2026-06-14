@@ -10,7 +10,7 @@ import {
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
-import { TrashToggle } from '@/components/TrashToggle';
+import { trashToggleAction } from '@/components/toolbarActions';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
@@ -58,9 +58,7 @@ export default function ExpenseCategoriesPage() {
     icon: <RotateCcw size={16} />,
     onClick: (r) => restore.mutate(r.id)
   };
-  const trashToggle = canDelete ? (
-    <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
-  ) : undefined;
+  const trashActions = canDelete ? [trashToggleAction(viewingTrash, setViewingTrash)] : undefined;
 
   return (
     <PageContainer>
@@ -74,7 +72,7 @@ export default function ExpenseCategoriesPage() {
           data={filteredList.data?.data}
           isLoading={filteredList.isLoading}
           emptyMessage="A lixeira está vazia."
-          toolbarRight={trashToggle}
+          actions={trashActions}
           customActions={canDelete ? [restoreAction] : undefined}
           rowKey={(r) => r.id}
           mobileRow={(row) => (
@@ -100,13 +98,13 @@ export default function ExpenseCategoriesPage() {
           onCreate={() => setEditing('new')}
           onEdit={(row) => setEditing(row)}
           onDelete={(row) => setDeleting(row)}
-          headerActions={trashToggle}
+          actions={trashActions}
           renderRowMeta={(row) => row.description || '—'}
         />
       )}
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && closeDialog()}>
-        <DialogContent className="sm:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'Nova categoria' : 'Editar categoria'}</DialogTitle>
             <DialogDescription>

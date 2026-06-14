@@ -18,7 +18,7 @@ export function YearPicker({
   years,
   value,
   onChange,
-  placeholder = 'Todos os anos',
+  placeholder = 'Todos',
   id,
   className,
   disabled
@@ -38,11 +38,13 @@ export function YearPicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            'justify-start font-normal aria-expanded:ring-1 aria-expanded:ring-ring/50',
+            'justify-between aria-expanded:ring-1 aria-expanded:ring-ring/50',
             className
           )}>
-          <Calendar className="mr-2 h-4 w-4 opacity-70" />
-          <span className="tabular-nums">{value !== undefined ? String(value) : placeholder}</span>
+          <Calendar className="mr-2 h-4 w-4" />
+          <span className={cn('tabular-nums', value === undefined && 'text-muted-foreground')}>
+            {value !== undefined ? String(value) : placeholder}
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-(--radix-popover-trigger-width) p-1" align="start">

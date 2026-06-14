@@ -83,10 +83,10 @@ export function MonthPicker({ value, onChange, id, className, disabled }: Props)
           variant="outline"
           disabled={disabled}
           className={cn(
-            'justify-start font-normal aria-expanded:ring-1 aria-expanded:ring-ring/50',
+            'justify-between aria-expanded:ring-1 aria-expanded:ring-ring/50',
             className
           )}>
-          <Calendar className="mr-2 h-4 w-4 opacity-70" />
+          <Calendar className="mr-2 h-4 w-4" />
           <span className="tabular-nums">
             {MONTH_LABELS_LONG[selectedMonth]} {selectedYear}
           </span>

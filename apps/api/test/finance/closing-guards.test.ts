@@ -70,4 +70,22 @@ describe('monthly closing guards', () => {
     const res = await action(999999, 'submit');
     expect(res.statusCode).toBe(404);
   });
+
+  // Concurrency regression: closing writes a permanent closingBalance and seeds the next period's
+  // opening balance, so two simultaneous "fechar" clicks must not both write. The service takes the
+  // row FOR UPDATE inside a transaction; the loser sees `fechado` and is rejected. We assert the
+  // invariant — exactly one 200 — rather than which request wins, so the test stays deterministic.
+  it('allows only one of two concurrent closes to succeed', async () => {
+    const created = await create(2098, 1);
+    const { id } = created.json<{ id: number }>();
+
+    expect((await action(id, 'submit')).statusCode).toBe(200); // aberto → em revisão
+    expect((await action(id, 'approve')).statusCode).toBe(200); // em revisão → aprovado
+
+    const [a, b] = await Promise.all([action(id, 'close'), action(id, 'close')]);
+    const codes = [a.statusCode, b.statusCode].sort();
+
+    expect(codes.filter((c) => c === 200)).toHaveLength(1);
+    expect(codes.filter((c) => c === 409)).toHaveLength(1);
+  });
 });

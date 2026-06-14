@@ -31,19 +31,19 @@ const ACTION_CONFIG: Record<
   submit: {
     title: 'Submeter para Revisão',
     description: 'O fechamento será enviado para revisão do contador.',
-    notesLabel: 'Observações do Tesoureiro (opcional)',
+    notesLabel: 'Observações do Tesoureiro',
     confirmLabel: 'Submeter'
   },
   approve: {
     title: 'Aprovar Fechamento',
     description: 'O fechamento será aprovado e ficará pronto para ser fechado.',
-    notesLabel: 'Observações do Contador (opcional)',
+    notesLabel: 'Observações do Contador',
     confirmLabel: 'Aprovar'
   },
   reject: {
     title: 'Rejeitar Fechamento',
     description: 'O fechamento voltará ao status "aberto" para correções.',
-    notesLabel: 'Motivo da Rejeição (opcional)',
+    notesLabel: 'Motivo da Rejeição',
     confirmLabel: 'Rejeitar'
   },
   close: {
@@ -59,7 +59,7 @@ const ACTION_CONFIG: Record<
   resubmit: {
     title: 'Submeter para revisão novamente',
     description: 'O fechamento voltará ao status "em revisão" para nova análise.',
-    notesLabel: 'Observações do Tesoureiro (opcional)',
+    notesLabel: 'Observações do Tesoureiro',
     confirmLabel: 'Submeter novamente'
   }
 };
@@ -106,10 +106,10 @@ export function ClosingTransitionDialog({
               <Controller
                 name="notes"
                 control={form.control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <Field>
                     <FieldLabel>{config.notesLabel}</FieldLabel>
-                    <Textarea {...field} rows={3} />
+                    <Textarea {...field} rows={3} aria-invalid={fieldState.invalid || undefined} />
                   </Field>
                 )}
               />

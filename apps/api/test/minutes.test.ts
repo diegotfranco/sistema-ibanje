@@ -18,7 +18,7 @@ describe('minutes module', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregado = await loginAs(app, 'membro@email.com', 'membro123');
     tesoureiro = await loginAs(app, 'tesoureiro@email.com', 'tesoureiro123');
   });
 

@@ -98,6 +98,30 @@ export async function getRolePermissions(id: number): Promise<RolePermissionResp
   return repo.getRolePermissions(id);
 }
 
+// Base member floor: every role keeps at least `Acessar` on Painel/Congregados/Atas (what the
+// Congregado role grants), so a configured role never drops below ordinary-member reach. Merged
+// in at write time so the seed and the config UI stay consistent.
+const BASE_FLOOR_MODULES: string[] = [Module.Dashboard, Module.Attenders, Module.Minutes];
+
+async function withBaseMemberFloor(
+  entries: { moduleId: number; permissionId: number }[]
+): Promise<{ moduleId: number; permissionId: number }[]> {
+  const [mods, perms] = await Promise.all([repo.listModules(), repo.listPermissionTypes()]);
+  const access = perms.find((p) => p.name === Action.View);
+  if (!access) return entries;
+
+  const seen = new Set(entries.map((e) => `${e.moduleId}:${e.permissionId}`));
+  const merged = [...entries];
+  for (const mod of mods) {
+    if (!BASE_FLOOR_MODULES.includes(mod.name)) continue;
+    const key = `${mod.id}:${access.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push({ moduleId: mod.id, permissionId: access.id });
+  }
+  return merged;
+}
+
 export async function setRolePermissions(
   callerId: number,
   targetId: number,
@@ -108,8 +132,9 @@ export async function setRolePermissions(
   const role = await repo.findRoleById(targetId);
   if (!role) return null;
 
+  const entries = await withBaseMemberFloor(body.permissions);
   return await db.transaction(async (tx) => {
-    await repo.setRolePermissions(targetId, body.permissions, tx);
+    await repo.setRolePermissions(targetId, entries, tx);
   });
 }
 

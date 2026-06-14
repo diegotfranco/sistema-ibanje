@@ -1,4 +1,5 @@
 import * as z from 'zod';
+import { newPasswordField } from '@/lib/password';
 
 export const LoginSchema = z.object({
   email: z.email('E-mail inválido').max(96, 'O e-mail deve ter no máximo 96 caracteres'),
@@ -23,10 +24,7 @@ export const ForgotPasswordSchema = z.object({
 
 export const ResetPasswordSchema = z
   .object({
-    newPassword: z
-      .string()
-      .min(8, 'A senha deve ter no mínimo 8 caracteres')
-      .max(64, 'A senha deve ter no máximo 64 caracteres'),
+    newPassword: newPasswordField,
     confirmPassword: z.string().min(1, 'Confirme sua senha')
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

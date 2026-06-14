@@ -277,7 +277,7 @@ describe('MembershipLettersPage', () => {
     });
 
     // Eye (preview) buttons
-    const eyeButtons = screen.getAllByTitle('Visualizar');
+    const eyeButtons = screen.getAllByRole('button', { name: 'Visualizar' });
     expect(eyeButtons.length).toBeGreaterThan(0);
   });
 
@@ -309,7 +309,7 @@ describe('MembershipLettersPage', () => {
     });
 
     // Edit (pencil) buttons should be visible
-    const editButtons = screen.getAllByTitle('Editar');
+    const editButtons = screen.getAllByRole('button', { name: 'Editar' });
     expect(editButtons.length).toBeGreaterThan(0);
   });
 
@@ -328,7 +328,7 @@ describe('MembershipLettersPage', () => {
     });
 
     // Edit buttons should not be visible
-    expect(screen.queryByTitle('Editar')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
   });
 
   it('displays delete button only for users with Delete permission', async () => {
@@ -345,7 +345,7 @@ describe('MembershipLettersPage', () => {
     });
 
     // Delete (trash) buttons should be visible
-    const deleteButtons = screen.getAllByTitle('Remover');
+    const deleteButtons = screen.getAllByRole('button', { name: 'Remover' });
     expect(deleteButtons.length).toBeGreaterThan(0);
   });
 
@@ -364,7 +364,7 @@ describe('MembershipLettersPage', () => {
     });
 
     // Delete buttons should not be visible
-    expect(screen.queryByTitle('Remover')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument();
   });
 
   it('handles attender lookup gracefully', async () => {

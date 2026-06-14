@@ -83,6 +83,39 @@ describe('CalendarPage', () => {
     expect(calendarElement).toBeInTheDocument();
   });
 
+  it('renders the custom toolbar nav/view buttons with accessible labels', async () => {
+    server.use(...referenceHandlers());
+
+    renderWithProviders(<CalendarPage />);
+
+    await waitFor(() => {
+      expect(document.querySelector('.fc')).toBeInTheDocument();
+    });
+
+    // Icon nav buttons carry an aria-label (which also feeds the shadcn tooltip).
+    expect(screen.getByRole('button', { name: 'Mês anterior' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Próximo mês' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hoje' })).toBeInTheDocument();
+    // View switch is a shadcn Tabs segmented control (hidden only on the dashboard embed).
+    expect(screen.getByRole('tab', { name: 'Mês' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Agenda' })).toBeInTheDocument();
+  });
+
+  it('renders the color/symbol legend for all feed types', async () => {
+    server.use(...referenceHandlers());
+
+    renderWithProviders(<CalendarPage />);
+
+    await waitFor(() => {
+      expect(document.querySelector('.fc')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Lembrete')).toBeInTheDocument();
+    expect(screen.getByText(/Aniversário/)).toBeInTheDocument();
+    expect(screen.getByText(/Batismo/)).toBeInTheDocument();
+    expect(screen.getByText('Evento')).toBeInTheDocument();
+  });
+
   it('page renders without errors when no calendar data is present', async () => {
     server.use(...referenceHandlers());
 

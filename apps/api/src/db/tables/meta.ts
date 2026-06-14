@@ -6,6 +6,7 @@ import {
   char,
   text,
   timestamp,
+  jsonb,
   check,
   index
 } from 'drizzle-orm/pg-core';
@@ -49,6 +50,9 @@ export const auditLog = pgTable(
     entityType: text('entity_type').notNull(),
     entityId: integer('entity_id'),
     notes: text('notes'),
+    // Nullable field-level diff for sensitive updates/state changes: { [field]: { from, to } }.
+    // null for create/delete/restore (the row id is the record) and for out-of-scope entities.
+    changes: jsonb('changes').$type<Record<string, { from: unknown; to: unknown }>>(),
     ipAddress: text('ip_address'),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
   },

@@ -97,3 +97,23 @@ export function isDateFuture(input: DateInput): boolean {
   if (!d) return false;
   return !d.isBefore(nowInAppTz().startOf('day'));
 }
+
+function pad2(n: number): string {
+  return n < 10 ? `0${n}` : String(n);
+}
+
+// Bridge ISO `YYYY-MM-DD` strings ↔ a local `Date` for react-day-picker, which works in Date
+// objects. We pin to the local calendar day (no TZ shift) so the day the user clicks is the day
+// emitted. Shared by DateInput (single) and DateRangeFilter (range).
+export function isoToLocalDate(iso: string | null | undefined): Date | undefined {
+  if (!iso || iso.length !== 10) return undefined;
+  const y = Number.parseInt(iso.slice(0, 4), 10);
+  const m = Number.parseInt(iso.slice(5, 7), 10);
+  const d = Number.parseInt(iso.slice(8, 10), 10);
+  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return undefined;
+  return new Date(y, m - 1, d);
+}
+
+export function localDateToIso(date: Date): string {
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}

@@ -108,7 +108,7 @@ export default function EventsPage() {
       </PageContainer>
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent>
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>{editing === 'new' ? 'Novo evento' : 'Editar evento'}</DialogTitle>
           </DialogHeader>

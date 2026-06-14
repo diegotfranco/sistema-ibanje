@@ -131,14 +131,14 @@ export function MembershipLetterForm({ initialValues, isPending, onSubmit, onCan
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Endereço da Igreja (opcional)</FieldLabel>
+              <FieldLabel>Endereço da Igreja</FieldLabel>
               <Textarea {...field} value={field.value ?? ''} rows={2} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Controller
             name="otherChurchCity"
             control={form.control}
@@ -161,7 +161,7 @@ export function MembershipLetterForm({ initialValues, isPending, onSubmit, onCan
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>UF (opcional)</FieldLabel>
+                <FieldLabel>UF</FieldLabel>
                 <input
                   {...field}
                   type="text"
@@ -181,7 +181,7 @@ export function MembershipLetterForm({ initialValues, isPending, onSubmit, onCan
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Observações (opcional)</FieldLabel>
+              <FieldLabel>Observações</FieldLabel>
               <Textarea
                 {...field}
                 value={field.value ?? ''}

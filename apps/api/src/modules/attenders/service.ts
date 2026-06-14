@@ -12,6 +12,7 @@ import type {
   CreateAttenderRequest,
   UpdateAttenderRequest,
   ChangeAttenderStatusRequest,
+  AdmitMemberRequest,
   AttenderResponse,
   AttenderDonationsSummaryResponse,
   AttenderDonationsEntriesResponse,
@@ -65,7 +66,10 @@ function toAttenderResponse(row: AttenderRow): AttenderResponse {
 
 // Write-path conversion for the two month fields (`YYYY-MM` string -> YYYYMM int), preserving
 // the partial-update semantics: an omitted key stays omitted; an explicit null clears the column.
-function monthFieldsToInt(body: Pick<UpdateAttenderRequest, 'memberSince' | 'congregatingSince'>): {
+function monthFieldsToInt(body: {
+  memberSince?: string | null;
+  congregatingSince?: string | null;
+}): {
   memberSince?: number | null;
   congregatingSince?: number | null;
 } {
@@ -212,11 +216,12 @@ export async function updateAttender(
     }
   }
 
-  // Spread `rest` (without the string month fields) and re-add them as YYYYMM ints.
-  const { memberSince, congregatingSince, ...rest } = body;
+  // `memberSince` is no longer editable here (admission-only); only `congregatingSince` remains a
+  // string month field on the edit body. Spread `rest` and re-add it as a YYYYMM int.
+  const { congregatingSince, ...rest } = body;
   const updated = await repo.updateAttender(targetId, {
     ...rest,
-    ...monthFieldsToInt({ memberSince, congregatingSince })
+    ...monthFieldsToInt({ congregatingSince })
   });
   if (!updated) return null;
 
@@ -232,22 +237,31 @@ export async function softDeleteAttender(callerId: number, targetId: number): Pr
   await repo.softDeleteAttender(targetId);
 }
 
+// Whoever can delete can undo it. Targets the soft-deleted row directly (the repo does not
+// compose `notDeleted`); returns null/404 when the id is unknown.
+export async function restoreAttender(
+  callerId: number,
+  targetId: number
+): Promise<AttenderResponse | null> {
+  await assertPermission(callerId, Module.Attenders, Action.Delete);
+
+  const restored = await repo.restoreAttender(targetId);
+  if (!restored) return null;
+
+  return toAttenderResponse(restored);
+}
+
 const TERMINAL: readonly AttenderStatusValue[] = ATTENDER_TERMINAL_STATUSES;
 
 // Member lifecycle FSM. Legal moves:
 //  - any state → ativo (reactivation)
-//  - ativo/inativo → inativo or any formal-exit state (desligado/transferido/falecido)
+//  - ativo → any formal-exit state (desligado/transferido/falecido)
 //  - same → same (idempotent metadata update, e.g. attaching the transfer letter weeks later)
 // Disallowed: jumping straight between two formal-exit states without reactivating first.
 function assertAttenderTransition(from: AttenderStatusValue, to: AttenderStatusValue): void {
   if (from === to) return;
   if (to === AttenderStatus.Active) return;
-  if (
-    (from === AttenderStatus.Active || from === AttenderStatus.Inactive) &&
-    (to === AttenderStatus.Inactive || TERMINAL.includes(to))
-  ) {
-    return;
-  }
+  if (from === AttenderStatus.Active && TERMINAL.includes(to)) return;
   throw httpError(409, `Transição de status inválida: ${from} → ${to}`);
 }
 
@@ -305,6 +319,34 @@ export async function changeAttenderStatus(
           exitLetterId: body.exitLetterId ?? null
         }
   );
+
+  if (!updated) return null;
+  return toAttenderResponse(updated);
+}
+
+// Admission: congregado → membro. A guarded, auditable event distinct from the generic edit —
+// it records *how* (admissionMode) and *when* (memberSince) the membership started. The reverse
+// direction (losing membership) is handled by the status exits, not here.
+export async function admitMember(
+  callerId: number,
+  targetId: number,
+  body: AdmitMemberRequest
+): Promise<AttenderResponse | null> {
+  await assertPermission(callerId, Module.Attenders, Action.Update);
+
+  const attender = await repo.findAttenderById(targetId);
+  if (!attender) return null;
+
+  if (attender.isMember) {
+    throw httpError(409, 'Este congregado já é membro.');
+  }
+
+  const updated = await repo.updateAttender(targetId, {
+    isMember: true,
+    admissionMode: body.admissionMode,
+    baptismDate: body.baptismDate ?? null,
+    memberSince: stringToYyyymm(body.memberSince)
+  });
 
   if (!updated) return null;
   return toAttenderResponse(updated);

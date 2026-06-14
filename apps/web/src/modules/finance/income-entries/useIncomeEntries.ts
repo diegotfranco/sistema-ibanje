@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import { FINANCE_DERIVED_KEYS } from '@/lib/financeInvalidation';
 import { api } from '@/lib/api';
 import type { IncomeEntryResponse, IncomeEntryCreateBody, IncomeEntryUpdateBody } from './schema';
 
@@ -26,6 +27,7 @@ export function useIncomeEntryMutations() {
       created: 'Lançamento criado.',
       updated: 'Lançamento atualizado.',
       removed: 'Lançamento removido.'
-    }
+    },
+    FINANCE_DERIVED_KEYS
   );
 }

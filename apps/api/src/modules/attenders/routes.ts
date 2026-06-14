@@ -10,6 +10,7 @@ import {
   CreateAttenderRequestSchema,
   UpdateAttenderRequestSchema,
   ChangeAttenderStatusRequestSchema,
+  AdmitMemberRequestSchema,
   AttenderResponseSchema,
   AttenderListResponseSchema,
   AttenderDonationsSummaryResponseSchema,
@@ -143,6 +144,27 @@ export async function attendersRoutes(app: FastifyInstance) {
     controller.changeStatus
   );
 
+  app.patch(
+    '/attenders/:id/membership',
+    {
+      schema: {
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        body: AdmitMemberRequestSchema,
+        response: {
+          200: AttenderResponseSchema,
+          400: ErrorResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema,
+          409: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Update)]
+    },
+    controller.admitMembership
+  );
+
   app.get(
     '/attenders/:id/donations/summary',
     {
@@ -217,5 +239,23 @@ export async function attendersRoutes(app: FastifyInstance) {
       preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Delete)]
     },
     controller.remove
+  );
+
+  app.patch(
+    '/attenders/:id/restore',
+    {
+      schema: {
+        tags: ['Attenders'],
+        params: IdParamSchema,
+        response: {
+          200: AttenderResponseSchema,
+          401: ErrorResponseSchema,
+          403: ErrorResponseSchema,
+          404: ErrorResponseSchema
+        }
+      },
+      preHandler: [requireAuth, checkPermission(Module.Attenders, Action.Delete)]
+    },
+    controller.restore
   );
 }

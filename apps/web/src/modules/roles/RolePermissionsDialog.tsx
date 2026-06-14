@@ -55,7 +55,7 @@ export default function RolePermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl flex flex-col overflow-hidden">
+      <DialogContent size="lg" className="flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Permissões — {role?.name}</DialogTitle>
         </DialogHeader>

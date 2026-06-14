@@ -1,36 +1,11 @@
 import { Wallet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeaderRow, CardTitle } from '@/components/Card';
-import { formatMoney } from '../entries-utils';
+import { currentMonthRange, formatMoney } from '../entries-utils';
 import { useExpenseSummary } from './useExpenseSummary';
-
-const MONTHS_PT = [
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro'
-];
 
 const BUDGET_OK_MAX = 0.6;
 const BUDGET_WARN_MAX = 0.85;
 const BUDGET_DANGER_MAX = 1.0;
-
-function currentMonthRange() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const from = `${year}-${pad(month + 1)}-01`;
-  const to = `${year}-${pad(month + 1)}-${pad(now.getDate())}`;
-  return { from, to, label: `${MONTHS_PT[month]}/${year}` };
-}
 
 function pickBarColor(ratio: number): string {
   if (ratio > BUDGET_DANGER_MAX) return 'bg-destructive';

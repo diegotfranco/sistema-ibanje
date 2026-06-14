@@ -1,6 +1,8 @@
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Gift } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { ArrowLeft, Gift, UserCog, UserPlus } from 'lucide-react';
 import { PageContainer } from '@/components/PageContainer';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { Button } from '@/components/Button';
@@ -8,10 +10,16 @@ import StatusBadge from '@/components/StatusBadge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
+import { applyFieldErrors } from '@/lib/forms';
 import { formatDate, formatMonthYear } from '@/lib/datetime';
 import { formatPhone, formatCep } from '@/lib/format';
-import { useAttender } from './useAttenders';
+import { Module, Action, hasPermission } from '@/lib/permissions';
+import { useCurrentUser } from '@/modules/auth/useCurrentUser';
+import { useAttender, useChangeAttenderStatus, useAdmitMember } from './useAttenders';
 import AttenderDonationsDialog from './AttenderDonationsDialog';
+import AttenderStatusDialog from './AttenderStatusDialog';
+import AttenderMembershipDialog from './AttenderMembershipDialog';
+import type { AttenderStatusChangeValues, AdmitMemberValues } from './schema';
 
 function Field({
   label,
@@ -47,8 +55,48 @@ export default function AttenderDetailPage() {
   const attenderId = id ? parseInt(id, 10) : null;
 
   const { data: attender, isLoading } = useAttender(attenderId);
+  const { data: user } = useCurrentUser();
+  const canEdit = hasPermission(user?.permissions, Module.Attenders, Action.Update);
 
   const [donationsOpen, setDonationsOpen] = useState(false);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const [membershipOpen, setMembershipOpen] = useState(false);
+
+  const statusFormRef = useRef<ReturnType<typeof useForm<AttenderStatusChangeValues>> | null>(null);
+  const membershipFormRef = useRef<ReturnType<typeof useForm<AdmitMemberValues>> | null>(null);
+
+  const changeStatus = useChangeAttenderStatus();
+  const admitMember = useAdmitMember();
+
+  function handleStatusSubmit(values: AttenderStatusChangeValues) {
+    if (!attender) return;
+    changeStatus.mutate(
+      { id: attender.id, body: values },
+      {
+        onError: (err) => {
+          if (statusFormRef.current && !applyFieldErrors(err, statusFormRef.current)) {
+            toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+          }
+        },
+        onSuccess: () => setStatusOpen(false)
+      }
+    );
+  }
+
+  function handleMembershipSubmit(values: AdmitMemberValues) {
+    if (!attender) return;
+    admitMember.mutate(
+      { id: attender.id, body: values },
+      {
+        onError: (err) => {
+          if (membershipFormRef.current && !applyFieldErrors(err, membershipFormRef.current)) {
+            toast.error(err instanceof Error ? err.message : 'Erro inesperado');
+          }
+        },
+        onSuccess: () => setMembershipOpen(false)
+      }
+    );
+  }
 
   if (isLoading) {
     return (
@@ -96,10 +144,24 @@ export default function AttenderDetailPage() {
                   </span>
                 </div>
               </div>
-              <Button variant="outline" size="sm" onClick={() => setDonationsOpen(true)}>
-                <Gift className="h-4 w-4 mr-2" />
-                Contribuições
-              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                {canEdit &&
+                  (attender.isMember ? (
+                    <Button variant="outline" size="sm" onClick={() => setStatusOpen(true)}>
+                      <UserCog className="h-4 w-4 mr-2" />
+                      Alterar situação
+                    </Button>
+                  ) : (
+                    <Button variant="outline" size="sm" onClick={() => setMembershipOpen(true)}>
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Admitir como membro
+                    </Button>
+                  ))}
+                <Button variant="outline" size="sm" onClick={() => setDonationsOpen(true)}>
+                  <Gift className="h-4 w-4 mr-2" />
+                  Contribuições
+                </Button>
+              </div>
             </CardHeaderRow>
 
             <Separator />
@@ -162,6 +224,24 @@ export default function AttenderDetailPage() {
         attenderName={attender.name}
         open={donationsOpen}
         onOpenChange={setDonationsOpen}
+      />
+
+      <AttenderStatusDialog
+        open={statusOpen}
+        onOpenChange={setStatusOpen}
+        attender={attender}
+        onSubmit={handleStatusSubmit}
+        isPending={changeStatus.isPending}
+        formRef={statusFormRef}
+      />
+
+      <AttenderMembershipDialog
+        open={membershipOpen}
+        onOpenChange={setMembershipOpen}
+        attender={attender}
+        onSubmit={handleMembershipSubmit}
+        isPending={admitMember.isPending}
+        formRef={membershipFormRef}
       />
     </>
   );

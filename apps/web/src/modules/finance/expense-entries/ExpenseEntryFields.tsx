@@ -65,10 +65,15 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
       <Controller
         name="date"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor="date">Data</FieldLabel>
-            <DateInput id="date" value={field.value} onChange={field.onChange} />
+            <DateInput
+              id="date"
+              value={field.value}
+              onChange={field.onChange}
+              aria-invalid={fieldState.invalid || undefined}
+            />
             {errors.date && <FieldError>{errors.date.message}</FieldError>}
           </Field>
         )}
@@ -95,10 +100,16 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
             <Controller
               name="amount"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="amount">Valor da Parcela (R$)</FieldLabel>
-                  <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
+                  <MoneyInput
+                    id="amount"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="0,00"
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
                   {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
                 </Field>
               )}
@@ -106,10 +117,16 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
             <Controller
               name="total"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="total">Valor Total (R$)</FieldLabel>
-                  <MoneyInput id="total" value={field.value ?? ''} onChange={field.onChange} />
+                  <MoneyInput
+                    id="total"
+                    value={field.value ?? ''}
+                    onChange={field.onChange}
+                    placeholder="0,00"
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
                   {errors.total && <FieldError>{errors.total.message}</FieldError>}
                 </Field>
               )}
@@ -120,7 +137,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
             <Controller
               name="installment"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="installment">Parcela Nº</FieldLabel>
                   <Input
@@ -129,6 +146,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                     min="1"
                     value={field.value ?? ''}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    aria-invalid={fieldState.invalid || undefined}
                   />
                   {errors.installment && <FieldError>{errors.installment.message}</FieldError>}
                 </Field>
@@ -137,7 +155,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
             <Controller
               name="totalInstallments"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel htmlFor="totalInstallments">Total de Parcelas</FieldLabel>
                   <Input
@@ -146,6 +164,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                     min="1"
                     value={field.value ?? ''}
                     onChange={(e) => field.onChange(e.target.valueAsNumber)}
+                    aria-invalid={fieldState.invalid || undefined}
                   />
                   {errors.totalInstallments && (
                     <FieldError>{errors.totalInstallments.message}</FieldError>
@@ -159,10 +178,16 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="amount"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="amount">Valor (R$)</FieldLabel>
-              <MoneyInput id="amount" value={field.value} onChange={field.onChange} />
+              <MoneyInput
+                id="amount"
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="0,00"
+                aria-invalid={fieldState.invalid || undefined}
+              />
               {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
             </Field>
           )}
@@ -173,7 +198,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="categoryId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="categoryId">Categoria</FieldLabel>
               <EntityPicker
@@ -186,6 +211,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                 emptyMessage="Nenhuma categoria encontrada."
                 isLoading={expenseCategories.isLoading}
                 ariaLabel="Categoria"
+                aria-invalid={fieldState.invalid || undefined}
                 className="w-full"
               />
               {errors.categoryId && <FieldError>{errors.categoryId.message}</FieldError>}
@@ -196,14 +222,17 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="paymentMethodId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="paymentMethodId">Forma de Pagamento</FieldLabel>
               <Select
                 value={field.value !== undefined ? String(field.value) : ''}
                 onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger id="paymentMethodId" className="w-full">
-                  <SelectValue placeholder="Selecione uma forma de pagamento" />
+                <SelectTrigger
+                  id="paymentMethodId"
+                  className="w-full"
+                  aria-invalid={fieldState.invalid || undefined}>
+                  <SelectValue placeholder="Selecionar..." />
                 </SelectTrigger>
                 <SelectContent>
                   {paymentMethodsList.map((method) => (
@@ -229,7 +258,10 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
               <Select
                 value={field.value ?? EntryStatus.Paid}
                 onValueChange={(v) => field.onChange(v as ExpenseEntryFormValues['status'])}>
-                <SelectTrigger className="w-full" aria-label="Status">
+                <SelectTrigger
+                  className="w-full"
+                  aria-label="Status"
+                  aria-invalid={fieldState.invalid || undefined}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -245,7 +277,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="attenderId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="attenderId">Congregado Patrocinador</FieldLabel>
               <EntityPicker
@@ -258,6 +290,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
                 emptyMessage="Nenhum congregado encontrado."
                 isLoading={attenders.isLoading}
                 ariaLabel="Congregado patrocinador"
+                aria-invalid={fieldState.invalid || undefined}
                 allowClear
                 className="w-full"
               />
@@ -267,7 +300,7 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
         />
 
         <Field>
-          <FieldLabel>Vincular a (opcional)</FieldLabel>
+          <FieldLabel>Vincular a</FieldLabel>
           <LinkPicker
             campaigns={campaignsList}
             events={eventsListData}
@@ -287,10 +320,15 @@ export function ExpenseEntryFields({ control, errors, setValue }: Props) {
       <Controller
         name="notes"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor="notes">Observações</FieldLabel>
-            <Textarea id="notes" placeholder="Adicione observações se necessário" {...field} />
+            <Textarea
+              id="notes"
+              placeholder="Adicione observações se necessário"
+              aria-invalid={fieldState.invalid || undefined}
+              {...field}
+            />
             {errors.notes && <FieldError>{errors.notes.message}</FieldError>}
           </Field>
         )}

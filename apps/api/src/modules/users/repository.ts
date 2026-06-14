@@ -191,7 +191,12 @@ export async function resolvePermissionRows(permissionsMap: Record<string, strin
 
 export async function findAttenderById(id: number) {
   const result = await db
-    .select({ id: attenders.id, userId: attenders.userId, name: attenders.name })
+    .select({
+      id: attenders.id,
+      userId: attenders.userId,
+      name: attenders.name,
+      isMember: attenders.isMember
+    })
     .from(attenders)
     .where(eq(attenders.id, id))
     .limit(1);

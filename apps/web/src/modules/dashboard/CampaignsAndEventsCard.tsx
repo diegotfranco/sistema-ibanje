@@ -10,6 +10,7 @@ import {
   type ChartConfig
 } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
+import { formatMoneyCompact } from '@/lib/format';
 import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
 import type { Events, CampaignSummary } from '@sistema-ibanje/shared';
@@ -134,12 +135,7 @@ function EventsContent({ data }: { data: Events }) {
           <YAxis
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value: number) => {
-              const abs = Math.abs(value);
-              if (abs >= 1_000_000) return `R$${(value / 1_000_000).toFixed(0)}M`;
-              if (abs >= 1_000) return `R$${(value / 1_000).toFixed(0)}K`;
-              return `R$${value.toFixed(0)}`;
-            }}
+            tickFormatter={(value: number) => formatMoneyCompact(value)}
           />
           <ChartTooltip
             cursor={{ fill: 'var(--muted)', opacity: 0.3 }}

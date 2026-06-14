@@ -164,9 +164,13 @@ export async function expenseEntriesRoutes(app: FastifyInstance) {
           400: ErrorResponseSchema,
           401: ErrorResponseSchema,
           403: ErrorResponseSchema,
-          404: ErrorResponseSchema
+          404: ErrorResponseSchema,
+          429: ErrorResponseSchema
         }
       },
+      // File uploads hit MinIO and consume storage; cap them so a stuck retry loop or a misbehaving
+      // client can't flood object storage. Generous enough for a treasurer attaching many receipts.
+      config: { rateLimit: { max: 60, timeWindow: '1 hour' } },
       preHandler: [requireAuth, checkPermission(Module.ExpenseEntries, Action.Update)]
     },
     controller.uploadReceipt

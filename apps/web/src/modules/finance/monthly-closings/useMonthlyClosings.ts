@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useResourceList } from '@/hooks/useResourceQuery';
+import { invalidateFinanceDerived } from '@/lib/financeInvalidation';
 import { api, ApiError } from '@/lib/api';
 import type { MonthlyClosingResponse, NewClosingFormValues } from './schema';
 
@@ -40,6 +41,7 @@ export function useCreateMonthlyClosing() {
     mutationFn: (body: NewClosingFormValues) => api.post<MonthlyClosingResponse>(BASE, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY });
+      invalidateFinanceDerived(qc);
       toast.success('Fechamento criado.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao criar fechamento.'))
@@ -52,6 +54,7 @@ export function useRemoveMonthlyClosing() {
     mutationFn: (id: number) => api.delete(`${BASE}/${id}`),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: KEY });
+      invalidateFinanceDerived(qc);
       toast.success('Fechamento removido.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao remover fechamento.'))
@@ -81,6 +84,7 @@ export function useClosingTransition() {
     },
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: KEY });
+      invalidateFinanceDerived(qc);
       toast.success(TRANSITION_LABELS[vars.action] ?? 'Ação concluída.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao processar ação.'))

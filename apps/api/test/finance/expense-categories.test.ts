@@ -25,7 +25,7 @@ describe('expense-categories module', () => {
     await clearMonthlyClosings();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
   });
 
   it('creates a parent expense category (201)', async () => {

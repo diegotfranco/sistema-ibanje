@@ -3,7 +3,12 @@ import { toast } from 'sonner';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
 import { api } from '@/lib/api';
 import type { AttenderStatusValue } from '@sistema-ibanje/shared';
-import type { AttenderFormValues, AttenderResponse, AttenderStatusChangeValues } from './schema';
+import type {
+  AttenderFormValues,
+  AttenderResponse,
+  AttenderStatusChangeValues,
+  AdmitMemberValues
+} from './schema';
 
 const BASE = '/attenders';
 const KEY = ['attenders'] as const;
@@ -11,15 +16,21 @@ const KEY = ['attenders'] as const;
 export function useAttenders(
   params: {
     page?: number;
+    // Server cap is 100; pass it when a picker needs the whole (small) set, not a page.
+    limit?: number;
     isMember?: 'true' | 'false';
-    status?: AttenderStatusValue;
+    // `inativo` is a pseudo-status the server expands to the union of the exit states.
+    status?: AttenderStatusValue | 'inativo';
+    deleted?: 'only' | 'include';
     q?: string;
   } = {}
 ) {
   return useResourceList<AttenderResponse>(BASE, KEY, {
     page: params.page ?? 1,
+    ...(params.limit !== undefined && { limit: params.limit }),
     ...(params.isMember !== undefined && { isMember: params.isMember }),
     ...(params.status !== undefined && { status: params.status }),
+    ...(params.deleted !== undefined && { deleted: params.deleted }),
     ...(params.q && { q: params.q })
   });
 }
@@ -42,7 +53,8 @@ export function useAttenderMutations() {
     {
       created: 'Congregado cadastrado.',
       updated: 'Congregado atualizado.',
-      removed: 'Congregado removido.'
+      removed: 'Congregado removido.',
+      restored: 'Congregado restaurado.'
     }
   );
 }
@@ -58,6 +70,21 @@ export function useChangeAttenderStatus() {
       qc.invalidateQueries({ queryKey: KEY });
       qc.invalidateQueries({ queryKey: [...KEY, updated.id, 'profile'] });
       toast.success('Situação do congregado atualizada.');
+    }
+  });
+}
+
+// Admission (congregado → membro). Guarded PATCH /attenders/:id/membership — distinct from the
+// generic edit, which no longer touches membership. Reverse direction = the status exits.
+export function useAdmitMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: AdmitMemberValues }) =>
+      api.patch<AttenderResponse>(`${BASE}/${id}/membership`, body),
+    onSuccess: (updated) => {
+      qc.invalidateQueries({ queryKey: KEY });
+      qc.invalidateQueries({ queryKey: [...KEY, updated.id, 'profile'] });
+      toast.success('Congregado admitido como membro.');
     }
   });
 }

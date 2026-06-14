@@ -20,7 +20,7 @@ describe('users self-service rules', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
 
     const list = await app.inject({
       method: 'GET',
@@ -29,7 +29,7 @@ describe('users self-service rules', () => {
     });
     const users = list.json<{ data: UserRow[] }>().data;
     const adminRow = users.find((u) => u.email === 'admin@email.com')!;
-    const congRow = users.find((u) => u.email === 'congregado@email.com')!;
+    const congRow = users.find((u) => u.email === 'membro@email.com')!;
     adminId = adminRow.id;
     adminRoleId = adminRow.roleId;
     congregantId = congRow.id;
@@ -54,6 +54,35 @@ describe('users self-service rules', () => {
       payload: { roleId: adminRoleId }
     });
     expect(res.statusCode).toBe(403);
+  });
+
+  it('lets an admin edit another user name + email + role together', async () => {
+    // Self-contained: create a throwaway user so we don't mutate the shared seed congregant that
+    // later list/search tests depend on.
+    const created = await app.inject({
+      method: 'POST',
+      url: '/users',
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+      payload: { name: 'Editável', email: 'editavel@email.com', roleId: adminRoleId }
+    });
+    expect(created.statusCode).toBe(201);
+    const targetId = created.json<{ id: number }>().id;
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: `/users/${targetId}`,
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+      payload: {
+        name: 'Editável Renomeado',
+        email: 'editavel.novo@email.com',
+        roleId: adminRoleId
+      }
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{ name: string; email: string; roleId: number }>();
+    expect(body.name).toBe('Editável Renomeado');
+    expect(body.email).toBe('editavel.novo@email.com');
+    expect(body.roleId).toBe(adminRoleId);
   });
 
   it('blocks a user without Editar from editing another user', async () => {
@@ -83,6 +112,36 @@ describe('users self-service rules', () => {
       payload: { permissions: {} }
     });
     expect(res.statusCode).toBe(403);
+  });
+
+  it('records a grant diff in the audit trail when a user permissions change', async () => {
+    // Grant the congregant a permission they lack, then assert the audit row carries a non-null diff.
+    const cur = await app.inject({
+      method: 'GET',
+      url: `/users/${congregantId}/permissions`,
+      headers: { cookie: admin.cookie }
+    });
+    const map = cur.json<Record<string, string[]>>();
+    map['Calendário'] = ['Acessar'];
+
+    const put = await app.inject({
+      method: 'PUT',
+      url: `/users/${congregantId}/permissions`,
+      headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+      payload: { permissions: map }
+    });
+    expect(put.statusCode).toBe(204);
+
+    const audit = await app.inject({
+      method: 'GET',
+      url: `/audit?entityType=user&action=update&limit=50`,
+      headers: { cookie: admin.cookie }
+    });
+    const row = audit
+      .json<{ data: { entityId: number; notes: string | null; changes: unknown }[] }>()
+      .data.find((r) => r.entityId === congregantId && r.notes === 'permissions');
+    expect(row).toBeTruthy();
+    expect(row!.changes).toEqual({ 'Calendário · Acessar': { from: false, to: true } });
   });
 
   it('rejects approving a user that is not pending', async () => {
@@ -120,7 +179,7 @@ describe('users self-service rules', () => {
         method: 'PATCH',
         url: `/users/${congregantId}/password`,
         headers: { cookie: congregant.cookie, 'x-csrf-token': congregant.csrfToken },
-        payload: { currentPassword: 'congregado123', newPassword: 'brandNewPass123' }
+        payload: { currentPassword: 'membro123', newPassword: 'brandNewPass123' }
       });
       expect(res.statusCode).toBe(204);
     });
@@ -133,6 +192,25 @@ describe('users self-service rules', () => {
         payload: { newPassword: 'adminSetPass123' }
       });
       expect(res.statusCode).toBe(204);
+    });
+  });
+
+  // Regression: the Membro picker sends `attenderId: null` when no member is linked; that must be
+  // accepted (treated as "no link"), not rejected as "expected number, received null".
+  describe('create with attenderId null', () => {
+    it('returns 201 when attenderId is null', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/users',
+        headers: { cookie: admin.cookie, 'x-csrf-token': admin.csrfToken },
+        payload: {
+          name: 'Sem Vínculo',
+          email: 'sem.vinculo@email.com',
+          roleId: adminRoleId,
+          attenderId: null
+        }
+      });
+      expect(res.statusCode).toBe(201);
     });
   });
 
@@ -173,7 +251,7 @@ describe('users self-service rules', () => {
         headers: { cookie: admin.cookie }
       });
       const nameBody = byName.json<{ data: UserRow[] }>();
-      expect(nameBody.data.some((u) => u.email === 'congregado@email.com')).toBe(true);
+      expect(nameBody.data.some((u) => u.email === 'membro@email.com')).toBe(true);
     });
 
     it('filters by ?status=', async () => {

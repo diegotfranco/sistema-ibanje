@@ -1,8 +1,6 @@
 import type { ReactElement } from 'react';
-import { Settings, type LucideIcon } from 'lucide-react';
+import { type LucideIcon } from 'lucide-react';
 import type { Module, Action } from '@/lib/permissions';
-import { paths } from '@/lib/paths';
-import SettingsHubPage from '@/modules/settings/SettingsHubPage';
 import { authRoutes } from '@/modules/auth/routes';
 import { dashboardRoutes } from '@/modules/dashboard/routes';
 import { attendersRoutes } from '@/modules/attenders/routes';
@@ -17,6 +15,7 @@ import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes'
 import { meRoutes } from '@/modules/me/routes';
 import { membershipLettersRouteChildren } from '@/modules/membership-letters/routes';
 import { calendarRouteChildren } from '@/modules/calendar/routes';
+import { auditRouteChildren } from '@/modules/audit/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -30,21 +29,24 @@ export type AppRoute = {
   children?: AppRoute[];
 };
 
+// Plain group (no landing page, like Secretaria/Administração): the header is a non-clickable
+// label and each child is gated by its own module permission.
 const configuracoesSection: AppRoute = {
   layout: 'app',
   label: 'Configurações',
-  // The section header itself is a clickable landing: a card-grid hub of every
-  // settings area (gated per-card by permission). Children stay as direct links.
-  path: paths.settings,
-  element: <SettingsHubPage />,
-  icon: Settings,
   children: [
-    ...rolesRouteChildren,
-    ...usersRouteChildren,
     ...paymentMethodsRouteChildren,
     ...churchSettingsRouteChildren,
     ...minuteTemplatesRouteChildren
   ]
+};
+
+// Plain group (no landing page, like Secretaria): admin surfaces — access accounts, roles and the
+// audit trail. Each child is gated by its own module permission.
+const administracaoSection: AppRoute = {
+  layout: 'app',
+  label: 'Administração',
+  children: [...usersRouteChildren, ...rolesRouteChildren, ...auditRouteChildren]
 };
 
 const secretariaSection: AppRoute = {
@@ -65,5 +67,6 @@ export const appRoutes: AppRoute[] = [
   secretariaSection,
   ...financeRoutes,
   configuracoesSection,
+  administracaoSection,
   ...meRoutes
 ];

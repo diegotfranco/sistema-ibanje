@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
   DialogTitle
 } from '@/components/Dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import { AttenderStatus, type AttenderStatusValue } from '@sistema-ibanje/shared';
@@ -53,7 +54,6 @@ export default function AttenderStatusDialog({
   });
 
   const {
-    handleSubmit,
     reset,
     control,
     register,
@@ -99,21 +99,26 @@ export default function AttenderStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Alterar situação — {attender?.name}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit((v) => onSubmit(prepare(v)))} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="status">Situação *</Label>
+        <form
+          onSubmit={autofillSafeSubmit(form, (v) => onSubmit(prepare(v)))}
+          className="space-y-4">
+          <Field data-invalid={!!errors.status || undefined}>
+            <FieldLabel htmlFor="status">Situação *</FieldLabel>
             <Controller
               control={control}
               name="status"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   value={field.value}
                   onValueChange={(v) => field.onChange(v as AttenderStatusValue)}>
-                  <SelectTrigger id="status" className="w-full">
+                  <SelectTrigger
+                    id="status"
+                    className="w-full"
+                    aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -126,52 +131,57 @@ export default function AttenderStatusDialog({
                 </Select>
               )}
             />
-            {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
-          </div>
+            {errors.status && <FieldError errors={[errors.status]} />}
+          </Field>
 
           {showExit && (
             <>
-              <div className="space-y-1">
-                <Label htmlFor="exitDate">Data de saída *</Label>
+              <Field data-invalid={!!errors.exitDate || undefined}>
+                <FieldLabel htmlFor="exitDate">Data de saída *</FieldLabel>
                 <Controller
                   control={control}
                   name="exitDate"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <DateInput
                       id="exitDate"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
                       name={field.name}
+                      aria-invalid={fieldState.invalid || undefined}
                     />
                   )}
                 />
-                {errors.exitDate && (
-                  <p className="text-xs text-destructive">{errors.exitDate.message}</p>
-                )}
-              </div>
+                {errors.exitDate && <FieldError errors={[errors.exitDate]} />}
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="exitReason">Motivo</Label>
-                <Input id="exitReason" maxLength={256} {...register('exitReason')} />
-                {errors.exitReason && (
-                  <p className="text-xs text-destructive">{errors.exitReason.message}</p>
-                )}
-              </div>
+              <Field data-invalid={!!errors.exitReason || undefined}>
+                <FieldLabel htmlFor="exitReason">Motivo</FieldLabel>
+                <Input
+                  id="exitReason"
+                  maxLength={256}
+                  {...register('exitReason')}
+                  aria-invalid={!!errors.exitReason || undefined}
+                />
+                {errors.exitReason && <FieldError errors={[errors.exitReason]} />}
+              </Field>
             </>
           )}
 
           {isTransfer && (
-            <div className="space-y-1">
-              <Label htmlFor="exitLetterId">Carta de transferência</Label>
+            <Field data-invalid={!!errors.exitLetterId || undefined}>
+              <FieldLabel htmlFor="exitLetterId">Carta de transferência</FieldLabel>
               <Controller
                 control={control}
                 name="exitLetterId"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <Select
                     value={field.value != null ? String(field.value) : NO_LETTER}
                     onValueChange={(v) => field.onChange(v === NO_LETTER ? null : Number(v))}>
-                    <SelectTrigger id="exitLetterId" className="w-full">
+                    <SelectTrigger
+                      id="exitLetterId"
+                      className="w-full"
+                      aria-invalid={fieldState.invalid || undefined}>
                       <SelectValue placeholder="Nenhuma (pode vincular depois)" />
                     </SelectTrigger>
                     <SelectContent>
@@ -185,10 +195,8 @@ export default function AttenderStatusDialog({
                   </Select>
                 )}
               />
-              {errors.exitLetterId && (
-                <p className="text-xs text-destructive">{errors.exitLetterId.message}</p>
-              )}
-            </div>
+              {errors.exitLetterId && <FieldError errors={[errors.exitLetterId]} />}
+            </Field>
           )}
 
           <DialogFooter>

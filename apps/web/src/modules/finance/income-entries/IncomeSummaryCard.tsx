@@ -1,36 +1,11 @@
 import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeaderRow, CardTitle } from '@/components/Card';
-import { formatMoney } from '../entries-utils';
+import { currentMonthRange, formatMoney } from '../entries-utils';
 import { useIncomeSummary } from './useIncomeSummary';
-
-const MONTHS_PT = [
-  'Janeiro',
-  'Fevereiro',
-  'Março',
-  'Abril',
-  'Maio',
-  'Junho',
-  'Julho',
-  'Agosto',
-  'Setembro',
-  'Outubro',
-  'Novembro',
-  'Dezembro'
-];
 
 const SPEND_OK_MAX = 0.6;
 const SPEND_WARN_MAX = 0.85;
 const SPEND_DANGER_MAX = 1.0;
-
-function currentMonthRange() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const from = `${year}-${pad(month + 1)}-01`;
-  const to = `${year}-${pad(month + 1)}-${pad(now.getDate())}`;
-  return { from, to, label: `${MONTHS_PT[month]}/${year}` };
-}
 
 function pickBarColor(ratio: number): string {
   if (ratio > SPEND_DANGER_MAX) return 'bg-destructive';
@@ -74,7 +49,7 @@ export function IncomeSummaryCard() {
           {isLoading ? (
             <div className="h-7 w-48 animate-pulse rounded bg-muted" />
           ) : (
-            <p className="text-2xl font-semibold font-mono tabular-nums text-money-in">
+            <p className="text-2xl font-semibold font-mono tabular-nums">
               R$ {formatMoney(data?.total ?? '0')}
             </p>
           )}

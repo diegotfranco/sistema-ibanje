@@ -113,7 +113,7 @@ describe('CampaignsPage', () => {
     renderWithProviders(<CampaignsPage />);
 
     await waitFor(() => {
-      const amounts = screen.queryAllByText(/10000|5000/);
+      const amounts = screen.queryAllByText(/10\.000,00|5\.000,00/);
       expect(amounts.length).toBeGreaterThan(0);
     });
   });

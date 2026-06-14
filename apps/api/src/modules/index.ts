@@ -12,6 +12,7 @@ import { calendarRoutes } from './calendar/routes.js';
 import { minutesRoutes } from './minutes/routes.js';
 import { healthRoutes } from './health/routes.js';
 import { membershipLettersRoutes } from './membership-letters/routes.js';
+import { auditRoutes } from './audit/routes.js';
 
 export async function registerRoutes(app: FastifyInstance) {
   await app.register(healthRoutes);
@@ -27,4 +28,5 @@ export async function registerRoutes(app: FastifyInstance) {
   await app.register(eventsRoutes);
   await app.register(calendarRoutes);
   await app.register(minutesRoutes);
+  await app.register(auditRoutes);
 }

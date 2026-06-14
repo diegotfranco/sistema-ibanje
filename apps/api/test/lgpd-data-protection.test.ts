@@ -37,7 +37,7 @@ describe('LGPD: data protection guarantees', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregado = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregado = await loginAs(app, 'membro@email.com', 'membro123');
 
     const [self] = await db
       .select({ id: attenders.id })

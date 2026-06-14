@@ -22,8 +22,12 @@ export function useResourceList<T>(
 ) {
   const merged: ListParams = { limit: 30, ...params };
   const qs = buildQueryString(merged);
+  // The semantic `queryKey` leads, so any hook that invalidates the bare key (summary/detail)
+  // still prefix-matches this list. `basePath` is appended only because the queryFn closes over it
+  // (satisfies @tanstack/query/exhaustive-deps); it's 1:1 with `queryKey`, so it never widens a key
+  // or defeats prefix-matching the way a leading `basePath` did.
   return useQuery({
-    queryKey: [basePath, ...queryKey, qs],
+    queryKey: [...queryKey, basePath, qs],
     queryFn: () => api.get<Paginated<T>>(`${basePath}?${qs}`)
   });
 }
@@ -39,11 +43,16 @@ function describeError(err: unknown, fallback: string) {
 export function useResourceMutations<T, C, U>(
   basePath: string,
   queryKey: readonly unknown[],
-  labels: { created: string; updated: string; removed: string; restored?: string }
+  labels: { created: string; updated: string; removed: string; restored?: string },
+  // Domain-agnostic hook for invalidating queries beyond this resource (e.g. finance modules pass
+  // their derived report/dashboard/summary keys so those aggregates refetch after a mutation).
+  extraInvalidateKeys: readonly (readonly unknown[])[] = []
 ) {
   const qc = useQueryClient();
-  const fullKey = [basePath, ...queryKey];
-  const invalidate = () => qc.invalidateQueries({ queryKey: fullKey });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: [...queryKey] });
+    for (const key of extraInvalidateKeys) qc.invalidateQueries({ queryKey: key });
+  };
 
   const create = useMutation({
     mutationFn: (body: C) => api.post<T>(basePath, body),

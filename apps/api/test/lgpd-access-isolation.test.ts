@@ -56,7 +56,7 @@ async function insertDonation(attenderId: number, userId: number, amount: string
 
 describe('LGPD: cross-titular access isolation (donations + roster)', () => {
   let app: FastifyInstance;
-  let titularA: AuthCookies; // seeded congregant (congregado@email.com ↔ "João da Silva")
+  let titularA: AuthCookies; // seeded congregant (membro@email.com ↔ "João da Silva")
   let titularB: AuthCookies;
   let attenderAId: number;
   let attenderBId: number;
@@ -73,7 +73,7 @@ describe('LGPD: cross-titular access isolation (donations + roster)', () => {
     const [congregadoRole] = await db
       .select({ id: roles.id })
       .from(roles)
-      .where(eq(roles.name, 'Congregado'));
+      .where(eq(roles.name, 'Membro'));
 
     // Titular A = the seeded congregant, already linked to attender "João da Silva".
     const [attA] = await db
@@ -111,7 +111,7 @@ describe('LGPD: cross-titular access isolation (donations + roster)', () => {
     attenderBId = attB.id;
     await insertDonation(attenderBId, adminUser.id, AMOUNT_B);
 
-    titularA = await loginAs(app, 'congregado@email.com', 'congregado123');
+    titularA = await loginAs(app, 'membro@email.com', 'membro123');
     titularB = await loginAs(app, B_EMAIL, B_PASSWORD);
   });
 

@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { RichTextEditor, EMPTY_TIPTAP_DOC, type TipTapDoc } from '@/components/RichTextEditor';
 import { useEditApprovedMinute } from './useMinutes';
@@ -47,7 +47,7 @@ export default function MinuteEditApprovedForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Criar Nova Versão</DialogTitle>
         </DialogHeader>
@@ -61,8 +61,8 @@ export default function MinuteEditApprovedForm({
             })
           )}
           className="space-y-4">
-          <div className="space-y-1">
-            <Label>Conteúdo *</Label>
+          <Field data-invalid={!!form.formState.errors.content || undefined}>
+            <FieldLabel>Conteúdo *</FieldLabel>
             <Controller
               control={form.control}
               name="content"
@@ -71,18 +71,20 @@ export default function MinuteEditApprovedForm({
               )}
             />
             {form.formState.errors.content && (
-              <p className="text-xs text-destructive">{form.formState.errors.content.message}</p>
+              <FieldError errors={[form.formState.errors.content]} />
             )}
-          </div>
-          <div className="space-y-1">
-            <Label htmlFor="ea-reason">Motivo da alteração *</Label>
-            <Input id="ea-reason" {...form.register('reasonForChange')} />
+          </Field>
+          <Field data-invalid={!!form.formState.errors.reasonForChange || undefined}>
+            <FieldLabel htmlFor="ea-reason">Motivo da alteração *</FieldLabel>
+            <Input
+              id="ea-reason"
+              {...form.register('reasonForChange')}
+              aria-invalid={!!form.formState.errors.reasonForChange || undefined}
+            />
             {form.formState.errors.reasonForChange && (
-              <p className="text-xs text-destructive">
-                {form.formState.errors.reasonForChange.message}
-              </p>
+              <FieldError errors={[form.formState.errors.reasonForChange]} />
             )}
-          </div>
+          </Field>
           <DialogFooter>
             <Button
               type="button"

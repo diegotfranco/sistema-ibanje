@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pencil, Plus, Trash2, ClipboardEdit } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import {
@@ -124,36 +125,30 @@ export default function PautasPage() {
                       <div className="flex items-center justify-end gap-1">
                         {canEdit && (
                           <>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Editar"
+                            <RowActionButton
+                              label="Editar"
+                              icon={<Pencil className="h-4 w-4" />}
                               onClick={() => {
                                 setEditing(row);
                                 setFormOpen(true);
                               }}
-                              className="text-warning hover:text-warning/80">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              aria-label="Definir pauta"
-                              onClick={() => setAgendaTarget(row)}>
-                              <ClipboardEdit className="h-4 w-4" />
-                            </Button>
+                              className="text-warning-strong hover:text-warning-strong/80"
+                            />
+                            <RowActionButton
+                              label="Definir pauta"
+                              icon={<ClipboardEdit className="h-4 w-4" />}
+                              onClick={() => setAgendaTarget(row)}
+                            />
                           </>
                         )}
                         {canDelete && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            aria-label="Excluir"
+                          <RowActionButton
+                            label="Remover"
+                            icon={<Trash2 className="h-4 w-4" />}
                             disabled={row.hasMinutes}
                             className="text-destructive hover:text-destructive/80 disabled:opacity-30"
-                            onClick={() => setDeleteTarget(row)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                            onClick={() => setDeleteTarget(row)}
+                          />
                         )}
                       </div>
                     </TableCell>

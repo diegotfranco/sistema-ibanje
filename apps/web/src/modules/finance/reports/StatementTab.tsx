@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { formatDate } from '@/lib/datetime';
+import { formatMoney } from '@/lib/format';
 import { useFinancialStatement, useDetailedStatement, usePdfDownload } from './useReports';
 import { FinancialStatementDocument } from './FinancialStatementDocument';
 import { IncomeBreakdown } from './IncomeBreakdown';
@@ -12,9 +13,6 @@ import { IncomeBreakdown } from './IncomeBreakdown';
 interface Props {
   month: string;
 }
-
-const formatMoney = (s: string) =>
-  `R$ ${Number.parseFloat(s).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
 export function StatementTab({ month }: Props) {
   const [view, setView] = useState<'simple' | 'detailed'>('simple');

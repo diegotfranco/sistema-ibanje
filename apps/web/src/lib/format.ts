@@ -63,3 +63,33 @@ export function maskCep(value: string): string {
 export function toDigits(value: string): string {
   return digits(value);
 }
+
+// --- Money (pt-BR: dot thousands, comma decimal) --------------------------------------------
+// Single source of truth for currency display. `formatAmount` is the bare number; `formatMoney`
+// prepends the `R$ ` symbol. Never prepend `R$ ` manually in JSX — call `formatMoney`.
+
+// Tolerant of `undefined`/`null`/non-numeric input (yields NaN, never throws) so callers that may
+// pass an absent value don't crash — matches the prior `Number.parseFloat`-based formatters.
+const toNumber = (value: string | number): number =>
+  typeof value === 'number' ? value : Number.parseFloat(value);
+
+/** `1234.5` → `"1.234,50"` (no currency symbol). */
+export function formatAmount(value: string | number): string {
+  return toNumber(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+/** `1234.5` → `"R$ 1.234,50"`. */
+export function formatMoney(value: string | number): string {
+  return `R$ ${formatAmount(value)}`;
+}
+
+/** Compact form for chart axis ticks: `1500` → `"R$2K"`, `2_000_000` → `"R$2M"`, `500` → `"R$500"`. */
+export function formatMoneyCompact(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000) return `R$${(value / 1_000_000).toFixed(0)}M`;
+  if (abs >= 1_000) return `R$${(value / 1_000).toFixed(0)}K`;
+  return `R$${value.toFixed(0)}`;
+}

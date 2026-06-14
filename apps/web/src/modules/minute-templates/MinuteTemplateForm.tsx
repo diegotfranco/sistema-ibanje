@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { MeetingType } from '@sistema-ibanje/shared';
 import { Button } from '@/components/Button';
 import {
@@ -10,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -46,16 +48,16 @@ export default function MinuteTemplateForm({
   isPending,
   initialData
 }: MinuteTemplateFormProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors }
-  } = useForm<MinuteTemplateFormValues>({
+  const form = useForm<MinuteTemplateFormValues>({
     resolver: zodResolver(MinuteTemplateFormSchema),
     defaultValues: initialData ? (initialData as MinuteTemplateFormValues) : EMPTY
   });
+  const {
+    register,
+    reset,
+    control,
+    formState: { errors }
+  } = form;
 
   const { fields, append, remove, move } = useFieldArray({
     control,
@@ -74,12 +76,12 @@ export default function MinuteTemplateForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Modelo' : 'Novo Modelo de Ata'}</DialogTitle>
         </DialogHeader>
         <form
-          onSubmit={handleSubmit((v) => {
+          onSubmit={autofillSafeSubmit(form, (v) => {
             const cleaned = {
               ...v,
               defaultAgendaItems: v.defaultAgendaItems.map(
@@ -92,27 +94,20 @@ export default function MinuteTemplateForm({
             onSubmit(cleaned);
           })}
           className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              placeholder="Nome do modelo"
-              {...register('name')}
-              className={errors.name ? 'border-destructive' : ''}
-            />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
+          <Field data-invalid={!!errors.name || undefined}>
+            <FieldLabel htmlFor="name">Nome *</FieldLabel>
+            <Input id="name" {...register('name')} aria-invalid={!!errors.name || undefined} />
+            {errors.name && <FieldError errors={[errors.name]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label htmlFor="meetingType">Tipo de Reunião *</Label>
+          <Field data-invalid={!!errors.meetingType || undefined}>
+            <FieldLabel htmlFor="meetingType">Tipo de Reunião *</FieldLabel>
             <Controller
               control={control}
               name="meetingType"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={!!initialData}>
-                  <SelectTrigger
-                    id="meetingType"
-                    className={errors.meetingType ? 'border-destructive' : ''}>
+                  <SelectTrigger id="meetingType" aria-invalid={!!errors.meetingType || undefined}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -122,10 +117,8 @@ export default function MinuteTemplateForm({
                 </Select>
               )}
             />
-            {errors.meetingType && (
-              <p className="text-xs text-destructive">{errors.meetingType.message}</p>
-            )}
-          </div>
+            {errors.meetingType && <FieldError errors={[errors.meetingType]} />}
+          </Field>
 
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -145,8 +138,8 @@ export default function MinuteTemplateForm({
             </p>
           </div>
 
-          <div className="space-y-1">
-            <Label>Conteúdo *</Label>
+          <Field data-invalid={!!errors.content || undefined}>
+            <FieldLabel>Conteúdo *</FieldLabel>
             <Controller
               control={control}
               name="content"
@@ -154,8 +147,8 @@ export default function MinuteTemplateForm({
                 <RichTextEditor value={field.value as TipTapDoc} onChange={field.onChange} />
               )}
             />
-            {errors.content && <p className="text-xs text-destructive">{errors.content.message}</p>}
-          </div>
+            {errors.content && <FieldError errors={[errors.content]} />}
+          </Field>
 
           <div className="space-y-2">
             <Label>Itens de Pauta Padrão</Label>
@@ -166,19 +159,15 @@ export default function MinuteTemplateForm({
                     <Input
                       placeholder="Título do item"
                       {...register(`defaultAgendaItems.${index}.title`)}
-                      className={
-                        errors.defaultAgendaItems?.[index]?.title ? 'border-destructive' : ''
-                      }
+                      aria-invalid={!!errors.defaultAgendaItems?.[index]?.title || undefined}
                     />
                     <Textarea
-                      placeholder="Descrição (opcional)"
+                      placeholder="Descrição"
                       {...register(`defaultAgendaItems.${index}.description`)}
                       rows={2}
                     />
                     {errors.defaultAgendaItems?.[index]?.title && (
-                      <p className="text-xs text-destructive">
-                        {errors.defaultAgendaItems[index]?.title?.message}
-                      </p>
+                      <FieldError errors={[errors.defaultAgendaItems[index]?.title]} />
                     )}
                   </div>
                   <div className="flex flex-col gap-1">

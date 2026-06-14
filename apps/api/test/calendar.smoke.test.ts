@@ -95,7 +95,7 @@ describe('calendar smoke: CRUD, merged feed, and access split', () => {
     expect(attender.statusCode).toBe(201);
     const attenderId = attender.json<{ id: number }>().id;
 
-    // Event at 02:00Z → 23:00 the previous day in America/Sao_Paulo (UTC-3): the feed must bucket it
+    // Event at 02:00Z → 22:00 the previous day in America/Cuiaba (UTC-4): the feed must bucket it
     // onto the local day 2099-03-24, NOT the UTC day 2099-03-25.
     const event = await app.inject({
       method: 'POST',
@@ -132,7 +132,7 @@ describe('calendar smoke: CRUD, merged feed, and access split', () => {
   });
 
   it('exposes the feed to any authenticated role but gates management', async () => {
-    const congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    const congregant = await loginAs(app, 'membro@email.com', 'membro123');
 
     const feed = await app.inject({
       method: 'GET',

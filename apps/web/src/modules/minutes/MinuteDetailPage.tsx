@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
 import { RichTextDisplay, interpolateTipTapDoc, type TipTapDoc } from '@/components/RichTextEditor';
@@ -109,7 +109,7 @@ export default function MinuteDetailPage() {
             </Button>
           )}
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm">
+        <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-muted-foreground font-medium">Pastor Presidente</p>
             <p>{minute.presidingPastorName ?? '—'}</p>
@@ -267,7 +267,7 @@ export default function MinuteDetailPage() {
 
       {/* Edit details dialog */}
       <Dialog open={editDetailsOpen} onOpenChange={setEditDetailsOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Detalhes</DialogTitle>
           </DialogHeader>
@@ -276,57 +276,50 @@ export default function MinuteDetailPage() {
               updateMinute.mutate(v, { onSuccess: () => setEditDetailsOpen(false) })
             )}
             className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="ed-presidingPastorName">Pastor Presidente</Label>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field
+                data-invalid={!!editDetailsForm.formState.errors.presidingPastorName || undefined}>
+                <FieldLabel htmlFor="ed-presidingPastorName">Pastor Presidente</FieldLabel>
                 <Input
                   id="ed-presidingPastorName"
                   {...editDetailsForm.register('presidingPastorName')}
                 />
                 {editDetailsForm.formState.errors.presidingPastorName && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.presidingPastorName.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.presidingPastorName]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-secretaryName">Secretário</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.secretaryName || undefined}>
+                <FieldLabel htmlFor="ed-secretaryName">Secretário</FieldLabel>
                 <Input id="ed-secretaryName" {...editDetailsForm.register('secretaryName')} />
                 {editDetailsForm.formState.errors.secretaryName && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.secretaryName.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.secretaryName]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-openingTime">Hora de Abertura</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.openingTime || undefined}>
+                <FieldLabel htmlFor="ed-openingTime">Hora de Abertura</FieldLabel>
                 <Input
                   type="time"
                   id="ed-openingTime"
                   {...editDetailsForm.register('openingTime')}
                 />
                 {editDetailsForm.formState.errors.openingTime && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.openingTime.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.openingTime]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-closingTime">Hora de Encerramento</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.closingTime || undefined}>
+                <FieldLabel htmlFor="ed-closingTime">Hora de Encerramento</FieldLabel>
                 <Input
                   type="time"
                   id="ed-closingTime"
                   {...editDetailsForm.register('closingTime')}
                 />
                 {editDetailsForm.formState.errors.closingTime && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.closingTime.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.closingTime]} />
                 )}
-              </div>
+              </Field>
             </div>
             <DialogFooter>
               <Button
@@ -354,7 +347,7 @@ export default function MinuteDetailPage() {
 
       {/* PDF preview dialog */}
       <Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}>
-        <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
+        <DialogContent size="xl" className="h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Pré-visualização — {minute.minuteNumber}</DialogTitle>
           </DialogHeader>
@@ -380,7 +373,7 @@ export default function MinuteDetailPage() {
 
       {/* Version viewer dialog */}
       <Dialog open={!!selectedVersion} onOpenChange={(open) => !open && setSelectedVersion(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent size="lg" className="flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Versão v{selectedVersion?.version} — {selectedVersion?.status}

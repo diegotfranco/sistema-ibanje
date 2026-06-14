@@ -1,0 +1,27 @@
+# Supply-chain coverage: Dependabot opens PRs for dependency + GitHub Actions updates and surfaces
+# security advisories. Updates are grouped so a solo maintainer gets a few reviewable PRs a week, not
+# dozens. Security updates are emitted regardless of the schedule. The npm ecosystem reads the root
+# pnpm-lock.yaml and covers every workspace package (apps/*, packages/*).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for all non-major bumps — the low-risk bulk that just needs CI to be green.
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Majors stay ungrouped: each is a deliberate, separately-reviewed upgrade.
+
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns:
+          - '*'

@@ -103,7 +103,7 @@ export function CalendarEntryDrawer({ draft, isPending, onClose, onSubmit, onDel
               control={form.control}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Observações (opcional)</FieldLabel>
+                  <FieldLabel>Observações</FieldLabel>
                   <Textarea {...field} aria-invalid={fieldState.invalid} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

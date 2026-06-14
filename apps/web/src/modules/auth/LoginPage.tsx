@@ -2,7 +2,7 @@ import { Navigate, Link } from 'react-router';
 import { Controller } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
-import { PasswordInput } from '@/modules/auth/PasswordInput';
+import { PasswordInput } from '@/components/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { paths } from '@/lib/paths';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -46,7 +46,6 @@ const LoginPage = () => {
                     id="email"
                     type="email"
                     aria-invalid={fieldState.invalid}
-                    placeholder="exemplo@mail.com"
                     autoComplete="email"
                     maxLength={96}
                   />
@@ -61,12 +60,7 @@ const LoginPage = () => {
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="password">Senha</FieldLabel>
-                  <PasswordInput
-                    id="password"
-                    placeholder="••••••••"
-                    autoComplete="current-password"
-                    {...field}
-                  />
+                  <PasswordInput id="password" autoComplete="current-password" {...field} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

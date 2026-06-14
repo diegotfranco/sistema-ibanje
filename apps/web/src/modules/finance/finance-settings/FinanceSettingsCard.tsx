@@ -53,9 +53,9 @@ export function FinanceSettingsCard() {
         </FieldDescription>
 
         {lockMessage && (
-          <Alert className="border-warning/40 text-warning">
+          <Alert className="border-warning/40 text-warning-strong">
             <AlertTriangle />
-            <AlertDescription className="text-warning/90">{lockMessage}</AlertDescription>
+            <AlertDescription className="text-warning-strong/90">{lockMessage}</AlertDescription>
           </Alert>
         )}
 

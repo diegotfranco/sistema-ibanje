@@ -103,31 +103,51 @@ const ADMISSION_MODES = [
   'profissão de fé'
 ] as const;
 
+const EXIT_STATUSES = ['desligado', 'transferido', 'falecido'] as const;
+const EXIT_REASONS: Record<(typeof EXIT_STATUSES)[number], string> = {
+  desligado: 'Desligamento a pedido próprio.',
+  transferido: 'Transferência para outra congregação.',
+  falecido: 'Falecimento.'
+};
+
 function synthesizeMembership(i: number): {
   isMember: boolean;
   memberSince: number | null;
   admissionMode: (typeof ADMISSION_MODES)[number] | null;
   congregatingSince: number;
-  status: 'ativo' | 'inativo';
+  status: 'ativo' | (typeof EXIT_STATUSES)[number];
+  exitDate: string | null;
+  exitReason: string | null;
 } {
   // Month-granular values are stored as YYYYMM ints (e.g. April 2024 -> 202404).
   const month = (i % 12) + 1;
   const congregatingSince = (2002 + (i % 21)) * 100 + month;
-  // ~12% inactive — people who transferred out, moved away, or stopped attending.
-  // Deterministic by index so `db:reset` stays reproducible; spans both members
-  // and non-members so the status filter has realistic data in either segment.
-  const status = i % 17 < 2 ? 'inativo' : 'ativo';
   const isMember = i % 20 < 13; // ~65%
   if (!isMember) {
-    return { isMember: false, memberSince: null, admissionMode: null, congregatingSince, status };
+    // Non-members have no formal-exit lifecycle — they stay `ativo` until admitted or removed.
+    return {
+      isMember: false,
+      memberSince: null,
+      admissionMode: null,
+      congregatingSince,
+      status: 'ativo',
+      exitDate: null,
+      exitReason: null
+    };
   }
   const memberSince = (2002 + (i % 21) + (i % 4)) * 100 + month;
+  // ~12% of members have left, rotated across the three exits so the "Inativo" union filter
+  // (desligado/transferido/falecido) has realistic data. Deterministic by index for `db:reset`.
+  const exited = i % 17 < 2;
+  const status = exited ? EXIT_STATUSES[i % 3] : 'ativo';
   return {
     isMember: true,
     memberSince,
     admissionMode: ADMISSION_MODES[i % 4],
     congregatingSince,
-    status
+    status,
+    exitDate: exited ? `${2018 + (i % 6)}-${String(month).padStart(2, '0')}-15` : null,
+    exitReason: exited ? EXIT_REASONS[status as (typeof EXIT_STATUSES)[number]] : null
   };
 }
 

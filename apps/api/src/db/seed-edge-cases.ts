@@ -28,7 +28,7 @@ export type EdgeCaseAttender = {
   email?: string | null;
   phone?: string | null;
   isMember?: boolean;
-  status?: 'ativo' | 'inativo' | 'desligado' | 'transferido' | 'falecido';
+  status?: 'ativo' | 'desligado' | 'transferido' | 'falecido';
   // Exit metadata, set when status is a formal-exit state (desligado/transferido/falecido).
   exitDate?: string | null;
   exitReason?: string | null;
@@ -41,7 +41,7 @@ export type EdgeCaseAttender = {
 export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
   {
     name: 'João da Silva',
-    linkToUserEmail: 'congregado@email.com',
+    linkToUserEmail: 'membro@email.com',
     birthDate: '1985-05-15',
     addressStreet: 'Rua das Flores',
     addressNumber: '123',
@@ -88,13 +88,16 @@ export const EDGE_CASE_ATTENDERS: EdgeCaseAttender[] = [
     admissionMode: 'profissão de fé'
   },
   {
-    // inativo — generic "drifted away", no formal exit. Exercises the inativo filter/badge.
+    // Desligado — "drifted away" then formally dismissed. Exercises the "Inativo" union filter
+    // (desligado/transferido/falecido) and the exit-metadata badge.
     name: 'Geraldo Afastado',
     birthDate: '1968-07-22',
     city: 'Santos',
     state: 'SP',
     isMember: true,
-    status: 'inativo',
+    status: 'desligado',
+    exitDate: '2024-03-10',
+    exitReason: 'Afastamento prolongado; desligado do rol de membros.',
     memberSince: 200506,
     baptismDate: '2005-06-12',
     admissionMode: 'batismo'
@@ -161,7 +164,7 @@ export const EDGE_CASE_USERS: EdgeCaseUser[] = [
     name: 'Pendente da Silva',
     email: 'pendente@email.com',
     password: 'pendente123',
-    roleName: 'Congregado',
+    roleName: 'Membro',
     status: 'pendente',
     skipPermissions: true
   },
@@ -169,7 +172,7 @@ export const EDGE_CASE_USERS: EdgeCaseUser[] = [
     name: 'Inativo da Silva',
     email: 'inativo@email.com',
     password: 'inativo123',
-    roleName: 'Congregado',
+    roleName: 'Membro',
     status: 'inativo'
   }
 ];
@@ -183,9 +186,9 @@ export const EDGE_CASE_USER_PERMISSION_OVERRIDES: {
   moduleName: string;
   permissionName: string;
 }[] = [
-  // congregado@email.com is a regular Congregado (Acessar on Atas/Congregados) — give
+  // membro@email.com is a regular Membro (Acessar on Atas/Congregados) — give
   // them Editar on Atas so the override is visible in the permissions UI.
-  { userEmail: 'congregado@email.com', moduleName: 'Atas', permissionName: 'Editar' }
+  { userEmail: 'membro@email.com', moduleName: 'Atas', permissionName: 'Editar' }
 ];
 
 // ---------------------------------------------------------------------------

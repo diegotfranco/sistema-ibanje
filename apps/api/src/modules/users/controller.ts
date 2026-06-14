@@ -7,9 +7,17 @@ import type {
   CreateUserRequest
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
-import { logAudit } from '../../lib/audit.js';
+import { logAudit, diffResponse, diffGrants } from '../../lib/audit.js';
+import { httpError } from '../../lib/errors.js';
 import { sendInviteEmail } from '../../lib/email.js';
 import * as service from './service.js';
+
+// Flatten the per-module permission map to "Módulo · Permissão" labels for the audit diff.
+function userGrantLabels(perms: Record<string, string[]>): string[] {
+  return Object.entries(perms).flatMap(([moduleName, names]) =>
+    names.map((name) => `${moduleName} · ${name}`)
+  );
+}
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit, q, status } = req.query as ListUsersRequest;
@@ -26,9 +34,13 @@ export async function getById(req: FastifyRequest, reply: FastifyReply) {
 export async function update(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as UpdateUserRequest;
+  const before = await service.getUserById(id);
   const user = await service.updateUser(req.session.userId!, id, body);
   if (!user) return reply.code(404).send({ message: 'User not found' });
-  logAudit(req.session.userId!, 'update', 'user', id, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'user', id, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, user)
+  });
   return reply.send(user);
 }
 
@@ -55,8 +67,14 @@ export async function getPermissions(req: FastifyRequest, reply: FastifyReply) {
 export async function setPermissions(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const { permissions } = req.body as UpdatePermissionsRequest;
+  const before = await service.getUserPermissions(id);
   await service.setUserPermissions(req.session.userId!, id, permissions);
-  logAudit(req.session.userId!, 'update', 'user', id, { notes: 'permissions', ipAddress: req.ip });
+  const after = await service.getUserPermissions(id);
+  logAudit(req.session.userId!, 'update', 'user', id, {
+    notes: 'permissions',
+    ipAddress: req.ip,
+    changes: diffGrants(userGrantLabels(before), userGrantLabels(after))
+  });
   return reply.code(204).send();
 }
 
@@ -66,13 +84,24 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
   const user = await service.createUser(body, (token) => {
     inviteToken = token;
   });
-  await sendInviteEmail(body.email, inviteToken);
+  // Audit the create before the email: the account exists post-commit regardless of whether the
+  // invite goes out, so the record must not hinge on the send succeeding.
   logAudit(req.session.userId!, 'create', 'user', user.id, { ipAddress: req.ip });
+  try {
+    await sendInviteEmail(body.email, inviteToken);
+  } catch (err) {
+    req.log.error({ err, userId: user.id }, 'invite email failed after user creation');
+    throw httpError(
+      502,
+      'Usuário criado, mas o envio do e-mail de convite falhou. Reenvie o convite mais tarde.'
+    );
+  }
   return reply.code(201).send(user);
 }
 
 export async function approve(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
+  const before = await service.getUserById(id);
   let inviteToken = '';
   let inviteEmail = '';
   const user = await service.approveUser(id, (token, email) => {
@@ -80,10 +109,19 @@ export async function approve(req: FastifyRequest, reply: FastifyReply) {
     inviteEmail = email;
   });
   if (!user) return reply.code(404).send({ message: 'User not found' });
-  await sendInviteEmail(inviteEmail, inviteToken);
   logAudit(req.session.userId!, 'state_change', 'user', id, {
     notes: 'approved',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, user)
   });
+  try {
+    await sendInviteEmail(inviteEmail, inviteToken);
+  } catch (err) {
+    req.log.error({ err, userId: id }, 'invite email failed after user approval');
+    throw httpError(
+      502,
+      'Usuário aprovado, mas o envio do e-mail de convite falhou. Reenvie o convite mais tarde.'
+    );
+  }
   return reply.send(user);
 }

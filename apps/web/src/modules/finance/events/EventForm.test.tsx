@@ -112,14 +112,14 @@ describe('EventForm', () => {
       await user.type(titleInput, 'Novo');
     }
 
-    const datetimeInputs = container.querySelectorAll('input[type="datetime-local"]');
-    const startInput = datetimeInputs[0] as HTMLInputElement;
-    const endInput = datetimeInputs[1] as HTMLInputElement;
+    const dateInputs = container.querySelectorAll('input[placeholder="dd/mm/aaaa"]');
+    const startInput = dateInputs[0] as HTMLInputElement;
+    const endInput = dateInputs[1] as HTMLInputElement;
     if (startInput) {
-      await user.type(startInput, '2024-06-15T10:00');
+      await user.type(startInput, '15/06/2024');
     }
     if (endInput) {
-      await user.type(endInput, '2024-06-15T11:00');
+      await user.type(endInput, '16/06/2024');
     }
 
     const saveButton = screen.getByRole('button', { name: /salvar/i });
@@ -178,8 +178,9 @@ describe('EventForm', () => {
       />
     );
 
-    const inputs = container.querySelectorAll('input[type="text"]');
-    const locationInput = inputs[2] as HTMLInputElement; // Third text input should be location
+    // Title and Local are the two maxlength-128 inputs; Local is the second.
+    const inputs = container.querySelectorAll('input[maxlength="128"]');
+    const locationInput = inputs[1] as HTMLInputElement;
     if (locationInput) {
       await user.type(locationInput, 'Sala de Eventos');
       expect(locationInput.value).toBe('Sala de Eventos');

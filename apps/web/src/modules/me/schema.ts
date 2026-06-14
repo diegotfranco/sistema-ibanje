@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { newPasswordField } from '@/lib/password';
 
 export const UpdateMyProfileFormSchema = z.object({
   phone: z
@@ -21,6 +22,21 @@ export const UpdateMyProfileFormSchema = z.object({
 });
 
 export type UpdateMyProfileFormValues = z.infer<typeof UpdateMyProfileFormSchema>;
+
+// Self-service password change. Self must supply the current password (the backend compares
+// session.userId vs :id) — mirrors the reset-password confirm-match pattern in auth/schema.ts.
+export const ChangeMyPasswordFormSchema = z
+  .object({
+    currentPassword: z.string().min(1, 'Informe a senha atual'),
+    newPassword: newPasswordField,
+    confirmPassword: z.string().min(1, 'Confirme a nova senha')
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'As senhas não coincidem',
+    path: ['confirmPassword']
+  });
+
+export type ChangeMyPasswordFormValues = z.infer<typeof ChangeMyPasswordFormSchema>;
 
 export type AttenderProfileResponse = {
   id: number;

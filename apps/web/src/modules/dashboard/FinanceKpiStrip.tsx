@@ -1,3 +1,4 @@
+import { formatMoney } from '@/lib/format';
 import { FinanceKpiTile } from './FinanceKpiTile';
 import { MetricTile } from './MetricTile';
 import type { FinanceKpis } from '@sistema-ibanje/shared';
@@ -8,9 +9,7 @@ interface FinanceKpiStripProps {
 }
 
 export function FinanceKpiStrip({ data, isLoading }: FinanceKpiStripProps) {
-  const cashValue = data?.cashBalance
-    ? `R$ ${Number.parseFloat(data.cashBalance.current).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-    : '—';
+  const cashValue = data?.cashBalance ? formatMoney(data.cashBalance.current) : '—';
   const cashMeta = data?.cashBalance?.asOf
     ? `até ${new Date(data.cashBalance.asOf).toLocaleDateString('pt-BR')}`
     : undefined;

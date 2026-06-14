@@ -1,4 +1,4 @@
-export const DEFAULT_ROLE_NAME = 'Congregado';
+export const DEFAULT_ROLE_NAME = 'Membro';
 export const ADMIN_ROLE_NAME = 'Administrador';
 
 export const Module = {
@@ -21,6 +21,7 @@ export const Module = {
   MinuteTemplates: 'Modelos de Ata',
   MembershipLetters: 'Cartas de Membros',
   SecretaryCalendar: 'Calendário',
+  Audit: 'Auditoria',
   Permissions: 'Permissões',
   Areas: 'Áreas',
   Status: 'Status'

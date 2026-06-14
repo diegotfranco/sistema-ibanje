@@ -11,6 +11,7 @@ import {
   type ChartConfig
 } from '@/components/ui/chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
+import { formatMoneyCompact } from '@/lib/format';
 import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
 import type { MonthlyTrend } from '@sistema-ibanje/shared';
@@ -105,22 +106,7 @@ export function ParticipationChart({ data, isLoading, className }: Participation
   const yAxisFormatter =
     variation === 'quantidade'
       ? (value: number) => value.toFixed(0)
-      : variation === 'ticket'
-        ? (value: number) => {
-            if (value >= 1_000) {
-              return `R$${(value / 1_000).toFixed(0)}K`;
-            }
-            return `R$${value.toFixed(0)}`;
-          }
-        : (value: number) => {
-            if (value >= 1_000_000) {
-              return `R$${(value / 1_000_000).toFixed(0)}M`;
-            }
-            if (value >= 1_000) {
-              return `R$${(value / 1_000).toFixed(0)}K`;
-            }
-            return `R$${value.toFixed(0)}`;
-          };
+      : (value: number) => formatMoneyCompact(value);
 
   const variationSelect = (
     <Select value={variation} onValueChange={(v) => setVariation(v as ChartVariation)}>

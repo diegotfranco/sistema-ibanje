@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import MePage from './MePage';
 import { renderWithProviders } from '@/test/renderWithProviders';
@@ -84,5 +85,40 @@ describe('MePage', () => {
     renderWithProviders(<MePage />);
 
     expect(await screen.findByRole('button', { name: /salvar alterações/i })).toBeInTheDocument();
+  });
+
+  it('renders the security (password change) section', async () => {
+    server.use(
+      meHandler({ attenderId: 1 }),
+      http.get(`${API}/attenders/1`, () => HttpResponse.json(attender)),
+      ...referenceHandlers()
+    );
+
+    renderWithProviders(<MePage />);
+
+    await screen.findByText('Segurança');
+    expect(screen.getByLabelText('Senha atual')).toBeInTheDocument();
+    expect(screen.getByLabelText('Nova senha')).toBeInTheDocument();
+    expect(screen.getByLabelText('Confirmar nova senha')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /alterar senha/i })).toBeInTheDocument();
+  });
+
+  it('validates that the new password and confirmation match', async () => {
+    server.use(
+      meHandler({ attenderId: 1 }),
+      http.get(`${API}/attenders/1`, () => HttpResponse.json(attender)),
+      ...referenceHandlers()
+    );
+
+    const user = userEvent.setup();
+    renderWithProviders(<MePage />);
+
+    await screen.findByText('Segurança');
+    await user.type(screen.getByLabelText('Senha atual'), 'oldpass123');
+    await user.type(screen.getByLabelText('Nova senha'), 'newpass123');
+    await user.type(screen.getByLabelText('Confirmar nova senha'), 'different123');
+    await user.click(screen.getByRole('button', { name: /alterar senha/i }));
+
+    expect(await screen.findByText('As senhas não coincidem')).toBeInTheDocument();
   });
 });

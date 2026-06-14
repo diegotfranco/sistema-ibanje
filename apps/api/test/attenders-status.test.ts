@@ -44,7 +44,7 @@ describe('attender lifecycle (status transitions)', () => {
     reseedDb();
     app = await getTestApp();
     admin = await loginAs(app, 'admin@email.com', 'admin123');
-    congregant = await loginAs(app, 'congregado@email.com', 'congregado123');
+    congregant = await loginAs(app, 'membro@email.com', 'membro123');
     attenderId = await createAttender('Lifecycle Tester');
   });
 
@@ -149,7 +149,7 @@ describe('attender lifecycle (status transitions)', () => {
       method: 'PATCH',
       url: `/attenders/${attenderId}/status`,
       headers: { cookie: congregant.cookie, 'x-csrf-token': congregant.csrfToken },
-      payload: { status: 'inativo' }
+      payload: { status: 'desligado', exitDate: '2026-01-10' }
     });
     expect(res.statusCode).toBe(403);
   });

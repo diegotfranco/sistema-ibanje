@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import {
   Dialog,
@@ -9,7 +10,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { MinuteFormSchema, type MinuteFormValues } from './schema';
@@ -33,13 +34,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
   const allMeetings = meetings.data?.data ?? [];
   const suggested = useSuggestedMinuteNumber(open);
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors }
-  } = useForm<MinuteFormValues>({
+  const form = useForm<MinuteFormValues>({
     resolver: zodResolver(MinuteFormSchema),
     defaultValues: {
       meetingId: 0,
@@ -50,6 +45,12 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
       closingTime: ''
     }
   });
+  const {
+    register,
+    reset,
+    control,
+    formState: { errors }
+  } = form;
 
   useEffect(() => {
     if (open) {
@@ -59,28 +60,28 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Nova Ata</DialogTitle>
         </DialogHeader>
         <form
-          onSubmit={handleSubmit((v) => {
+          onSubmit={autofillSafeSubmit(form, (v) => {
             const cleaned = Object.fromEntries(
               Object.entries(v).map(([k, val]) => [k, val === '' ? undefined : val])
             ) as MinuteFormValues;
             onSubmit(cleaned);
           })}
           className="space-y-4">
-          <div className="space-y-1">
-            <Label>Reunião *</Label>
+          <Field data-invalid={!!errors.meetingId || undefined}>
+            <FieldLabel>Reunião *</FieldLabel>
             <Controller
               control={control}
               name="meetingId"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   value={field.value ? String(field.value) : undefined}
                   onValueChange={(v) => field.onChange(Number.parseInt(v))}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue placeholder="Selecione a reunião" />
                   </SelectTrigger>
                   <SelectContent>
@@ -94,55 +95,61 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
                 </Select>
               )}
             />
-            {errors.meetingId && (
-              <p className="text-xs text-destructive">{errors.meetingId.message}</p>
-            )}
-          </div>
+            {errors.meetingId && <FieldError errors={[errors.meetingId]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label htmlFor="minuteNumber">Número da Ata *</Label>
-            <Input id="minuteNumber" placeholder="Ata 001/2025" {...register('minuteNumber')} />
-            {errors.minuteNumber && (
-              <p className="text-xs text-destructive">{errors.minuteNumber.message}</p>
-            )}
-          </div>
+          <Field data-invalid={!!errors.minuteNumber || undefined}>
+            <FieldLabel htmlFor="minuteNumber">Número da Ata *</FieldLabel>
+            <Input
+              id="minuteNumber"
+              {...register('minuteNumber')}
+              aria-invalid={!!errors.minuteNumber || undefined}
+            />
+            {errors.minuteNumber && <FieldError errors={[errors.minuteNumber]} />}
+          </Field>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <Label htmlFor="presidingPastorName">Pastor Presidente</Label>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field data-invalid={!!errors.presidingPastorName || undefined}>
+              <FieldLabel htmlFor="presidingPastorName">Pastor Presidente</FieldLabel>
               <Input
                 id="presidingPastorName"
-                placeholder="Nome"
                 {...register('presidingPastorName')}
+                aria-invalid={!!errors.presidingPastorName || undefined}
               />
-              {errors.presidingPastorName && (
-                <p className="text-xs text-destructive">{errors.presidingPastorName.message}</p>
-              )}
-            </div>
+              {errors.presidingPastorName && <FieldError errors={[errors.presidingPastorName]} />}
+            </Field>
 
-            <div className="space-y-1">
-              <Label htmlFor="secretaryName">Secretário</Label>
-              <Input id="secretaryName" placeholder="Nome" {...register('secretaryName')} />
-              {errors.secretaryName && (
-                <p className="text-xs text-destructive">{errors.secretaryName.message}</p>
-              )}
-            </div>
+            <Field data-invalid={!!errors.secretaryName || undefined}>
+              <FieldLabel htmlFor="secretaryName">Secretário</FieldLabel>
+              <Input
+                id="secretaryName"
+                {...register('secretaryName')}
+                aria-invalid={!!errors.secretaryName || undefined}
+              />
+              {errors.secretaryName && <FieldError errors={[errors.secretaryName]} />}
+            </Field>
 
-            <div className="space-y-1">
-              <Label htmlFor="openingTime">Hora de Abertura</Label>
-              <Input type="time" id="openingTime" {...register('openingTime')} />
-              {errors.openingTime && (
-                <p className="text-xs text-destructive">{errors.openingTime.message}</p>
-              )}
-            </div>
+            <Field data-invalid={!!errors.openingTime || undefined}>
+              <FieldLabel htmlFor="openingTime">Hora de Abertura</FieldLabel>
+              <Input
+                type="time"
+                id="openingTime"
+                {...register('openingTime')}
+                aria-invalid={!!errors.openingTime || undefined}
+              />
+              {errors.openingTime && <FieldError errors={[errors.openingTime]} />}
+            </Field>
 
-            <div className="space-y-1">
-              <Label htmlFor="closingTime">Hora de Encerramento</Label>
-              <Input type="time" id="closingTime" {...register('closingTime')} />
-              {errors.closingTime && (
-                <p className="text-xs text-destructive">{errors.closingTime.message}</p>
-              )}
-            </div>
+            <Field data-invalid={!!errors.closingTime || undefined}>
+              <FieldLabel htmlFor="closingTime">Hora de Encerramento</FieldLabel>
+              <Input
+                type="time"
+                id="closingTime"
+                {...register('closingTime')}
+                aria-invalid={!!errors.closingTime || undefined}
+              />
+              {errors.closingTime && <FieldError errors={[errors.closingTime]} />}
+            </Field>
           </div>
 
           <p className="text-xs text-muted-foreground mt-2">

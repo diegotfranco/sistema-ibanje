@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import EntityPicker from '@/components/EntityPicker';
 import {
   UserCreateFormSchema,
@@ -40,7 +42,10 @@ export default function UserForm({
   const rolesList = useRoles();
   const roles = rolesList.data?.data ?? [];
 
-  const attendersList = useAttenders();
+  // Only members can hold a login, so the picker (and the email-match warning below) work off the
+  // member roster. Server caps the page at 100 — fine for a single church; the email-match toast
+  // is best-effort and the backend independently blocks non-member email collisions.
+  const attendersList = useAttenders({ isMember: 'true', limit: 100 });
   const attenders = attendersList.data?.data ?? [];
 
   const createForm = useForm<UserCreateFormValues>({
@@ -54,6 +59,17 @@ export default function UserForm({
       ? { name: initialValues.name, email: initialValues.email, roleId: initialValues.roleId }
       : {}
   });
+
+  // When the typed email belongs to a member who wasn't linked, nudge the operator to link them
+  // instead of creating a detached account. Non-blocking — the backend enforces the hard rules.
+  function warnOnUnlinkedMemberEmail(rawEmail: string) {
+    const email = rawEmail.trim().toLowerCase();
+    if (!email || createForm.getValues('attenderId')) return;
+    const match = attenders.find((a) => a.email?.toLowerCase() === email);
+    if (match) {
+      toast.warning(`Existe um membro com este e-mail (${match.name}). Considere vinculá-lo.`);
+    }
+  }
 
   useEffect(() => {
     // Populate form ref for error handling from parent
@@ -79,28 +95,32 @@ export default function UserForm({
   if (isEditing) {
     const {
       register,
-      handleSubmit,
       control,
       formState: { errors }
     } = editForm;
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="edit-name">Nome</Label>
-          <Input id="edit-name" {...register('name')} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="edit-email">E-mail</Label>
-          <Input id="edit-email" type="email" {...register('email')} />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-        </div>
-        <div className="space-y-1">
-          <Label>Cargo</Label>
+      <form onSubmit={autofillSafeSubmit(editForm, onSubmit)} className="space-y-4">
+        <Field data-invalid={!!errors.name || undefined}>
+          <FieldLabel htmlFor="edit-name">Nome</FieldLabel>
+          <Input id="edit-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
+          {errors.name && <FieldError errors={[errors.name]} />}
+        </Field>
+        <Field data-invalid={!!errors.email || undefined}>
+          <FieldLabel htmlFor="edit-email">E-mail</FieldLabel>
+          <Input
+            id="edit-email"
+            type="email"
+            {...register('email')}
+            aria-invalid={!!errors.email || undefined}
+          />
+          {errors.email && <FieldError errors={[errors.email]} />}
+        </Field>
+        <Field data-invalid={!!errors.roleId || undefined}>
+          <FieldLabel>Cargo</FieldLabel>
           <Controller
             name="roleId"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <EntityPicker<RoleResponse>
                 items={roles}
                 value={field.value ?? null}
@@ -109,11 +129,12 @@ export default function UserForm({
                 getLabel={(r) => r.name}
                 placeholder="Selecionar cargo..."
                 isLoading={rolesList.isLoading}
+                aria-invalid={fieldState.invalid || undefined}
               />
             )}
           />
-          {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
-        </div>
+          {errors.roleId && <FieldError errors={[errors.roleId]} />}
+        </Field>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancelar
@@ -128,28 +149,41 @@ export default function UserForm({
 
   const {
     register,
-    handleSubmit,
     control,
     formState: { errors }
   } = createForm;
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="create-name">Nome *</Label>
-        <Input id="create-name" {...register('name')} />
-        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="create-email">E-mail *</Label>
-        <Input id="create-email" type="email" {...register('email')} />
-        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label>Cargo *</Label>
+    <form onSubmit={autofillSafeSubmit(createForm, onSubmit)} className="space-y-4">
+      <Field data-invalid={!!errors.name || undefined}>
+        <FieldLabel htmlFor="create-name">Nome *</FieldLabel>
+        <Input id="create-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
+        {errors.name && <FieldError errors={[errors.name]} />}
+      </Field>
+      <Field data-invalid={!!errors.email || undefined}>
+        <FieldLabel htmlFor="create-email">E-mail *</FieldLabel>
+        {(() => {
+          const emailField = register('email');
+          return (
+            <Input
+              id="create-email"
+              type="email"
+              {...emailField}
+              aria-invalid={!!errors.email || undefined}
+              onBlur={(e) => {
+                emailField.onBlur(e);
+                warnOnUnlinkedMemberEmail(e.target.value);
+              }}
+            />
+          );
+        })()}
+        {errors.email && <FieldError errors={[errors.email]} />}
+      </Field>
+      <Field data-invalid={!!errors.roleId || undefined}>
+        <FieldLabel>Cargo *</FieldLabel>
         <Controller
           name="roleId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <EntityPicker<RoleResponse>
               items={roles}
               value={field.value ?? null}
@@ -158,13 +192,14 @@ export default function UserForm({
               getLabel={(r) => r.name}
               placeholder="Selecionar cargo..."
               isLoading={rolesList.isLoading}
+              aria-invalid={fieldState.invalid || undefined}
             />
           )}
         />
-        {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label>Congregado (opcional)</Label>
+        {errors.roleId && <FieldError errors={[errors.roleId]} />}
+      </Field>
+      <Field>
+        <FieldLabel>Membro</FieldLabel>
         <Controller
           name="attenderId"
           control={control}
@@ -175,13 +210,13 @@ export default function UserForm({
               onChange={(v) => field.onChange(v)}
               getValue={(a) => a.id}
               getLabel={(a) => a.name}
-              placeholder="Vincular a um congregado..."
+              placeholder="Vincular a um membro..."
               isLoading={attendersList.isLoading}
               allowClear
             />
           )}
         />
-      </div>
+      </Field>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancelar

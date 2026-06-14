@@ -38,7 +38,7 @@ export default function DashboardPage() {
             id="month-input"
             value={selectedMonth}
             onChange={setSelectedMonth}
-            className="w-48 hover:bg-muted-foreground/10"
+            className="w-40 hover:bg-muted-foreground/10"
           />
         </div>
 

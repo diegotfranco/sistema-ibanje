@@ -3,7 +3,6 @@ import { AdmissionMode, ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 
 export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
-  userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   phone: z
     .string()
@@ -60,6 +59,21 @@ export const AttenderStatusChangeSchema = z.object({
 });
 
 export type AttenderStatusChangeValues = z.infer<typeof AttenderStatusChangeSchema>;
+
+// Drives the admission dialog (PATCH /attenders/:id/membership). Admission mode and the month
+// membership started are required; baptism date is optional context.
+export const AdmitMemberSchema = z.object({
+  admissionMode: z.enum([
+    AdmissionMode.Acclamation,
+    AdmissionMode.Baptism,
+    AdmissionMode.TransferLetter,
+    AdmissionMode.FaithProfession
+  ] as const),
+  memberSince: z.string().regex(/^\d{4}-\d{2}$/, 'Formato esperado: MM/AAAA'),
+  baptismDate: z.string().optional().nullable()
+});
+
+export type AdmitMemberValues = z.infer<typeof AdmitMemberSchema>;
 
 export type AttenderResponse = {
   id: number;

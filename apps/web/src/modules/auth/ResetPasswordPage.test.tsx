@@ -51,7 +51,7 @@ describe('ResetPasswordPage', () => {
     expect(await screen.findByRole('link', { name: /voltar ao login/i })).toBeInTheDocument();
   });
 
-  it('blocks submit when password is shorter than 8 chars', async () => {
+  it('blocks submit when password is shorter than 12 chars', async () => {
     let resetCalled = false;
     server.use(
       http.get(`${API}/auth/me`, () => HttpResponse.json({}, { status: 401 })),
@@ -71,7 +71,7 @@ describe('ResetPasswordPage', () => {
     await user.type(newPasswordInput, 'short');
     await user.click(screen.getByRole('button', { name: /definir senha/i }));
 
-    expect(await screen.findByText('A senha deve ter no mínimo 8 caracteres')).toBeInTheDocument();
+    expect(await screen.findByText('A senha deve ter no mínimo 12 caracteres')).toBeInTheDocument();
     expect(resetCalled).toBe(false);
   });
 
