@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import StatusBadge from '@/components/StatusBadge';
 import { RichTextDisplay, interpolateTipTapDoc, type TipTapDoc } from '@/components/RichTextEditor';
@@ -277,56 +277,49 @@ export default function MinuteDetailPage() {
             )}
             className="space-y-4">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-1">
-                <Label htmlFor="ed-presidingPastorName">Pastor Presidente</Label>
+              <Field
+                data-invalid={!!editDetailsForm.formState.errors.presidingPastorName || undefined}>
+                <FieldLabel htmlFor="ed-presidingPastorName">Pastor Presidente</FieldLabel>
                 <Input
                   id="ed-presidingPastorName"
                   {...editDetailsForm.register('presidingPastorName')}
                 />
                 {editDetailsForm.formState.errors.presidingPastorName && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.presidingPastorName.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.presidingPastorName]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-secretaryName">Secretário</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.secretaryName || undefined}>
+                <FieldLabel htmlFor="ed-secretaryName">Secretário</FieldLabel>
                 <Input id="ed-secretaryName" {...editDetailsForm.register('secretaryName')} />
                 {editDetailsForm.formState.errors.secretaryName && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.secretaryName.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.secretaryName]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-openingTime">Hora de Abertura</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.openingTime || undefined}>
+                <FieldLabel htmlFor="ed-openingTime">Hora de Abertura</FieldLabel>
                 <Input
                   type="time"
                   id="ed-openingTime"
                   {...editDetailsForm.register('openingTime')}
                 />
                 {editDetailsForm.formState.errors.openingTime && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.openingTime.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.openingTime]} />
                 )}
-              </div>
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="ed-closingTime">Hora de Encerramento</Label>
+              <Field data-invalid={!!editDetailsForm.formState.errors.closingTime || undefined}>
+                <FieldLabel htmlFor="ed-closingTime">Hora de Encerramento</FieldLabel>
                 <Input
                   type="time"
                   id="ed-closingTime"
                   {...editDetailsForm.register('closingTime')}
                 />
                 {editDetailsForm.formState.errors.closingTime && (
-                  <p className="text-xs text-destructive">
-                    {editDetailsForm.formState.errors.closingTime.message}
-                  </p>
+                  <FieldError errors={[editDetailsForm.formState.errors.closingTime]} />
                 )}
-              </div>
+              </Field>
             </div>
             <DialogFooter>
               <Button

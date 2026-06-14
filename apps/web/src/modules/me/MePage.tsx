@@ -1,5 +1,6 @@
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { PageContainer } from '@/components/PageContainer';
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/PasswordInput';
 import { PasswordStrengthMeter, PasswordRequirements } from '@/components/PasswordStrengthBar';
 import { PhoneInput, CepInput } from '@/components/MaskedInput';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { formatMonthYear } from '@/lib/datetime';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -66,7 +68,6 @@ export default function MePage() {
   const {
     register,
     control,
-    handleSubmit,
     formState: { errors }
   } = form;
 
@@ -149,15 +150,15 @@ export default function MePage() {
 
       {/* Segurança — password change (independent form) */}
       <form
-        onSubmit={passwordForm.handleSubmit(onSubmitPassword)}
+        onSubmit={autofillSafeSubmit(passwordForm, onSubmitPassword)}
         className="space-y-4 sm:space-y-6">
         <Card>
           <CardHeaderRow>
             <CardTitle>Segurança</CardTitle>
           </CardHeaderRow>
           <CardContent className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="newPassword">Nova senha</Label>
+            <Field data-invalid={!!passwordForm.formState.errors.newPassword || undefined}>
+              <FieldLabel htmlFor="newPassword">Nova senha</FieldLabel>
               <PasswordInput
                 id="newPassword"
                 autoComplete="new-password"
@@ -166,14 +167,12 @@ export default function MePage() {
               />
               <PasswordStrengthMeter value={passwordForm.watch('newPassword') ?? ''} />
               {passwordForm.formState.errors.newPassword && (
-                <p className="text-xs text-destructive mt-1">
-                  {passwordForm.formState.errors.newPassword.message}
-                </p>
+                <FieldError errors={[passwordForm.formState.errors.newPassword]} />
               )}
-            </div>
+            </Field>
 
-            <div>
-              <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+            <Field data-invalid={!!passwordForm.formState.errors.confirmPassword || undefined}>
+              <FieldLabel htmlFor="confirmPassword">Confirmar nova senha</FieldLabel>
               <PasswordInput
                 id="confirmPassword"
                 autoComplete="new-password"
@@ -181,11 +180,9 @@ export default function MePage() {
                 aria-invalid={!!passwordForm.formState.errors.confirmPassword || undefined}
               />
               {passwordForm.formState.errors.confirmPassword && (
-                <p className="text-xs text-destructive mt-1">
-                  {passwordForm.formState.errors.confirmPassword.message}
-                </p>
+                <FieldError errors={[passwordForm.formState.errors.confirmPassword]} />
               )}
-            </div>
+            </Field>
 
             <div>
               <p className="text-sm font-medium leading-none">Requisitos</p>
@@ -194,8 +191,8 @@ export default function MePage() {
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="currentPassword">Senha atual</Label>
+            <Field data-invalid={!!passwordForm.formState.errors.currentPassword || undefined}>
+              <FieldLabel htmlFor="currentPassword">Senha atual</FieldLabel>
               <PasswordInput
                 id="currentPassword"
                 autoComplete="current-password"
@@ -203,11 +200,9 @@ export default function MePage() {
                 aria-invalid={!!passwordForm.formState.errors.currentPassword || undefined}
               />
               {passwordForm.formState.errors.currentPassword && (
-                <p className="text-xs text-destructive mt-1">
-                  {passwordForm.formState.errors.currentPassword.message}
-                </p>
+                <FieldError errors={[passwordForm.formState.errors.currentPassword]} />
               )}
-            </div>
+            </Field>
           </CardContent>
         </Card>
 
@@ -221,28 +216,26 @@ export default function MePage() {
         </div>
       </form>
 
-      <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-4 sm:space-y-6">
+      <form onSubmit={autofillSafeSubmit(form, onSubmitProfile)} className="space-y-4 sm:space-y-6">
         {/* Contato */}
         <Card>
           <CardHeaderRow>
             <CardTitle>Contato</CardTitle>
           </CardHeaderRow>
           <CardContent className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="email">E-mail</Label>
+            <Field data-invalid={!!errors.email || undefined}>
+              <FieldLabel htmlFor="email">E-mail</FieldLabel>
               <Input
                 id="email"
                 type="email"
                 {...register('email')}
                 aria-invalid={!!errors.email || undefined}
               />
-              {errors.email && (
-                <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
-              )}
-            </div>
+              {errors.email && <FieldError errors={[errors.email]} />}
+            </Field>
 
-            <div>
-              <Label htmlFor="phone">Telefone</Label>
+            <Field data-invalid={!!errors.phone || undefined}>
+              <FieldLabel htmlFor="phone">Telefone</FieldLabel>
               <Controller
                 control={control}
                 name="phone"
@@ -257,10 +250,8 @@ export default function MePage() {
                   />
                 )}
               />
-              {errors.phone && (
-                <p className="text-xs text-destructive mt-1">{errors.phone.message}</p>
-              )}
-            </div>
+              {errors.phone && <FieldError errors={[errors.phone]} />}
+            </Field>
           </CardContent>
         </Card>
 
@@ -270,57 +261,49 @@ export default function MePage() {
             <CardTitle>Endereço</CardTitle>
           </CardHeaderRow>
           <CardContent className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-6">
-            <div className="sm:col-span-4">
-              <Label htmlFor="addressStreet">Rua</Label>
+            <Field className="sm:col-span-4" data-invalid={!!errors.addressStreet || undefined}>
+              <FieldLabel htmlFor="addressStreet">Rua</FieldLabel>
               <Input
                 id="addressStreet"
                 {...register('addressStreet')}
                 aria-invalid={!!errors.addressStreet || undefined}
               />
-              {errors.addressStreet && (
-                <p className="text-xs text-destructive mt-1">{errors.addressStreet.message}</p>
-              )}
-            </div>
+              {errors.addressStreet && <FieldError errors={[errors.addressStreet]} />}
+            </Field>
 
-            <div className="sm:col-span-2">
-              <Label htmlFor="addressNumber">Número</Label>
+            <Field className="sm:col-span-2" data-invalid={!!errors.addressNumber || undefined}>
+              <FieldLabel htmlFor="addressNumber">Número</FieldLabel>
               <Input
                 id="addressNumber"
                 maxLength={16}
                 {...register('addressNumber')}
                 aria-invalid={!!errors.addressNumber || undefined}
               />
-              {errors.addressNumber && (
-                <p className="text-xs text-destructive mt-1">{errors.addressNumber.message}</p>
-              )}
-            </div>
+              {errors.addressNumber && <FieldError errors={[errors.addressNumber]} />}
+            </Field>
 
-            <div className="sm:col-span-3">
-              <Label htmlFor="addressComplement">Complemento</Label>
+            <Field className="sm:col-span-3" data-invalid={!!errors.addressComplement || undefined}>
+              <FieldLabel htmlFor="addressComplement">Complemento</FieldLabel>
               <Input
                 id="addressComplement"
                 {...register('addressComplement')}
                 aria-invalid={!!errors.addressComplement || undefined}
               />
-              {errors.addressComplement && (
-                <p className="text-xs text-destructive mt-1">{errors.addressComplement.message}</p>
-              )}
-            </div>
+              {errors.addressComplement && <FieldError errors={[errors.addressComplement]} />}
+            </Field>
 
-            <div className="sm:col-span-3">
-              <Label htmlFor="addressDistrict">Bairro</Label>
+            <Field className="sm:col-span-3" data-invalid={!!errors.addressDistrict || undefined}>
+              <FieldLabel htmlFor="addressDistrict">Bairro</FieldLabel>
               <Input
                 id="addressDistrict"
                 {...register('addressDistrict')}
                 aria-invalid={!!errors.addressDistrict || undefined}
               />
-              {errors.addressDistrict && (
-                <p className="text-xs text-destructive mt-1">{errors.addressDistrict.message}</p>
-              )}
-            </div>
+              {errors.addressDistrict && <FieldError errors={[errors.addressDistrict]} />}
+            </Field>
 
-            <div className="sm:col-span-1">
-              <Label htmlFor="state">Estado</Label>
+            <Field className="sm:col-span-1" data-invalid={!!errors.state || undefined}>
+              <FieldLabel htmlFor="state">Estado</FieldLabel>
               <Input
                 id="state"
                 maxLength={2}
@@ -328,21 +311,17 @@ export default function MePage() {
                 {...register('state')}
                 aria-invalid={!!errors.state || undefined}
               />
-              {errors.state && (
-                <p className="text-xs text-destructive mt-1">{errors.state.message}</p>
-              )}
-            </div>
+              {errors.state && <FieldError errors={[errors.state]} />}
+            </Field>
 
-            <div className="sm:col-span-3">
-              <Label htmlFor="city">Cidade</Label>
+            <Field className="sm:col-span-3" data-invalid={!!errors.city || undefined}>
+              <FieldLabel htmlFor="city">Cidade</FieldLabel>
               <Input id="city" {...register('city')} aria-invalid={!!errors.city || undefined} />
-              {errors.city && (
-                <p className="text-xs text-destructive mt-1">{errors.city.message}</p>
-              )}
-            </div>
+              {errors.city && <FieldError errors={[errors.city]} />}
+            </Field>
 
-            <div className="sm:col-span-2">
-              <Label htmlFor="postalCode">CEP</Label>
+            <Field className="sm:col-span-2" data-invalid={!!errors.postalCode || undefined}>
+              <FieldLabel htmlFor="postalCode">CEP</FieldLabel>
               <Controller
                 control={control}
                 name="postalCode"
@@ -357,10 +336,8 @@ export default function MePage() {
                   />
                 )}
               />
-              {errors.postalCode && (
-                <p className="text-xs text-destructive mt-1">{errors.postalCode.message}</p>
-              )}
-            </div>
+              {errors.postalCode && <FieldError errors={[errors.postalCode]} />}
+            </Field>
           </CardContent>
         </Card>
 

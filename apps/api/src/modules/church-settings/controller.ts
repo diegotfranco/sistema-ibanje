@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import type { UpdateChurchSettingsRequest } from './schema.js';
-import { logAudit } from '../../lib/audit.js';
+import { logAudit, diffResponse } from '../../lib/audit.js';
 import * as service from './service.js';
 
 export async function getSettings(req: FastifyRequest, reply: FastifyReply) {
@@ -11,9 +11,13 @@ export async function getSettings(req: FastifyRequest, reply: FastifyReply) {
 
 export async function update(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as UpdateChurchSettingsRequest;
+  const before = await service.getChurchSettings();
   const settings = await service.updateChurchSettings(req.session.userId!, body);
   if (!settings) return reply.code(404).send({ message: 'Church settings not found' });
-  logAudit(req.session.userId!, 'update', 'church_settings', 1, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'church_settings', 1, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, settings)
+  });
   return reply.send(settings);
 }
 
@@ -22,8 +26,12 @@ export async function uploadLogo(req: FastifyRequest, reply: FastifyReply) {
   if (!file) return reply.code(400).send({ message: 'No file uploaded' });
 
   const buffer = await file.toBuffer();
+  const before = await service.getChurchSettings();
   const settings = await service.uploadChurchLogo(req.session.userId!, buffer, file.mimetype);
-  logAudit(req.session.userId!, 'update', 'church_settings', 1, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'church_settings', 1, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, settings)
+  });
   return reply.send(settings);
 }
 

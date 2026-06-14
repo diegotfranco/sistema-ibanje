@@ -55,7 +55,7 @@ Database rollback: see "Restore from backup" below.
 ## Database migrations & rollback policy
 
 - **Forward-only.** Migrations are never un-applied with a "down" step in production. To undo a bad
-  schema change you roll *forward* with a new corrective migration, or restore the pre-migration
+  schema change you roll _forward_ with a new corrective migration, or restore the pre-migration
   snapshot (below). Drizzle migrations are append-only SQL under `apps/api/drizzle/`.
 - **Snapshot before migrating.** A deploy that includes a migration is the one moment most likely to
   corrupt data. Before running `pnpm db:migrate` on a release with schema changes, take a manual dump:

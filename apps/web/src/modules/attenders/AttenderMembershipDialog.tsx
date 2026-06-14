@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
-import { Label } from '@/components/ui/label';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import MonthInput from '@/components/MonthInput';
@@ -66,8 +66,8 @@ export default function AttenderMembershipDialog({
           <DialogTitle>Admitir como membro — {attender?.name}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="admissionMode">Modo de admissão *</Label>
+          <Field data-invalid={!!errors.admissionMode || undefined}>
+            <FieldLabel htmlFor="admissionMode">Modo de admissão *</FieldLabel>
             <Controller
               control={control}
               name="admissionMode"
@@ -92,13 +92,11 @@ export default function AttenderMembershipDialog({
                 </Select>
               )}
             />
-            {errors.admissionMode && (
-              <p className="text-xs text-destructive">{errors.admissionMode.message}</p>
-            )}
-          </div>
+            {errors.admissionMode && <FieldError errors={[errors.admissionMode]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label htmlFor="memberSince">Membro desde *</Label>
+          <Field data-invalid={!!errors.memberSince || undefined}>
+            <FieldLabel htmlFor="memberSince">Membro desde *</FieldLabel>
             <Controller
               control={control}
               name="memberSince"
@@ -113,13 +111,11 @@ export default function AttenderMembershipDialog({
                 />
               )}
             />
-            {errors.memberSince && (
-              <p className="text-xs text-destructive">{errors.memberSince.message}</p>
-            )}
-          </div>
+            {errors.memberSince && <FieldError errors={[errors.memberSince]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label htmlFor="baptismDate">Data de batismo</Label>
+          <Field>
+            <FieldLabel htmlFor="baptismDate">Data de batismo</FieldLabel>
             <Controller
               control={control}
               name="baptismDate"
@@ -133,7 +129,7 @@ export default function AttenderMembershipDialog({
                 />
               )}
             />
-          </div>
+          </Field>
 
           <DialogFooter>
             <Button

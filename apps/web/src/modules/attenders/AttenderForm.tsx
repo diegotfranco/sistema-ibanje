@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import {
   Dialog,
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import DateInput from '@/components/DateInput';
 import MonthInput from '@/components/MonthInput';
 import { PhoneInput, CepInput } from '@/components/MaskedInput';
@@ -31,7 +33,6 @@ interface AttenderFormProps {
 
 const EMPTY: AttenderFormValues = {
   name: '',
-  userId: null,
   birthDate: null,
   phone: null,
   email: null,
@@ -64,7 +65,6 @@ export default function AttenderForm({
 
   const {
     register,
-    handleSubmit,
     reset,
     control,
     formState: { errors }
@@ -108,19 +108,21 @@ export default function AttenderForm({
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Editar Congregado' : 'Novo Congregado'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit((v) => onSubmit(prepare(v)))} className="space-y-4">
-          <p className="text-sm font-medium text-muted-foreground">Dados Pessoais</p>
+        <form
+          onSubmit={autofillSafeSubmit(form, (v) => onSubmit(prepare(v)))}
+          className="space-y-4">
+          <p className="text-sm font-medium text-primary-soft">Dados Pessoais</p>
           <Separator />
 
-          <div className="space-y-1">
-            <Label htmlFor="name">Nome *</Label>
+          <Field data-invalid={!!errors.name || undefined}>
+            <FieldLabel htmlFor="name">Nome *</FieldLabel>
             <Input id="name" {...register('name')} aria-invalid={!!errors.name || undefined} />
-            {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-          </div>
+            {errors.name && <FieldError errors={[errors.name]} />}
+          </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1">
-              <Label htmlFor="birthDate">Data de Nascimento</Label>
+            <Field>
+              <FieldLabel htmlFor="birthDate">Data de Nascimento</FieldLabel>
               <Controller
                 control={control}
                 name="birthDate"
@@ -134,9 +136,9 @@ export default function AttenderForm({
                   />
                 )}
               />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="phone">Telefone</Label>
+            </Field>
+            <Field data-invalid={!!errors.phone || undefined}>
+              <FieldLabel htmlFor="phone">Telefone</FieldLabel>
               <Controller
                 control={control}
                 name="phone"
@@ -151,23 +153,23 @@ export default function AttenderForm({
                   />
                 )}
               />
-              {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
-            </div>
+              {errors.phone && <FieldError errors={[errors.phone]} />}
+            </Field>
           </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="email">E-mail</Label>
+          <Field data-invalid={!!errors.email || undefined}>
+            <FieldLabel htmlFor="email">E-mail</FieldLabel>
             <Input
               id="email"
               type="email"
               {...register('email')}
               aria-invalid={!!errors.email || undefined}
             />
-            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-          </div>
+            {errors.email && <FieldError errors={[errors.email]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label htmlFor="congregatingSince">Congregando desde</Label>
+          <Field data-invalid={!!errors.congregatingSince || undefined}>
+            <FieldLabel htmlFor="congregatingSince">Congregando desde</FieldLabel>
             <Controller
               control={control}
               name="congregatingSince"
@@ -182,14 +184,12 @@ export default function AttenderForm({
                 />
               )}
             />
-            {errors.congregatingSince && (
-              <p className="text-xs text-destructive">{errors.congregatingSince.message}</p>
-            )}
-          </div>
+            {errors.congregatingSince && <FieldError errors={[errors.congregatingSince]} />}
+          </Field>
 
           {!isEditing && (
             <>
-              <p className="pt-2 text-sm font-medium text-muted-foreground">Vínculo</p>
+              <p className="pt-2 text-sm font-medium text-primary-soft">Vínculo</p>
               <Separator />
 
               <div className="flex items-center gap-2">
@@ -209,8 +209,8 @@ export default function AttenderForm({
                 </Label>
               </div>
 
-              <div className="space-y-1">
-                <Label htmlFor="baptismDate">Data de batismo</Label>
+              <Field>
+                <FieldLabel htmlFor="baptismDate">Data de batismo</FieldLabel>
                 <Controller
                   control={control}
                   name="baptismDate"
@@ -224,12 +224,12 @@ export default function AttenderForm({
                     />
                   )}
                 />
-              </div>
+              </Field>
 
               {isMember && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="memberSince">Membro desde</Label>
+                  <Field data-invalid={!!errors.memberSince || undefined}>
+                    <FieldLabel htmlFor="memberSince">Membro desde</FieldLabel>
                     <Controller
                       control={control}
                       name="memberSince"
@@ -244,12 +244,10 @@ export default function AttenderForm({
                         />
                       )}
                     />
-                    {errors.memberSince && (
-                      <p className="text-xs text-destructive">{errors.memberSince.message}</p>
-                    )}
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="admissionMode">Modo de Admissão</Label>
+                    {errors.memberSince && <FieldError errors={[errors.memberSince]} />}
+                  </Field>
+                  <Field data-invalid={!!errors.admissionMode || undefined}>
+                    <FieldLabel htmlFor="admissionMode">Modo de Admissão</FieldLabel>
                     <Controller
                       name="admissionMode"
                       control={control}
@@ -280,26 +278,24 @@ export default function AttenderForm({
                         </Select>
                       )}
                     />
-                    {errors.admissionMode && (
-                      <p className="text-xs text-destructive">{errors.admissionMode.message}</p>
-                    )}
-                  </div>
+                    {errors.admissionMode && <FieldError errors={[errors.admissionMode]} />}
+                  </Field>
                 </div>
               )}
             </>
           )}
 
-          <p className="pt-2 text-sm font-medium text-muted-foreground">Endereço</p>
+          <p className="pt-2 text-sm font-medium text-primary-soft">Endereço</p>
           <Separator />
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
-            <div className="space-y-1 sm:col-span-4">
-              <Label htmlFor="addressStreet">Rua</Label>
+            <Field className="sm:col-span-4">
+              <FieldLabel htmlFor="addressStreet">Rua</FieldLabel>
               <Input id="addressStreet" {...register('addressStreet')} />
-            </div>
+            </Field>
 
-            <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="addressNumber">Número</Label>
+            <Field className="sm:col-span-2" data-invalid={!!errors.addressNumber || undefined}>
+              <FieldLabel htmlFor="addressNumber">Número</FieldLabel>
               <Input
                 id="addressNumber"
                 maxLength={16}
@@ -308,23 +304,21 @@ export default function AttenderForm({
                 })}
                 aria-invalid={!!errors.addressNumber || undefined}
               />
-              {errors.addressNumber && (
-                <p className="text-xs text-destructive">{errors.addressNumber.message}</p>
-              )}
-            </div>
+              {errors.addressNumber && <FieldError errors={[errors.addressNumber]} />}
+            </Field>
 
-            <div className="space-y-1 sm:col-span-3">
-              <Label htmlFor="addressComplement">Complemento</Label>
+            <Field className="sm:col-span-3">
+              <FieldLabel htmlFor="addressComplement">Complemento</FieldLabel>
               <Input id="addressComplement" {...register('addressComplement')} />
-            </div>
+            </Field>
 
-            <div className="space-y-1 sm:col-span-3">
-              <Label htmlFor="addressDistrict">Bairro</Label>
+            <Field className="sm:col-span-3">
+              <FieldLabel htmlFor="addressDistrict">Bairro</FieldLabel>
               <Input id="addressDistrict" {...register('addressDistrict')} />
-            </div>
+            </Field>
 
-            <div className="space-y-1 sm:col-span-1">
-              <Label htmlFor="state">Estado</Label>
+            <Field className="sm:col-span-1" data-invalid={!!errors.state || undefined}>
+              <FieldLabel htmlFor="state">Estado</FieldLabel>
               <Input
                 id="state"
                 {...register('state')}
@@ -332,16 +326,16 @@ export default function AttenderForm({
                 placeholder="UF"
                 aria-invalid={!!errors.state || undefined}
               />
-              {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
-            </div>
+              {errors.state && <FieldError errors={[errors.state]} />}
+            </Field>
 
-            <div className="space-y-1 sm:col-span-3">
-              <Label htmlFor="city">Cidade</Label>
+            <Field className="sm:col-span-3">
+              <FieldLabel htmlFor="city">Cidade</FieldLabel>
               <Input id="city" {...register('city')} />
-            </div>
+            </Field>
 
-            <div className="space-y-1 sm:col-span-2">
-              <Label htmlFor="postalCode">CEP</Label>
+            <Field className="sm:col-span-2" data-invalid={!!errors.postalCode || undefined}>
+              <FieldLabel htmlFor="postalCode">CEP</FieldLabel>
               <Controller
                 control={control}
                 name="postalCode"
@@ -356,10 +350,8 @@ export default function AttenderForm({
                   />
                 )}
               />
-              {errors.postalCode && (
-                <p className="text-xs text-destructive">{errors.postalCode.message}</p>
-              )}
-            </div>
+              {errors.postalCode && <FieldError errors={[errors.postalCode]} />}
+            </Field>
           </div>
 
           <DialogFooter>

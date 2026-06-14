@@ -110,6 +110,46 @@ describe('UserForm', () => {
     expect(emailInput).toHaveValue('newuser@email.com');
   });
 
+  it('submits the edited name/email (not the original) in edit mode', async () => {
+    server.use(
+      listHandler('/roles', roles),
+      listHandler('/attenders', attenders),
+      ...referenceHandlers()
+    );
+
+    const onSubmit = vi.fn();
+    const onCancel = vi.fn();
+    const user = userEvent.setup();
+
+    const initialValues = {
+      id: 1,
+      name: 'João Silva',
+      email: 'joao@email.com',
+      role: 'Administrador',
+      roleId: 1,
+      status: 'ativo',
+      createdAt: '2024-01-01'
+    };
+
+    renderWithProviders(
+      <UserForm
+        initialValues={initialValues}
+        onSubmit={onSubmit}
+        onCancel={onCancel}
+        isPending={false}
+      />
+    );
+
+    const nameInput = screen.getByDisplayValue('João Silva');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'João Editado');
+
+    await user.click(screen.getByRole('button', { name: /salvar/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ name: 'João Editado' });
+  });
+
   it('displays disabled state when isPending is true', async () => {
     server.use(
       listHandler('/roles', roles),

@@ -8,6 +8,7 @@ import {
   type DataTableSearchable,
   type TableFilterOption
 } from '@/components/DataTable';
+import { RowActionButton } from '@/components/RowActionButton';
 import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
 import {
   ToolbarActionButtons,
@@ -155,36 +156,27 @@ export function ResourceListPage<T>({
           {customActions
             ?.filter((action) => !action.hidden?.(row.original))
             .map((action) => (
-              <Button
+              <RowActionButton
                 key={action.label}
-                size="sm"
-                variant="ghost"
+                label={action.label}
+                icon={action.icon ?? action.label}
                 onClick={() => action.onClick(row.original)}
-                aria-label={action.label}
                 className={action.className}
-                title={action.label}>
-                {action.icon || action.label}
-              </Button>
+              />
             ))}
           {canEdit && onEdit && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label="Editar"
+              icon={<Edit size={16} />}
               onClick={() => onEdit(row.original)}
-              aria-label="Editar"
-              title="Editar">
-              <Edit size={16} />
-            </Button>
+            />
           )}
           {canDelete && onDelete && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label="Remover"
+              icon={<Trash2 size={16} />}
               onClick={() => onDelete(row.original)}
-              aria-label="Remover"
-              title="Remover">
-              <Trash2 size={16} />
-            </Button>
+            />
           )}
         </div>
       ),

@@ -43,6 +43,7 @@ export async function listAudit(offset: number, limit: number, filters: AuditLis
       entityType: auditLog.entityType,
       entityId: auditLog.entityId,
       notes: auditLog.notes,
+      changes: auditLog.changes,
       ipAddress: auditLog.ipAddress,
       createdAt: auditLog.createdAt
     })

@@ -5,13 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/Button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { isoToLocalDate, localDateToIso } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 
 type Props = Omit<React.ComponentPropsWithoutRef<typeof Input>, 'type'>;
-
-function pad2(n: number): string {
-  return n < 10 ? `0${n}` : String(n);
-}
 
 function isoToBr(iso: string): string {
   if (!iso || typeof iso !== 'string') return '';
@@ -50,19 +47,6 @@ function applyMask(raw: string): string {
   if (digits.length <= 2) return digits;
   if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-}
-
-function isoToLocalDate(iso: string): Date | undefined {
-  if (!iso || iso.length !== 10) return undefined;
-  const y = Number.parseInt(iso.slice(0, 4), 10);
-  const m = Number.parseInt(iso.slice(5, 7), 10);
-  const d = Number.parseInt(iso.slice(8, 10), 10);
-  if (Number.isNaN(y) || Number.isNaN(m) || Number.isNaN(d)) return undefined;
-  return new Date(y, m - 1, d);
-}
-
-function localDateToIso(date: Date): string {
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
 
 export default React.forwardRef<HTMLInputElement, Props>(

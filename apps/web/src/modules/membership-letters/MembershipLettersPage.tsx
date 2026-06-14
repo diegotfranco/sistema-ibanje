@@ -12,6 +12,7 @@ import {
 } from '@/components/Dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 import EntityPicker from '@/components/EntityPicker';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -161,37 +162,31 @@ export default function MembershipLettersPage() {
       const letter = row as MembershipLetterResponse;
       return (
         <div className="flex items-center justify-end gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
+          <RowActionButton
+            label="Visualizar"
+            icon={<Eye className="h-4 w-4" />}
             onClick={() => {
               setPreviewId(letter.id);
               setPreviewOpen(true);
             }}
-            title="Visualizar">
-            <Eye className="h-4 w-4" />
-          </Button>
+          />
           {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <RowActionButton
+              label="Editar"
+              icon={<Pencil className="h-4 w-4" />}
               onClick={() => {
                 setEditing(letter);
                 setDialogOpen(true);
               }}
-              title="Editar"
-              className="text-warning-strong hover:text-warning-strong/80">
-              <Pencil className="h-4 w-4" />
-            </Button>
+              className="text-warning-strong hover:text-warning-strong/80"
+            />
           )}
           {canDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <RowActionButton
+              label="Remover"
+              icon={<Trash2 className="h-4 w-4" />}
               onClick={() => setDeleteTarget(letter)}
-              title="Remover">
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            />
           )}
         </div>
       );

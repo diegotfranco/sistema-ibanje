@@ -3,8 +3,14 @@ import type { CreateRoleRequest, UpdateRoleRequest, SetRolePermissionsRequest } 
 import type { IdParam } from '../../lib/validation.js';
 import type { PaginationQuery } from '../../lib/pagination.js';
 import type { DeletedFilter } from '../../lib/softDelete.js';
-import { logAudit } from '../../lib/audit.js';
+import { logAudit, diffResponse, diffGrants } from '../../lib/audit.js';
+import type { RolePermissionResponse } from './schema.js';
 import * as service from './service.js';
+
+// Flatten the grant list to "Módulo · Permissão" labels for the permission audit diff.
+function grantLabels(perms: RolePermissionResponse[] | null): string[] {
+  return (perms ?? []).map((p) => `${p.moduleName} · ${p.permissionName}`);
+}
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
   const { page, limit, deleted } = req.query as PaginationQuery & { deleted?: DeletedFilter };
@@ -28,9 +34,13 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 export async function update(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as UpdateRoleRequest;
+  const before = await service.getRoleById(id);
   const role = await service.updateRole(req.session.userId!, id, body);
   if (!role) return reply.code(404).send({ message: 'Role not found' });
-  logAudit(req.session.userId!, 'update', 'role', id, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'role', id, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, role)
+  });
   return reply.send(role);
 }
 
@@ -60,9 +70,15 @@ export async function getPermissions(req: FastifyRequest, reply: FastifyReply) {
 export async function setPermissions(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as SetRolePermissionsRequest;
+  const before = await service.getRolePermissions(id);
   const result = await service.setRolePermissions(req.session.userId!, id, body);
   if (result === null) return reply.code(404).send({ message: 'Role not found' });
-  logAudit(req.session.userId!, 'update', 'role', id, { notes: 'permissions', ipAddress: req.ip });
+  const after = await service.getRolePermissions(id);
+  logAudit(req.session.userId!, 'update', 'role', id, {
+    notes: 'permissions',
+    ipAddress: req.ip,
+    changes: diffGrants(grantLabels(before), grantLabels(after))
+  });
   return reply.code(204).send();
 }
 

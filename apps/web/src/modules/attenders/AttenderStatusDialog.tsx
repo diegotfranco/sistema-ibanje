@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import {
   Dialog,
@@ -10,7 +11,7 @@ import {
   DialogTitle
 } from '@/components/Dialog';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import DateInput from '@/components/DateInput';
 import { AttenderStatus, type AttenderStatusValue } from '@sistema-ibanje/shared';
@@ -53,7 +54,6 @@ export default function AttenderStatusDialog({
   });
 
   const {
-    handleSubmit,
     reset,
     control,
     register,
@@ -103,9 +103,11 @@ export default function AttenderStatusDialog({
         <DialogHeader>
           <DialogTitle>Alterar situação — {attender?.name}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit((v) => onSubmit(prepare(v)))} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="status">Situação *</Label>
+        <form
+          onSubmit={autofillSafeSubmit(form, (v) => onSubmit(prepare(v)))}
+          className="space-y-4">
+          <Field data-invalid={!!errors.status || undefined}>
+            <FieldLabel htmlFor="status">Situação *</FieldLabel>
             <Controller
               control={control}
               name="status"
@@ -129,13 +131,13 @@ export default function AttenderStatusDialog({
                 </Select>
               )}
             />
-            {errors.status && <p className="text-xs text-destructive">{errors.status.message}</p>}
-          </div>
+            {errors.status && <FieldError errors={[errors.status]} />}
+          </Field>
 
           {showExit && (
             <>
-              <div className="space-y-1">
-                <Label htmlFor="exitDate">Data de saída *</Label>
+              <Field data-invalid={!!errors.exitDate || undefined}>
+                <FieldLabel htmlFor="exitDate">Data de saída *</FieldLabel>
                 <Controller
                   control={control}
                   name="exitDate"
@@ -150,29 +152,25 @@ export default function AttenderStatusDialog({
                     />
                   )}
                 />
-                {errors.exitDate && (
-                  <p className="text-xs text-destructive">{errors.exitDate.message}</p>
-                )}
-              </div>
+                {errors.exitDate && <FieldError errors={[errors.exitDate]} />}
+              </Field>
 
-              <div className="space-y-1">
-                <Label htmlFor="exitReason">Motivo</Label>
+              <Field data-invalid={!!errors.exitReason || undefined}>
+                <FieldLabel htmlFor="exitReason">Motivo</FieldLabel>
                 <Input
                   id="exitReason"
                   maxLength={256}
                   {...register('exitReason')}
                   aria-invalid={!!errors.exitReason || undefined}
                 />
-                {errors.exitReason && (
-                  <p className="text-xs text-destructive">{errors.exitReason.message}</p>
-                )}
-              </div>
+                {errors.exitReason && <FieldError errors={[errors.exitReason]} />}
+              </Field>
             </>
           )}
 
           {isTransfer && (
-            <div className="space-y-1">
-              <Label htmlFor="exitLetterId">Carta de transferência</Label>
+            <Field data-invalid={!!errors.exitLetterId || undefined}>
+              <FieldLabel htmlFor="exitLetterId">Carta de transferência</FieldLabel>
               <Controller
                 control={control}
                 name="exitLetterId"
@@ -197,10 +195,8 @@ export default function AttenderStatusDialog({
                   </Select>
                 )}
               />
-              {errors.exitLetterId && (
-                <p className="text-xs text-destructive">{errors.exitLetterId.message}</p>
-              )}
-            </div>
+              {errors.exitLetterId && <FieldError errors={[errors.exitLetterId]} />}
+            </Field>
           )}
 
           <DialogFooter>

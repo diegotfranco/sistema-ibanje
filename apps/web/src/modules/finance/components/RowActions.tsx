@@ -1,6 +1,7 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import { Edit, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 
 /**
  * Per-row callbacks shared by the finance line-item displays. Each handler is
@@ -26,26 +27,11 @@ interface RowActionButtonsProps {
  */
 export function RowActionButtons({ onView, onEdit, onDelete }: RowActionButtonsProps) {
   return (
-    <div className="flex justify-end gap-2">
-      {onView && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onView}
-          title="Ver detalhes"
-          aria-label="Ver detalhes">
-          <Eye size={16} />
-        </Button>
-      )}
-      {onEdit && (
-        <Button variant="ghost" size="sm" onClick={onEdit} title="Editar" aria-label="Editar">
-          <Edit size={16} />
-        </Button>
-      )}
+    <div className="flex justify-end gap-1">
+      {onView && <RowActionButton label="Ver detalhes" icon={<Eye size={16} />} onClick={onView} />}
+      {onEdit && <RowActionButton label="Editar" icon={<Edit size={16} />} onClick={onEdit} />}
       {onDelete && (
-        <Button variant="ghost" size="sm" onClick={onDelete} title="Cancelar" aria-label="Cancelar">
-          <Trash2 size={16} />
-        </Button>
+        <RowActionButton label="Cancelar" icon={<Trash2 size={16} />} onClick={onDelete} />
       )}
     </div>
   );

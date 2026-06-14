@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { Plus, Eye, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { PageContainer } from '@/components/PageContainer';
@@ -100,24 +101,18 @@ export default function MonthlyClosingsPage() {
       id: '__actions',
       header: 'Ações',
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-2">
-          <Button
-            size="sm"
-            variant="ghost"
+        <div className="flex items-center justify-end gap-1">
+          <RowActionButton
+            label="Ver detalhes"
+            icon={<Eye size={16} />}
             onClick={() => navigate(`/monthly-closings/${row.original.id}`)}
-            aria-label="Abrir"
-            title="Abrir">
-            <Eye size={16} />
-          </Button>
+          />
           {canDelete && row.original.status === ClosingStatus.Open && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label="Excluir"
+              icon={<Trash2 size={16} />}
               onClick={() => setDeleting(row.original)}
-              aria-label="Excluir"
-              title="Excluir">
-              <Trash2 size={16} />
-            </Button>
+            />
           )}
         </div>
       ),

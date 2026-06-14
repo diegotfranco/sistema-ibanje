@@ -53,7 +53,8 @@ export type ListAttendersRequest = z.infer<typeof ListAttendersRequestSchema>;
 export const CreateAttenderRequestSchema = z.object({
   userId: z.number().int().positive().optional(),
   name: trimmedString(96, 2),
-  birthDate: z.iso.date().optional(),
+  // Nullable: the edit form sends `null` to clear a birth date (and for attenders that never had one).
+  birthDate: z.iso.date().nullable().optional(),
   addressStreet: trimmedString(96).nullable().optional(),
   addressNumber: trimmedString(16).nullable().optional(),
   addressComplement: trimmedString(64).nullable().optional(),

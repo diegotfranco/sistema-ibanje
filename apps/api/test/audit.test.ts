@@ -18,6 +18,7 @@ type AuditRow = {
   entityId: number | null;
   userId: number | null;
   notes: string | null;
+  changes: Record<string, { from: unknown; to: unknown }> | null;
 };
 type Page = { data: AuditRow[]; total: number; page: number; limit: number; totalPages: number };
 
@@ -48,6 +49,7 @@ describe('GET /audit', () => {
         entityType: ENTITY,
         entityId: 1,
         notes: 'second',
+        changes: { phone: { from: '111', to: '222' } },
         createdAt: new Date('2099-02-20T12:00:00.000Z')
       },
       {
@@ -69,7 +71,7 @@ describe('GET /audit', () => {
     return app.inject({ method: 'GET', url: `/audit${query}`, headers: { cookie: auth.cookie } });
   }
 
-  it('forbids a user without Users.View (403)', async () => {
+  it('forbids a user without Auditoria.View (403)', async () => {
     const res = await get(membro, `?entityType=${ENTITY}`);
     expect(res.statusCode).toBe(403);
   });
@@ -89,6 +91,14 @@ describe('GET /audit', () => {
     const body = res.json<Page>();
     expect(body.total).toBe(1);
     expect(body.data[0].notes).toBe('second');
+    // The field-level diff round-trips through the read path.
+    expect(body.data[0].changes).toEqual({ phone: { from: '111', to: '222' } });
+  });
+
+  it('returns null changes for rows without a recorded diff', async () => {
+    const res = await get(admin, `?entityType=${ENTITY}&action=create`);
+    const body = res.json<Page>();
+    expect(body.data[0].changes).toBeNull();
   });
 
   it('filters by an inclusive date range', async () => {

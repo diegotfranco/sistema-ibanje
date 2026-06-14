@@ -2,9 +2,10 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import EntityPicker from '@/components/EntityPicker';
 import {
   UserCreateFormSchema,
@@ -94,29 +95,28 @@ export default function UserForm({
   if (isEditing) {
     const {
       register,
-      handleSubmit,
       control,
       formState: { errors }
     } = editForm;
     return (
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-1">
-          <Label htmlFor="edit-name">Nome</Label>
+      <form onSubmit={autofillSafeSubmit(editForm, onSubmit)} className="space-y-4">
+        <Field data-invalid={!!errors.name || undefined}>
+          <FieldLabel htmlFor="edit-name">Nome</FieldLabel>
           <Input id="edit-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="edit-email">E-mail</Label>
+          {errors.name && <FieldError errors={[errors.name]} />}
+        </Field>
+        <Field data-invalid={!!errors.email || undefined}>
+          <FieldLabel htmlFor="edit-email">E-mail</FieldLabel>
           <Input
             id="edit-email"
             type="email"
             {...register('email')}
             aria-invalid={!!errors.email || undefined}
           />
-          {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-        </div>
-        <div className="space-y-1">
-          <Label>Cargo</Label>
+          {errors.email && <FieldError errors={[errors.email]} />}
+        </Field>
+        <Field data-invalid={!!errors.roleId || undefined}>
+          <FieldLabel>Cargo</FieldLabel>
           <Controller
             name="roleId"
             control={control}
@@ -133,8 +133,8 @@ export default function UserForm({
               />
             )}
           />
-          {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
-        </div>
+          {errors.roleId && <FieldError errors={[errors.roleId]} />}
+        </Field>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
             Cancelar
@@ -149,19 +149,18 @@ export default function UserForm({
 
   const {
     register,
-    handleSubmit,
     control,
     formState: { errors }
   } = createForm;
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="create-name">Nome *</Label>
+    <form onSubmit={autofillSafeSubmit(createForm, onSubmit)} className="space-y-4">
+      <Field data-invalid={!!errors.name || undefined}>
+        <FieldLabel htmlFor="create-name">Nome *</FieldLabel>
         <Input id="create-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
-        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label htmlFor="create-email">E-mail *</Label>
+        {errors.name && <FieldError errors={[errors.name]} />}
+      </Field>
+      <Field data-invalid={!!errors.email || undefined}>
+        <FieldLabel htmlFor="create-email">E-mail *</FieldLabel>
         {(() => {
           const emailField = register('email');
           return (
@@ -177,10 +176,10 @@ export default function UserForm({
             />
           );
         })()}
-        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label>Cargo *</Label>
+        {errors.email && <FieldError errors={[errors.email]} />}
+      </Field>
+      <Field data-invalid={!!errors.roleId || undefined}>
+        <FieldLabel>Cargo *</FieldLabel>
         <Controller
           name="roleId"
           control={control}
@@ -197,10 +196,10 @@ export default function UserForm({
             />
           )}
         />
-        {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
-      </div>
-      <div className="space-y-1">
-        <Label>Membro</Label>
+        {errors.roleId && <FieldError errors={[errors.roleId]} />}
+      </Field>
+      <Field>
+        <FieldLabel>Membro</FieldLabel>
         <Controller
           name="attenderId"
           control={control}
@@ -217,7 +216,7 @@ export default function UserForm({
             />
           )}
         />
-      </div>
+      </Field>
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
           Cancelar

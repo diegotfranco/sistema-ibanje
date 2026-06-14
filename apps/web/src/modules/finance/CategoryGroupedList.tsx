@@ -3,6 +3,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ChevronRight, Edit, Pencil, Plus, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/Button';
+import { RowActionButton } from '@/components/RowActionButton';
 import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
@@ -178,22 +179,18 @@ export function CategoryGroupedList<T extends CategoryLike>({
           return (
             <div className="flex items-center justify-end gap-1">
               {canEdit && (
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <RowActionButton
+                  label={`Editar ${r.row.name}`}
+                  icon={<Edit className="h-4 w-4" />}
                   onClick={() => onEdit(r.row)}
-                  aria-label={`Editar ${r.row.name}`}>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                />
               )}
               {canDelete && (
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <RowActionButton
+                  label={`Remover ${r.row.name}`}
+                  icon={<Trash2 className="h-4 w-4" />}
                   onClick={() => onDelete(r.row)}
-                  aria-label={`Remover ${r.row.name}`}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+                />
               )}
             </div>
           );
@@ -224,22 +221,18 @@ export function CategoryGroupedList<T extends CategoryLike>({
         </div>
         <div className="flex items-center gap-1">
           {canEdit && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label={`Editar ${r.row.name}`}
+              icon={<Edit className="h-4 w-4" />}
               onClick={() => onEdit(r.row)}
-              aria-label={`Editar ${r.row.name}`}>
-              <Edit className="h-4 w-4" />
-            </Button>
+            />
           )}
           {canDelete && (
-            <Button
-              size="sm"
-              variant="ghost"
+            <RowActionButton
+              label={`Remover ${r.row.name}`}
+              icon={<Trash2 className="h-4 w-4" />}
               onClick={() => onDelete(r.row)}
-              aria-label={`Remover ${r.row.name}`}>
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            />
           )}
         </div>
       </div>
@@ -284,24 +277,18 @@ export function CategoryGroupedList<T extends CategoryLike>({
         {!destructive && row.parent && (
           <div className="flex items-center gap-0.5">
             {canEdit && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
+              <RowActionButton
+                label={`Editar grupo ${row.label}`}
+                icon={<Pencil className="h-4 w-4" />}
                 onClick={() => onEdit(row.parent!)}
-                aria-label={`Editar grupo ${row.label}`}>
-                <Pencil className="h-4 w-4" />
-              </Button>
+              />
             )}
             {canDelete && (
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
+              <RowActionButton
+                label={`Remover grupo ${row.label}`}
+                icon={<Trash2 className="h-4 w-4" />}
                 onClick={() => onDelete(row.parent!)}
-                aria-label={`Remover grupo ${row.label}`}>
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              />
             )}
           </div>
         )}

@@ -24,6 +24,9 @@ export const AuditEntryResponseSchema = z.object({
   entityType: z.string(),
   entityId: z.number().int().nullable(),
   notes: z.string().nullable(),
+  // Field-level diff for sensitive updates/state changes: { [field]: { from, to } }. Null for
+  // create/delete/restore and out-of-scope entities.
+  changes: z.record(z.string(), z.object({ from: z.unknown(), to: z.unknown() })).nullable(),
   ipAddress: z.string().nullable(),
   createdAt: z.date()
 });

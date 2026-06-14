@@ -32,7 +32,8 @@ export const CreateUserRequestSchema = z.object({
   name: trimmedString(96, 1),
   email: emailField,
   roleId: z.number().int().positive(),
-  attenderId: z.number().int().positive().optional()
+  // Nullable: the member picker sends `null` when no member is linked (service treats null as "skip").
+  attenderId: z.number().int().positive().nullable().optional()
 });
 
 export const UserResponseSchema = z.object({

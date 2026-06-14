@@ -12,7 +12,7 @@ import type {
   DonationsPdfQuerySchema
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
-import { logAudit } from '../../lib/audit.js';
+import { logAudit, diffResponse } from '../../lib/audit.js';
 import * as service from './service.js';
 import { renderAttenderDonationsPdf, renderAttendersRosterPdf } from './pdf-service.js';
 
@@ -59,27 +59,39 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 export async function update(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as UpdateAttenderRequest;
+  const before = await service.getAttenderById(req.session.userId!, id);
   const attender = await service.updateAttender(req.session.userId!, id, body);
   if (!attender) return reply.code(404).send({ message: 'Attender not found' });
-  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'attender', id, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, attender)
+  });
   return reply.send(attender);
 }
 
 export async function changeStatus(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as ChangeAttenderStatusRequest;
+  const before = await service.getAttenderById(req.session.userId!, id);
   const attender = await service.changeAttenderStatus(req.session.userId!, id, body);
   if (!attender) return reply.code(404).send({ message: 'Attender not found' });
-  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'attender', id, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, attender)
+  });
   return reply.send(attender);
 }
 
 export async function admitMembership(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as AdmitMemberRequest;
+  const before = await service.getAttenderById(req.session.userId!, id);
   const attender = await service.admitMember(req.session.userId!, id, body);
   if (!attender) return reply.code(404).send({ message: 'Attender not found' });
-  logAudit(req.session.userId!, 'update', 'attender', id, { ipAddress: req.ip });
+  logAudit(req.session.userId!, 'update', 'attender', id, {
+    ipAddress: req.ip,
+    changes: diffResponse(before, attender)
+  });
   return reply.send(attender);
 }
 

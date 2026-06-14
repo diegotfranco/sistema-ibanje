@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Plus, Trash2 } from 'lucide-react';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import {
   Dialog,
@@ -26,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
+import { Field, FieldError } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -83,18 +85,14 @@ function SortableRow({ id, index, register, onRemove, canRemove, errors }: Sorta
         <GripVertical className="h-4 w-4" />
       </button>
       <div className="flex-1 space-y-2">
-        <div>
+        <Field data-invalid={!!itemErrors?.title || undefined}>
           <Input placeholder="Título do item" {...register(`items.${index}.title`)} />
-          {itemErrors?.title && (
-            <p className="mt-1 text-xs text-destructive">{itemErrors.title.message}</p>
-          )}
-        </div>
-        <div>
+          {itemErrors?.title && <FieldError errors={[itemErrors.title]} />}
+        </Field>
+        <Field data-invalid={!!itemErrors?.description || undefined}>
           <Textarea placeholder="Descrição" rows={2} {...register(`items.${index}.description`)} />
-          {itemErrors?.description && (
-            <p className="mt-1 text-xs text-destructive">{itemErrors.description.message}</p>
-          )}
-        </div>
+          {itemErrors?.description && <FieldError errors={[itemErrors.description]} />}
+        </Field>
       </div>
       <Button
         type="button"
@@ -123,7 +121,7 @@ export default function AgendaDialog({
     defaultValues: initialValues(currentItems)
   });
 
-  const { control, register, handleSubmit, reset, formState } = form;
+  const { control, register, reset, formState } = form;
   const { fields, append, remove, move } = useFieldArray({ control, name: 'items' });
 
   const sensors = useSensors(
@@ -159,7 +157,7 @@ export default function AgendaDialog({
         <DialogHeader>
           <DialogTitle>Definir Pauta</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={autofillSafeSubmit(form, onSubmit)} className="space-y-4">
           <div className="flex items-center justify-between">
             <Label className="text-sm text-muted-foreground">
               Arraste pelo ícone para reordenar

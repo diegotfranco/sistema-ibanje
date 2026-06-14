@@ -21,6 +21,7 @@ export const Module = {
   MinuteTemplates: 'Modelos de Ata',
   MembershipLetters: 'Cartas de Membros',
   SecretaryCalendar: 'Calendário',
+  Audit: 'Auditoria',
   Permissions: 'Permissões',
   Areas: 'Áreas',
   Status: 'Status'

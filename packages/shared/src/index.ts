@@ -46,7 +46,8 @@ export const Module = {
   MinuteTemplates: 19,
   ChurchSettings: 20,
   Events: 21,
-  SecretaryCalendar: 22
+  SecretaryCalendar: 22,
+  Audit: 23
 } as const;
 export type Module = (typeof Module)[keyof typeof Module];
 

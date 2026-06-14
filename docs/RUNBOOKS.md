@@ -1,7 +1,7 @@
 # Runbooks — Sistema Ibanje
 
 Incident playbooks for the solo operator. Each is **symptom → diagnose → fix**. Deploy/restore
-mechanics live in [DEPLOY.md](./DEPLOY.md); this file is what you reach for when something is *wrong*.
+mechanics live in [DEPLOY.md](./DEPLOY.md); this file is what you reach for when something is _wrong_.
 
 All commands assume you're in `/opt/sistema-ibanje/app`. Shorthand used below:
 
@@ -55,7 +55,7 @@ dump (02:00 UTC). Confirm the damage is real and worse than losing today's entri
 
 **Fix:** follow **[DEPLOY.md → Restore from backup](./DEPLOY.md#restore-from-backup)**. In short:
 list backups in the `backup` container, `mc cp` the chosen `YYYY-MM-DD.sql.gz`, then pipe it through
-`psql` (the dump is `--clean --if-exists`, so it drops and recreates). Take a *fresh* dump of the
+`psql` (the dump is `--clean --if-exists`, so it drops and recreates). Take a _fresh_ dump of the
 current broken state first — it's evidence, and occasionally the "broken" DB still has rows the old
 backup lacks.
 
@@ -93,5 +93,5 @@ dc exec postgres psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "\dt"   # eyeball
 ## When in doubt
 
 Stop changing things. The data is only as safe as the last good dump, and most outages here are
-*availability* (a container to restart), not *integrity* (data to recover). Restart the cheap thing
+_availability_ (a container to restart), not _integrity_ (data to recover). Restart the cheap thing
 (`api`, `redis`) before touching the irreplaceable thing (`postgres`).

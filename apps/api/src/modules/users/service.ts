@@ -185,7 +185,7 @@ export async function createUser(
   logFn: (token: string) => void
 ): Promise<UserResponse> {
   return await db.transaction(async (tx) => {
-    if (body.attenderId !== undefined) {
+    if (body.attenderId != null) {
       const attender = await repo.findAttenderById(body.attenderId);
       if (!attender) {
         throw httpError(404, 'Attender not found');
@@ -247,7 +247,7 @@ export async function createUser(
 
     await repo.copyRolePermissionsToUser(body.roleId, newUser.id, tx);
 
-    if (body.attenderId !== undefined) {
+    if (body.attenderId != null) {
       await tx
         .update(attenders)
         .set({ userId: newUser.id })

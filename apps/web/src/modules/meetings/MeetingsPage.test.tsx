@@ -214,7 +214,7 @@ describe('MeetingsPage', () => {
     renderWithProviders(<MeetingsPage />);
     await screen.findByText('15/02/2026');
 
-    const deleteButtons = screen.getAllByRole('button', { name: 'Excluir' });
+    const deleteButtons = screen.getAllByRole('button', { name: 'Remover' });
     expect(deleteButtons.length).toBeGreaterThan(0);
   });
 
@@ -228,7 +228,7 @@ describe('MeetingsPage', () => {
     renderWithProviders(<MeetingsPage />);
     await screen.findByText('15/02/2026');
 
-    expect(screen.queryByRole('button', { name: 'Excluir' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument();
   });
 
   it('disables delete button when meeting has minutes', async () => {
@@ -240,7 +240,7 @@ describe('MeetingsPage', () => {
     renderWithProviders(<MeetingsPage />);
     await screen.findByText('15/02/2026');
 
-    const deleteButtons = screen.getAllByRole('button', { name: 'Excluir' });
+    const deleteButtons = screen.getAllByRole('button', { name: 'Remover' });
     // The second meeting (id=2) has hasMinutes=true, so its delete button should be disabled
     const disabledButtons = deleteButtons.filter((btn) => btn.hasAttribute('disabled'));
     expect(disabledButtons.length).toBeGreaterThan(0);

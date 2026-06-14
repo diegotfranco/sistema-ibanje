@@ -5,11 +5,10 @@ import { paginate } from '../../lib/pagination.js';
 import type { ListAuditRequest } from './schema.js';
 
 export async function listAudit(callerId: number, query: ListAuditRequest) {
-  // Reading the audit trail is an administrative accountability action, gated behind the same
-  // privilege as user administration: whoever manages users is the operator who reviews "who did
-  // what". No dedicated Audit permission exists by design — adding one would require a seed/migration
-  // for marginal benefit at single-church scale.
-  await assertPermission(callerId, Module.Users, Action.View);
+  // Reading the audit trail is an administrative accountability action gated behind the dedicated
+  // Auditoria module. By seed it's granted to Administrador only (the operator who reviews "who did
+  // what"); it lives under the Administração section alongside Usuários/Cargos.
+  await assertPermission(callerId, Module.Audit, Action.View);
 
   const { page, limit, ...filters } = query;
   const offset = (page - 1) * limit;

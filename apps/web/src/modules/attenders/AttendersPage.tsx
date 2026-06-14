@@ -175,7 +175,6 @@ export default function AttendersPage() {
   function convertToFormValues(attender: AttenderResponse): AttenderFormValues {
     return {
       name: attender.name,
-      userId: attender.userId,
       birthDate: attender.birthDate,
       phone: attender.phone,
       email: attender.email,
@@ -335,7 +334,7 @@ export default function AttendersPage() {
     }
     return [
       {
-        label: 'Detalhes',
+        label: 'Ver detalhes',
         icon: <Eye className="h-4 w-4" />,
         onClick: (row) => navigate(`/attenders/${row.id}`)
       }

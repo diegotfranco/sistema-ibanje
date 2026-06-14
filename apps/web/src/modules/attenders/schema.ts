@@ -3,7 +3,6 @@ import { AdmissionMode, ATTENDER_STATUS_VALUES } from '@sistema-ibanje/shared';
 
 export const AttenderFormSchema = z.object({
   name: z.string().min(2, 'Mínimo de 2 caracteres').max(96, 'Máximo de 96 caracteres'),
-  userId: z.number().positive().optional().nullable(),
   birthDate: z.string().optional().nullable(),
   phone: z
     .string()

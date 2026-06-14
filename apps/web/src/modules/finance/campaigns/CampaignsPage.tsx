@@ -12,6 +12,7 @@ import { CAMPAIGN_STATUS_FILTER_OPTIONS, CAMPAIGN_STATUS_LABELS } from '@/lib/st
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
 import { useCampaigns, useCampaignMutations } from './useCampaigns';
 import { CampaignForm } from './CampaignForm';
+import { formatMoney } from '@/lib/format';
 import { formatDate, makeSubmitHandler } from '../entries-utils';
 import type { CampaignResponse } from './schema';
 
@@ -82,7 +83,7 @@ export default function CampaignsPage() {
             },
             {
               header: 'Meta',
-              cell: (row) => (row.targetAmount ? `R$ ${row.targetAmount}` : '—'),
+              cell: (row) => (row.targetAmount ? formatMoney(row.targetAmount) : '—'),
               hideBelow: 'md'
             },
             {
@@ -119,7 +120,7 @@ export default function CampaignsPage() {
               </div>
               {row.targetAmount && (
                 <span className="shrink-0 font-mono text-sm text-money-in">
-                  R$ {row.targetAmount}
+                  {formatMoney(row.targetAmount)}
                 </span>
               )}
             </div>
@@ -139,7 +140,7 @@ export default function CampaignsPage() {
             },
             {
               label: 'Meta',
-              value: row.targetAmount ? `R$ ${row.targetAmount}` : '—'
+              value: row.targetAmount ? formatMoney(row.targetAmount) : '—'
             },
             { label: 'Encerra em', value: formatDate(row.targetDate) }
           ]}

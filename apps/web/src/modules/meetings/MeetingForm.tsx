@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/Dialog';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/Select';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -58,8 +59,8 @@ export default function MeetingForm({
           <DialogTitle>{defaultValues ? 'Editar Reunião' : 'Nova Reunião'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-1">
-            <Label htmlFor="meetingDate">Data *</Label>
+          <Field data-invalid={!!errors.meetingDate || undefined}>
+            <FieldLabel htmlFor="meetingDate">Data *</FieldLabel>
             <Controller
               control={control}
               name="meetingDate"
@@ -74,13 +75,11 @@ export default function MeetingForm({
                 />
               )}
             />
-            {errors.meetingDate && (
-              <p className="text-xs text-destructive">{errors.meetingDate.message}</p>
-            )}
-          </div>
+            {errors.meetingDate && <FieldError errors={[errors.meetingDate]} />}
+          </Field>
 
-          <div className="space-y-1">
-            <Label>Tipo *</Label>
+          <Field data-invalid={!!errors.type || undefined}>
+            <FieldLabel>Tipo *</FieldLabel>
             <Controller
               control={control}
               name="type"
@@ -96,8 +95,8 @@ export default function MeetingForm({
                 </Select>
               )}
             />
-            {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
-          </div>
+            {errors.type && <FieldError errors={[errors.type]} />}
+          </Field>
 
           <div className="flex items-center gap-2">
             <Controller

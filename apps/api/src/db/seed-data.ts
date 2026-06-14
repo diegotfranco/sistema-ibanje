@@ -83,7 +83,8 @@ export const SEED_MODULES = [
   {
     name: 'Calendário',
     description: 'Gerencia datas, feriados e lembretes do calendário da secretaria'
-  }
+  },
+  { name: 'Auditoria', description: 'Histórico de quem fez o quê nas áreas sensíveis' }
 ];
 
 export const EXPECTED_MODULE_ORDER = SEED_MODULES.map((m) => m.name);

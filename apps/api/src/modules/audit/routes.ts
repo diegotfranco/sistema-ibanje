@@ -7,7 +7,7 @@ import { ListAuditRequestSchema, AuditListResponseSchema } from './schema.js';
 import * as controller from './controller.js';
 
 export async function auditRoutes(app: FastifyInstance) {
-  // Gated by Users.View — the audit trail is an admin/accountability surface (see service comment).
+  // Gated by Auditoria.View — admin-only by seed (see service comment).
   app.get(
     '/audit',
     {
@@ -20,7 +20,7 @@ export async function auditRoutes(app: FastifyInstance) {
           403: ErrorResponseSchema
         }
       },
-      preHandler: [requireAuth, checkPermission(Module.Users, Action.View)]
+      preHandler: [requireAuth, checkPermission(Module.Audit, Action.View)]
     },
     controller.list
   );

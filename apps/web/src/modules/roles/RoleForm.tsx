@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@/lib/zodResolver';
+import { autofillSafeSubmit } from '@/lib/forms';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Field, FieldLabel, FieldError } from '@/components/ui/field';
 import { RoleFormSchema, type RoleFormValues, type RoleResponse } from './schema';
 
 interface RoleFormProps {
@@ -17,17 +18,17 @@ interface RoleFormProps {
 const EMPTY: RoleFormValues = { name: '', description: '' };
 
 export default function RoleForm({ initialValues, isPending, onSubmit, onCancel }: RoleFormProps) {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors }
-  } = useForm<RoleFormValues>({
+  const form = useForm<RoleFormValues>({
     resolver: zodResolver(RoleFormSchema),
     defaultValues: initialValues
       ? { name: initialValues.name, description: initialValues.description ?? '' }
       : EMPTY
   });
+  const {
+    register,
+    reset,
+    formState: { errors }
+  } = form;
 
   useEffect(() => {
     reset(
@@ -45,20 +46,18 @@ export default function RoleForm({ initialValues, isPending, onSubmit, onCancel 
   }
 
   return (
-    <form onSubmit={handleSubmit((v) => onSubmit(prepare(v)))} className="space-y-4">
-      <div className="space-y-1">
-        <Label htmlFor="name">Nome *</Label>
+    <form onSubmit={autofillSafeSubmit(form, (v) => onSubmit(prepare(v)))} className="space-y-4">
+      <Field data-invalid={!!errors.name || undefined}>
+        <FieldLabel htmlFor="name">Nome *</FieldLabel>
         <Input id="name" {...register('name')} />
-        {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
-      </div>
+        {errors.name && <FieldError errors={[errors.name]} />}
+      </Field>
 
-      <div className="space-y-1">
-        <Label htmlFor="description">Descrição</Label>
+      <Field data-invalid={!!errors.description || undefined}>
+        <FieldLabel htmlFor="description">Descrição</FieldLabel>
         <Textarea id="description" {...register('description')} rows={3} />
-        {errors.description && (
-          <p className="text-xs text-destructive">{errors.description.message}</p>
-        )}
-      </div>
+        {errors.description && <FieldError errors={[errors.description]} />}
+      </Field>
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

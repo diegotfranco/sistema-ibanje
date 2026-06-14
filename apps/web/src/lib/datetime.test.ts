@@ -9,7 +9,7 @@ import {
   isDateFuture
 } from './datetime';
 
-// datetime.ts formats everything in APP_TZ (America/Sao_Paulo, UTC-3). The timezone is the sensitive
+// datetime.ts formats everything in APP_TZ (America/Cuiaba, UTC-4). The timezone is the sensitive
 // bit: a UTC instant near midnight must bucket into the correct local calendar day.
 describe('datetime formatting', () => {
   describe('formatDate', () => {
@@ -27,16 +27,16 @@ describe('datetime formatting', () => {
       expect(formatDate('not-a-date')).toBe('—');
     });
 
-    it('buckets a UTC instant into the America/Sao_Paulo calendar day', () => {
-      // 2026-03-25T02:00Z is 2026-03-24 23:00 in UTC-3 → previous local day.
+    it('buckets a UTC instant into the America/Cuiaba calendar day', () => {
+      // 2026-03-25T02:00Z is 2026-03-24 22:00 in UTC-4 → previous local day.
       expect(formatDate('2026-03-25T02:00:00Z')).toBe('24/03/2026');
     });
   });
 
   describe('formatDateTime', () => {
     it('formats date + time as DD/MM/YYYY HH:mm in the app tz', () => {
-      // 12:00Z → 09:00 local (UTC-3).
-      expect(formatDateTime('2026-05-31T12:00:00Z')).toBe('31/05/2026 09:00');
+      // 12:00Z → 08:00 local (UTC-4).
+      expect(formatDateTime('2026-05-31T12:00:00Z')).toBe('31/05/2026 08:00');
     });
 
     it('returns the placeholder for null', () => {

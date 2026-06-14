@@ -1,9 +1,10 @@
 import { describe, it, expect } from 'vitest';
+import { http, HttpResponse } from 'msw';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UsersPage from './UsersPage';
 import { renderWithProviders } from '@/test/renderWithProviders';
-import { setupTestServer, referenceHandlers, listHandler, meHandler } from '@/test/server';
+import { setupTestServer, referenceHandlers, listHandler, meHandler, API } from '@/test/server';
 
 const server = setupTestServer();
 
@@ -37,6 +38,31 @@ describe('UsersPage', () => {
     expect(await screen.findByText('Admin User')).toBeInTheDocument();
     expect(screen.getByText('Secretary User')).toBeInTheDocument();
     expect(screen.getByText('Usuários')).toBeInTheDocument();
+  });
+
+  it('sends the edited name (not the original) in the PATCH body', async () => {
+    let patchBody: Record<string, unknown> | null = null;
+    server.use(
+      listHandler('/users', rows),
+      ...referenceHandlers(),
+      http.patch(`${API}/users/:id`, async ({ request }) => {
+        patchBody = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json({ ...rows[1], name: patchBody.name });
+      })
+    );
+
+    renderWithProviders(<UsersPage />);
+    await screen.findByText('Secretary User');
+
+    const editButtons = screen.getAllByRole('button', { name: 'Editar' });
+    await userEvent.click(editButtons[editButtons.length - 1]);
+    const nameInput = await screen.findByDisplayValue('Secretary User');
+    await userEvent.clear(nameInput);
+    await userEvent.type(nameInput, 'Secretary Edited');
+    await userEvent.click(screen.getByRole('button', { name: /salvar/i }));
+
+    await waitFor(() => expect(patchBody).not.toBeNull());
+    expect(patchBody!.name).toBe('Secretary Edited');
   });
 
   it('opens the create dialog when the user clicks "Novo" (has Create permission)', async () => {

@@ -10,7 +10,7 @@ import {
   type ReproveClosingRequest
 } from './schema.js';
 import type { IdParam } from '../../../lib/validation.js';
-import { logAudit } from '../../../lib/audit.js';
+import { logAudit, diffResponse } from '../../../lib/audit.js';
 import * as service from './service.js';
 
 type ListMonthlyClosingsQuery = z.infer<typeof ListMonthlyClosingsRequestSchema>;
@@ -42,10 +42,11 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
 export async function submit(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as SubmitMonthlyClosingRequest;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.submitMonthlyClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'em revisão',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
@@ -53,10 +54,11 @@ export async function submit(req: FastifyRequest, reply: FastifyReply) {
 export async function approve(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as ApproveMonthlyClosingRequest;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.approveMonthlyClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'aprovado',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
@@ -64,20 +66,22 @@ export async function approve(req: FastifyRequest, reply: FastifyReply) {
 export async function reject(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as RejectMonthlyClosingRequest;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.rejectMonthlyClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'aberto',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
 
 export async function reopen(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.reopenMonthlyClosing(req.session.userId!, id);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'aberto',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
@@ -85,10 +89,11 @@ export async function reopen(req: FastifyRequest, reply: FastifyReply) {
 export async function resubmit(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as ResubmitMonthlyClosingRequest;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.resubmitRejectedClosing(req.session.userId!, id, body);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'em revisão',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
@@ -96,20 +101,23 @@ export async function resubmit(req: FastifyRequest, reply: FastifyReply) {
 export async function reprove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const body = req.body as ReproveClosingRequest;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.reproveApprovedClosing(req.session.userId!, id);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
     notes: body.reason,
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
 
 export async function close(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
+  const before = await service.getMonthlyClosingById(id);
   const closing = await service.closeMonthlyClosing(req.session.userId!, id);
   logAudit(req.session.userId!, 'state_change', 'monthly_closing', id, {
-    notes: 'fechado',
-    ipAddress: req.ip
+    ipAddress: req.ip,
+    changes: diffResponse(before, closing)
   });
   return reply.send(closing);
 }
