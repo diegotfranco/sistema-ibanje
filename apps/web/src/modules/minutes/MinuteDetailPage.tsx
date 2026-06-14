@@ -109,7 +109,7 @@ export default function MinuteDetailPage() {
             </Button>
           )}
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4 text-sm">
+        <CardContent className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
           <div>
             <p className="text-muted-foreground font-medium">Pastor Presidente</p>
             <p>{minute.presidingPastorName ?? '—'}</p>
@@ -276,7 +276,7 @@ export default function MinuteDetailPage() {
               updateMinute.mutate(v, { onSuccess: () => setEditDetailsOpen(false) })
             )}
             className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label htmlFor="ed-presidingPastorName">Pastor Presidente</Label>
                 <Input

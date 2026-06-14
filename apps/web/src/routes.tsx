@@ -17,6 +17,7 @@ import { minuteTemplatesRouteChildren } from '@/modules/minute-templates/routes'
 import { meRoutes } from '@/modules/me/routes';
 import { membershipLettersRouteChildren } from '@/modules/membership-letters/routes';
 import { calendarRouteChildren } from '@/modules/calendar/routes';
+import { auditRouteChildren } from '@/modules/audit/routes';
 
 export type AppRoute = {
   // Section parents (with children) may omit path/element; only leaves render as routes.
@@ -43,7 +44,8 @@ const configuracoesSection: AppRoute = {
     ...usersRouteChildren,
     ...paymentMethodsRouteChildren,
     ...churchSettingsRouteChildren,
-    ...minuteTemplatesRouteChildren
+    ...minuteTemplatesRouteChildren,
+    ...auditRouteChildren
   ]
 };
 

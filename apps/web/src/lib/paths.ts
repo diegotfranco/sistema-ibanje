@@ -24,6 +24,7 @@ export const paths = {
   minuteTemplates: '/minute-templates',
   churchSettings: '/church-settings',
   settings: '/configuracoes',
+  audit: '/configuracoes/auditoria',
   membershipLetters: '/membership-letters',
   calendar: '/calendar',
   me: '/me'

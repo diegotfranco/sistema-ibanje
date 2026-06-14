@@ -6,6 +6,8 @@ import type {
 } from './schema.js';
 import type { IdParam } from '../../../../lib/validation.js';
 import type { PaginationQuery } from '../../../../lib/pagination.js';
+import { ALLOWED_MIME_TYPES } from '../../../../lib/storage.js';
+import { logAudit } from '../../../../lib/audit.js';
 import * as service from './service.js';
 
 export async function list(req: FastifyRequest, reply: FastifyReply) {
@@ -22,7 +24,9 @@ export async function getById(req: FastifyRequest, reply: FastifyReply) {
 
 export async function create(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as CreateExpenseEntryRequest;
-  return reply.code(201).send(await service.createExpenseEntry(req.session.userId!, body));
+  const entry = await service.createExpenseEntry(req.session.userId!, body);
+  logAudit(req.session.userId!, 'create', 'expense_entry', entry.id, { ipAddress: req.ip });
+  return reply.code(201).send(entry);
 }
 
 export async function update(req: FastifyRequest, reply: FastifyReply) {
@@ -30,6 +34,7 @@ export async function update(req: FastifyRequest, reply: FastifyReply) {
   const body = req.body as UpdateExpenseEntryRequest;
   const entry = await service.updateExpenseEntry(req.session.userId!, id, body);
   if (!entry) return reply.code(404).send({ message: 'Expense entry not found' });
+  logAudit(req.session.userId!, 'update', 'expense_entry', id, { ipAddress: req.ip });
   return reply.send(entry);
 }
 
@@ -37,6 +42,11 @@ export async function remove(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const result = await service.cancelExpenseEntry(req.session.userId!, id);
   if (result === null) return reply.code(404).send({ message: 'Expense entry not found' });
+  // Finance entries are voided (status → cancelada), never hard-deleted, so this is a state change.
+  logAudit(req.session.userId!, 'state_change', 'expense_entry', id, {
+    notes: 'cancelada',
+    ipAddress: req.ip
+  });
   return reply.code(204).send();
 }
 
@@ -65,8 +75,14 @@ export async function getReceipt(req: FastifyRequest, reply: FastifyReply) {
   const { id } = req.params as IdParam;
   const file = await service.getExpenseReceiptFile(req.session.userId!, id);
   if (!file) return reply.code(404).send({ message: 'Receipt not found' });
+  // Receipts are served from the same origin as the SPA (the API is proxied under /api/), so we
+  // force a download rather than let the browser render the bytes in-page. Combined with `nosniff`
+  // this neutralizes any stored-content XSS even if a wrong content-type ever slipped past upload
+  // validation (which already magic-byte-checks against the jpeg/png/pdf allowlist).
+  const ext = ALLOWED_MIME_TYPES[file.contentType] ?? 'bin';
   reply.header('Content-Type', file.contentType);
-  reply.header('Content-Disposition', `inline; filename="comprovante-${id}"`);
+  reply.header('X-Content-Type-Options', 'nosniff');
+  reply.header('Content-Disposition', `attachment; filename="comprovante-${id}.${ext}"`);
   if (file.contentLength !== null) reply.header('Content-Length', file.contentLength);
   return reply.send(file.body);
 }

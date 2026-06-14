@@ -3,6 +3,7 @@ import {
   Building2,
   CreditCard,
   FileCode2,
+  ScrollText,
   ShieldAlert,
   Users,
   type LucideIcon
@@ -55,6 +56,13 @@ const GROUPS: HubGroup[] = [
         to: paths.roles,
         icon: ShieldAlert,
         module: Module.Roles
+      },
+      {
+        label: 'Auditoria',
+        description: 'Histórico de quem fez o quê nas áreas sensíveis.',
+        to: paths.audit,
+        icon: ScrollText,
+        module: Module.Users
       }
     ]
   },

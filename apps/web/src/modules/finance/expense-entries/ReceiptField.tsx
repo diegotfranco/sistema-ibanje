@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { toast } from 'sonner';
-import { Paperclip, X } from 'lucide-react';
+import { Paperclip, X, Download } from 'lucide-react';
 import { Button } from '@/components/Button';
 
 interface Props {
@@ -75,7 +75,8 @@ export function ReceiptField({
         <>
           <Button type="button" variant="outline" size="sm" asChild>
             <a href={receiptUrl} target="_blank" rel="noopener noreferrer">
-              Ver comprovante
+              <Download size={14} className="mr-1" />
+              Baixar comprovante
             </a>
           </Button>
           <Button type="button" variant="outline" size="sm" onClick={openPicker}>

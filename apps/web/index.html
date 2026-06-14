@@ -5,14 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>web</title>
-    <script>
-      (function () {
-        var t = localStorage.getItem('theme') || 'system';
-        var dark =
-          t === 'dark' || (t === 'system' && matchMedia('(prefers-color-scheme: dark)').matches);
-        if (dark) document.documentElement.classList.add('dark');
-      })();
-    </script>
+    <!-- Pre-paint theme bootstrap. External (not inline) so the CSP can keep script-src 'self'
+         with no 'unsafe-inline'. Render-blocking in <head> so it runs before the body paints. -->
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

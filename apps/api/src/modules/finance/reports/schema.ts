@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import { EntryStatus } from '@sistema-ibanje/shared';
+
+// Single source for the entry-status enum used across the report query/response schemas.
+const entryStatusValues = [EntryStatus.Pending, EntryStatus.Paid, EntryStatus.Cancelled] as const;
 
 export const MonthQueryRequestSchema = z.object({
   month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, 'Formato esperado: YYYY-MM')
@@ -17,7 +21,7 @@ export const PaginatedDateRangeQueryRequestSchema = DateRangeQueryRequestSchema.
 export const PaginatedMonthQueryRequestSchema = MonthQueryRequestSchema.extend({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
-  status: z.enum(['pendente', 'paga', 'cancelada']).optional()
+  status: z.enum(entryStatusValues).optional()
 });
 
 export const OptionalMonthQueryRequestSchema = z.object({
@@ -50,7 +54,7 @@ const IncomeReportRowSchema = z.object({
   attenderName: z.string().nullable(),
   paymentMethodName: z.string(),
   notes: z.string().nullable(),
-  status: z.enum(['pendente', 'paga', 'cancelada'])
+  status: z.enum(entryStatusValues)
 });
 
 export const IncomeReportResponseSchema = z.object({
@@ -80,7 +84,7 @@ const ExpenseReportRowSchema = z.object({
   hasReceipt: z.boolean(),
   notes: z.string().nullable(),
   amount: z.string(),
-  status: z.enum(['pendente', 'paga', 'cancelada'])
+  status: z.enum(entryStatusValues)
 });
 
 export const ExpenseReportResponseSchema = z.object({
