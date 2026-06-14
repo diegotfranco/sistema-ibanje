@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { PageContainer } from '@/components/PageContainer';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/PasswordInput';
+import { PasswordStrengthMeter, PasswordRequirements } from '@/components/PasswordStrengthBar';
 import { PhoneInput, CepInput } from '@/components/MaskedInput';
 import { Label } from '@/components/ui/label';
 import { formatMonthYear } from '@/lib/datetime';
@@ -154,22 +155,7 @@ export default function MePage() {
           <CardHeaderRow>
             <CardTitle>Segurança</CardTitle>
           </CardHeaderRow>
-          <CardContent className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-3">
-            <div>
-              <Label htmlFor="currentPassword">Senha atual</Label>
-              <PasswordInput
-                id="currentPassword"
-                autoComplete="current-password"
-                {...passwordForm.register('currentPassword')}
-                aria-invalid={!!passwordForm.formState.errors.currentPassword || undefined}
-              />
-              {passwordForm.formState.errors.currentPassword && (
-                <p className="text-xs text-destructive mt-1">
-                  {passwordForm.formState.errors.currentPassword.message}
-                </p>
-              )}
-            </div>
-
+          <CardContent className="grid grid-cols-1 gap-4 py-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="newPassword">Nova senha</Label>
               <PasswordInput
@@ -178,6 +164,7 @@ export default function MePage() {
                 {...passwordForm.register('newPassword')}
                 aria-invalid={!!passwordForm.formState.errors.newPassword || undefined}
               />
+              <PasswordStrengthMeter value={passwordForm.watch('newPassword') ?? ''} />
               {passwordForm.formState.errors.newPassword && (
                 <p className="text-xs text-destructive mt-1">
                   {passwordForm.formState.errors.newPassword.message}
@@ -196,6 +183,28 @@ export default function MePage() {
               {passwordForm.formState.errors.confirmPassword && (
                 <p className="text-xs text-destructive mt-1">
                   {passwordForm.formState.errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <p className="text-sm font-medium leading-none">Requisitos</p>
+              <div className="mt-2">
+                <PasswordRequirements value={passwordForm.watch('newPassword') ?? ''} />
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="currentPassword">Senha atual</Label>
+              <PasswordInput
+                id="currentPassword"
+                autoComplete="current-password"
+                {...passwordForm.register('currentPassword')}
+                aria-invalid={!!passwordForm.formState.errors.currentPassword || undefined}
+              />
+              {passwordForm.formState.errors.currentPassword && (
+                <p className="text-xs text-destructive mt-1">
+                  {passwordForm.formState.errors.currentPassword.message}
                 </p>
               )}
             </div>

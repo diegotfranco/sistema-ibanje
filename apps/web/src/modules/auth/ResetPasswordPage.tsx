@@ -2,6 +2,7 @@ import { Link, useSearchParams } from 'react-router';
 import { Controller } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { PasswordInput } from '@/components/PasswordInput';
+import { PasswordStrengthBar } from '@/components/PasswordStrengthBar';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { paths } from '@/lib/paths';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/Card';
@@ -53,7 +54,7 @@ export default function ResetPasswordPage() {
             </Link>
           </div>
           <CardDescription className="text-left">
-            Escolha uma senha com no mínimo 8 caracteres.
+            Escolha uma senha com no mínimo 12 caracteres.
           </CardDescription>
         </CardHeader>
 
@@ -71,6 +72,7 @@ export default function ResetPasswordPage() {
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
+                  <PasswordStrengthBar value={field.value ?? ''} />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>
               )}

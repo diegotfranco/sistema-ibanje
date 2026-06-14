@@ -17,6 +17,7 @@ import type {
   CreateUserRequest
 } from './schema.js';
 import { httpError, isUniqueViolation } from '../../lib/errors.js';
+import { isCommonPassword } from '../../lib/passwordPolicy.js';
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -119,6 +120,13 @@ export async function changePassword(
     }
   } else {
     await assertPermission(callerId, Module.Users, Action.Update);
+  }
+
+  // Length is enforced by the Zod schema; reject breached/common passwords here in the service.
+  if (await isCommonPassword(body.newPassword)) {
+    throw httpError(400, 'Senha muito comum. Escolha uma senha mais forte.', {
+      fieldErrors: { newPassword: 'Senha muito comum. Escolha uma senha mais forte.' }
+    });
   }
 
   const newPasswordHash = await argon2.hash(body.newPassword + env.ARGON2_PEPPER, {

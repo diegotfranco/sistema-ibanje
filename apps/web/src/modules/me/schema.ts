@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { newPasswordField } from '@/lib/password';
 
 export const UpdateMyProfileFormSchema = z.object({
   phone: z
@@ -27,10 +28,7 @@ export type UpdateMyProfileFormValues = z.infer<typeof UpdateMyProfileFormSchema
 export const ChangeMyPasswordFormSchema = z
   .object({
     currentPassword: z.string().min(1, 'Informe a senha atual'),
-    newPassword: z
-      .string()
-      .min(8, 'A senha deve ter no mínimo 8 caracteres')
-      .max(64, 'A senha deve ter no máximo 64 caracteres'),
+    newPassword: newPasswordField,
     confirmPassword: z.string().min(1, 'Confirme a nova senha')
   })
   .refine((data) => data.newPassword === data.confirmPassword, {

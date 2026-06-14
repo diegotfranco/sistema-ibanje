@@ -54,20 +54,20 @@ describe('auth form schemas', () => {
   });
 
   describe('ResetPasswordSchema', () => {
-    it('requires newPassword of at least 8 chars', () => {
+    it('requires newPassword of at least 12 chars', () => {
       const r = ResetPasswordSchema.safeParse({ newPassword: 'short', confirmPassword: 'short' });
       expect(r.success).toBe(false);
       if (!r.success) {
         expect(r.error.issues.find((i) => i.path[0] === 'newPassword')?.message).toBe(
-          'A senha deve ter no mínimo 8 caracteres'
+          'A senha deve ter no mínimo 12 caracteres'
         );
       }
     });
 
     it('rejects a mismatched confirmation with the path on confirmPassword', () => {
       const r = ResetPasswordSchema.safeParse({
-        newPassword: 'longenough1',
-        confirmPassword: 'different1'
+        newPassword: 'longenough123',
+        confirmPassword: 'different1234'
       });
       expect(r.success).toBe(false);
       if (!r.success) {
@@ -80,8 +80,8 @@ describe('auth form schemas', () => {
     it('accepts matching passwords of sufficient length', () => {
       expect(
         ResetPasswordSchema.safeParse({
-          newPassword: 'longenough1',
-          confirmPassword: 'longenough1'
+          newPassword: 'longenough123',
+          confirmPassword: 'longenough123'
         }).success
       ).toBe(true);
     });

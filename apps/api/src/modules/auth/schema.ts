@@ -1,5 +1,12 @@
 import { z } from 'zod';
-import { emailField, phoneField, cepField, ufField, trimmedString } from '../../lib/normalize.js';
+import {
+  emailField,
+  phoneField,
+  cepField,
+  ufField,
+  trimmedString,
+  passwordField
+} from '../../lib/normalize.js';
 
 export type { MeResponse } from '@sistema-ibanje/shared';
 
@@ -17,7 +24,7 @@ export const PasswordResetRequestSchema = z.object({
 
 export const ResetPasswordRequestSchema = z.object({
   token: z.string().min(1),
-  newPassword: z.string().min(8)
+  newPassword: passwordField
 });
 
 export const RegisterRequestSchema = z.object({

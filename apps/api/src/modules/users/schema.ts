@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { paginatedSchema } from '../../lib/http-schemas.js';
-import { emailField, trimmedString } from '../../lib/normalize.js';
+import { emailField, trimmedString, passwordField } from '../../lib/normalize.js';
 
 export const ListUsersRequestSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
@@ -21,7 +21,7 @@ export const UpdateUserRequestSchema = z
 
 export const UpdatePasswordRequestSchema = z.object({
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(8)
+  newPassword: passwordField
 });
 
 export const UpdatePermissionsRequestSchema = z.object({

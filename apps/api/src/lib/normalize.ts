@@ -74,3 +74,15 @@ export function trimmedString(max?: number, min = 0) {
     .transform((s) => s.replace(/\s+/g, ' '))
     .pipe(out);
 }
+
+/**
+ * User-settable password (set/reset/change — NOT login). Length only: OWASP discourages composition
+ * rules, so we enforce a 12-char floor and a 64-char ceiling and otherwise allow anything, including
+ * spaces (passphrases). Deliberately NOT trimmed — leading/trailing spaces are part of the secret.
+ * The breach/common-password reject is a separate, async check (`isCommonPassword` in
+ * `lib/passwordPolicy.ts`) run in the service layer, so this stays a sync Zod schema.
+ */
+export const passwordField = z
+  .string()
+  .min(12, 'A senha deve ter ao menos 12 caracteres')
+  .max(64, 'A senha deve ter no máximo 64 caracteres');

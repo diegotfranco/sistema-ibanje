@@ -7,6 +7,7 @@ import type {
   UpdateMyProfileRequest
 } from './schema.js';
 import { logAudit } from '../../lib/audit.js';
+import { isLoginLocked, registerLoginFailure, clearLoginFailures } from './lockout.js';
 import * as service from './service.js';
 
 export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
@@ -17,12 +18,21 @@ export async function getCsrfToken(_req: FastifyRequest, reply: FastifyReply) {
 export async function login(req: FastifyRequest, reply: FastifyReply) {
   const { email, password, rememberMe } = req.body as LoginRequest;
 
+  // Per-account soft lock. Returns the same generic 401 as a normal bad credential so the lock
+  // state is never disclosed (no enumeration, no confirmation that an admin email was locked).
+  if (await isLoginLocked(email)) {
+    req.log.warn({ email, ip: req.ip }, 'login blocked: too many failed attempts');
+    return reply.code(401).send({ message: 'Invalid credentials' });
+  }
+
   const result = await service.login(email, password);
   if (!result) {
+    await registerLoginFailure(email);
     req.log.warn({ email, ip: req.ip }, 'failed login attempt');
     return reply.code(401).send({ message: 'Invalid credentials' });
   }
 
+  await clearLoginFailures(email);
   await req.session.regenerate();
   req.session.userId = result.userId;
 
@@ -61,7 +71,7 @@ export async function me(req: FastifyRequest, reply: FastifyReply) {
 export async function requestPasswordReset(req: FastifyRequest, reply: FastifyReply) {
   const { email } = req.body as PasswordResetRequest;
 
-  await service.requestPasswordReset(email, req.ip, req.headers['user-agent']);
+  await service.requestPasswordReset(email, req.ip, req.headers['user-agent'], req.log);
 
   return reply.send({ message: 'If that email exists, a reset link was sent' });
 }
