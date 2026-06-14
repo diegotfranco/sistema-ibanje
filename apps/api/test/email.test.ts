@@ -67,3 +67,31 @@ describe('email sender from-string', () => {
     expect(sendMock.mock.calls[0][0].from).toBe(`"Sistema Ibanje" <${ADDRESS}>`);
   });
 });
+
+describe('email send failure surfacing', () => {
+  beforeEach(() => {
+    sendMock.mockReset();
+  });
+
+  afterAll(() => {
+    sendMock.mockResolvedValue({ data: { id: 'test' }, error: null });
+  });
+
+  it('throws (without leaking the recipient) when Resend returns an error object', async () => {
+    sendMock.mockResolvedValue({ data: null, error: { message: 'domain not verified' } });
+    await expect(sendInviteEmail('user@example.com', 'token123')).rejects.toThrow(
+      /Resend rejected/
+    );
+    // The recipient address must not appear in the thrown message (error strings bypass redaction).
+    await sendInviteEmail('secret@example.com', 'token123').catch((err: Error) => {
+      expect(err.message).not.toContain('secret@example.com');
+    });
+  });
+
+  it('throws when the Resend SDK itself rejects', async () => {
+    sendMock.mockRejectedValue(new Error('network down'));
+    await expect(sendPasswordResetEmail('user@example.com', 'token123')).rejects.toThrow(
+      /Failed to send/
+    );
+  });
+});

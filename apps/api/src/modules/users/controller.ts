@@ -8,6 +8,7 @@ import type {
 } from './schema.js';
 import type { IdParam } from '../../lib/validation.js';
 import { logAudit } from '../../lib/audit.js';
+import { httpError } from '../../lib/errors.js';
 import { sendInviteEmail } from '../../lib/email.js';
 import * as service from './service.js';
 
@@ -66,8 +67,18 @@ export async function create(req: FastifyRequest, reply: FastifyReply) {
   const user = await service.createUser(body, (token) => {
     inviteToken = token;
   });
-  await sendInviteEmail(body.email, inviteToken);
+  // Audit the create before the email: the account exists post-commit regardless of whether the
+  // invite goes out, so the record must not hinge on the send succeeding.
   logAudit(req.session.userId!, 'create', 'user', user.id, { ipAddress: req.ip });
+  try {
+    await sendInviteEmail(body.email, inviteToken);
+  } catch (err) {
+    req.log.error({ err, userId: user.id }, 'invite email failed after user creation');
+    throw httpError(
+      502,
+      'Usuário criado, mas o envio do e-mail de convite falhou. Reenvie o convite mais tarde.'
+    );
+  }
   return reply.code(201).send(user);
 }
 
@@ -80,10 +91,18 @@ export async function approve(req: FastifyRequest, reply: FastifyReply) {
     inviteEmail = email;
   });
   if (!user) return reply.code(404).send({ message: 'User not found' });
-  await sendInviteEmail(inviteEmail, inviteToken);
   logAudit(req.session.userId!, 'state_change', 'user', id, {
     notes: 'approved',
     ipAddress: req.ip
   });
+  try {
+    await sendInviteEmail(inviteEmail, inviteToken);
+  } catch (err) {
+    req.log.error({ err, userId: id }, 'invite email failed after user approval');
+    throw httpError(
+      502,
+      'Usuário aprovado, mas o envio do e-mail de convite falhou. Reenvie o convite mais tarde.'
+    );
+  }
   return reply.send(user);
 }

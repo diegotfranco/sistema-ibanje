@@ -1,4 +1,5 @@
 import { eq, gte, lt, sum, count, and, desc, isNotNull, ne, sql } from 'drizzle-orm';
+import { ClosingStatus, EntryStatus } from '@sistema-ibanje/shared';
 import { db } from '../../../db/index.js';
 import {
   monthlyClosings,
@@ -28,6 +29,10 @@ type MonthlyClosingRow = Omit<MonthlyClosing, 'period'> & {
   periodYear: number;
   periodMonth: number;
 };
+
+// Drizzle's transaction callback executor — same query surface as `db`, so repo fns accept it
+// optionally (`executor = tx ?? db`) to participate in a caller-owned transaction.
+type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 function decode(row: MonthlyClosing): MonthlyClosingRow {
   const { period, ...rest } = row;
@@ -62,8 +67,32 @@ export async function listMonthlyClosingYears(): Promise<number[]> {
   return rows.map((r) => Number(r.year));
 }
 
-export async function findMonthlyClosingById(id: number): Promise<MonthlyClosingRow | null> {
-  const result = await db.select().from(monthlyClosings).where(eq(monthlyClosings.id, id)).limit(1);
+export async function findMonthlyClosingById(
+  id: number,
+  tx?: Tx
+): Promise<MonthlyClosingRow | null> {
+  const executor = tx ?? db;
+  const result = await executor
+    .select()
+    .from(monthlyClosings)
+    .where(eq(monthlyClosings.id, id))
+    .limit(1);
+  return result[0] ? decode(result[0]) : null;
+}
+
+// SELECT … FOR UPDATE: takes a row-level write lock so a concurrent close of the same closing
+// blocks here until the first transaction commits, then re-reads the (now `fechado`) status and is
+// rejected by the caller's guard. This is the integrity guarantee against a double-close double-write.
+export async function findMonthlyClosingByIdForUpdate(
+  id: number,
+  tx: Tx
+): Promise<MonthlyClosingRow | null> {
+  const result = await tx
+    .select()
+    .from(monthlyClosings)
+    .where(eq(monthlyClosings.id, id))
+    .limit(1)
+    .for('update');
   return result[0] ? decode(result[0]) : null;
 }
 
@@ -88,7 +117,7 @@ export async function findPreviousFechadoClosing(
     .from(monthlyClosings)
     .where(
       and(
-        eq(monthlyClosings.status, 'fechado'),
+        eq(monthlyClosings.status, ClosingStatus.Closed),
         lt(monthlyClosings.period, toPeriodInt(year, month))
       )
     )
@@ -101,7 +130,7 @@ export async function findLatestNonAbertoClosing(): Promise<MonthlyClosingRow | 
   const result = await db
     .select()
     .from(monthlyClosings)
-    .where(ne(monthlyClosings.status, 'aberto'))
+    .where(ne(monthlyClosings.status, ClosingStatus.Open))
     .orderBy(desc(monthlyClosings.period))
     .limit(1);
   return result[0] ? decode(result[0]) : null;
@@ -135,13 +164,15 @@ export async function updateMonthlyClosing(
       | 'closedByUserId'
       | 'closedAt'
     >
-  >
+  >,
+  tx?: Tx
 ): Promise<MonthlyClosingRow | null> {
-  await db
+  const executor = tx ?? db;
+  await executor
     .update(monthlyClosings)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(monthlyClosings.id, id));
-  return findMonthlyClosingById(id);
+  return findMonthlyClosingById(id, tx);
 }
 
 export async function deleteMonthlyClosing(id: number) {
@@ -156,7 +187,7 @@ export async function sumIncomeForPeriod(year: number, month: number): Promise<s
       and(
         gte(incomeEntries.referenceDate, periodStart(year, month)),
         lt(incomeEntries.referenceDate, periodEnd(year, month)),
-        eq(incomeEntries.status, 'paga')
+        eq(incomeEntries.status, EntryStatus.Paid)
       )
     );
   return result[0]?.total ?? '0';
@@ -170,7 +201,7 @@ export async function sumExpensesForPeriod(year: number, month: number): Promise
       and(
         gte(expenseEntries.date, periodStart(year, month)),
         lt(expenseEntries.date, periodEnd(year, month)),
-        eq(expenseEntries.status, 'paga')
+        eq(expenseEntries.status, EntryStatus.Paid)
       )
     );
   return result[0]?.total ?? '0';
@@ -188,7 +219,7 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
         and(
           gte(incomeEntries.referenceDate, start),
           lt(incomeEntries.referenceDate, end),
-          eq(incomeEntries.status, 'paga'),
+          eq(incomeEntries.status, EntryStatus.Paid),
           isNotNull(incomeEntries.campaignId)
         )
       ),
@@ -199,7 +230,7 @@ export async function getTotalReservedFunds(year: number, month: number): Promis
         and(
           gte(expenseEntries.date, start),
           lt(expenseEntries.date, end),
-          eq(expenseEntries.status, 'paga'),
+          eq(expenseEntries.status, EntryStatus.Paid),
           isNotNull(expenseEntries.campaignId)
         )
       )
@@ -219,7 +250,7 @@ export async function sumNetForDateRange(startDate: string, endDate: string): Pr
         and(
           gte(incomeEntries.referenceDate, startDate),
           lt(incomeEntries.referenceDate, endDate),
-          eq(incomeEntries.status, 'paga')
+          eq(incomeEntries.status, EntryStatus.Paid)
         )
       ),
     db
@@ -229,7 +260,7 @@ export async function sumNetForDateRange(startDate: string, endDate: string): Pr
         and(
           gte(expenseEntries.date, startDate),
           lt(expenseEntries.date, endDate),
-          eq(expenseEntries.status, 'paga')
+          eq(expenseEntries.status, EntryStatus.Paid)
         )
       )
   ]);

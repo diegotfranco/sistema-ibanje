@@ -1,4 +1,5 @@
 import * as repo from './repository.js';
+import { db } from '../../../db/index.js';
 import { assertPermission } from '../../../lib/permissions.js';
 import { Module, Action } from '../../../lib/constants.js';
 import { ClosingStatus } from '@sistema-ibanje/shared';
@@ -267,7 +268,7 @@ export async function reproveApprovedClosing(
   }
 
   const updated = await repo.updateMonthlyClosing(id, {
-    status: 'rejeitado',
+    status: ClosingStatus.Rejected,
     reviewedAt: null
   });
   return buildResponse(updated!);
@@ -279,47 +280,58 @@ export async function closeMonthlyClosing(
 ): Promise<MonthlyClosingResponse> {
   await assertPermission(callerId, Module.MonthlyClosings, Action.Update);
 
-  const closing = await repo.findMonthlyClosingById(id);
-  if (!closing) throw httpError(404, 'Monthly closing not found');
-  if (closing.status !== ClosingStatus.Approved)
-    throw httpError(409, 'Only approved closings can be closed');
+  // Closing writes a permanent closingBalance and chains into the next period's opening balance, so a
+  // double-close (two treasurers/admins hitting "fechar" at once) would double-write and could fork
+  // the balance chain. The whole read-decide-write runs in one transaction; the closing row is taken
+  // FOR UPDATE first so the second concurrent caller blocks, then re-reads the now-`fechado` status
+  // and is rejected by the guard below — exactly one close wins.
+  return await db.transaction(async (tx) => {
+    const closing = await repo.findMonthlyClosingByIdForUpdate(id, tx);
+    if (!closing) throw httpError(404, 'Monthly closing not found');
+    if (closing.status !== ClosingStatus.Approved)
+      throw httpError(409, 'Only approved closings can be closed');
 
-  const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
-  const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
-  const prevMonthClosing = await repo.findMonthlyClosingByPeriod(prevYear, prevMonth);
-  if (prevMonthClosing && prevMonthClosing.status !== ClosingStatus.Closed) {
-    throw httpError(409, 'Previous period must be closed before closing this period');
-  }
+    const prevYear = closing.periodMonth === 1 ? closing.periodYear - 1 : closing.periodYear;
+    const prevMonth = closing.periodMonth === 1 ? 12 : closing.periodMonth - 1;
+    const prevMonthClosing = await repo.findMonthlyClosingByPeriod(prevYear, prevMonth);
+    if (prevMonthClosing && prevMonthClosing.status !== ClosingStatus.Closed) {
+      throw httpError(409, 'Previous period must be closed before closing this period');
+    }
 
-  const [totalIncome, totalExpenses] = await Promise.all([
-    repo.sumIncomeForPeriod(closing.periodYear, closing.periodMonth),
-    repo.sumExpensesForPeriod(closing.periodYear, closing.periodMonth)
-  ]);
+    const [totalIncome, totalExpenses] = await Promise.all([
+      repo.sumIncomeForPeriod(closing.periodYear, closing.periodMonth),
+      repo.sumExpensesForPeriod(closing.periodYear, closing.periodMonth)
+    ]);
 
-  const prevClosing = await repo.findPreviousFechadoClosing(
-    closing.periodYear,
-    closing.periodMonth
-  );
-  let openingBal: string;
-  if (prevClosing) {
-    openingBal = prevClosing.closingBalance ?? '0';
-  } else {
-    const settings = await repo.findFinanceSettings();
-    openingBal = settings?.openingBalance ?? '0';
-  }
-  const computedBalance = (
-    Number.parseFloat(openingBal) +
-    Number.parseFloat(totalIncome) -
-    Number.parseFloat(totalExpenses)
-  ).toFixed(2);
+    const prevClosing = await repo.findPreviousFechadoClosing(
+      closing.periodYear,
+      closing.periodMonth
+    );
+    let openingBal: string;
+    if (prevClosing) {
+      openingBal = prevClosing.closingBalance ?? '0';
+    } else {
+      const settings = await repo.findFinanceSettings();
+      openingBal = settings?.openingBalance ?? '0';
+    }
+    const computedBalance = (
+      Number.parseFloat(openingBal) +
+      Number.parseFloat(totalIncome) -
+      Number.parseFloat(totalExpenses)
+    ).toFixed(2);
 
-  const updated = await repo.updateMonthlyClosing(id, {
-    status: ClosingStatus.Closed,
-    closingBalance: computedBalance,
-    closedByUserId: callerId,
-    closedAt: new Date()
+    const updated = await repo.updateMonthlyClosing(
+      id,
+      {
+        status: ClosingStatus.Closed,
+        closingBalance: computedBalance,
+        closedByUserId: callerId,
+        closedAt: new Date()
+      },
+      tx
+    );
+    return buildResponse(updated!);
   });
-  return buildResponse(updated!);
 }
 
 export async function deleteMonthlyClosing(callerId: number, id: number): Promise<void | null> {

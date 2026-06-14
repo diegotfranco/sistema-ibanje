@@ -44,19 +44,20 @@ function wrap(title: string, body: string, buttonLabel: string, buttonUrl: strin
 </html>`;
 }
 
+// Throws on any failure (SDK exception OR the `{ error }` Resend returns instead of throwing).
+// Callers decide how to react: admin-triggered sends (invite) let it propagate so the operator sees
+// the failure; the self-serve reset path catches + logs but stays silent (no user enumeration). The
+// recipient address is deliberately kept out of the thrown message — error strings aren't covered by
+// the Pino redaction policy, so we surface only the non-PII `label`.
 async function send(to: string, subject: string, html: string, label: string): Promise<void> {
+  let result: Awaited<ReturnType<typeof resend.emails.send>>;
   try {
-    const result = await resend.emails.send({
-      from: await buildFrom(),
-      to,
-      subject,
-      html
-    });
-    if (result.error) {
-      console.error(`[email] resend rejected ${label}`, { to, error: result.error });
-    }
+    result = await resend.emails.send({ from: await buildFrom(), to, subject, html });
   } catch (err) {
-    console.error(`[email] failed to send ${label}`, { to, err });
+    throw new Error(`Failed to send ${label}`, { cause: err });
+  }
+  if (result.error) {
+    throw new Error(`Resend rejected ${label}: ${result.error.message ?? 'unknown error'}`);
   }
 }
 
