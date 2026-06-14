@@ -99,7 +99,7 @@ export default function AttenderStatusDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Alterar situação — {attender?.name}</DialogTitle>
         </DialogHeader>
@@ -109,11 +109,14 @@ export default function AttenderStatusDialog({
             <Controller
               control={control}
               name="status"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   value={field.value}
                   onValueChange={(v) => field.onChange(v as AttenderStatusValue)}>
-                  <SelectTrigger id="status" className="w-full">
+                  <SelectTrigger
+                    id="status"
+                    className="w-full"
+                    aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,13 +139,14 @@ export default function AttenderStatusDialog({
                 <Controller
                   control={control}
                   name="exitDate"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <DateInput
                       id="exitDate"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
                       name={field.name}
+                      aria-invalid={fieldState.invalid || undefined}
                     />
                   )}
                 />
@@ -153,7 +157,12 @@ export default function AttenderStatusDialog({
 
               <div className="space-y-1">
                 <Label htmlFor="exitReason">Motivo</Label>
-                <Input id="exitReason" maxLength={256} {...register('exitReason')} />
+                <Input
+                  id="exitReason"
+                  maxLength={256}
+                  {...register('exitReason')}
+                  aria-invalid={!!errors.exitReason || undefined}
+                />
                 {errors.exitReason && (
                   <p className="text-xs text-destructive">{errors.exitReason.message}</p>
                 )}
@@ -167,11 +176,14 @@ export default function AttenderStatusDialog({
               <Controller
                 control={control}
                 name="exitLetterId"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <Select
                     value={field.value != null ? String(field.value) : NO_LETTER}
                     onValueChange={(v) => field.onChange(v === NO_LETTER ? null : Number(v))}>
-                    <SelectTrigger id="exitLetterId" className="w-full">
+                    <SelectTrigger
+                      id="exitLetterId"
+                      className="w-full"
+                      aria-invalid={fieldState.invalid || undefined}>
                       <SelectValue placeholder="Nenhuma (pode vincular depois)" />
                     </SelectTrigger>
                     <SelectContent>

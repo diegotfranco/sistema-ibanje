@@ -65,7 +65,7 @@ export default function ExpenseEntriesPage() {
       />
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Editar lançamento de saída</DialogTitle>
           </DialogHeader>
@@ -109,7 +109,10 @@ export default function ExpenseEntriesPage() {
       <ConfirmDeleteDialog
         open={deleting !== null}
         onOpenChange={(v) => !v && setDeleting(null)}
-        description={`Tem certeza que deseja remover o lançamento "${deleting?.categoryName ?? ''}"?`}
+        title="Cancelar lançamento"
+        description={`Tem certeza que deseja cancelar o lançamento "${deleting?.categoryName ?? ''}"? Ele será marcado como cancelado e deixará de contar no período.`}
+        confirmLabel="Cancelar lançamento"
+        pendingLabel="Cancelando..."
         onConfirm={() =>
           deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
         }

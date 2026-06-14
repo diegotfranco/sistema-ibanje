@@ -7,6 +7,11 @@ import { Card, CardContent, CardHeaderRow, CardTitle } from '@/components/Card';
 import { DataTable } from '@/components/DataTable';
 import { Pagination } from '@/components/Pagination';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  ToolbarActionButtons,
+  ToolbarActionsMenu,
+  type ToolbarAction
+} from '@/components/toolbarActions';
 import { cn } from '@/lib/utils';
 import { groupCategoriesByParent, type CategoryLike } from './category-grouping';
 
@@ -30,8 +35,9 @@ interface Props<T extends CategoryLike> {
   onDelete: (row: T) => void;
   renderRowMeta?: (row: T) => ReactNode;
   createLabel?: string;
-  /** Extra controls rendered in the card header, left of the create button (e.g. a TrashToggle). */
-  headerActions?: ReactNode;
+  /** Secondary toolbar actions (e.g. a trash toggle). Rendered as outline buttons in the table
+   *  toolbar on desktop and inside a header overflow menu on mobile. */
+  actions?: ToolbarAction[];
 }
 
 type SectionKey = number | 'orphans';
@@ -68,8 +74,9 @@ export function CategoryGroupedList<T extends CategoryLike>({
   onDelete,
   renderRowMeta,
   createLabel = 'Adicionar',
-  headerActions
+  actions
 }: Props<T>) {
+  const toolbarActions = actions ?? [];
   const { groups, orphans } = useMemo(() => groupCategoriesByParent(items), [items]);
   const [collapsed, setCollapsed] = useState<Partial<Record<SectionKey, boolean>>>({});
   const [page, setPage] = useState(1);
@@ -311,7 +318,7 @@ export function CategoryGroupedList<T extends CategoryLike>({
       <CardHeaderRow>
         <CardTitle>{title}</CardTitle>
         <div className="flex items-center gap-2">
-          {headerActions}
+          <ToolbarActionsMenu actions={toolbarActions} className="md:hidden" />
           {canCreate && (
             <Button onClick={onCreate} size="sm">
               <Plus className="mr-1 h-4 w-4" />
@@ -334,6 +341,11 @@ export function CategoryGroupedList<T extends CategoryLike>({
           searchable={{ placeholder: 'Buscar...', loading: isSearching }}
           globalFilter={searchQuery}
           onGlobalFilterChange={onSearchChange}
+          toolbarRight={
+            toolbarActions.length > 0 ? (
+              <ToolbarActionButtons actions={toolbarActions} />
+            ) : undefined
+          }
         />
         <div className="border-t px-3 py-2 flex justify-end">
           <Pagination currentPage={safePage} totalPages={totalPages} onPageChange={setPage} />

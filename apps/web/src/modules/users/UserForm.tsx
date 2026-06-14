@@ -102,12 +102,17 @@ export default function UserForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-1">
           <Label htmlFor="edit-name">Nome</Label>
-          <Input id="edit-name" {...register('name')} />
+          <Input id="edit-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
           {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
         </div>
         <div className="space-y-1">
           <Label htmlFor="edit-email">E-mail</Label>
-          <Input id="edit-email" type="email" {...register('email')} />
+          <Input
+            id="edit-email"
+            type="email"
+            {...register('email')}
+            aria-invalid={!!errors.email || undefined}
+          />
           {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-1">
@@ -115,7 +120,7 @@ export default function UserForm({
           <Controller
             name="roleId"
             control={control}
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <EntityPicker<RoleResponse>
                 items={roles}
                 value={field.value ?? null}
@@ -124,6 +129,7 @@ export default function UserForm({
                 getLabel={(r) => r.name}
                 placeholder="Selecionar cargo..."
                 isLoading={rolesList.isLoading}
+                aria-invalid={fieldState.invalid || undefined}
               />
             )}
           />
@@ -151,7 +157,7 @@ export default function UserForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="space-y-1">
         <Label htmlFor="create-name">Nome *</Label>
-        <Input id="create-name" {...register('name')} />
+        <Input id="create-name" {...register('name')} aria-invalid={!!errors.name || undefined} />
         {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
       </div>
       <div className="space-y-1">
@@ -163,6 +169,7 @@ export default function UserForm({
               id="create-email"
               type="email"
               {...emailField}
+              aria-invalid={!!errors.email || undefined}
               onBlur={(e) => {
                 emailField.onBlur(e);
                 warnOnUnlinkedMemberEmail(e.target.value);
@@ -177,7 +184,7 @@ export default function UserForm({
         <Controller
           name="roleId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <EntityPicker<RoleResponse>
               items={roles}
               value={field.value ?? null}
@@ -186,13 +193,14 @@ export default function UserForm({
               getLabel={(r) => r.name}
               placeholder="Selecionar cargo..."
               isLoading={rolesList.isLoading}
+              aria-invalid={fieldState.invalid || undefined}
             />
           )}
         />
         {errors.roleId && <p className="text-xs text-destructive">{errors.roleId.message}</p>}
       </div>
       <div className="space-y-1">
-        <Label>Membro (opcional)</Label>
+        <Label>Membro</Label>
         <Controller
           name="attenderId"
           control={control}

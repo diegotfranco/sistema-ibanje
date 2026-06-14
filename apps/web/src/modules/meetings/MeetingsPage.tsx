@@ -132,7 +132,7 @@ export default function PautasPage() {
                                 setEditing(row);
                                 setFormOpen(true);
                               }}
-                              className="text-warning hover:text-warning/80">
+                              className="text-warning-strong hover:text-warning-strong/80">
                               <Pencil className="h-4 w-4" />
                             </Button>
                             <Button

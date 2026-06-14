@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import { FINANCE_DERIVED_KEYS } from '@/lib/financeInvalidation';
 import { api, ApiError } from '@/lib/api';
 import type {
   ExpenseEntryResponse,
@@ -36,7 +37,8 @@ export function useExpenseEntryMutations() {
       created: 'Lançamento criado.',
       updated: 'Lançamento atualizado.',
       removed: 'Lançamento removido.'
-    }
+    },
+    FINANCE_DERIVED_KEYS
   );
 }
 

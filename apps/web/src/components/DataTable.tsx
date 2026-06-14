@@ -328,7 +328,7 @@ export function DataTable<TData>({
         {columnToggle && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="bg-transparent">
+              <Button variant="outline" className="bg-transparent" size="sm">
                 <SlidersHorizontal size={14} className="mr-1" />
                 Colunas
               </Button>

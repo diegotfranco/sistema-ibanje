@@ -15,15 +15,25 @@ export function registerErrorHandler(app: FastifyInstance) {
         const field = issue.instancePath.replace(/^\//, '').replace(/\//g, '.');
         if (field) fieldErrors[field] = issue.message ?? 'Valor inválido';
       }
-      return reply.code(400).send({ message: 'Validation error', fieldErrors });
+      // Root-level issues (empty instancePath) carry no field key. Rather than return an opaque
+      // { message: 'Validation error', fieldErrors: {} }, surface the first issue's message.
+      const message =
+        Object.keys(fieldErrors).length > 0
+          ? 'Validation error'
+          : (error.validation[0]?.message ?? 'Validation error');
+      return reply.code(400).send({ message, fieldErrors });
     }
     if (error instanceof ZodError) {
       const fieldErrors: Record<string, string> = {};
       for (const issue of error.issues) {
         const field = issue.path.join('.');
-        fieldErrors[field] = issue.message;
+        if (field) fieldErrors[field] = issue.message;
       }
-      return reply.code(400).send({ message: 'Validation error', fieldErrors });
+      const message =
+        Object.keys(fieldErrors).length > 0
+          ? 'Validation error'
+          : (error.issues[0]?.message ?? 'Validation error');
+      return reply.code(400).send({ message, fieldErrors });
     }
     if (isHttpError(error) && error.statusCode < 500) {
       const body: Record<string, unknown> = { message: error.message };

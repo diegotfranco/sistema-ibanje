@@ -267,7 +267,7 @@ export default function MinuteDetailPage() {
 
       {/* Edit details dialog */}
       <Dialog open={editDetailsOpen} onOpenChange={setEditDetailsOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Detalhes</DialogTitle>
           </DialogHeader>
@@ -354,7 +354,7 @@ export default function MinuteDetailPage() {
 
       {/* PDF preview dialog */}
       <Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}>
-        <DialogContent className="sm:max-w-4xl h-[90vh] flex flex-col">
+        <DialogContent size="xl" className="h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Pré-visualização — {minute.minuteNumber}</DialogTitle>
           </DialogHeader>
@@ -380,7 +380,7 @@ export default function MinuteDetailPage() {
 
       {/* Version viewer dialog */}
       <Dialog open={!!selectedVersion} onOpenChange={(open) => !open && setSelectedVersion(null)}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent size="lg" className="flex flex-col">
           <DialogHeader>
             <DialogTitle>
               Versão v{selectedVersion?.version} — {selectedVersion?.status}

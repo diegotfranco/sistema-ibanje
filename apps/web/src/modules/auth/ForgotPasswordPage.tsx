@@ -44,7 +44,6 @@ export default function ForgotPasswordPage() {
                     {...field}
                     id="email"
                     type="email"
-                    placeholder="exemplo@mail.com"
                     autoComplete="email"
                     aria-invalid={fieldState.invalid}
                   />

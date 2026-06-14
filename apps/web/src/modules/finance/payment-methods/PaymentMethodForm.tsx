@@ -42,35 +42,37 @@ export function PaymentMethodForm({ initialValues, isPending, onSubmit, onCancel
             </Field>
           )}
         />
-        <Controller
-          name="allowsInflow"
-          control={form.control}
-          render={({ field, fieldState }) => (
-            <Field orientation="horizontal" data-invalid={fieldState.invalid}>
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="cursor-pointer"
-              />
-              <FieldLabel className="cursor-pointer">Permite entrada</FieldLabel>
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
-        <Controller
-          name="allowsOutflow"
-          control={form.control}
-          render={({ field }) => (
-            <Field orientation="horizontal">
-              <Checkbox
-                checked={field.value}
-                onCheckedChange={field.onChange}
-                className="cursor-pointer"
-              />
-              <FieldLabel className="cursor-pointer">Permite saída</FieldLabel>
-            </Field>
-          )}
-        />
+        <div className="flex gap-8">
+          <Controller
+            name="allowsInflow"
+            control={form.control}
+            render={({ field, fieldState }) => (
+              <Field orientation="horizontal" className="w-auto" data-invalid={fieldState.invalid}>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="cursor-pointer"
+                />
+                <FieldLabel className="cursor-pointer">Entrada</FieldLabel>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+          <Controller
+            name="allowsOutflow"
+            control={form.control}
+            render={({ field }) => (
+              <Field orientation="horizontal" className="w-auto">
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  className="cursor-pointer"
+                />
+                <FieldLabel className="cursor-pointer">Saída</FieldLabel>
+              </Field>
+            )}
+          />
+        </div>
       </FieldGroup>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>

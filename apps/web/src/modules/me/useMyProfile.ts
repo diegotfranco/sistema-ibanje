@@ -1,7 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError } from '@/lib/api';
-import type { AttenderProfileResponse, UpdateMyProfileFormValues } from './schema';
+import type {
+  AttenderProfileResponse,
+  ChangeMyPasswordFormValues,
+  UpdateMyProfileFormValues
+} from './schema';
 
 function describeError(err: unknown, fallback: string) {
   if (err instanceof ApiError) return err.message || fallback;
@@ -26,5 +30,17 @@ export function useUpdateMyProfile() {
       toast.success('Perfil atualizado com sucesso.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao atualizar perfil.'))
+  });
+}
+
+export function useChangeMyPassword(userId: number | undefined) {
+  return useMutation({
+    mutationFn: (values: ChangeMyPasswordFormValues) =>
+      api.patch(`/users/${userId}/password`, {
+        currentPassword: values.currentPassword,
+        newPassword: values.newPassword
+      }),
+    onSuccess: () => toast.success('Senha alterada com sucesso.'),
+    onError: (err) => toast.error(describeError(err, 'Erro ao alterar a senha.'))
   });
 }

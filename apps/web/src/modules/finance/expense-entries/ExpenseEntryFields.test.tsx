@@ -207,7 +207,7 @@ describe('ExpenseEntryFields', () => {
     renderWithProviders(<TestComponent />);
 
     await waitFor(() => {
-      expect(screen.getByText('Vincular a (opcional)')).toBeInTheDocument();
+      expect(screen.getByText('Vincular a')).toBeInTheDocument();
     });
   });
 

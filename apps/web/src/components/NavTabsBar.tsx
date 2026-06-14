@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   Select,
   SelectContent,
@@ -21,12 +22,14 @@ interface NavTabsBarProps {
   tabs: NavTab[];
   value: string;
   onValueChange: (value: string) => void;
+  /** Optional control rendered on the right of the bar (e.g. a period filter), justified between. */
+  action?: ReactNode;
 }
 
-export function NavTabsBar({ tabs, value, onValueChange }: NavTabsBarProps) {
+export function NavTabsBar({ tabs, value, onValueChange, action }: NavTabsBarProps) {
   return (
     <>
-      <div className="sm:hidden border-b px-4 py-3">
+      <div className="sm:hidden space-y-2 border-b px-4 py-3">
         <Select value={value} onValueChange={onValueChange}>
           <SelectTrigger className="w-full">
             <SelectValue />
@@ -39,8 +42,9 @@ export function NavTabsBar({ tabs, value, onValueChange }: NavTabsBarProps) {
             ))}
           </SelectContent>
         </Select>
+        {action}
       </div>
-      <div className="hidden sm:block border-b px-4 pt-0.5 pb-2">
+      <div className="hidden sm:flex items-center justify-between gap-4 border-b px-4 py-2">
         <TabsList variant="line">
           {tabs.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} className={triggerClassName}>
@@ -48,6 +52,7 @@ export function NavTabsBar({ tabs, value, onValueChange }: NavTabsBarProps) {
             </TabsTrigger>
           ))}
         </TabsList>
+        {action}
       </div>
     </>
   );

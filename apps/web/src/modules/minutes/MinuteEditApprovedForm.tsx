@@ -47,7 +47,7 @@ export default function MinuteEditApprovedForm({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Criar Nova Versão</DialogTitle>
         </DialogHeader>
@@ -76,7 +76,11 @@ export default function MinuteEditApprovedForm({
           </div>
           <div className="space-y-1">
             <Label htmlFor="ea-reason">Motivo da alteração *</Label>
-            <Input id="ea-reason" {...form.register('reasonForChange')} />
+            <Input
+              id="ea-reason"
+              {...form.register('reasonForChange')}
+              aria-invalid={!!form.formState.errors.reasonForChange || undefined}
+            />
             {form.formState.errors.reasonForChange && (
               <p className="text-xs text-destructive">
                 {form.formState.errors.reasonForChange.message}

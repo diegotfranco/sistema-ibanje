@@ -19,7 +19,7 @@ export function useRoles({ deleted }: { deleted?: DeletedFilter } = {}) {
 
 export function useRoleMutations() {
   // The shared hook supplies create/update/remove/restore with correct cache invalidation
-  // (keyed by [basePath, ...KEY]); restore hits PATCH /roles/:id/restore.
+  // (keyed by the semantic KEY); restore hits PATCH /roles/:id/restore.
   return useResourceMutations<RoleResponse, RoleFormValues, Partial<RoleFormValues>>(BASE, KEY, {
     created: 'Cargo cadastrado.',
     updated: 'Cargo atualizado.',

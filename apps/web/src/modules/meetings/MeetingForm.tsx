@@ -53,7 +53,7 @@ export default function MeetingForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Editar Reunião' : 'Nova Reunião'}</DialogTitle>
         </DialogHeader>
@@ -63,13 +63,14 @@ export default function MeetingForm({
             <Controller
               control={control}
               name="meetingDate"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <DateInput
                   id="meetingDate"
                   value={field.value}
                   onChange={(e) => field.onChange(e.target.value)}
                   onBlur={field.onBlur}
                   name={field.name}
+                  aria-invalid={fieldState.invalid || undefined}
                 />
               )}
             />
@@ -83,9 +84,9 @@ export default function MeetingForm({
             <Controller
               control={control}
               name="type"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>

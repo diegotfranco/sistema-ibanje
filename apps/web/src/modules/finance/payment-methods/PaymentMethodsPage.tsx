@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/D
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { TrashToggle } from '@/components/TrashToggle';
+import { trashToggleAction } from '@/components/toolbarActions';
 import { Module, Action, hasPermission } from '@/lib/permissions';
 import { ActiveStatus } from '@sistema-ibanje/shared';
 import { useCurrentUser } from '@/modules/auth/useCurrentUser';
@@ -61,11 +61,7 @@ export default function PaymentMethodsPage() {
           data={items}
           isLoading={list.isLoading}
           emptyMessage={viewingTrash ? 'A lixeira está vazia.' : undefined}
-          toolbarRight={
-            canDelete ? (
-              <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
-            ) : undefined
-          }
+          actions={canDelete ? [trashToggleAction(viewingTrash, setViewingTrash)] : undefined}
           onCreate={!viewingTrash && canCreate ? () => setEditing('new') : undefined}
           onEdit={!viewingTrash && canEdit ? (r) => setEditing(r) : undefined}
           onDelete={!viewingTrash && canDelete ? (r) => setDeleting(r) : undefined}

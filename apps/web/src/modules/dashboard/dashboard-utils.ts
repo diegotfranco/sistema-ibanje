@@ -11,10 +11,7 @@ export {
 
 export const formatMonthForBanner = (monthStr: string): string => formatMonthYear(monthStr);
 
-export const formatMoney = (value: string | number): string => {
-  const num = typeof value === 'string' ? Number.parseFloat(value) : value;
-  return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+export { formatMoney } from '@/lib/format';
 
 export const getMonthNumber = (monthStr: string): number => {
   const [, month] = monthStr.split('-');

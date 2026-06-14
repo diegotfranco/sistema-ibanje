@@ -89,18 +89,18 @@ export function getStatusLabel(status: string): string {
 const ACTIVE_STATUS_CLASSES: Record<ActiveStatusValue, string> = {
   [ActiveStatus.Active]: 'bg-success/15 text-success',
   [ActiveStatus.Inactive]: 'bg-muted text-muted-foreground',
-  [ActiveStatus.Pending]: 'bg-warning/15 text-warning'
+  [ActiveStatus.Pending]: 'bg-warning-strong/15 text-warning-strong'
 };
 
 const ENTRY_STATUS_CLASSES: Record<EntryStatusValue, string> = {
-  [EntryStatus.Pending]: 'bg-warning/15 text-warning',
+  [EntryStatus.Pending]: 'bg-warning-strong/15 text-warning-strong',
   [EntryStatus.Paid]: 'bg-success/15 text-success',
   [EntryStatus.Cancelled]: 'bg-muted text-muted-foreground'
 };
 
 const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
   [ClosingStatus.Open]: 'bg-primary-soft/15 text-primary-soft',
-  [ClosingStatus.InReview]: 'bg-warning/15 text-warning',
+  [ClosingStatus.InReview]: 'bg-warning-strong/15 text-warning-strong',
   [ClosingStatus.Rejected]: 'bg-danger/15 text-danger',
   [ClosingStatus.Approved]: 'bg-success/15 text-success',
   [ClosingStatus.Closed]: 'bg-muted text-muted-foreground'
@@ -108,7 +108,7 @@ const CLOSING_STATUS_CLASSES: Record<ClosingStatusValue, string> = {
 
 const MINUTE_STATUS_CLASSES: Record<MinuteStatusValue, string> = {
   [MinuteStatus.Draft]: 'bg-primary-soft/15 text-primary-soft',
-  [MinuteStatus.AwaitingApproval]: 'bg-warning/15 text-warning',
+  [MinuteStatus.AwaitingApproval]: 'bg-warning-strong/15 text-warning-strong',
   [MinuteStatus.Approved]: 'bg-success/15 text-success',
   [MinuteStatus.Replaced]: 'bg-muted text-muted-foreground'
 };

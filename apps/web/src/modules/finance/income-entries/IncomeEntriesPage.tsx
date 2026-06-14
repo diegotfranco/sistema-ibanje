@@ -54,7 +54,7 @@ export default function IncomeEntriesPage() {
       />
 
       <Dialog open={editing !== null} onOpenChange={(v) => !v && setEditing(null)}>
-        <DialogContent className="sm:max-w-2xl lg:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>Editar lançamento de entrada</DialogTitle>
           </DialogHeader>
@@ -77,7 +77,10 @@ export default function IncomeEntriesPage() {
       <ConfirmDeleteDialog
         open={deleting !== null}
         onOpenChange={(v) => !v && setDeleting(null)}
-        description={`Tem certeza que deseja remover este lançamento de R$ ${deleting ? formatMoney(deleting.amount) : ''}?`}
+        title="Cancelar lançamento"
+        description={`Tem certeza que deseja cancelar este lançamento de R$ ${deleting ? formatMoney(deleting.amount) : ''}? Ele será marcado como cancelado e deixará de contar no período.`}
+        confirmLabel="Cancelar lançamento"
+        pendingLabel="Cancelando..."
         onConfirm={() =>
           deleting && remove.mutate(deleting.id, { onSuccess: () => setDeleting(null) })
         }

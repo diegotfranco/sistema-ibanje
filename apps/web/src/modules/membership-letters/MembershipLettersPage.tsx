@@ -180,7 +180,7 @@ export default function MembershipLettersPage() {
                 setDialogOpen(true);
               }}
               title="Editar"
-              className="text-warning hover:text-warning/80">
+              className="text-warning-strong hover:text-warning-strong/80">
               <Pencil className="h-4 w-4" />
             </Button>
           )}
@@ -267,7 +267,7 @@ export default function MembershipLettersPage() {
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent size="lg">
           <DialogHeader>
             <DialogTitle>
               {editing ? 'Editar Carta de Transferência' : 'Nova Carta de Transferência'}

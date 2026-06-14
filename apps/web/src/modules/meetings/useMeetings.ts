@@ -29,7 +29,7 @@ export function useSetAgenda() {
     mutationFn: ({ id, items }: { id: number; items: AgendaItemInput[] }) =>
       api.put<MeetingResponse>(`${BASE}/${id}/agenda-items`, { items }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
       toast.success('Pauta salva.');
     },
     onError: (err) => toast.error(err instanceof ApiError ? err.message : 'Erro ao salvar pauta.')

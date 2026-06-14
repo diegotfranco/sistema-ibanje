@@ -65,7 +65,7 @@ export default function MinuteApprovalSection({
 
       {/* Approve dialog */}
       <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Aprovar Ata</DialogTitle>
           </DialogHeader>
@@ -100,7 +100,7 @@ export default function MinuteApprovalSection({
 
       {/* Finalize draft dialog */}
       <Dialog open={finalizeDraftOpen} onOpenChange={setFinalizeDraftOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent>
           <DialogHeader>
             <DialogTitle>Finalizar Rascunho</DialogTitle>
           </DialogHeader>
@@ -178,7 +178,7 @@ function UploadDocumentDialog({
         if (!v) setSelectedFile(null);
         onOpenChange(v);
       }}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Enviar PDF Assinado</DialogTitle>
         </DialogHeader>

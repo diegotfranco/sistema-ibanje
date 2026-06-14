@@ -5,6 +5,7 @@ import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import DateInput from '@/components/DateInput';
+import MoneyInput from '../components/MoneyInput';
 import { zodResolver } from '@/lib/zodResolver';
 import { CampaignFormSchema, type CampaignFormValues, type CampaignResponse } from './schema';
 
@@ -67,7 +68,14 @@ export function CampaignForm({ initialValues, isPending, onSubmit, onCancel }: P
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Meta (R$)</FieldLabel>
-              <Input {...field} aria-invalid={fieldState.invalid} placeholder="1000.00" />
+              <MoneyInput
+                value={field.value ?? ''}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                name={field.name}
+                aria-invalid={fieldState.invalid}
+                placeholder="0,00"
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}
@@ -77,7 +85,7 @@ export function CampaignForm({ initialValues, isPending, onSubmit, onCancel }: P
           control={form.control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Encerra em (opcional)</FieldLabel>
+              <FieldLabel>Encerra em</FieldLabel>
               <DateInput {...field} value={field.value || ''} aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>

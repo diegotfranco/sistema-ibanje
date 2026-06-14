@@ -32,7 +32,16 @@ export async function buildApp() {
     reply.header('x-request-id', req.id);
   });
 
-  app.setValidatorCompiler(validatorCompiler);
+  // An all-optional body schema (every PATCH/transition route) should accept a request that omits
+  // the body entirely. Fastify hands the validator `undefined` in that case and z.object() rejects it
+  // at the root path — surfacing as a generic "Validation error" with empty fieldErrors. Coerce a
+  // missing body to {} so optional schemas pass and required ones still produce proper per-field errors.
+  const bodyTolerantValidatorCompiler: typeof validatorCompiler = (routeSchema) => {
+    const validate = validatorCompiler(routeSchema);
+    if (routeSchema.httpPart !== 'body') return validate;
+    return (data) => validate(data == null ? {} : data);
+  };
+  app.setValidatorCompiler(bodyTolerantValidatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
   await registerCorsPlugin(app);

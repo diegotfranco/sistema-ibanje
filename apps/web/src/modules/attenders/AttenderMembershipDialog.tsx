@@ -61,7 +61,7 @@ export default function AttenderMembershipDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Admitir como membro — {attender?.name}</DialogTitle>
         </DialogHeader>
@@ -71,11 +71,14 @@ export default function AttenderMembershipDialog({
             <Controller
               control={control}
               name="admissionMode"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   value={field.value}
                   onValueChange={(v) => field.onChange(v as AdmitMemberValues['admissionMode'])}>
-                  <SelectTrigger id="admissionMode" className="w-full">
+                  <SelectTrigger
+                    id="admissionMode"
+                    className="w-full"
+                    aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -99,13 +102,14 @@ export default function AttenderMembershipDialog({
             <Controller
               control={control}
               name="memberSince"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <MonthInput
                   id="memberSince"
                   value={field.value ?? ''}
                   onChange={(e) => field.onChange(e.target.value)}
                   onBlur={field.onBlur}
                   name={field.name}
+                  aria-invalid={fieldState.invalid || undefined}
                 />
               )}
             />

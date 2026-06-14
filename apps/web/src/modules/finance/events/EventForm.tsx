@@ -1,9 +1,11 @@
-import { Controller, useForm } from 'react-hook-form';
+import { Controller, useForm, type Control } from 'react-hook-form';
 import { Button } from '@/components/Button';
 import { DialogFooter } from '@/components/Dialog';
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import DateInput from '@/components/DateInput';
+import { TimeInput } from '@/components/TimeInput';
 import { zodResolver } from '@/lib/zodResolver';
 import { EventFormSchema, type EventFormValues, type EventResponse } from './schema';
 
@@ -14,8 +16,10 @@ interface Props {
   onCancel: () => void;
 }
 
-// "datetime-local" inputs use the local-time format `YYYY-MM-DDTHH:mm` (no zone).
-// Trim seconds and zone offset from ISO strings round-tripped from the API.
+// Each timestamp lives in the form as a local `YYYY-MM-DDTHH:mm` string (no zone) — the same value
+// the old <input type="datetime-local"> produced, so the schema and `fromLocalInput` are unchanged.
+// We render it as a dd/mm/aaaa DateInput + a 24h time input and split/join the two halves here, so
+// dates read consistently with the rest of the app instead of the browser's locale-dependent format.
 function toLocalInput(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -25,6 +29,63 @@ function toLocalInput(iso?: string): string {
 
 function fromLocalInput(local: string): string {
   return new Date(local).toISOString();
+}
+
+function splitLocal(local: string): { date: string; time: string } {
+  if (!local) return { date: '', time: '' };
+  const [date = '', time = ''] = local.split('T');
+  return { date, time: time.slice(0, 5) };
+}
+
+function joinLocal(date: string, time: string): string {
+  if (!date) return '';
+  return `${date}T${time || '00:00'}`;
+}
+
+function DateTimeField({
+  control,
+  name,
+  label,
+  idPrefix
+}: {
+  control: Control<EventFormValues>;
+  name: 'startTime' | 'endTime';
+  label: string;
+  idPrefix: string;
+}) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field, fieldState }) => {
+        const { date, time } = splitLocal(field.value);
+        return (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel htmlFor={`${idPrefix}-date`}>{label}</FieldLabel>
+            <div className="flex gap-2">
+              <DateInput
+                id={`${idPrefix}-date`}
+                className="flex-1"
+                value={date}
+                onChange={(e) => field.onChange(joinLocal(e.target.value, time))}
+                onBlur={field.onBlur}
+                aria-invalid={fieldState.invalid || undefined}
+              />
+              <TimeInput
+                aria-label={`${label} (hora)`}
+                className="w-28 shrink-0"
+                value={time}
+                onChange={(e) => field.onChange(joinLocal(date, e.target.value))}
+                onBlur={field.onBlur}
+                aria-invalid={fieldState.invalid || undefined}
+              />
+            </div>
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        );
+      }}
+    />
+  );
 }
 
 export function EventForm({ initialValues, isPending, onSubmit, onCancel }: Props) {
@@ -63,29 +124,9 @@ export function EventForm({ initialValues, isPending, onSubmit, onCancel }: Prop
             </Field>
           )}
         />
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Controller
-            name="startTime"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Início</FieldLabel>
-                <Input {...field} type="datetime-local" aria-invalid={fieldState.invalid} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
-          <Controller
-            name="endTime"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel>Término</FieldLabel>
-                <Input {...field} type="datetime-local" aria-invalid={fieldState.invalid} />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <DateTimeField control={form.control} name="startTime" label="Início" idPrefix="start" />
+          <DateTimeField control={form.control} name="endTime" label="Término" idPrefix="end" />
         </div>
         <Controller
           name="location"

@@ -104,7 +104,7 @@ export default function AttenderForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{defaultValues ? 'Editar Congregado' : 'Novo Congregado'}</DialogTitle>
         </DialogHeader>
@@ -114,7 +114,7 @@ export default function AttenderForm({
 
           <div className="space-y-1">
             <Label htmlFor="name">Nome *</Label>
-            <Input id="name" {...register('name')} />
+            <Input id="name" {...register('name')} aria-invalid={!!errors.name || undefined} />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
@@ -140,13 +140,14 @@ export default function AttenderForm({
               <Controller
                 control={control}
                 name="phone"
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <PhoneInput
                     id="phone"
                     value={field.value ?? ''}
                     onChange={(e) => field.onChange(e.target.value)}
                     onBlur={field.onBlur}
                     name={field.name}
+                    aria-invalid={fieldState.invalid || undefined}
                   />
                 )}
               />
@@ -156,7 +157,12 @@ export default function AttenderForm({
 
           <div className="space-y-1">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" {...register('email')} />
+            <Input
+              id="email"
+              type="email"
+              {...register('email')}
+              aria-invalid={!!errors.email || undefined}
+            />
             {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
 
@@ -165,13 +171,14 @@ export default function AttenderForm({
             <Controller
               control={control}
               name="congregatingSince"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <MonthInput
                   id="congregatingSince"
                   value={field.value ?? ''}
                   onChange={(e) => field.onChange(e.target.value)}
                   onBlur={field.onBlur}
                   name={field.name}
+                  aria-invalid={fieldState.invalid || undefined}
                 />
               )}
             />
@@ -226,13 +233,14 @@ export default function AttenderForm({
                     <Controller
                       control={control}
                       name="memberSince"
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <MonthInput
                           id="memberSince"
                           value={field.value ?? ''}
                           onChange={(e) => field.onChange(e.target.value)}
                           onBlur={field.onBlur}
                           name={field.name}
+                          aria-invalid={fieldState.invalid || undefined}
                         />
                       )}
                     />
@@ -245,7 +253,7 @@ export default function AttenderForm({
                     <Controller
                       name="admissionMode"
                       control={control}
-                      render={({ field }) => (
+                      render={({ field, fieldState }) => (
                         <Select
                           value={field.value ?? ''}
                           onValueChange={(v) =>
@@ -253,7 +261,10 @@ export default function AttenderForm({
                               v === '' ? null : (v as AttenderFormValues['admissionMode'])
                             )
                           }>
-                          <SelectTrigger id="admissionMode" className="w-full">
+                          <SelectTrigger
+                            id="admissionMode"
+                            className="w-full"
+                            aria-invalid={fieldState.invalid || undefined}>
                             <SelectValue placeholder="Selecionar..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -281,45 +292,13 @@ export default function AttenderForm({
           <p className="pt-2 text-sm font-medium text-muted-foreground">Endereço</p>
           <Separator />
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="postalCode">CEP</Label>
-              <Controller
-                control={control}
-                name="postalCode"
-                render={({ field }) => (
-                  <CepInput
-                    id="postalCode"
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value)}
-                    onBlur={field.onBlur}
-                    name={field.name}
-                  />
-                )}
-              />
-              {errors.postalCode && (
-                <p className="text-xs text-destructive">{errors.postalCode.message}</p>
-              )}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-6">
+            <div className="space-y-1 sm:col-span-4">
+              <Label htmlFor="addressStreet">Rua</Label>
+              <Input id="addressStreet" {...register('addressStreet')} />
             </div>
-            <div className="space-y-1">
-              <Label htmlFor="state">Estado (UF)</Label>
-              <Input id="state" {...register('state')} maxLength={2} placeholder="SP" />
-              {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
-            </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="city">Cidade</Label>
-            <Input id="city" {...register('city')} />
-          </div>
-
-          <div className="space-y-1">
-            <Label htmlFor="addressStreet">Rua</Label>
-            <Input id="addressStreet" {...register('addressStreet')} />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
+            <div className="space-y-1 sm:col-span-2">
               <Label htmlFor="addressNumber">Número</Label>
               <Input
                 id="addressNumber"
@@ -327,20 +306,60 @@ export default function AttenderForm({
                 {...register('addressNumber', {
                   setValueAs: (v) => (v === '' || v === null ? null : String(v))
                 })}
+                aria-invalid={!!errors.addressNumber || undefined}
               />
               {errors.addressNumber && (
                 <p className="text-xs text-destructive">{errors.addressNumber.message}</p>
               )}
             </div>
-            <div className="space-y-1">
+
+            <div className="space-y-1 sm:col-span-3">
               <Label htmlFor="addressComplement">Complemento</Label>
               <Input id="addressComplement" {...register('addressComplement')} />
             </div>
-          </div>
 
-          <div className="space-y-1">
-            <Label htmlFor="addressDistrict">Bairro</Label>
-            <Input id="addressDistrict" {...register('addressDistrict')} />
+            <div className="space-y-1 sm:col-span-3">
+              <Label htmlFor="addressDistrict">Bairro</Label>
+              <Input id="addressDistrict" {...register('addressDistrict')} />
+            </div>
+
+            <div className="space-y-1 sm:col-span-1">
+              <Label htmlFor="state">Estado</Label>
+              <Input
+                id="state"
+                {...register('state')}
+                maxLength={2}
+                placeholder="UF"
+                aria-invalid={!!errors.state || undefined}
+              />
+              {errors.state && <p className="text-xs text-destructive">{errors.state.message}</p>}
+            </div>
+
+            <div className="space-y-1 sm:col-span-3">
+              <Label htmlFor="city">Cidade</Label>
+              <Input id="city" {...register('city')} />
+            </div>
+
+            <div className="space-y-1 sm:col-span-2">
+              <Label htmlFor="postalCode">CEP</Label>
+              <Controller
+                control={control}
+                name="postalCode"
+                render={({ field, fieldState }) => (
+                  <CepInput
+                    id="postalCode"
+                    value={field.value ?? ''}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    onBlur={field.onBlur}
+                    name={field.name}
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
+                )}
+              />
+              {errors.postalCode && (
+                <p className="text-xs text-destructive">{errors.postalCode.message}</p>
+              )}
+            </div>
           </div>
 
           <DialogFooter>

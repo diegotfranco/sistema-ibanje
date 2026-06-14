@@ -78,7 +78,7 @@ describe('IncomeEntryFields', () => {
       expect(screen.getByText('Valor (R$)')).toBeInTheDocument();
       expect(screen.getByText('Categoria')).toBeInTheDocument();
       expect(screen.getByText('Forma de Pagamento')).toBeInTheDocument();
-      expect(screen.getByText('Congregado (opcional)')).toBeInTheDocument();
+      expect(screen.getByText('Congregado')).toBeInTheDocument();
       expect(screen.getByText('Observações')).toBeInTheDocument();
     });
   });
@@ -203,9 +203,9 @@ describe('IncomeEntryFields', () => {
 
     renderWithProviders(<TestComponent />);
 
-    // The LinkPicker should be rendered with the label "Vincular a (opcional)"
+    // The LinkPicker should be rendered with the label "Vincular a"
     await waitFor(() => {
-      expect(screen.getByText('Vincular a (opcional)')).toBeInTheDocument();
+      expect(screen.getByText('Vincular a')).toBeInTheDocument();
     });
   });
 });

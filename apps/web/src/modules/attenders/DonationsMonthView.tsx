@@ -1,13 +1,6 @@
 import { formatDate } from '@/lib/datetime';
+import { formatMoney as formatBRL } from '@/lib/format';
 import type { AttenderDonationsEntries } from './useDonations';
-
-function formatBRL(value: string): string {
-  return Number.parseFloat(value).toLocaleString('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2
-  });
-}
 
 function entryLabel(
   categoryName: string,

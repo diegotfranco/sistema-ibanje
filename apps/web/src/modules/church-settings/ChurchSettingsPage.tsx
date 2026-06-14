@@ -110,14 +110,16 @@ export default function ChurchSettingsPage() {
             <CardTitle className="py-0.75">Identificação</CardTitle>
           </CardHeader>
           <CardContent className="mt-4 space-y-4">
-            {/* nome · cnpj · cep */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* nome · cnpj */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field>
                 <FieldLabel htmlFor="name">Nome</FieldLabel>
                 <Controller
                   control={control}
                   name="name"
-                  render={({ field }) => <Input {...field} id="name" />}
+                  render={({ field, fieldState }) => (
+                    <Input {...field} id="name" aria-invalid={fieldState.invalid || undefined} />
+                  )}
                 />
                 {errors.name && <FieldError>{errors.name.message}</FieldError>}
               </Field>
@@ -127,93 +129,124 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="cnpj"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <CnpjInput
                       id="cnpj"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
                       name={field.name}
+                      aria-invalid={fieldState.invalid || undefined}
                     />
                   )}
                 />
                 {errors.cnpj && <FieldError>{errors.cnpj.message}</FieldError>}
               </Field>
-
-              <Field>
-                <FieldLabel htmlFor="postalCode">Código Postal</FieldLabel>
-                <Controller
-                  control={control}
-                  name="postalCode"
-                  render={({ field }) => (
-                    <CepInput
-                      id="postalCode"
-                      value={field.value ?? ''}
-                      onChange={(e) => field.onChange(e.target.value)}
-                      onBlur={field.onBlur}
-                      name={field.name}
-                    />
-                  )}
-                />
-                {errors.postalCode && <FieldError>{errors.postalCode.message}</FieldError>}
-              </Field>
             </div>
 
-            {/* rua · número */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field className="sm:col-span-2">
+            {/* endereço — mesma ordem/proporção do MePage (sem complemento) */}
+            <div className="grid grid-cols-1 sm:grid-cols-6 gap-4">
+              <Field className="sm:col-span-4">
                 <FieldLabel htmlFor="addressStreet">Rua</FieldLabel>
                 <Controller
                   control={control}
                   name="addressStreet"
-                  render={({ field }) => <Input {...field} id="addressStreet" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="addressStreet"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.addressStreet && <FieldError>{errors.addressStreet.message}</FieldError>}
               </Field>
 
-              <Field>
+              <Field className="sm:col-span-2">
                 <FieldLabel htmlFor="addressNumber">Número</FieldLabel>
                 <Controller
                   control={control}
                   name="addressNumber"
-                  render={({ field }) => <Input {...field} id="addressNumber" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="addressNumber"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.addressNumber && <FieldError>{errors.addressNumber.message}</FieldError>}
               </Field>
-            </div>
 
-            {/* bairro · cidade · estado */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field>
+              <Field className="sm:col-span-3">
                 <FieldLabel htmlFor="addressDistrict">Bairro</FieldLabel>
                 <Controller
                   control={control}
                   name="addressDistrict"
-                  render={({ field }) => <Input {...field} id="addressDistrict" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="addressDistrict"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.addressDistrict && (
                   <FieldError>{errors.addressDistrict.message}</FieldError>
                 )}
               </Field>
 
-              <Field>
+              <Field className="sm:col-span-3">
                 <FieldLabel htmlFor="addressCity">Cidade</FieldLabel>
                 <Controller
                   control={control}
                   name="addressCity"
-                  render={({ field }) => <Input {...field} id="addressCity" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="addressCity"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.addressCity && <FieldError>{errors.addressCity.message}</FieldError>}
               </Field>
 
-              <Field>
+              <Field className="sm:col-span-1">
                 <FieldLabel htmlFor="addressState">Estado</FieldLabel>
                 <Controller
                   control={control}
                   name="addressState"
-                  render={({ field }) => <Input {...field} id="addressState" maxLength={2} />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="addressState"
+                      maxLength={2}
+                      placeholder="UF"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.addressState && <FieldError>{errors.addressState.message}</FieldError>}
+              </Field>
+
+              <Field className="sm:col-span-2">
+                <FieldLabel htmlFor="postalCode">Código Postal</FieldLabel>
+                <Controller
+                  control={control}
+                  name="postalCode"
+                  render={({ field, fieldState }) => (
+                    <CepInput
+                      id="postalCode"
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
+                />
+                {errors.postalCode && <FieldError>{errors.postalCode.message}</FieldError>}
               </Field>
             </div>
           </CardContent>
@@ -231,13 +264,14 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="phone"
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <PhoneInput
                       id="phone"
                       value={field.value ?? ''}
                       onChange={(e) => field.onChange(e.target.value)}
                       onBlur={field.onBlur}
                       name={field.name}
+                      aria-invalid={fieldState.invalid || undefined}
                     />
                   )}
                 />
@@ -249,7 +283,14 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="email"
-                  render={({ field }) => <Input {...field} id="email" type="email" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="email"
+                      type="email"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.email && <FieldError>{errors.email.message}</FieldError>}
               </Field>
@@ -260,7 +301,14 @@ export default function ChurchSettingsPage() {
               <Controller
                 control={control}
                 name="websiteUrl"
-                render={({ field }) => <Input {...field} id="websiteUrl" type="url" />}
+                render={({ field, fieldState }) => (
+                  <Input
+                    {...field}
+                    id="websiteUrl"
+                    type="url"
+                    aria-invalid={fieldState.invalid || undefined}
+                  />
+                )}
               />
               {errors.websiteUrl && <FieldError>{errors.websiteUrl.message}</FieldError>}
             </Field>
@@ -279,7 +327,13 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="currentPresidentName"
-                  render={({ field }) => <Input {...field} id="currentPresidentName" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="currentPresidentName"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.currentPresidentName && (
                   <FieldError>{errors.currentPresidentName.message}</FieldError>
@@ -291,7 +345,13 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="currentPresidentTitle"
-                  render={({ field }) => <Input {...field} id="currentPresidentTitle" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="currentPresidentTitle"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.currentPresidentTitle && (
                   <FieldError>{errors.currentPresidentTitle.message}</FieldError>
@@ -305,7 +365,13 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="currentSecretaryName"
-                  render={({ field }) => <Input {...field} id="currentSecretaryName" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="currentSecretaryName"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.currentSecretaryName && (
                   <FieldError>{errors.currentSecretaryName.message}</FieldError>
@@ -317,7 +383,13 @@ export default function ChurchSettingsPage() {
                 <Controller
                   control={control}
                   name="currentSecretaryTitle"
-                  render={({ field }) => <Input {...field} id="currentSecretaryTitle" />}
+                  render={({ field, fieldState }) => (
+                    <Input
+                      {...field}
+                      id="currentSecretaryTitle"
+                      aria-invalid={fieldState.invalid || undefined}
+                    />
+                  )}
                 />
                 {errors.currentSecretaryTitle && (
                   <FieldError>{errors.currentSecretaryTitle.message}</FieldError>

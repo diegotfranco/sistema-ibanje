@@ -1,7 +1,7 @@
 import { Link, useSearchParams } from 'react-router';
 import { Controller } from 'react-hook-form';
 import { Button } from '@/components/Button';
-import { PasswordInput } from '@/modules/auth/PasswordInput';
+import { PasswordInput } from '@/components/PasswordInput';
 import { AuthLayout } from '@/components/layouts/AuthLayout';
 import { paths } from '@/lib/paths';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/Card';
@@ -68,7 +68,6 @@ export default function ResetPasswordPage() {
                   <PasswordInput
                     {...field}
                     id="newPassword"
-                    placeholder="••••••••"
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />
@@ -86,7 +85,6 @@ export default function ResetPasswordPage() {
                   <PasswordInput
                     {...field}
                     id="confirmPassword"
-                    placeholder="••••••••"
                     autoComplete="new-password"
                     aria-invalid={fieldState.invalid}
                   />

@@ -48,7 +48,6 @@ export default function RegisterPage() {
                     {...field}
                     id="name"
                     type="text"
-                    placeholder="Seu nome"
                     autoComplete="name"
                     aria-invalid={fieldState.invalid}
                   />
@@ -67,7 +66,6 @@ export default function RegisterPage() {
                     {...field}
                     id="email"
                     type="email"
-                    placeholder="exemplo@mail.com"
                     autoComplete="email"
                     aria-invalid={fieldState.invalid}
                   />

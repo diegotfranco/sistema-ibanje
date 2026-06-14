@@ -86,7 +86,7 @@ export default function UserPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl flex flex-col overflow-hidden">
+      <DialogContent size="lg" className="flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle>Permissões — {user?.name}</DialogTitle>
         </DialogHeader>

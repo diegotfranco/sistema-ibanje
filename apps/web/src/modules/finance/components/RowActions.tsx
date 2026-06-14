@@ -43,7 +43,7 @@ export function RowActionButtons({ onView, onEdit, onDelete }: RowActionButtonsP
         </Button>
       )}
       {onDelete && (
-        <Button variant="ghost" size="sm" onClick={onDelete} title="Remover" aria-label="Remover">
+        <Button variant="ghost" size="sm" onClick={onDelete} title="Cancelar" aria-label="Cancelar">
           <Trash2 size={16} />
         </Button>
       )}
@@ -100,7 +100,7 @@ export function RowDetailFooterActions({ onEdit, onDelete }: RowDetailFooterActi
       {onDelete && (
         <Button variant="destructive" size="sm" onClick={onDelete}>
           <Trash2 size={16} className="mr-1" />
-          Remover
+          Cancelar
         </Button>
       )}
     </div>

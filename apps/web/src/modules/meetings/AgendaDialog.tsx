@@ -90,11 +90,7 @@ function SortableRow({ id, index, register, onRemove, canRemove, errors }: Sorta
           )}
         </div>
         <div>
-          <Textarea
-            placeholder="Descrição (opcional)"
-            rows={2}
-            {...register(`items.${index}.description`)}
-          />
+          <Textarea placeholder="Descrição" rows={2} {...register(`items.${index}.description`)} />
           {itemErrors?.description && (
             <p className="mt-1 text-xs text-destructive">{itemErrors.description.message}</p>
           )}
@@ -159,7 +155,7 @@ export default function AgendaDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>Definir Pauta</DialogTitle>
         </DialogHeader>

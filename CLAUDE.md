@@ -166,7 +166,7 @@ Two orthogonal axes — never overload one column with both jobs (the original `
 - Reference data keeps `ativo/inativo` = available/retired.
 - **Pre-existing FSMs are single-purpose, leave their enum members alone:** `transactionStatus` (`pendente→paga→cancelada`), `closingStatus`, `minuteVersionStatus`. Behavior is still fair game — `assertEntryTransition(from, to)` in `src/lib/finance.ts` guards entry status moves (forbids un-void `cancelada→*` and un-confirm `paga→pendente`).
 
-**Frontend:** all status labels, badge colors, and filter-option lists live in `apps/web/src/lib/status.ts` (consumed by `StatusBadge`, every filter dropdown, `ClosingStatusCard`). The shared `useResourceMutations` exposes `restore`; `<TrashToggle>` flips a reference-data list between live rows and its "Lixeira" (passes `deleted: 'only'`, swaps create/edit/delete for Restaurar).
+**Frontend:** all status labels, badge colors, and filter-option lists live in `apps/web/src/lib/status.ts` (consumed by `StatusBadge`, every filter dropdown, `ClosingStatusCard`). The shared `useResourceMutations` exposes `restore`; the `trashToggleAction(viewingTrash, onToggle)` descriptor (from `components/toolbarActions.tsx`) flips a reference-data list between live rows and its "Lixeira" (passes `deleted: 'only'`, swaps create/edit/delete for Restaurar). Pass it via the `actions` prop on `ResourceListPage`/`CategoryGroupedList`: on desktop these `ToolbarAction`s render as outline buttons in the DataTable toolbar (next to "Colunas"); below `md`, where that toolbar is hidden, they surface through a `ToolbarActionsMenu` kebab in the always-visible card header.
 
 ---
 

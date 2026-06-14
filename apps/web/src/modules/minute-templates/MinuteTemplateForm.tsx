@@ -74,7 +74,7 @@ export default function MinuteTemplateForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent size="lg">
         <DialogHeader>
           <DialogTitle>{initialData ? 'Editar Modelo' : 'Novo Modelo de Ata'}</DialogTitle>
         </DialogHeader>
@@ -94,12 +94,7 @@ export default function MinuteTemplateForm({
           className="space-y-4">
           <div className="space-y-1">
             <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              placeholder="Nome do modelo"
-              {...register('name')}
-              className={errors.name ? 'border-destructive' : ''}
-            />
+            <Input id="name" {...register('name')} aria-invalid={!!errors.name || undefined} />
             {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
           </div>
 
@@ -110,9 +105,7 @@ export default function MinuteTemplateForm({
               name="meetingType"
               render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={!!initialData}>
-                  <SelectTrigger
-                    id="meetingType"
-                    className={errors.meetingType ? 'border-destructive' : ''}>
+                  <SelectTrigger id="meetingType" aria-invalid={!!errors.meetingType || undefined}>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -166,12 +159,10 @@ export default function MinuteTemplateForm({
                     <Input
                       placeholder="Título do item"
                       {...register(`defaultAgendaItems.${index}.title`)}
-                      className={
-                        errors.defaultAgendaItems?.[index]?.title ? 'border-destructive' : ''
-                      }
+                      aria-invalid={!!errors.defaultAgendaItems?.[index]?.title || undefined}
                     />
                     <Textarea
-                      placeholder="Descrição (opcional)"
+                      placeholder="Descrição"
                       {...register(`defaultAgendaItems.${index}.description`)}
                       rows={2}
                     />

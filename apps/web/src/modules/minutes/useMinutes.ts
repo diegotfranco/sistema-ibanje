@@ -24,7 +24,7 @@ export function useMinutes() {
 
 export function useMinuteById(id: number) {
   return useQuery({
-    queryKey: [BASE, ...KEY, id],
+    queryKey: [...KEY, id],
     queryFn: () => api.get<MinuteResponse>(`${BASE}/${id}`)
   });
 }
@@ -34,7 +34,7 @@ export function useCreateMinute() {
   return useMutation({
     mutationFn: (body: MinuteFormValues) => api.post<MinuteResponse>(BASE, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
       toast.success('Ata cadastrada.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao cadastrar ata.'))
@@ -43,7 +43,7 @@ export function useCreateMinute() {
 
 export function useSuggestedMinuteNumber(enabled: boolean) {
   return useQuery({
-    queryKey: [BASE, ...KEY, 'suggested-number'],
+    queryKey: [...KEY, 'suggested-number'],
     queryFn: () => api.get<{ value: string }>(`${BASE}/suggested-number`),
     enabled,
     staleTime: 0
@@ -52,7 +52,7 @@ export function useSuggestedMinuteNumber(enabled: boolean) {
 
 export function useMeetingAttendersPresent(meetingId: number | null) {
   return useQuery({
-    queryKey: [BASE, ...KEY, 'meeting-attenders', meetingId],
+    queryKey: [...KEY, 'meeting-attenders', meetingId],
     queryFn: () =>
       api.get<{ data: { id: number; name: string }[] }>(
         `${BASE}/meetings/${meetingId}/attenders-present`
@@ -67,8 +67,8 @@ export function useSetMeetingAttendersPresent(meetingId: number) {
     mutationFn: (attenderIds: number[]) =>
       api.put(`${BASE}/meetings/${meetingId}/attenders-present`, { attenderIds }),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, 'meeting-attenders', meetingId] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, 'meeting-attenders', meetingId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
       toast.success('Membros presentes atualizados.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao atualizar membros presentes.'))
@@ -81,8 +81,8 @@ export function useUpdatePendingVersion(minuteId: number) {
     mutationFn: (body: { content: unknown }) =>
       api.patch<MinuteResponse>(`${BASE}/${minuteId}/pending`, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Rascunho atualizado.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao atualizar rascunho.'))
@@ -95,8 +95,8 @@ export function useEditApprovedMinute(minuteId: number) {
     mutationFn: (body: EditApprovedMinuteValues) =>
       api.post<MinuteResponse>(`${BASE}/${minuteId}/edit-approved`, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Nova versão criada.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao criar nova versão.'))
@@ -109,8 +109,8 @@ export function useApproveMinute(minuteId: number) {
     mutationFn: (body: ApproveMinuteValues) =>
       api.post<MinuteResponse>(`${BASE}/${minuteId}/approve`, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Ata aprovada.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao aprovar ata.'))
@@ -122,7 +122,7 @@ export function useDeleteMinute() {
   return useMutation({
     mutationFn: (id: number) => api.delete(`${BASE}/${id}`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
       toast.success('Ata removida.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao remover ata.'))
@@ -134,8 +134,8 @@ export function useFinalizeDraft(minuteId: number) {
   return useMutation({
     mutationFn: () => api.post<MinuteResponse>(`${BASE}/${minuteId}/finalize-draft`),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Rascunho finalizado.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao finalizar rascunho.'))
@@ -148,8 +148,8 @@ export function useUpdateMinute(minuteId: number) {
     mutationFn: (body: UpdateMinuteValues) =>
       api.patch<MinuteResponse>(`${BASE}/${minuteId}`, body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Detalhes atualizados.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao atualizar detalhes.'))
@@ -165,8 +165,8 @@ export function useSignMinute(minuteId: number) {
       return api.postForm<MinuteResponse>(`${BASE}/${minuteId}/sign`, form);
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
-      qc.invalidateQueries({ queryKey: [BASE, ...KEY, minuteId] });
+      qc.invalidateQueries({ queryKey: [...KEY] });
+      qc.invalidateQueries({ queryKey: [...KEY, minuteId] });
       toast.success('Documento assinado enviado.');
     },
     onError: (err) => toast.error(describeError(err, 'Erro ao enviar documento.'))

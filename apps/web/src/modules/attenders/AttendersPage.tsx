@@ -6,8 +6,7 @@ import { Eye, FileDown, RotateCcw } from 'lucide-react';
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { Button } from '@/components/Button';
-import { TrashToggle } from '@/components/TrashToggle';
+import { trashToggleAction, type ToolbarAction } from '@/components/toolbarActions';
 import { Pagination } from '@/components/Pagination';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { applyFieldErrors } from '@/lib/forms';
@@ -343,21 +342,19 @@ export default function AttendersPage() {
     ];
   }, [navigate, viewingTrash, canDelete, mutations.restore]);
 
-  const toolbarRight = (
-    <div className="flex items-center gap-2">
-      {!viewingTrash && (
-        <Button
-          variant="outline"
-          className="bg-transparent"
-          onClick={handleExport}
-          disabled={exporting}>
-          <FileDown className="h-4 w-4 mr-1" />
-          {exporting ? 'Exportando...' : 'Exportar PDF'}
-        </Button>
-      )}
-      {canDelete && <TrashToggle viewingTrash={viewingTrash} onToggle={handleToggleTrash} />}
-    </div>
-  );
+  const toolbarActions: ToolbarAction[] = [];
+  if (!viewingTrash) {
+    toolbarActions.push({
+      key: 'export',
+      label: exporting ? 'Exportando...' : 'Exportar PDF',
+      icon: <FileDown className="h-4 w-4" />,
+      onClick: handleExport,
+      disabled: exporting
+    });
+  }
+  if (canDelete) {
+    toolbarActions.push(trashToggleAction(viewingTrash, handleToggleTrash));
+  }
 
   if (!userLoading && user && !canViewAll && !user.attenderId) {
     return (
@@ -405,7 +402,7 @@ export default function AttendersPage() {
           emptyMessage={viewingTrash ? 'A lixeira está vazia.' : 'Nenhum congregado encontrado.'}
           columnToggle
           tableId="attenders"
-          toolbarRight={toolbarRight}
+          actions={toolbarActions}
           onColumnVisibilityChange={handleColumnVisibility}
           searchable={{ placeholder: 'Buscar congregado...', loading: list.isFetching }}
           globalFilter={search}

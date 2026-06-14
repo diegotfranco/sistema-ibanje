@@ -9,6 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig
 } from '@/components/ui/chart';
+import { formatMoneyCompact } from '@/lib/format';
 import { formatMoney } from './dashboard-utils';
 import { MoneyTooltipRow } from './chart-tooltip';
 import type { MonthlyTrend } from '@sistema-ibanje/shared';
@@ -78,15 +79,7 @@ export function TrendChart({ data, isLoading }: TrendChartProps) {
           <YAxis
             tickLine={false}
             axisLine={false}
-            tickFormatter={(value) => {
-              if (value >= 1_000_000) {
-                return `R$${(value / 1_000_000).toFixed(0)}M`;
-              }
-              if (value >= 1_000) {
-                return `R$${(value / 1_000).toFixed(0)}K`;
-              }
-              return `R$${value.toFixed(0)}`;
-            }}
+            tickFormatter={(value) => formatMoneyCompact(value)}
           />
           <ChartTooltip
             cursor={{ fill: 'var(--muted)', opacity: 0.3 }}

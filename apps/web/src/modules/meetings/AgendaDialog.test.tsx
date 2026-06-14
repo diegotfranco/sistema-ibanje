@@ -102,7 +102,7 @@ describe('AgendaDialog', () => {
     );
 
     const titleInput = await screen.findByPlaceholderText('Título do item');
-    const descInput = screen.getByPlaceholderText('Descrição (opcional)');
+    const descInput = screen.getByPlaceholderText('Descrição');
 
     await userEvent.type(titleInput, 'Nova Pauta');
     await userEvent.type(descInput, 'Descrição da pauta');

@@ -59,7 +59,7 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Nova Ata</DialogTitle>
         </DialogHeader>
@@ -76,11 +76,11 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
             <Controller
               control={control}
               name="meetingId"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   value={field.value ? String(field.value) : undefined}
                   onValueChange={(v) => field.onChange(Number.parseInt(v))}>
-                  <SelectTrigger>
+                  <SelectTrigger aria-invalid={fieldState.invalid || undefined}>
                     <SelectValue placeholder="Selecione a reunião" />
                   </SelectTrigger>
                   <SelectContent>
@@ -101,7 +101,11 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
           <div className="space-y-1">
             <Label htmlFor="minuteNumber">Número da Ata *</Label>
-            <Input id="minuteNumber" placeholder="Ata 001/2025" {...register('minuteNumber')} />
+            <Input
+              id="minuteNumber"
+              {...register('minuteNumber')}
+              aria-invalid={!!errors.minuteNumber || undefined}
+            />
             {errors.minuteNumber && (
               <p className="text-xs text-destructive">{errors.minuteNumber.message}</p>
             )}
@@ -112,8 +116,8 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
               <Label htmlFor="presidingPastorName">Pastor Presidente</Label>
               <Input
                 id="presidingPastorName"
-                placeholder="Nome"
                 {...register('presidingPastorName')}
+                aria-invalid={!!errors.presidingPastorName || undefined}
               />
               {errors.presidingPastorName && (
                 <p className="text-xs text-destructive">{errors.presidingPastorName.message}</p>
@@ -122,7 +126,11 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
             <div className="space-y-1">
               <Label htmlFor="secretaryName">Secretário</Label>
-              <Input id="secretaryName" placeholder="Nome" {...register('secretaryName')} />
+              <Input
+                id="secretaryName"
+                {...register('secretaryName')}
+                aria-invalid={!!errors.secretaryName || undefined}
+              />
               {errors.secretaryName && (
                 <p className="text-xs text-destructive">{errors.secretaryName.message}</p>
               )}
@@ -130,7 +138,12 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
             <div className="space-y-1">
               <Label htmlFor="openingTime">Hora de Abertura</Label>
-              <Input type="time" id="openingTime" {...register('openingTime')} />
+              <Input
+                type="time"
+                id="openingTime"
+                {...register('openingTime')}
+                aria-invalid={!!errors.openingTime || undefined}
+              />
               {errors.openingTime && (
                 <p className="text-xs text-destructive">{errors.openingTime.message}</p>
               )}
@@ -138,7 +151,12 @@ export default function MinuteForm({ open, onOpenChange, onSubmit, isPending }: 
 
             <div className="space-y-1">
               <Label htmlFor="closingTime">Hora de Encerramento</Label>
-              <Input type="time" id="closingTime" {...register('closingTime')} />
+              <Input
+                type="time"
+                id="closingTime"
+                {...register('closingTime')}
+                aria-invalid={!!errors.closingTime || undefined}
+              />
               {errors.closingTime && (
                 <p className="text-xs text-destructive">{errors.closingTime.message}</p>
               )}

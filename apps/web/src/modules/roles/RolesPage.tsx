@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/D
 import { PageContainer } from '@/components/PageContainer';
 import { ResourceListPage, type CustomAction } from '@/components/ResourceListPage';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
-import { TrashToggle } from '@/components/TrashToggle';
+import { trashToggleAction } from '@/components/toolbarActions';
 import StatusBadge from '@/components/StatusBadge';
 import { getStatusLabel } from '@/lib/status';
 import { Module, Action, hasPermission } from '@/lib/permissions';
@@ -64,11 +64,7 @@ export default function RolesPage() {
           data={list.data?.data}
           isLoading={list.isLoading}
           emptyMessage={viewingTrash ? 'A lixeira está vazia.' : 'Nenhum cargo encontrado.'}
-          toolbarRight={
-            canDelete ? (
-              <TrashToggle viewingTrash={viewingTrash} onToggle={setViewingTrash} />
-            ) : undefined
-          }
+          actions={canDelete ? [trashToggleAction(viewingTrash, setViewingTrash)] : undefined}
           onCreate={!viewingTrash && canCreate ? () => setEditing('new') : undefined}
           onEdit={!viewingTrash && canEdit ? (r) => setEditing(r) : undefined}
           onDelete={!viewingTrash && canDelete ? (r) => setDeleting(r) : undefined}

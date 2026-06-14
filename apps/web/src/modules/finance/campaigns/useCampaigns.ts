@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { api, ApiError, rateLimitMessage } from '@/lib/api';
 import { useResourceList, useResourceMutations } from '@/hooks/useResourceQuery';
+import { FINANCE_DERIVED_KEYS, invalidateFinanceDerived } from '@/lib/financeInvalidation';
 import type { CampaignStatusValue } from '@sistema-ibanje/shared';
 import type { DeletedFilter } from '@/lib/status';
 import type { CampaignResponse, CampaignFormValues } from './schema';
@@ -33,15 +34,23 @@ export function useCampaignMutations() {
     CampaignResponse,
     CampaignFormValues,
     Partial<CampaignFormValues>
-  >(BASE, KEY, {
-    created: 'Campanha criada.',
-    updated: 'Campanha atualizada.',
-    removed: 'Campanha removida.',
-    restored: 'Campanha restaurada.'
-  });
+  >(
+    BASE,
+    KEY,
+    {
+      created: 'Campanha criada.',
+      updated: 'Campanha atualizada.',
+      removed: 'Campanha removida.',
+      restored: 'Campanha restaurada.'
+    },
+    FINANCE_DERIVED_KEYS
+  );
 
   const qc = useQueryClient();
-  const invalidate = () => qc.invalidateQueries({ queryKey: [BASE, ...KEY] });
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: [...KEY] });
+    invalidateFinanceDerived(qc);
+  };
   const onError = (fallback: string) => (err: unknown) => {
     if (err instanceof ApiError) {
       toast.error(err.status === 429 ? rateLimitMessage(err) : err.message);

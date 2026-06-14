@@ -57,7 +57,7 @@ export default function AttenderDonationsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+      <DialogContent size="lg" className="flex flex-col overflow-hidden">
         <DialogHeader className="flex-row items-center justify-between pr-8">
           <DialogTitle>Contribuições de {attenderName}</DialogTitle>
           {attenderId && (
@@ -80,8 +80,8 @@ export default function AttenderDonationsDialog({
               years={availableYears}
               value={displayYear}
               onChange={setYear}
-              placeholder="Ano"
-              className="w-32"
+              placeholder="Atual"
+              className="w-30"
             />
           ) : (
             <MonthPicker value={month} onChange={setMonth} className="w-44" />

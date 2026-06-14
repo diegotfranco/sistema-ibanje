@@ -33,7 +33,11 @@
   --danger: oklch(0.5 0.21 27.325);
   --success: oklch(0.45 0.154 150.07);
   --success-foreground: oklch(0.982 0.018 155.826);
-  --warning: oklch(0.473 0.137 46.201);
+  /* --warning is the bright gold FILL (summary-card bars, alert borders). It is intentionally too
+     light to use as text on a light /15 tint, so badges and other `text-warning` surfaces use
+     --warning-strong instead — a darker gold that clears WCAG AA (1.4.3, 4.5:1) as small text. */
+  --warning: oklch(0.8 0.16 82);
+  --warning-strong: oklch(0.52 0.145 75);
   --warning-foreground: oklch(0.987 0.022 95.277);
   --money-in: oklch(0.5 0.17 150);
   --money-out: oklch(0.51 0.23 27);
@@ -80,6 +84,8 @@
   --success: oklch(0.723 0.219 149.579);
   --success-foreground: oklch(0.266 0.065 152.934);
   --warning: oklch(0.828 0.189 84.429);
+  /* On dark surfaces the bright gold already passes as text, so the strong tone matches the fill. */
+  --warning-strong: oklch(0.828 0.189 84.429);
   --warning-foreground: oklch(0.279 0.077 45.635);
   --money-in: oklch(0.723 0.219 149.579);
   --money-out: oklch(0.704 0.191 22.216);
@@ -126,6 +132,7 @@
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-warning-strong: var(--warning-strong);
   --color-warning-foreground: var(--warning-foreground);
   --color-money-in: var(--money-in);
   --color-money-out: var(--money-out);

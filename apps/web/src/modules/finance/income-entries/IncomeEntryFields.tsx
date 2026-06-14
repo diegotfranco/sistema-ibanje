@@ -67,10 +67,15 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
       <Controller
         name="depositDate"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor="depositDate">Data de Depósito</FieldLabel>
-            <DateInput id="depositDate" value={field.value} onChange={field.onChange} />
+            <DateInput
+              id="depositDate"
+              value={field.value}
+              onChange={field.onChange}
+              aria-invalid={fieldState.invalid || undefined}
+            />
             {errors.depositDate && <FieldError>{errors.depositDate.message}</FieldError>}
           </Field>
         )}
@@ -79,7 +84,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
       <Controller
         name="amount"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor="amount">Valor (R$)</FieldLabel>
             <MoneyInput
@@ -87,7 +92,8 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
               value={field.value}
               onChange={field.onChange}
               onBlur={field.onBlur}
-              placeholder="0.00"
+              placeholder="0,00"
+              aria-invalid={fieldState.invalid || undefined}
             />
             {errors.amount && <FieldError>{errors.amount.message}</FieldError>}
           </Field>
@@ -98,7 +104,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="categoryId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="categoryId">Categoria</FieldLabel>
               <EntityPicker
@@ -111,6 +117,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
                 emptyMessage="Nenhuma categoria encontrada."
                 isLoading={incomeCategories.isLoading}
                 ariaLabel="Categoria"
+                aria-invalid={fieldState.invalid || undefined}
                 className="w-full"
               />
               {errors.categoryId && <FieldError>{errors.categoryId.message}</FieldError>}
@@ -121,13 +128,16 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="paymentMethodId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
               <FieldLabel htmlFor="paymentMethodId">Forma de Pagamento</FieldLabel>
               <Select
                 value={field.value !== undefined ? String(field.value) : ''}
                 onValueChange={(v) => field.onChange(Number(v))}>
-                <SelectTrigger id="paymentMethodId" className="w-full">
+                <SelectTrigger
+                  id="paymentMethodId"
+                  className="w-full"
+                  aria-invalid={fieldState.invalid || undefined}>
                   <SelectValue placeholder="Selecionar..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -154,7 +164,10 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
               <Select
                 value={field.value ?? EntryStatus.Paid}
                 onValueChange={(v) => field.onChange(v as IncomeEntryFormValues['status'])}>
-                <SelectTrigger className="w-full" aria-label="Status">
+                <SelectTrigger
+                  className="w-full"
+                  aria-label="Status"
+                  aria-invalid={fieldState.invalid || undefined}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -170,11 +183,9 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
         <Controller
           name="attenderId"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field>
-              <FieldLabel htmlFor="attenderId">
-                Congregado{requiresMember ? ' *' : ' (opcional)'}
-              </FieldLabel>
+              <FieldLabel htmlFor="attenderId">Congregado{requiresMember ? ' *' : ''}</FieldLabel>
               <EntityPicker
                 items={activeAttenders}
                 value={field.value ?? null}
@@ -185,6 +196,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
                 emptyMessage="Nenhum congregado encontrado."
                 isLoading={attenders.isLoading}
                 ariaLabel="Congregado"
+                aria-invalid={fieldState.invalid || undefined}
                 allowClear
                 className="w-full"
               />
@@ -194,7 +206,7 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
         />
 
         <Field>
-          <FieldLabel>Vincular a (opcional)</FieldLabel>
+          <FieldLabel>Vincular a</FieldLabel>
           <LinkPicker
             campaigns={activeCampaigns}
             events={activeEvents}
@@ -214,13 +226,14 @@ export function IncomeEntryFields({ control, errors, setValue }: Props) {
       <Controller
         name="notes"
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Field>
             <FieldLabel htmlFor="notes">Observações</FieldLabel>
             <Textarea
               id="notes"
               placeholder="Adicione observações se necessário"
               rows={2}
+              aria-invalid={fieldState.invalid || undefined}
               {...field}
             />
             {errors.notes && <FieldError>{errors.notes.message}</FieldError>}

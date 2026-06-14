@@ -9,6 +9,11 @@ import {
   type TableFilterOption
 } from '@/components/DataTable';
 import { RowDetailPanel, type RowDetailField } from '@/components/RowDetailPanel';
+import {
+  ToolbarActionButtons,
+  ToolbarActionsMenu,
+  type ToolbarAction
+} from '@/components/toolbarActions';
 
 export interface ResourceColumn<T> {
   header: string;
@@ -64,6 +69,9 @@ interface ResourceListPageProps<T> {
   columnToggle?: boolean;
   tableId?: string;
   toolbarRight?: ReactNode;
+  /** Secondary toolbar actions (trash toggle, export, …). Rendered as outline buttons in the table
+   *  toolbar on desktop and inside a header overflow menu on mobile (where that toolbar is hidden). */
+  actions?: ToolbarAction[];
   pagination?: ReactNode;
   onColumnVisibilityChange?: (visibleColumnIds: string[]) => void;
   // Search + per-column header filters (forwarded to DataTable; both server-side).
@@ -94,6 +102,7 @@ export function ResourceListPage<T>({
   columnToggle,
   tableId,
   toolbarRight,
+  actions,
   pagination,
   onColumnVisibilityChange,
   searchable,
@@ -103,6 +112,15 @@ export function ResourceListPage<T>({
   onFilterChange
 }: ResourceListPageProps<T>) {
   const [detailRow, setDetailRow] = useState<T | null>(null);
+
+  const toolbarActions = actions ?? [];
+  const desktopToolbarRight =
+    toolbarRight || toolbarActions.length > 0 ? (
+      <>
+        {toolbarRight}
+        <ToolbarActionButtons actions={toolbarActions} />
+      </>
+    ) : undefined;
 
   const showActions =
     (canEdit && onEdit) || (canDelete && onDelete) || (customActions && customActions.length > 0);
@@ -223,12 +241,15 @@ export function ResourceListPage<T>({
       <Card className="pb-0">
         <CardHeaderRow>
           <CardTitle>{title}</CardTitle>
-          {canCreate && onCreate && (
-            <Button onClick={onCreate} size="sm">
-              <Plus className="h-4 w-4" />
-              Novo
-            </Button>
-          )}
+          <div className="flex items-center gap-2">
+            <ToolbarActionsMenu actions={toolbarActions} className="md:hidden" />
+            {canCreate && onCreate && (
+              <Button onClick={onCreate} size="sm">
+                <Plus className="h-4 w-4" />
+                Novo
+              </Button>
+            )}
+          </div>
         </CardHeaderRow>
         <CardContent className="p-0">
           <DataTable
@@ -241,7 +262,7 @@ export function ResourceListPage<T>({
             mobileOnRowClick={mobileDetailFields ? (row) => setDetailRow(row) : undefined}
             columnToggle={columnToggle}
             tableId={tableId}
-            toolbarRight={toolbarRight}
+            toolbarRight={desktopToolbarRight}
             onColumnVisibilityChange={onColumnVisibilityChange}
             searchable={searchable}
             globalFilter={globalFilter}
