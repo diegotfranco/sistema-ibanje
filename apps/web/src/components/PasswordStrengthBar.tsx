@@ -76,6 +76,7 @@ export function PasswordStrengthMeter({ value }: { value: string }) {
       <Progress
         value={score === 0 ? 0 : score * (100 / 3)}
         className={cn('h-1.5', filled?.level.barClass)}
+        aria-label="Força da senha"
         aria-valuetext={filled?.level.label ?? 'Sem senha'}
       />
       {filled && (

@@ -2,7 +2,19 @@
 // global-setup.ts runs once before everything; this just guarantees env in each worker.
 process.env.NODE_ENV = 'test';
 
-import { afterAll } from 'vitest';
+import { afterAll, vi } from 'vitest';
+
+// Stub the Resend SDK suite-wide so no test makes a real network call to the email provider. CI
+// sets a placeholder RESEND_API_KEY (re_test) that Resend rejects, which would otherwise turn every
+// invite/approval send into a 502 (the admin create/approve paths surface a failed send as 502).
+// The `send` is a successful no-op by default; tests that need to inspect the payload (email.test.ts,
+// church-settings-logo.test.ts) declare their own in-file vi.mock with a capturing spy, which
+// re-registers and takes precedence for that file.
+vi.mock('resend', () => ({
+  Resend: class {
+    emails = { send: vi.fn().mockResolvedValue({ data: { id: 'test-email' }, error: null }) };
+  }
+}));
 
 // Per-fork teardown: close the shared Fastify app (fires its onClose hook → closeRedis)
 // and end the postgres pool, so no open sockets keep the Vitest process alive.

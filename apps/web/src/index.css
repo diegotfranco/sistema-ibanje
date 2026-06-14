@@ -37,7 +37,9 @@
      light to use as text on a light /15 tint, so badges and other `text-warning` surfaces use
      --warning-strong instead — a darker gold that clears WCAG AA (1.4.3, 4.5:1) as small text. */
   --warning: oklch(0.8 0.16 82);
-  --warning-strong: oklch(0.52 0.145 75);
+  /* 0.52 measured 4.42:1 on the /15 badge composite (#985800 on #ece3d6) — just under AA. 0.50
+     (#925200) clears it at 4.81:1; darker text only raises contrast on every light tint it sits on. */
+  --warning-strong: oklch(0.5 0.145 75);
   --warning-foreground: oklch(0.987 0.022 95.277);
   --money-in: oklch(0.5 0.17 150);
   --money-out: oklch(0.51 0.23 27);
